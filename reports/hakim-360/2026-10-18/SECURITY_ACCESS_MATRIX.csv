@@ -1,0 +1,12 @@
+principal,plane,capability,evidence,confidence,note
+neondb_owner,database,login createrole createdb bypassrls replication,evidence/roles.csv,CONFIRMED,this audit session authenticated as this role; not proof it is the only app role
+hakeem_readonly,database,login without super createdb createrole replication or bypassrls,evidence/roles.csv,CONFIRMED,existence only; grants per table are in evidence/grants.csv; runtime use UNVERIFIED
+neon_superuser,database,platform role cannot login bypassrls,evidence/roles.csv,CONFIRMED,Neon platform
+cloud_admin,database,superuser login,evidence/roles.csv,CONFIRMED,Neon platform
+application RLS,database,no relrowsecurity on user tables and zero pg_policies,summary.json,CONFIRMED,absence is not evidence of a breach
+Clerk session,application,admin and desk routes redirect anonymous users to sign-in,HTTP 307 /admin/legal and /dashboard/legal-core,CONFIRMED,post-login RBAC not exercised
+editorial bindings,application,desk roles in editorial_config jsonb,keys bindings policies controls; binding user ids not exported,CONFIRMED,MFA required flag true
+MCP bearer,application,unauthenticated /mcp returns 401 scope mcp:read,HTTP 401,CONFIRMED,authenticated tool behavior not called
+GitHub Actions secrets,ci,names not listed HTTP 403,gh api,BLOCKED,workflow files reference NEON_DATABASE_URL DATABASE_URL OPENSEARCH_URL by name only
+branch protection,github,not readable HTTP 403,gh api branches/main/protection,BLOCKED,do not infer it is absent
+preview deployments,application,code says preview shares production DB and editorial writes lock unless EDITORIAL_DESK_WRITE=1,lib/modules/editorial/write-gate.ts,LIKELY,Vercel env values not read

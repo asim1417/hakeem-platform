@@ -1,0 +1,639 @@
+schema,table_name,index_name,is_unique,is_primary,is_valid,is_ready,access_method,index_def,index_bytes,idx_scan,idx_tup_read,idx_tup_fetch
+boe,amendment_note,amendment_note_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX amendment_note_pkey ON boe.amendment_note USING btree (id),155648,5460,14549,3633
+boe,attachment,attachment_href_key,true,false,true,true,btree,CREATE UNIQUE INDEX attachment_href_key ON boe.attachment USING btree (href),229376,1976,816,0
+boe,attachment,attachment_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX attachment_pkey ON boe.attachment USING btree (id),90112,19689,23598,17720
+boe,attachment_page,attachment_page_pkey,true,true,true,true,btree,"CREATE UNIQUE INDEX attachment_page_pkey ON boe.attachment_page USING btree (attachment_id, page_no)",729088,17725,52519,0
+boe,attachment_target,attachment_target_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX attachment_target_pkey ON boe.attachment_target USING btree (href),385024,4296,2005,0
+boe,catalog,catalog_pkey,true,true,true,true,btree,"CREATE UNIQUE INDEX catalog_pkey ON boe.catalog USING btree (guid, run_id)",81920,1082,541,541
+boe,crawl_run,crawl_run_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX crawl_run_pkey ON boe.crawl_run USING btree (id),16384,1084,1083,1083
+boe,diff,diff_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX diff_pkey ON boe.diff USING btree (id),1048576,32833,96236,16414
+boe,law,law_guid_idx,false,false,true,true,btree,"CREATE INDEX law_guid_idx ON boe.law USING btree (guid, parsed_at DESC)",57344,0,0,0
+boe,law,law_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX law_pkey ON boe.law USING btree (id),57344,55774,55244,55244
+boe,match,match_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX match_pkey ON boe.match USING btree (id),57344,994,408,0
+boe,owner_decision,owner_decision_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX owner_decision_pkey ON boe.owner_decision USING btree (id),8192,0,0,0
+boe,page_snapshot,page_snapshot_guid_idx,false,false,true,true,btree,"CREATE INDEX page_snapshot_guid_idx ON boe.page_snapshot USING btree (guid, retrieved_at DESC)",57344,0,0,0
+boe,page_snapshot,page_snapshot_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX page_snapshot_pkey ON boe.page_snapshot USING btree (sha256),90112,2606,2065,2065
+boe,related_doc,related_doc_pkey,true,true,true,true,btree,"CREATE UNIQUE INDEX related_doc_pkey ON boe.related_doc USING btree (law_id, target_guid, label)",16384,44,22,22
+boe,review_proposal,review_proposal_note_idx,false,false,true,true,btree,CREATE INDEX review_proposal_note_idx ON boe.review_proposal USING btree (note_id),81920,2,2,0
+boe,review_proposal,review_proposal_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX review_proposal_pkey ON boe.review_proposal USING btree (id),65536,1488,5156,0
+boe,text_block,text_block_pkey,true,true,true,true,btree,"CREATE UNIQUE INDEX text_block_pkey ON boe.text_block USING btree (law_id, seq)",237568,7358,21862,3180
+boe,unit,unit_pkey,true,true,true,true,btree,"CREATE UNIQUE INDEX unit_pkey ON boe.unit USING btree (law_id, seq)",1458176,36424,172744,16955
+boe,vision_reading,vision_reading_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX vision_reading_pkey ON boe.vision_reading USING btree (note_id),16384,337,973,0
+boe_inject,manifest,manifest_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX manifest_pkey ON boe_inject.manifest USING btree (id),8192,0,0,0
+boe_inject,p1_unit_version,p1_unit_version_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX p1_unit_version_pkey ON boe_inject.p1_unit_version USING btree (id),16384,106,12,12
+boe_inject,p1_verification,p1_verification_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX p1_verification_pkey ON boe_inject.p1_verification USING btree (id),16384,78,8,8
+boe_inject,unit_version_b64,unit_version_b64_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX unit_version_b64_pkey ON boe_inject.unit_version_b64 USING btree (id),40960,215,0,0
+boe_inject,unit_version_fix,unit_version_fix_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX unit_version_fix_pkey ON boe_inject.unit_version_fix USING btree (id),16384,7,0,0
+boe_inject,unit_version_stage,unit_version_stage_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX unit_version_stage_pkey ON boe_inject.unit_version_stage USING btree (id),8192,0,0,0
+boe_inject,verification_fix,verification_fix_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX verification_fix_pkey ON boe_inject.verification_fix USING btree (id),16384,18,0,0
+boe_inject,verification_stage,verification_stage_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX verification_stage_pkey ON boe_inject.verification_stage USING btree (id),57344,667,0,0
+pg_toast,pg_toast_1213,pg_toast_1213_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_1213_index ON pg_toast.pg_toast_1213 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_1247,pg_toast_1247_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_1247_index ON pg_toast.pg_toast_1247 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_1255,pg_toast_1255_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_1255_index ON pg_toast.pg_toast_1255 USING btree (chunk_id, chunk_seq)",16384,,,
+pg_toast,pg_toast_1260,pg_toast_1260_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_1260_index ON pg_toast.pg_toast_1260 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_1262,pg_toast_1262_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_1262_index ON pg_toast.pg_toast_1262 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_131780,pg_toast_131780_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_131780_index ON pg_toast.pg_toast_131780 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_13400,pg_toast_13400_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_13400_index ON pg_toast.pg_toast_13400 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_13405,pg_toast_13405_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_13405_index ON pg_toast.pg_toast_13405 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_13410,pg_toast_13410_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_13410_index ON pg_toast.pg_toast_13410 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_13415,pg_toast_13415_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_13415_index ON pg_toast.pg_toast_13415 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_1417,pg_toast_1417_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_1417_index ON pg_toast.pg_toast_1417 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_1418,pg_toast_1418_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_1418_index ON pg_toast.pg_toast_1418 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_164249,pg_toast_164249_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_164249_index ON pg_toast.pg_toast_164249 USING btree (chunk_id, chunk_seq)",8134656,,,
+pg_toast,pg_toast_16571,pg_toast_16571_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_16571_index ON pg_toast.pg_toast_16571 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_16580,pg_toast_16580_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_16580_index ON pg_toast.pg_toast_16580 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_16588,pg_toast_16588_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_16588_index ON pg_toast.pg_toast_16588 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_16596,pg_toast_16596_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_16596_index ON pg_toast.pg_toast_16596 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_16603,pg_toast_16603_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_16603_index ON pg_toast.pg_toast_16603 USING btree (chunk_id, chunk_seq)",40960,,,
+pg_toast,pg_toast_16612,pg_toast_16612_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_16612_index ON pg_toast.pg_toast_16612 USING btree (chunk_id, chunk_seq)",3047424,,,
+pg_toast,pg_toast_16622,pg_toast_16622_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_16622_index ON pg_toast.pg_toast_16622 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_16630,pg_toast_16630_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_16630_index ON pg_toast.pg_toast_16630 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_16639,pg_toast_16639_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_16639_index ON pg_toast.pg_toast_16639 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_16647,pg_toast_16647_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_16647_index ON pg_toast.pg_toast_16647 USING btree (chunk_id, chunk_seq)",16384,,,
+pg_toast,pg_toast_16656,pg_toast_16656_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_16656_index ON pg_toast.pg_toast_16656 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_16664,pg_toast_16664_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_16664_index ON pg_toast.pg_toast_16664 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_16672,pg_toast_16672_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_16672_index ON pg_toast.pg_toast_16672 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_16681,pg_toast_16681_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_16681_index ON pg_toast.pg_toast_16681 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_16689,pg_toast_16689_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_16689_index ON pg_toast.pg_toast_16689 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_16697,pg_toast_16697_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_16697_index ON pg_toast.pg_toast_16697 USING btree (chunk_id, chunk_seq)",16384,,,
+pg_toast,pg_toast_16707,pg_toast_16707_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_16707_index ON pg_toast.pg_toast_16707 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_16715,pg_toast_16715_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_16715_index ON pg_toast.pg_toast_16715 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_16725,pg_toast_16725_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_16725_index ON pg_toast.pg_toast_16725 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_16734,pg_toast_16734_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_16734_index ON pg_toast.pg_toast_16734 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_16742,pg_toast_16742_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_16742_index ON pg_toast.pg_toast_16742 USING btree (chunk_id, chunk_seq)",16384,,,
+pg_toast,pg_toast_180224,pg_toast_180224_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_180224_index ON pg_toast.pg_toast_180224 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_180239,pg_toast_180239_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_180239_index ON pg_toast.pg_toast_180239 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_180254,pg_toast_180254_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_180254_index ON pg_toast.pg_toast_180254 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_180274,pg_toast_180274_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_180274_index ON pg_toast.pg_toast_180274 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_180301,pg_toast_180301_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_180301_index ON pg_toast.pg_toast_180301 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_180315,pg_toast_180315_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_180315_index ON pg_toast.pg_toast_180315 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_180333,pg_toast_180333_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_180333_index ON pg_toast.pg_toast_180333 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_180363,pg_toast_180363_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_180363_index ON pg_toast.pg_toast_180363 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_180384,pg_toast_180384_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_180384_index ON pg_toast.pg_toast_180384 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_180410,pg_toast_180410_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_180410_index ON pg_toast.pg_toast_180410 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_180419,pg_toast_180419_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_180419_index ON pg_toast.pg_toast_180419 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_180438,pg_toast_180438_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_180438_index ON pg_toast.pg_toast_180438 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_2328,pg_toast_2328_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_2328_index ON pg_toast.pg_toast_2328 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_23707649,pg_toast_23707649_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23707649_index ON pg_toast.pg_toast_23707649 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_23707658,pg_toast_23707658_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23707658_index ON pg_toast.pg_toast_23707658 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_23707677,pg_toast_23707677_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23707677_index ON pg_toast.pg_toast_23707677 USING btree (chunk_id, chunk_seq)",131072,,,
+pg_toast,pg_toast_23707693,pg_toast_23707693_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23707693_index ON pg_toast.pg_toast_23707693 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_23707710,pg_toast_23707710_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23707710_index ON pg_toast.pg_toast_23707710 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_23707723,pg_toast_23707723_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23707723_index ON pg_toast.pg_toast_23707723 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_23708226,pg_toast_23708226_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23708226_index ON pg_toast.pg_toast_23708226 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_23830529,pg_toast_23830529_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23830529_index ON pg_toast.pg_toast_23830529 USING btree (chunk_id, chunk_seq)",32768,,,
+pg_toast,pg_toast_23830537,pg_toast_23830537_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23830537_index ON pg_toast.pg_toast_23830537 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_23830550,pg_toast_23830550_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23830550_index ON pg_toast.pg_toast_23830550 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_23830562,pg_toast_23830562_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23830562_index ON pg_toast.pg_toast_23830562 USING btree (chunk_id, chunk_seq)",16384,,,
+pg_toast,pg_toast_23830579,pg_toast_23830579_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23830579_index ON pg_toast.pg_toast_23830579 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_23830599,pg_toast_23830599_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23830599_index ON pg_toast.pg_toast_23830599 USING btree (chunk_id, chunk_seq)",16384,,,
+pg_toast,pg_toast_23830974,pg_toast_23830974_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23830974_index ON pg_toast.pg_toast_23830974 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_23830986,pg_toast_23830986_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23830986_index ON pg_toast.pg_toast_23830986 USING btree (chunk_id, chunk_seq)",16384,,,
+pg_toast,pg_toast_23830995,pg_toast_23830995_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23830995_index ON pg_toast.pg_toast_23830995 USING btree (chunk_id, chunk_seq)",106496,,,
+pg_toast,pg_toast_23831004,pg_toast_23831004_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23831004_index ON pg_toast.pg_toast_23831004 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_23838794,pg_toast_23838794_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23838794_index ON pg_toast.pg_toast_23838794 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_23838804,pg_toast_23838804_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23838804_index ON pg_toast.pg_toast_23838804 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_23838819,pg_toast_23838819_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23838819_index ON pg_toast.pg_toast_23838819 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_23838835,pg_toast_23838835_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23838835_index ON pg_toast.pg_toast_23838835 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_23838850,pg_toast_23838850_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23838850_index ON pg_toast.pg_toast_23838850 USING btree (chunk_id, chunk_seq)",16384,,,
+pg_toast,pg_toast_23855140,pg_toast_23855140_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23855140_index ON pg_toast.pg_toast_23855140 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_23855151,pg_toast_23855151_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23855151_index ON pg_toast.pg_toast_23855151 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_23855206,pg_toast_23855206_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23855206_index ON pg_toast.pg_toast_23855206 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_23855227,pg_toast_23855227_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23855227_index ON pg_toast.pg_toast_23855227 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_23855246,pg_toast_23855246_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23855246_index ON pg_toast.pg_toast_23855246 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_23855261,pg_toast_23855261_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23855261_index ON pg_toast.pg_toast_23855261 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_23855276,pg_toast_23855276_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23855276_index ON pg_toast.pg_toast_23855276 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_23855287,pg_toast_23855287_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23855287_index ON pg_toast.pg_toast_23855287 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_23855297,pg_toast_23855297_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23855297_index ON pg_toast.pg_toast_23855297 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_23855315,pg_toast_23855315_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23855315_index ON pg_toast.pg_toast_23855315 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_23855362,pg_toast_23855362_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23855362_index ON pg_toast.pg_toast_23855362 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_23896064,pg_toast_23896064_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23896064_index ON pg_toast.pg_toast_23896064 USING btree (chunk_id, chunk_seq)",13721600,,,
+pg_toast,pg_toast_2396,pg_toast_2396_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_2396_index ON pg_toast.pg_toast_2396 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_23994368,pg_toast_23994368_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23994368_index ON pg_toast.pg_toast_23994368 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_23994386,pg_toast_23994386_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23994386_index ON pg_toast.pg_toast_23994386 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_23994396,pg_toast_23994396_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23994396_index ON pg_toast.pg_toast_23994396 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_23994404,pg_toast_23994404_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23994404_index ON pg_toast.pg_toast_23994404 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_23994414,pg_toast_23994414_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23994414_index ON pg_toast.pg_toast_23994414 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_23994422,pg_toast_23994422_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23994422_index ON pg_toast.pg_toast_23994422 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_23994444,pg_toast_23994444_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_23994444_index ON pg_toast.pg_toast_23994444 USING btree (chunk_id, chunk_seq)",933888,,,
+pg_toast,pg_toast_24004310,pg_toast_24004310_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24004310_index ON pg_toast.pg_toast_24004310 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_24004318,pg_toast_24004318_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24004318_index ON pg_toast.pg_toast_24004318 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_24004326,pg_toast_24004326_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24004326_index ON pg_toast.pg_toast_24004326 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_24006436,pg_toast_24006436_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24006436_index ON pg_toast.pg_toast_24006436 USING btree (chunk_id, chunk_seq)",16384,,,
+pg_toast,pg_toast_24006444,pg_toast_24006444_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24006444_index ON pg_toast.pg_toast_24006444 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_24006470,pg_toast_24006470_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24006470_index ON pg_toast.pg_toast_24006470 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_24073692,pg_toast_24073692_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24073692_index ON pg_toast.pg_toast_24073692 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_24073710,pg_toast_24073710_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24073710_index ON pg_toast.pg_toast_24073710 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_24076356,pg_toast_24076356_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24076356_index ON pg_toast.pg_toast_24076356 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_24076375,pg_toast_24076375_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24076375_index ON pg_toast.pg_toast_24076375 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_24076392,pg_toast_24076392_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24076392_index ON pg_toast.pg_toast_24076392 USING btree (chunk_id, chunk_seq)",40960,,,
+pg_toast,pg_toast_24078590,pg_toast_24078590_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24078590_index ON pg_toast.pg_toast_24078590 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_24078597,pg_toast_24078597_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24078597_index ON pg_toast.pg_toast_24078597 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_24078609,pg_toast_24078609_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24078609_index ON pg_toast.pg_toast_24078609 USING btree (chunk_id, chunk_seq)",122880,,,
+pg_toast,pg_toast_24078622,pg_toast_24078622_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24078622_index ON pg_toast.pg_toast_24078622 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_24078639,pg_toast_24078639_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24078639_index ON pg_toast.pg_toast_24078639 USING btree (chunk_id, chunk_seq)",16384,,,
+pg_toast,pg_toast_24078652,pg_toast_24078652_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24078652_index ON pg_toast.pg_toast_24078652 USING btree (chunk_id, chunk_seq)",49152,,,
+pg_toast,pg_toast_24078665,pg_toast_24078665_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24078665_index ON pg_toast.pg_toast_24078665 USING btree (chunk_id, chunk_seq)",16384,,,
+pg_toast,pg_toast_24078678,pg_toast_24078678_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24078678_index ON pg_toast.pg_toast_24078678 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_24078690,pg_toast_24078690_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24078690_index ON pg_toast.pg_toast_24078690 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_24078700,pg_toast_24078700_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24078700_index ON pg_toast.pg_toast_24078700 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_24078733,pg_toast_24078733_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24078733_index ON pg_toast.pg_toast_24078733 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_24078743,pg_toast_24078743_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24078743_index ON pg_toast.pg_toast_24078743 USING btree (chunk_id, chunk_seq)",16384,,,
+pg_toast,pg_toast_24078757,pg_toast_24078757_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24078757_index ON pg_toast.pg_toast_24078757 USING btree (chunk_id, chunk_seq)",16384,,,
+pg_toast,pg_toast_24078774,pg_toast_24078774_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24078774_index ON pg_toast.pg_toast_24078774 USING btree (chunk_id, chunk_seq)",16384,,,
+pg_toast,pg_toast_24078792,pg_toast_24078792_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24078792_index ON pg_toast.pg_toast_24078792 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_24078806,pg_toast_24078806_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24078806_index ON pg_toast.pg_toast_24078806 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_24081904,pg_toast_24081904_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24081904_index ON pg_toast.pg_toast_24081904 USING btree (chunk_id, chunk_seq)",16384,,,
+pg_toast,pg_toast_24081912,pg_toast_24081912_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24081912_index ON pg_toast.pg_toast_24081912 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_24092676,pg_toast_24092676_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24092676_index ON pg_toast.pg_toast_24092676 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_24092701,pg_toast_24092701_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24092701_index ON pg_toast.pg_toast_24092701 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_24092732,pg_toast_24092732_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24092732_index ON pg_toast.pg_toast_24092732 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_24092756,pg_toast_24092756_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24092756_index ON pg_toast.pg_toast_24092756 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_24092769,pg_toast_24092769_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24092769_index ON pg_toast.pg_toast_24092769 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_24092787,pg_toast_24092787_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24092787_index ON pg_toast.pg_toast_24092787 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_24092856,pg_toast_24092856_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24092856_index ON pg_toast.pg_toast_24092856 USING btree (chunk_id, chunk_seq)",16384,,,
+pg_toast,pg_toast_24092886,pg_toast_24092886_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_24092886_index ON pg_toast.pg_toast_24092886 USING btree (chunk_id, chunk_seq)",16384,,,
+pg_toast,pg_toast_2600,pg_toast_2600_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_2600_index ON pg_toast.pg_toast_2600 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_2604,pg_toast_2604_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_2604_index ON pg_toast.pg_toast_2604 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_2606,pg_toast_2606_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_2606_index ON pg_toast.pg_toast_2606 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_2609,pg_toast_2609_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_2609_index ON pg_toast.pg_toast_2609 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_2612,pg_toast_2612_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_2612_index ON pg_toast.pg_toast_2612 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_2615,pg_toast_2615_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_2615_index ON pg_toast.pg_toast_2615 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_2618,pg_toast_2618_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_2618_index ON pg_toast.pg_toast_2618 USING btree (chunk_id, chunk_seq)",16384,,,
+pg_toast,pg_toast_2619,pg_toast_2619_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_2619_index ON pg_toast.pg_toast_2619 USING btree (chunk_id, chunk_seq)",57344,,,
+pg_toast,pg_toast_2620,pg_toast_2620_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_2620_index ON pg_toast.pg_toast_2620 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_262157,pg_toast_262157_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_262157_index ON pg_toast.pg_toast_262157 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_2670722,pg_toast_2670722_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_2670722_index ON pg_toast.pg_toast_2670722 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_2964,pg_toast_2964_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_2964_index ON pg_toast.pg_toast_2964 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_303104,pg_toast_303104_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_303104_index ON pg_toast.pg_toast_303104 USING btree (chunk_id, chunk_seq)",16384,,,
+pg_toast,pg_toast_3079,pg_toast_3079_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_3079_index ON pg_toast.pg_toast_3079 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_3118,pg_toast_3118_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_3118_index ON pg_toast.pg_toast_3118 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_319488,pg_toast_319488_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_319488_index ON pg_toast.pg_toast_319488 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_319500,pg_toast_319500_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_319500_index ON pg_toast.pg_toast_319500 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_3256,pg_toast_3256_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_3256_index ON pg_toast.pg_toast_3256 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_327680,pg_toast_327680_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_327680_index ON pg_toast.pg_toast_327680 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_327692,pg_toast_327692_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_327692_index ON pg_toast.pg_toast_327692 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_327702,pg_toast_327702_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_327702_index ON pg_toast.pg_toast_327702 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_3350,pg_toast_3350_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_3350_index ON pg_toast.pg_toast_3350 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_3381,pg_toast_3381_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_3381_index ON pg_toast.pg_toast_3381 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_3394,pg_toast_3394_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_3394_index ON pg_toast.pg_toast_3394 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_3429,pg_toast_3429_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_3429_index ON pg_toast.pg_toast_3429 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_3456,pg_toast_3456_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_3456_index ON pg_toast.pg_toast_3456 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_3466,pg_toast_3466_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_3466_index ON pg_toast.pg_toast_3466 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_3592,pg_toast_3592_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_3592_index ON pg_toast.pg_toast_3592 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_3596,pg_toast_3596_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_3596_index ON pg_toast.pg_toast_3596 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_3600,pg_toast_3600_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_3600_index ON pg_toast.pg_toast_3600 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_360448,pg_toast_360448_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_360448_index ON pg_toast.pg_toast_360448 USING btree (chunk_id, chunk_seq)",16384,,,
+pg_toast,pg_toast_409631,pg_toast_409631_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_409631_index ON pg_toast.pg_toast_409631 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_409638,pg_toast_409638_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_409638_index ON pg_toast.pg_toast_409638 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_4194304,pg_toast_4194304_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_4194304_index ON pg_toast.pg_toast_4194304 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_4194317,pg_toast_4194317_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_4194317_index ON pg_toast.pg_toast_4194317 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_4194328,pg_toast_4194328_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_4194328_index ON pg_toast.pg_toast_4194328 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_4194341,pg_toast_4194341_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_4194341_index ON pg_toast.pg_toast_4194341 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_4194356,pg_toast_4194356_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_4194356_index ON pg_toast.pg_toast_4194356 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_4194368,pg_toast_4194368_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_4194368_index ON pg_toast.pg_toast_4194368 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_4194385,pg_toast_4194385_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_4194385_index ON pg_toast.pg_toast_4194385 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_4194402,pg_toast_4194402_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_4194402_index ON pg_toast.pg_toast_4194402 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_4194421,pg_toast_4194421_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_4194421_index ON pg_toast.pg_toast_4194421 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_4210734,pg_toast_4210734_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_4210734_index ON pg_toast.pg_toast_4210734 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_4210807,pg_toast_4210807_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_4210807_index ON pg_toast.pg_toast_4210807 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_4210819,pg_toast_4210819_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_4210819_index ON pg_toast.pg_toast_4210819 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_4210835,pg_toast_4210835_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_4210835_index ON pg_toast.pg_toast_4210835 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_4210855,pg_toast_4210855_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_4210855_index ON pg_toast.pg_toast_4210855 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_425984,pg_toast_425984_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_425984_index ON pg_toast.pg_toast_425984 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_425995,pg_toast_425995_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_425995_index ON pg_toast.pg_toast_425995 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_434176,pg_toast_434176_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_434176_index ON pg_toast.pg_toast_434176 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_434191,pg_toast_434191_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_434191_index ON pg_toast.pg_toast_434191 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_4423685,pg_toast_4423685_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_4423685_index ON pg_toast.pg_toast_4423685 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_4866189,pg_toast_4866189_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_4866189_index ON pg_toast.pg_toast_4866189 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_4866203,pg_toast_4866203_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_4866203_index ON pg_toast.pg_toast_4866203 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_4866214,pg_toast_4866214_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_4866214_index ON pg_toast.pg_toast_4866214 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_4866223,pg_toast_4866223_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_4866223_index ON pg_toast.pg_toast_4866223 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_4866232,pg_toast_4866232_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_4866232_index ON pg_toast.pg_toast_4866232 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_4866243,pg_toast_4866243_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_4866243_index ON pg_toast.pg_toast_4866243 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_4866254,pg_toast_4866254_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_4866254_index ON pg_toast.pg_toast_4866254 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_4866265,pg_toast_4866265_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_4866265_index ON pg_toast.pg_toast_4866265 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_4866276,pg_toast_4866276_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_4866276_index ON pg_toast.pg_toast_4866276 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_4866289,pg_toast_4866289_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_4866289_index ON pg_toast.pg_toast_4866289 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_4866299,pg_toast_4866299_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_4866299_index ON pg_toast.pg_toast_4866299 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_4866310,pg_toast_4866310_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_4866310_index ON pg_toast.pg_toast_4866310 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_4866318,pg_toast_4866318_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_4866318_index ON pg_toast.pg_toast_4866318 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_4866426,pg_toast_4866426_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_4866426_index ON pg_toast.pg_toast_4866426 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_4866459,pg_toast_4866459_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_4866459_index ON pg_toast.pg_toast_4866459 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_4866472,pg_toast_4866472_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_4866472_index ON pg_toast.pg_toast_4866472 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_57344,pg_toast_57344_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_57344_index ON pg_toast.pg_toast_57344 USING btree (chunk_id, chunk_seq)",8527872,,,
+pg_toast,pg_toast_573440,pg_toast_573440_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_573440_index ON pg_toast.pg_toast_573440 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_573455,pg_toast_573455_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_573455_index ON pg_toast.pg_toast_573455 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_573467,pg_toast_573467_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_573467_index ON pg_toast.pg_toast_573467 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_57354,pg_toast_57354_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_57354_index ON pg_toast.pg_toast_57354 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_57363,pg_toast_57363_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_57363_index ON pg_toast.pg_toast_57363 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_57398,pg_toast_57398_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_57398_index ON pg_toast.pg_toast_57398 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_6000,pg_toast_6000_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_6000_index ON pg_toast.pg_toast_6000 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_606208,pg_toast_606208_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_606208_index ON pg_toast.pg_toast_606208 USING btree (chunk_id, chunk_seq)",16384,,,
+pg_toast,pg_toast_606224,pg_toast_606224_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_606224_index ON pg_toast.pg_toast_606224 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_6100,pg_toast_6100_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_6100_index ON pg_toast.pg_toast_6100 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_6106,pg_toast_6106_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_6106_index ON pg_toast.pg_toast_6106 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_6243,pg_toast_6243_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_6243_index ON pg_toast.pg_toast_6243 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_647168,pg_toast_647168_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_647168_index ON pg_toast.pg_toast_647168 USING btree (chunk_id, chunk_seq)",49152,,,
+pg_toast,pg_toast_704512,pg_toast_704512_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_704512_index ON pg_toast.pg_toast_704512 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_704527,pg_toast_704527_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_704527_index ON pg_toast.pg_toast_704527 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_704542,pg_toast_704542_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_704542_index ON pg_toast.pg_toast_704542 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_704552,pg_toast_704552_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_704552_index ON pg_toast.pg_toast_704552 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_704566,pg_toast_704566_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_704566_index ON pg_toast.pg_toast_704566 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_729088,pg_toast_729088_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_729088_index ON pg_toast.pg_toast_729088 USING btree (chunk_id, chunk_seq)",8192,,,
+pg_toast,pg_toast_729098,pg_toast_729098_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_729098_index ON pg_toast.pg_toast_729098 USING btree (chunk_id, chunk_seq)",32768,,,
+pg_toast,pg_toast_826,pg_toast_826_index,true,true,true,true,btree,"CREATE UNIQUE INDEX pg_toast_826_index ON pg_toast.pg_toast_826 USING btree (chunk_id, chunk_seq)",8192,,,
+public,_prisma_migrations,_prisma_migrations_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX _prisma_migrations_pkey ON public._prisma_migrations USING btree (id),16384,0,0,0
+public,ai_usage_events,ai_usage_events_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX ai_usage_events_pkey ON public.ai_usage_events USING btree (id),32768,0,0,0
+public,ai_usage_events,ai_usage_events_provider_idx,false,false,true,true,btree,CREATE INDEX ai_usage_events_provider_idx ON public.ai_usage_events USING btree (provider),16384,0,0,0
+public,ai_usage_events,ai_usage_events_user_created_idx,false,false,true,true,btree,"CREATE INDEX ai_usage_events_user_created_idx ON public.ai_usage_events USING btree (user_id, created_at DESC)",49152,8,89,89
+public,annotations,annotations_document_type_document_id_idx,false,false,true,true,btree,"CREATE INDEX annotations_document_type_document_id_idx ON public.annotations USING btree (document_type, document_id)",8192,15,0,0
+public,annotations,annotations_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX annotations_pkey ON public.annotations USING btree (id),8192,0,0,0
+public,annotations,annotations_user_id_idx,false,false,true,true,btree,CREATE INDEX annotations_user_id_idx ON public.annotations USING btree (user_id),8192,0,0,0
+public,api_keys,api_keys_key_hash_key,true,false,true,true,btree,CREATE UNIQUE INDEX api_keys_key_hash_key ON public.api_keys USING btree (key_hash),8192,0,0,0
+public,api_keys,api_keys_key_prefix_idx,false,false,true,true,btree,CREATE INDEX api_keys_key_prefix_idx ON public.api_keys USING btree (key_prefix),8192,0,0,0
+public,api_keys,api_keys_key_prefix_key,true,false,true,true,btree,CREATE UNIQUE INDEX api_keys_key_prefix_key ON public.api_keys USING btree (key_prefix),8192,0,0,0
+public,api_keys,api_keys_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX api_keys_pkey ON public.api_keys USING btree (id),8192,0,0,0
+public,api_keys,api_keys_user_id_idx,false,false,true,true,btree,CREATE INDEX api_keys_user_id_idx ON public.api_keys USING btree (user_id),8192,0,0,0
+public,api_request_windows,api_request_windows_api_key_id_window_start_key,true,false,true,true,btree,"CREATE UNIQUE INDEX api_request_windows_api_key_id_window_start_key ON public.api_request_windows USING btree (api_key_id, window_start)",8192,0,0,0
+public,api_request_windows,api_request_windows_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX api_request_windows_pkey ON public.api_request_windows USING btree (id),8192,0,0,0
+public,api_request_windows,api_request_windows_window_start_idx,false,false,true,true,btree,CREATE INDEX api_request_windows_window_start_idx ON public.api_request_windows USING btree (window_start),8192,0,0,0
+public,app_settings,app_settings_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX app_settings_pkey ON public.app_settings USING btree (key),16384,22374,38984,4074
+public,article_amendments,article_amendments_articleId_idx,false,false,true,true,btree,"CREATE INDEX ""article_amendments_articleId_idx"" ON public.article_amendments USING btree (""articleId"")",49152,2593,1675,1669
+public,article_amendments,article_amendments_articleId_version_key,true,false,true,true,btree,"CREATE UNIQUE INDEX ""article_amendments_articleId_version_key"" ON public.article_amendments USING btree (""articleId"", version)",49152,8231,1,1
+public,article_amendments,article_amendments_effectiveFrom_idx,false,false,true,true,btree,"CREATE INDEX ""article_amendments_effectiveFrom_idx"" ON public.article_amendments USING btree (""effectiveFrom"")",16384,0,0,0
+public,article_amendments,article_amendments_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX article_amendments_pkey ON public.article_amendments USING btree (id),57344,0,0,0
+public,article_versions,article_versions_article_id_effective_from_idx,false,false,true,true,btree,"CREATE INDEX article_versions_article_id_effective_from_idx ON public.article_versions USING btree (article_id, effective_from)",966656,2550,513195,130415
+public,article_versions,article_versions_effective_to_idx,false,false,true,true,btree,CREATE INDEX article_versions_effective_to_idx ON public.article_versions USING btree (effective_to),139264,26,288371,2938
+public,article_versions,article_versions_one_current_per_article,true,false,true,true,btree,CREATE UNIQUE INDEX article_versions_one_current_per_article ON public.article_versions USING btree (article_id) WHERE (effective_to IS NULL),802816,252,127565,351
+public,article_versions,article_versions_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX article_versions_pkey ON public.article_versions USING btree (id),819200,0,0,0
+public,attachments,attachments_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX attachments_pkey ON public.attachments USING btree (id),16384,967,1,1
+public,audit_event,audit_event_actor_idx,false,false,true,true,btree,"CREATE INDEX audit_event_actor_idx ON public.audit_event USING btree (actor_id, at DESC)",16384,0,0,0
+public,audit_event,audit_event_at_idx,false,false,true,true,btree,CREATE INDEX audit_event_at_idx ON public.audit_event USING btree (at DESC),16384,15,13,13
+public,audit_event,audit_event_object_idx,false,false,true,true,btree,"CREATE INDEX audit_event_object_idx ON public.audit_event USING btree (object_type, object_id, at DESC)",16384,0,0,0
+public,audit_event,audit_event_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX audit_event_pkey ON public.audit_event USING btree (id),16384,0,0,0
+public,audit_logs,audit_logs_correlation_id_idx,false,false,true,true,btree,CREATE INDEX audit_logs_correlation_id_idx ON public.audit_logs USING btree (correlation_id),32768,0,0,0
+public,audit_logs,audit_logs_createdAt_idx,false,false,true,true,btree,"CREATE INDEX ""audit_logs_createdAt_idx"" ON public.audit_logs USING btree (""createdAt"")",40960,755,8185,8185
+public,audit_logs,audit_logs_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX audit_logs_pkey ON public.audit_logs USING btree (id),73728,0,0,0
+public,audit_logs,audit_logs_subject_action_idx,false,false,true,true,btree,"CREATE INDEX audit_logs_subject_action_idx ON public.audit_logs USING btree (subject, action)",40960,24,139,49
+public,billing_audit_logs,billing_audit_logs_action_created_at_idx,false,false,true,true,btree,"CREATE INDEX billing_audit_logs_action_created_at_idx ON public.billing_audit_logs USING btree (action, created_at)",8192,0,0,0
+public,billing_audit_logs,billing_audit_logs_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX billing_audit_logs_pkey ON public.billing_audit_logs USING btree (id),8192,0,0,0
+public,billing_events,billing_events_created_idx,false,false,true,true,btree,CREATE INDEX billing_events_created_idx ON public.billing_events USING btree (created_at DESC),8192,13,0,0
+public,billing_events,billing_events_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX billing_events_pkey ON public.billing_events USING btree (id),8192,0,0,0
+public,billing_events,billing_events_user_idx,false,false,true,true,btree,"CREATE INDEX billing_events_user_idx ON public.billing_events USING btree (user_id, created_at)",8192,0,0,0
+public,billing_invoice_counters,billing_invoice_counters_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX billing_invoice_counters_pkey ON public.billing_invoice_counters USING btree (year),8192,0,0,0
+public,billing_invoices,billing_invoices_invoice_number_key,true,false,true,true,btree,CREATE UNIQUE INDEX billing_invoices_invoice_number_key ON public.billing_invoices USING btree (invoice_number),8192,0,0,0
+public,billing_invoices,billing_invoices_order_id_key,true,false,true,true,btree,CREATE UNIQUE INDEX billing_invoices_order_id_key ON public.billing_invoices USING btree (order_id),8192,0,0,0
+public,billing_invoices,billing_invoices_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX billing_invoices_pkey ON public.billing_invoices USING btree (id),8192,0,0,0
+public,billing_model_prices,billing_model_prices_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX billing_model_prices_pkey ON public.billing_model_prices USING btree (id),8192,0,0,0
+public,billing_model_prices,billing_model_prices_provider_model_is_active_idx,false,false,true,true,btree,"CREATE INDEX billing_model_prices_provider_model_is_active_idx ON public.billing_model_prices USING btree (provider, model, is_active)",8192,0,0,0
+public,billing_notifications,billing_notifications_dedupeKey_key,true,false,true,true,btree,"CREATE UNIQUE INDEX ""billing_notifications_dedupeKey_key"" ON public.billing_notifications USING btree (""dedupeKey"")",8192,0,0,0
+public,billing_notifications,billing_notifications_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX billing_notifications_pkey ON public.billing_notifications USING btree (id),8192,0,0,0
+public,billing_notifications,billing_notifications_user_idx,false,false,true,true,btree,"CREATE INDEX billing_notifications_user_idx ON public.billing_notifications USING btree (""userId"", ""createdAt"" DESC)",8192,0,0,0
+public,billing_orders,billing_orders_idempotency_key_key,true,false,true,true,btree,CREATE UNIQUE INDEX billing_orders_idempotency_key_key ON public.billing_orders USING btree (idempotency_key),8192,0,0,0
+public,billing_orders,billing_orders_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX billing_orders_pkey ON public.billing_orders USING btree (id),8192,0,0,0
+public,billing_orders,billing_orders_user_id_status_idx,false,false,true,true,btree,"CREATE INDEX billing_orders_user_id_status_idx ON public.billing_orders USING btree (user_id, status)",8192,0,0,0
+public,billing_payment_methods,billing_payment_methods_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX billing_payment_methods_pkey ON public.billing_payment_methods USING btree (id),8192,0,0,0
+public,billing_payment_methods,billing_payment_methods_user_id_is_default_idx,false,false,true,true,btree,"CREATE INDEX billing_payment_methods_user_id_is_default_idx ON public.billing_payment_methods USING btree (user_id, is_default)",8192,0,0,0
+public,billing_payments,billing_payments_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX billing_payments_pkey ON public.billing_payments USING btree (id),8192,0,0,0
+public,billing_payments,billing_payments_provider_provider_payment_id_idx,false,false,true,true,btree,"CREATE INDEX billing_payments_provider_provider_payment_id_idx ON public.billing_payments USING btree (provider, provider_payment_id)",8192,0,0,0
+public,billing_plan_prices,billing_plan_prices_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX billing_plan_prices_pkey ON public.billing_plan_prices USING btree (id),8192,0,0,0
+public,billing_plan_prices,billing_plan_prices_plan_id_billing_period_is_active_idx,false,false,true,true,btree,"CREATE INDEX billing_plan_prices_plan_id_billing_period_is_active_idx ON public.billing_plan_prices USING btree (plan_id, billing_period, is_active)",8192,0,0,0
+public,billing_plans,billing_plans_code_key,true,false,true,true,btree,CREATE UNIQUE INDEX billing_plans_code_key ON public.billing_plans USING btree (code),8192,0,0,0
+public,billing_plans,billing_plans_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX billing_plans_pkey ON public.billing_plans USING btree (id),8192,0,0,0
+public,billing_refunds,billing_refunds_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX billing_refunds_pkey ON public.billing_refunds USING btree (id),8192,0,0,0
+public,billing_subscriptions,billing_subscriptions_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX billing_subscriptions_pkey ON public.billing_subscriptions USING btree (id),8192,0,0,0
+public,billing_subscriptions,billing_subscriptions_status_current_period_end_idx,false,false,true,true,btree,"CREATE INDEX billing_subscriptions_status_current_period_end_idx ON public.billing_subscriptions USING btree (status, current_period_end)",8192,0,0,0
+public,billing_subscriptions,billing_subscriptions_user_id_status_idx,false,false,true,true,btree,"CREATE INDEX billing_subscriptions_user_id_status_idx ON public.billing_subscriptions USING btree (user_id, status)",8192,0,0,0
+public,billing_trial_grants,billing_trial_grants_pkey,true,true,true,true,btree,"CREATE UNIQUE INDEX billing_trial_grants_pkey ON public.billing_trial_grants USING btree (""identityHash"")",8192,0,0,0
+public,billing_trial_grants,billing_trial_grants_user_idx,false,false,true,true,btree,"CREATE INDEX billing_trial_grants_user_idx ON public.billing_trial_grants USING btree (""userId"")",8192,0,0,0
+public,billing_webhook_events,billing_webhook_events_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX billing_webhook_events_pkey ON public.billing_webhook_events USING btree (id),8192,0,0,0
+public,billing_webhook_events,billing_webhook_events_provider_provider_event_id_key,true,false,true,true,btree,"CREATE UNIQUE INDEX billing_webhook_events_provider_provider_event_id_key ON public.billing_webhook_events USING btree (provider, provider_event_id)",8192,0,0,0
+public,billing_workspace_members,billing_workspace_members_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX billing_workspace_members_pkey ON public.billing_workspace_members USING btree (id),8192,0,0,0
+public,billing_workspace_members,billing_workspace_members_workspace_id_user_id_key,true,false,true,true,btree,"CREATE UNIQUE INDEX billing_workspace_members_workspace_id_user_id_key ON public.billing_workspace_members USING btree (workspace_id, user_id)",8192,0,0,0
+public,billing_workspaces,billing_workspaces_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX billing_workspaces_pkey ON public.billing_workspaces USING btree (id),8192,0,0,0
+public,bug_reports,bug_reports_createdAt_idx,false,false,true,true,btree,"CREATE INDEX ""bug_reports_createdAt_idx"" ON public.bug_reports USING btree (""createdAt"")",8192,12,0,0
+public,bug_reports,bug_reports_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX bug_reports_pkey ON public.bug_reports USING btree (id),8192,0,0,0
+public,bug_reports,bug_reports_type_idx,false,false,true,true,btree,CREATE INDEX bug_reports_type_idx ON public.bug_reports USING btree (type),8192,0,0,0
+public,cases,cases_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX cases_pkey ON public.cases USING btree (id),16384,2,2,2
+public,change_set,change_set_idempotency_uq,true,false,true,true,btree,CREATE UNIQUE INDEX change_set_idempotency_uq ON public.change_set USING btree (idempotency_key) WHERE (idempotency_key IS NOT NULL),8192,0,0,0
+public,change_set,change_set_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX change_set_pkey ON public.change_set USING btree (id),8192,0,0,0
+public,change_set,change_set_status_idx,false,false,true,true,btree,"CREATE INDEX change_set_status_idx ON public.change_set USING btree (status, created_at DESC)",8192,923,0,0
+public,chat_conversations,chat_conversations_judicial_case_updated_idx,false,false,true,true,btree,"CREATE INDEX chat_conversations_judicial_case_updated_idx ON public.chat_conversations USING btree (judicial_case_id, updated_at DESC) WHERE ((judicial_case_id IS NOT NULL) AND (deleted_at IS NULL))",8192,0,0,0
+public,chat_conversations,chat_conversations_parent_conversation_id_idx,false,false,true,true,btree,CREATE INDEX chat_conversations_parent_conversation_id_idx ON public.chat_conversations USING btree (parent_conversation_id) WHERE (parent_conversation_id IS NOT NULL),8192,0,0,0
+public,chat_conversations,chat_conversations_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX chat_conversations_pkey ON public.chat_conversations USING btree (id),16384,170,198,50
+public,chat_conversations,chat_conversations_title_lower_idx,false,false,true,true,btree,CREATE INDEX chat_conversations_title_lower_idx ON public.chat_conversations USING btree (lower(title)),16384,0,0,0
+public,chat_conversations,chat_conversations_user_id_idx,false,false,true,true,btree,CREATE INDEX chat_conversations_user_id_idx ON public.chat_conversations USING btree (user_id),16384,0,0,0
+public,chat_conversations,chat_conversations_user_service_active_idx,false,false,true,true,btree,"CREATE INDEX chat_conversations_user_service_active_idx ON public.chat_conversations USING btree (user_id, service_key, updated_at DESC) WHERE ((deleted_at IS NULL) AND (archived_at IS NULL))",16384,187,183,117
+public,chat_conversations,chat_conversations_user_service_pinned_idx,false,false,true,true,btree,"CREATE INDEX chat_conversations_user_service_pinned_idx ON public.chat_conversations USING btree (user_id, service_key, pinned_at DESC) WHERE ((pinned_at IS NOT NULL) AND (deleted_at IS NULL))",8192,0,0,0
+public,chat_conversations,chat_conversations_user_service_updated_idx,false,false,true,true,btree,"CREATE INDEX chat_conversations_user_service_updated_idx ON public.chat_conversations USING btree (user_id, service_key, updated_at DESC)",16384,47,47,47
+public,chat_messages,chat_messages_conversation_client_request_uidx,true,false,true,true,btree,"CREATE UNIQUE INDEX chat_messages_conversation_client_request_uidx ON public.chat_messages USING btree (conversation_id, client_request_id) WHERE (client_request_id IS NOT NULL)",16384,7,0,0
+public,chat_messages,chat_messages_conversation_id_idx,false,false,true,true,btree,CREATE INDEX chat_messages_conversation_id_idx ON public.chat_messages USING btree (conversation_id),16384,118,714,714
+public,chat_messages,chat_messages_conversation_sequence_uidx,true,false,true,true,btree,"CREATE UNIQUE INDEX chat_messages_conversation_sequence_uidx ON public.chat_messages USING btree (conversation_id, sequence)",16384,166,762,762
+public,chat_messages,chat_messages_job_id_idx,false,false,true,true,btree,CREATE INDEX chat_messages_job_id_idx ON public.chat_messages USING btree (job_id) WHERE (job_id IS NOT NULL),8192,0,0,0
+public,chat_messages,chat_messages_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX chat_messages_pkey ON public.chat_messages USING btree (id),16384,9794,9794,9794
+public,consultation_citations,consultation_citations_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX consultation_citations_pkey ON public.consultation_citations USING btree (id),16384,0,0,0
+public,consultations,consultations_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX consultations_pkey ON public.consultations USING btree (id),16384,108,108,108
+public,credit_transactions,credit_transactions_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX credit_transactions_pkey ON public.credit_transactions USING btree (id),16384,0,0,0
+public,credit_transactions,credit_transactions_source_idx,false,false,true,true,btree,"CREATE INDEX credit_transactions_source_idx ON public.credit_transactions USING btree (""userId"", source)",16384,170,733,21
+public,credit_transactions,credit_transactions_userId_idx,false,false,true,true,btree,"CREATE INDEX ""credit_transactions_userId_idx"" ON public.credit_transactions USING btree (""userId"")",16384,0,0,0
+public,doc_cases,doc_cases_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX doc_cases_pkey ON public.doc_cases USING btree (id),16384,0,0,0
+public,doc_cases,doc_cases_workspace_id_idx,false,false,true,true,btree,CREATE INDEX doc_cases_workspace_id_idx ON public.doc_cases USING btree (workspace_id),16384,7,4,0
+public,doc_tool_snapshots,doc_tool_snapshots_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX doc_tool_snapshots_pkey ON public.doc_tool_snapshots USING btree (id),8192,0,0,0
+public,doc_tool_snapshots,doc_tool_snapshots_workspace_id_created_at_idx,false,false,true,true,btree,"CREATE INDEX doc_tool_snapshots_workspace_id_created_at_idx ON public.doc_tool_snapshots USING btree (workspace_id, created_at)",8192,0,0,0
+public,doc_workspaces,doc_workspaces_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX doc_workspaces_pkey ON public.doc_workspaces USING btree (id),16384,7,7,7
+public,doc_workspaces,doc_workspaces_token_key,true,false,true,true,btree,CREATE UNIQUE INDEX doc_workspaces_token_key ON public.doc_workspaces USING btree (token),16384,8,8,8
+public,editorial_change,editorial_change_open_target_uq,true,false,true,true,btree,"CREATE UNIQUE INDEX editorial_change_open_target_uq ON public.editorial_change USING btree (target_type, target_id) WHERE (status = ANY (ARRAY['draft'::text, 'checks_failed'::text, 'pending'::text, 'approved'::text]))",8192,169,0,0
+public,editorial_change,editorial_change_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX editorial_change_pkey ON public.editorial_change USING btree (id),8192,0,0,0
+public,editorial_change,editorial_change_set_idx,false,false,true,true,btree,CREATE INDEX editorial_change_set_idx ON public.editorial_change USING btree (change_set_id),8192,0,0,0
+public,editorial_change,editorial_change_source_ref_uq,true,false,true,true,btree,"CREATE UNIQUE INDEX editorial_change_source_ref_uq ON public.editorial_change USING btree (source_ref) WHERE ((source_ref IS NOT NULL) AND (status <> ALL (ARRAY['rejected'::text, 'reverted'::text])))",8192,1308,0,0
+public,editorial_change,editorial_change_target_idx,false,false,true,true,btree,"CREATE INDEX editorial_change_target_idx ON public.editorial_change USING btree (target_type, target_id, created_at DESC)",8192,0,0,0
+public,editorial_config,editorial_config_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX editorial_config_pkey ON public.editorial_config USING btree (version),16384,397,387,387
+public,embedding_version,embedding_version_owner_idx,false,false,true,true,btree,"CREATE INDEX embedding_version_owner_idx ON public.embedding_version USING btree (owner_type, owner_id, created_at DESC)",81920,591,3763,3
+public,embedding_version,embedding_version_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX embedding_version_pkey ON public.embedding_version USING btree (id),90112,0,0,0
+public,embeddings,embeddings_owner_type_owner_id_key,true,false,true,true,btree,"CREATE UNIQUE INDEX embeddings_owner_type_owner_id_key ON public.embeddings USING btree (owner_type, owner_id)",6250496,117291,837360,189755
+public,embeddings,embeddings_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX embeddings_pkey ON public.embeddings USING btree (id),5570560,152,152,0
+public,embeddings,idx_embeddings_hnsw_article,false,false,true,true,hnsw,CREATE INDEX idx_embeddings_hnsw_article ON public.embeddings USING hnsw (embedding vector_cosine_ops) WHERE (owner_type = 'article'::text),141910016,75,728,728
+public,embeddings,idx_embeddings_hnsw_cosine,false,false,true,true,hnsw,CREATE INDEX idx_embeddings_hnsw_cosine ON public.embeddings USING hnsw (embedding vector_cosine_ops),686260224,3533,126748,126306
+public,embeddings,idx_embeddings_hnsw_principle,false,false,true,true,hnsw,CREATE INDEX idx_embeddings_hnsw_principle ON public.embeddings USING hnsw (embedding vector_cosine_ops) WHERE (owner_type = 'principle'::text),33308672,75,723,723
+public,exercises,exercises_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX exercises_pkey ON public.exercises USING btree (id),8192,0,0,0
+public,extraction_runs,extraction_runs_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX extraction_runs_pkey ON public.extraction_runs USING btree (id),8192,0,0,0
+public,feature_toggles,feature_toggles_key_key,true,false,true,true,btree,CREATE UNIQUE INDEX feature_toggles_key_key ON public.feature_toggles USING btree (key),16384,3058,3254,912
+public,feature_toggles,feature_toggles_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX feature_toggles_pkey ON public.feature_toggles USING btree (id),16384,462,462,462
+public,fiqh_article_alignments,fiqh_article_alignments_article_id_fiqh_text_id_key,true,false,true,true,btree,"CREATE UNIQUE INDEX fiqh_article_alignments_article_id_fiqh_text_id_key ON public.fiqh_article_alignments USING btree (article_id, fiqh_text_id)",8192,0,0,0
+public,fiqh_article_alignments,fiqh_article_alignments_article_id_idx,false,false,true,true,btree,CREATE INDEX fiqh_article_alignments_article_id_idx ON public.fiqh_article_alignments USING btree (article_id),8192,0,0,0
+public,fiqh_article_alignments,fiqh_article_alignments_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX fiqh_article_alignments_pkey ON public.fiqh_article_alignments USING btree (id),8192,0,0,0
+public,fiqh_article_alignments,fiqh_article_alignments_review_status_idx,false,false,true,true,btree,CREATE INDEX fiqh_article_alignments_review_status_idx ON public.fiqh_article_alignments USING btree (review_status),8192,37,0,0
+public,fiqh_issue_links,fiqh_issue_links_issue_law_article_key,true,false,true,true,btree,"CREATE UNIQUE INDEX fiqh_issue_links_issue_law_article_key ON public.fiqh_issue_links USING btree (issue_id, law_name, article_number)",901120,0,0,0
+public,fiqh_issue_links,fiqh_issue_links_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX fiqh_issue_links_pkey ON public.fiqh_issue_links USING btree (id),401408,0,0,0
+public,fiqh_issue_links,idx_fiqh_issue_links_article,false,false,true,true,btree,CREATE INDEX idx_fiqh_issue_links_article ON public.fiqh_issue_links USING btree (article_id),106496,92,38850,0
+public,fiqh_issue_links,idx_fiqh_issue_links_law_article,false,false,true,true,btree,"CREATE INDEX idx_fiqh_issue_links_law_article ON public.fiqh_issue_links USING btree (law_name, article_number)",131072,0,0,0
+public,fiqh_issues,fiqh_issues_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX fiqh_issues_pkey ON public.fiqh_issues USING btree (id),163840,10358,10358,10358
+public,fiqh_issues,idx_fiqh_issues_link_status,false,false,true,true,btree,CREATE INDEX idx_fiqh_issues_link_status ON public.fiqh_issues USING btree (link_status),40960,1,2590,0
+public,fiqh_issues,idx_fiqh_issues_suggested_nizam,false,false,true,true,btree,CREATE INDEX idx_fiqh_issues_suggested_nizam ON public.fiqh_issues USING btree (suggested_nizam),49152,0,0,0
+public,fiqh_sources,fiqh_sources_author_idx,false,false,true,true,btree,CREATE INDEX fiqh_sources_author_idx ON public.fiqh_sources USING btree (author),8192,0,0,0
+public,fiqh_sources,fiqh_sources_external_id_key,true,false,true,true,btree,CREATE UNIQUE INDEX fiqh_sources_external_id_key ON public.fiqh_sources USING btree (external_id),8192,0,0,0
+public,fiqh_sources,fiqh_sources_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX fiqh_sources_pkey ON public.fiqh_sources USING btree (id),8192,0,0,0
+public,fiqh_texts,fiqh_texts_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX fiqh_texts_pkey ON public.fiqh_texts USING btree (id),8192,0,0,0
+public,fiqh_texts,fiqh_texts_source_id_idx,false,false,true,true,btree,CREATE INDEX fiqh_texts_source_id_idx ON public.fiqh_texts USING btree (source_id),8192,0,0,0
+public,fiqh_texts,fiqh_texts_topic_idx,false,false,true,true,btree,CREATE INDEX fiqh_texts_topic_idx ON public.fiqh_texts USING btree (topic),8192,0,0,0
+public,folders,folders_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX folders_pkey ON public.folders USING btree (id),8192,0,0,0
+public,folders,folders_user_id_idx,false,false,true,true,btree,CREATE INDEX folders_user_id_idx ON public.folders USING btree (user_id),8192,0,0,0
+public,generation_jobs,generation_jobs_conversation_client_request_uidx,true,false,true,true,btree,"CREATE UNIQUE INDEX generation_jobs_conversation_client_request_uidx ON public.generation_jobs USING btree (conversation_id, client_request_id) WHERE ((client_request_id IS NOT NULL) AND (conversation_id IS NOT NULL))",8192,0,0,0
+public,generation_jobs,generation_jobs_conversation_created_idx,false,false,true,true,btree,"CREATE INDEX generation_jobs_conversation_created_idx ON public.generation_jobs USING btree (conversation_id, created_at DESC) WHERE (conversation_id IS NOT NULL)",8192,0,0,0
+public,generation_jobs,generation_jobs_message_id_idx,false,false,true,true,btree,CREATE INDEX generation_jobs_message_id_idx ON public.generation_jobs USING btree (message_id) WHERE (message_id IS NOT NULL),8192,0,0,0
+public,generation_jobs,generation_jobs_owner_idx,false,false,true,true,btree,"CREATE INDEX generation_jobs_owner_idx ON public.generation_jobs USING btree (owner_id, created_at)",40960,0,0,0
+public,generation_jobs,generation_jobs_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX generation_jobs_pkey ON public.generation_jobs USING btree (id),16384,0,0,0
+public,generic_rate_limit_windows,generic_rate_limit_windows_bucket_window_uidx,true,false,true,true,btree,"CREATE UNIQUE INDEX generic_rate_limit_windows_bucket_window_uidx ON public.generic_rate_limit_windows USING btree (bucket_key, window_start)",8192,0,0,0
+public,generic_rate_limit_windows,generic_rate_limit_windows_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX generic_rate_limit_windows_pkey ON public.generic_rate_limit_windows USING btree (id),8192,0,0,0
+public,generic_rate_limit_windows,generic_rate_limit_windows_window_idx,false,false,true,true,btree,CREATE INDEX generic_rate_limit_windows_window_idx ON public.generic_rate_limit_windows USING btree (window_start),8192,0,0,0
+public,glossary_terms,glossary_terms_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX glossary_terms_pkey ON public.glossary_terms USING btree (id),8192,0,0,0
+public,glossary_terms,glossary_terms_term_key,true,false,true,true,btree,CREATE UNIQUE INDEX glossary_terms_term_key ON public.glossary_terms USING btree (term),8192,0,0,0
+public,guardrail_decisions,guardrail_decisions_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX guardrail_decisions_pkey ON public.guardrail_decisions USING btree (id),16384,0,0,0
+public,index_sync,index_sync_due_idx,false,false,true,true,btree,CREATE INDEX index_sync_due_idx ON public.index_sync USING btree (next_attempt_at) WHERE (completed_at IS NULL),8192,1,0,0
+public,index_sync,index_sync_pending_idx,false,false,true,true,btree,CREATE INDEX index_sync_pending_idx ON public.index_sync USING btree (created_at DESC) WHERE ((search_norm_at IS NULL) OR (opensearch_at IS NULL) OR (page_revalidated_at IS NULL)),8192,14,0,0
+public,index_sync,index_sync_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX index_sync_pkey ON public.index_sync USING btree (id),8192,0,0,0
+public,index_sync,index_sync_target_uq,true,false,true,true,btree,"CREATE UNIQUE INDEX index_sync_target_uq ON public.index_sync USING btree (change_set_id, target_type, target_id)",8192,0,0,0
+public,jds_agent_runs,jds_agent_runs_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX jds_agent_runs_pkey ON public.jds_agent_runs USING btree (run_id),8192,0,0,0
+public,jds_agent_runs,jds_agent_runs_status_idx,false,false,true,true,btree,CREATE INDEX jds_agent_runs_status_idx ON public.jds_agent_runs USING btree (status),8192,0,0,0
+public,jds_agent_runs,jds_agent_runs_task_idx,false,false,true,true,btree,CREATE INDEX jds_agent_runs_task_idx ON public.jds_agent_runs USING btree (task_id),8192,0,0,0
+public,jds_authority_snapshots,jds_authority_snapshots_article_idx,false,false,true,true,btree,CREATE INDEX jds_authority_snapshots_article_idx ON public.jds_authority_snapshots USING btree (article_id),16384,0,0,0
+public,jds_authority_snapshots,jds_authority_snapshots_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX jds_authority_snapshots_pkey ON public.jds_authority_snapshots USING btree (id),16384,0,0,0
+public,jds_document_recipes,jds_document_recipes_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX jds_document_recipes_pkey ON public.jds_document_recipes USING btree (id),8192,0,0,0
+public,jds_document_recipes,jds_document_recipes_task_idx,false,false,true,true,btree,CREATE INDEX jds_document_recipes_task_idx ON public.jds_document_recipes USING btree (task_id),8192,0,0,0
+public,jds_domain_packs,jds_domain_packs_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX jds_domain_packs_pkey ON public.jds_domain_packs USING btree (id),16384,53,44,44
+public,jds_procedure_edges,jds_procedure_edges_graph_idx,false,false,true,true,btree,CREATE INDEX jds_procedure_edges_graph_idx ON public.jds_procedure_edges USING btree (graph_id),8192,0,0,0
+public,jds_procedure_edges,jds_procedure_edges_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX jds_procedure_edges_pkey ON public.jds_procedure_edges USING btree (id),8192,0,0,0
+public,jds_procedure_graphs,jds_procedure_graphs_case_idx,false,false,true,true,btree,CREATE INDEX jds_procedure_graphs_case_idx ON public.jds_procedure_graphs USING btree (case_id),8192,0,0,0
+public,jds_procedure_graphs,jds_procedure_graphs_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX jds_procedure_graphs_pkey ON public.jds_procedure_graphs USING btree (id),8192,0,0,0
+public,jds_procedure_nodes,jds_procedure_nodes_graph_idx,false,false,true,true,btree,CREATE INDEX jds_procedure_nodes_graph_idx ON public.jds_procedure_nodes USING btree (graph_id),8192,0,0,0
+public,jds_procedure_nodes,jds_procedure_nodes_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX jds_procedure_nodes_pkey ON public.jds_procedure_nodes USING btree (id),8192,0,0,0
+public,jds_quality_findings,jds_quality_findings_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX jds_quality_findings_pkey ON public.jds_quality_findings USING btree (id),8192,0,0,0
+public,jds_quality_findings,jds_quality_findings_task_idx,false,false,true,true,btree,CREATE INDEX jds_quality_findings_task_idx ON public.jds_quality_findings USING btree (task_id),8192,0,0,0
+public,jds_recipe_sections,jds_recipe_sections_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX jds_recipe_sections_pkey ON public.jds_recipe_sections USING btree (id),8192,0,0,0
+public,jds_recipe_sections,jds_recipe_sections_recipe_idx,false,false,true,true,btree,CREATE INDEX jds_recipe_sections_recipe_idx ON public.jds_recipe_sections USING btree (recipe_id),8192,0,0,0
+public,jds_statement_traces,jds_statement_traces_draft_idx,false,false,true,true,btree,CREATE INDEX jds_statement_traces_draft_idx ON public.jds_statement_traces USING btree (draft_version_id),8192,0,0,0
+public,jds_statement_traces,jds_statement_traces_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX jds_statement_traces_pkey ON public.jds_statement_traces USING btree (id),8192,0,0,0
+public,judgment_article_links,judgment_article_links_article_id_idx,false,false,true,true,btree,CREATE INDEX judgment_article_links_article_id_idx ON public.judgment_article_links USING btree (article_id),8192,567,0,0
+public,judgment_article_links,judgment_article_links_judgment_id_idx,false,false,true,true,btree,CREATE INDEX judgment_article_links_judgment_id_idx ON public.judgment_article_links USING btree (judgment_id),8192,0,0,0
+public,judgment_article_links,judgment_article_links_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX judgment_article_links_pkey ON public.judgment_article_links USING btree (id),8192,0,0,0
+public,judgment_article_links,judgment_article_links_sys_art_idx,false,false,true,true,btree,"CREATE INDEX judgment_article_links_sys_art_idx ON public.judgment_article_links USING btree (legal_system_id, article_number)",8192,0,0,0
+public,judgment_cards,judgment_cards_calibration_idx,false,false,true,true,btree,CREATE INDEX judgment_cards_calibration_idx ON public.judgment_cards USING btree (calibration),8192,0,0,0
+public,judgment_cards,judgment_cards_judgment_id_key,true,false,true,true,btree,CREATE UNIQUE INDEX judgment_cards_judgment_id_key ON public.judgment_cards USING btree (judgment_id),8192,0,0,0
+public,judgment_cards,judgment_cards_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX judgment_cards_pkey ON public.judgment_cards USING btree (id),8192,0,0,0
+public,judgment_cards,judgment_cards_review_status_idx,false,false,true,true,btree,CREATE INDEX judgment_cards_review_status_idx ON public.judgment_cards USING btree (review_status),8192,0,0,0
+public,judgment_cards,judgment_cards_run_id_idx,false,false,true,true,btree,CREATE INDEX judgment_cards_run_id_idx ON public.judgment_cards USING btree (run_id),8192,0,0,0
+public,judicial_analyses,judicial_analyses_case_ref_created_at_idx,false,false,true,true,btree,"CREATE INDEX judicial_analyses_case_ref_created_at_idx ON public.judicial_analyses USING btree (case_ref, created_at)",8192,81,0,0
+public,judicial_analyses,judicial_analyses_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX judicial_analyses_pkey ON public.judicial_analyses USING btree (id),8192,0,0,0
+public,judicial_cases,idx_judicial_cases_text_trgm,false,false,true,true,gin,"CREATE INDEX idx_judicial_cases_text_trgm ON public.judicial_cases USING gin (""judgmentText"" gin_trgm_ops)",293969920,16298,620196851,0
+public,judicial_cases,idx_judicial_cases_title_trgm,false,false,true,true,gin,"CREATE INDEX idx_judicial_cases_title_trgm ON public.judicial_cases USING gin (""judgmentTitle"" gin_trgm_ops)",10764288,5070,1320731,0
+public,judicial_cases,judicial_cases_caseNo_idx,false,false,true,true,btree,"CREATE INDEX ""judicial_cases_caseNo_idx"" ON public.judicial_cases USING btree (""caseNo"")",5693440,10,511050,460
+public,judicial_cases,judicial_cases_cityName_idx,false,false,true,true,btree,"CREATE INDEX ""judicial_cases_cityName_idx"" ON public.judicial_cases USING btree (""cityName"")",1032192,4,105672,12395
+public,judicial_cases,judicial_cases_court_idx,false,false,true,true,btree,CREATE INDEX judicial_cases_court_idx ON public.judicial_cases USING btree (court),1064960,297,14850790,933500
+public,judicial_cases,judicial_cases_decisionDate_idx,false,false,true,true,btree,"CREATE INDEX ""judicial_cases_decisionDate_idx"" ON public.judicial_cases USING btree (""decisionDate"")",819200,216,11141901,2526760
+public,judicial_cases,judicial_cases_decisionNo_idx,false,false,true,true,btree,"CREATE INDEX ""judicial_cases_decisionNo_idx"" ON public.judicial_cases USING btree (""decisionNo"")",1384448,6,271236,243
+public,judicial_cases,judicial_cases_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX judicial_cases_pkey ON public.judicial_cases USING btree (id),5103616,322212,21647716,15090879
+public,judicial_cases,judicial_cases_search_norm_gin,false,false,true,true,gin,"CREATE INDEX judicial_cases_search_norm_gin ON public.judicial_cases USING gin (to_tsvector('simple'::regconfig, COALESCE(search_norm, ''::text)))",168247296,1254,5093450,0
+public,judicial_cases,judicial_cases_sourceId_key,true,false,true,true,btree,"CREATE UNIQUE INDEX ""judicial_cases_sourceId_key"" ON public.judicial_cases USING btree (""sourceId"")",2301952,17,367832,60078
+public,judicial_doc_chunks,judicial_doc_chunks_case_idx,false,false,true,true,btree,CREATE INDEX judicial_doc_chunks_case_idx ON public.judicial_doc_chunks USING btree (case_id),16384,1,0,0
+public,judicial_doc_chunks,judicial_doc_chunks_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX judicial_doc_chunks_pkey ON public.judicial_doc_chunks USING btree (id),16384,0,0,0
+public,judicial_doc_chunks,judicial_doc_chunks_uq,true,false,true,true,btree,"CREATE UNIQUE INDEX judicial_doc_chunks_uq ON public.judicial_doc_chunks USING btree (case_id, att_id, ord)",32768,206,200,18
+public,judicial_principles,idx_judicial_principles_text_trgm,false,false,true,true,gin,"CREATE INDEX idx_judicial_principles_text_trgm ON public.judicial_principles USING gin (""principleText"" gin_trgm_ops)",8134656,0,0,0
+public,judicial_principles,judicial_principles_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX judicial_principles_pkey ON public.judicial_principles USING btree (id),253952,1377,517203,472433
+public,judicial_principles,judicial_principles_sourceCaseId_idx,false,false,true,true,btree,"CREATE INDEX ""judicial_principles_sourceCaseId_idx"" ON public.judicial_principles USING btree (""sourceCaseId"")",253952,776,3140950,215369
+public,judicial_work_cases,judicial_work_cases_owner_id_created_at_idx,false,false,true,true,btree,"CREATE INDEX judicial_work_cases_owner_id_created_at_idx ON public.judicial_work_cases USING btree (owner_id, created_at)",16384,172,145,145
+public,judicial_work_cases,judicial_work_cases_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX judicial_work_cases_pkey ON public.judicial_work_cases USING btree (id),16384,198,198,198
+public,law_card,law_card_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX law_card_pkey ON public.law_card USING btree (id),57344,1030,6592,33
+public,law_card,law_card_system_idx,false,false,true,true,btree,"CREATE INDEX law_card_system_idx ON public.law_card USING btree (system_id, created_at DESC)",90112,6580,7459,3352
+public,legal_article_bis,legal_article_bis_lawName_label_key,true,false,true,true,btree,"CREATE UNIQUE INDEX ""legal_article_bis_lawName_label_key"" ON public.legal_article_bis USING btree (""lawName"", label)",8192,1,0,0
+public,legal_article_bis,legal_article_bis_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX legal_article_bis_pkey ON public.legal_article_bis USING btree (id),8192,0,0,0
+public,legal_article_case_links,legal_article_case_links_articleId_caseId_citedText_key,true,false,true,true,btree,"CREATE UNIQUE INDEX ""legal_article_case_links_articleId_caseId_citedText_key"" ON public.legal_article_case_links USING btree (""articleId"", ""caseId"", ""citedText"")",5971968,51919,117901,47211
+public,legal_article_case_links,legal_article_case_links_articleId_idx,false,false,true,true,btree,"CREATE INDEX ""legal_article_case_links_articleId_idx"" ON public.legal_article_case_links USING btree (""articleId"")",458752,582535,15229630,3090042
+public,legal_article_case_links,legal_article_case_links_caseId_idx,false,false,true,true,btree,"CREATE INDEX ""legal_article_case_links_caseId_idx"" ON public.legal_article_case_links USING btree (""caseId"")",909312,204828,8893733,1841363
+public,legal_article_case_links,legal_article_case_links_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX legal_article_case_links_pkey ON public.legal_article_case_links USING btree (id),2367488,65852,23678,14519
+public,legal_article_case_links,legal_article_case_links_relationType_idx,false,false,true,true,btree,"CREATE INDEX ""legal_article_case_links_relationType_idx"" ON public.legal_article_case_links USING btree (""relationType"")",286720,33,980265,200673
+public,legal_article_label,legal_article_label_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX legal_article_label_pkey ON public.legal_article_label USING btree (id),57344,0,0,0
+public,legal_article_label,legal_article_label_unit_id_key,true,false,true,true,btree,CREATE UNIQUE INDEX legal_article_label_unit_id_key ON public.legal_article_label USING btree (unit_id),57344,2,2,2
+public,legal_articles,idx_legal_articles_content_trgm,false,false,true,true,gin,CREATE INDEX idx_legal_articles_content_trgm ON public.legal_articles USING gin (content gin_trgm_ops),45064192,1352,31595,0
+public,legal_articles,idx_legal_articles_search_norm_trgm,false,false,true,true,gin,CREATE INDEX idx_legal_articles_search_norm_trgm ON public.legal_articles USING gin (search_norm gin_trgm_ops),50274304,1,2,0
+public,legal_articles,idx_legal_articles_search_norm_tsv,false,false,true,true,gin,"CREATE INDEX idx_legal_articles_search_norm_tsv ON public.legal_articles USING gin (to_tsvector('simple'::regconfig, COALESCE(search_norm, ''::text)))",21061632,2470,12954866,0
+public,legal_articles,idx_legal_articles_title_trgm,false,false,true,true,gin,CREATE INDEX idx_legal_articles_title_trgm ON public.legal_articles USING gin (title gin_trgm_ops),6643712,1968,2506,0
+public,legal_articles,idx_trgm_la_classification,false,false,true,true,gin,CREATE INDEX idx_trgm_la_classification ON public.legal_articles USING gin (classification gin_trgm_ops),7159808,2,258,0
+public,legal_articles,legal_articles_lawName_articleNumber_articleBis_key,true,false,true,true,btree,"CREATE UNIQUE INDEX ""legal_articles_lawName_articleNumber_articleBis_key"" ON public.legal_articles USING btree (""lawName"", ""articleNumber"", ""articleBis"")",3375104,4896,639895,16650
+public,legal_articles,legal_articles_lawName_idx,false,false,true,true,btree,"CREATE INDEX ""legal_articles_lawName_idx"" ON public.legal_articles USING btree (""lawName"")",638976,29223,8747808,3635218
+public,legal_articles,legal_articles_legalSystemId_idx,false,false,true,true,btree,"CREATE INDEX ""legal_articles_legalSystemId_idx"" ON public.legal_articles USING btree (""legalSystemId"")",524288,291177,48694564,1975377
+public,legal_articles,legal_articles_norm_modality_norm_addressee_idx,false,false,true,true,btree,"CREATE INDEX legal_articles_norm_modality_norm_addressee_idx ON public.legal_articles USING btree (norm_modality, norm_addressee)",581632,97,1011394,35208
+public,legal_articles,legal_articles_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX legal_articles_pkey ON public.legal_articles USING btree (id),2777088,690430,14374050,11840430
+public,legal_graph_edges,legal_graph_edges_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX legal_graph_edges_pkey ON public.legal_graph_edges USING btree (id),73728,0,0,0
+public,legal_graph_edges,legal_graph_edges_sourceId_idx,false,false,true,true,btree,"CREATE INDEX ""legal_graph_edges_sourceId_idx"" ON public.legal_graph_edges USING btree (""sourceId"")",180224,1110,79,79
+public,legal_graph_edges,legal_graph_edges_sourceId_targetId_type_key,true,false,true,true,btree,"CREATE UNIQUE INDEX ""legal_graph_edges_sourceId_targetId_type_key"" ON public.legal_graph_edges USING btree (""sourceId"", ""targetId"", type)",327680,1142,12,2
+public,legal_graph_edges,legal_graph_edges_targetId_idx,false,false,true,true,btree,"CREATE INDEX ""legal_graph_edges_targetId_idx"" ON public.legal_graph_edges USING btree (""targetId"")",73728,489,810,2
+public,legal_graph_nodes,legal_graph_nodes_articleId_idx,false,false,true,true,btree,"CREATE INDEX ""legal_graph_nodes_articleId_idx"" ON public.legal_graph_nodes USING btree (""articleId"")",303104,716,223,107
+public,legal_graph_nodes,legal_graph_nodes_law_number_idx,false,false,true,true,btree,"CREATE INDEX legal_graph_nodes_law_number_idx ON public.legal_graph_nodes USING btree (law, number)",557056,120,3277,97
+public,legal_graph_nodes,legal_graph_nodes_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX legal_graph_nodes_pkey ON public.legal_graph_nodes USING btree (id),614400,15579,11323,2278
+public,legal_graph_nodes,legal_graph_nodes_type_idx,false,false,true,true,btree,CREATE INDEX legal_graph_nodes_type_idx ON public.legal_graph_nodes USING btree (type),49152,3,12768,0
+public,legal_relations,legal_relations_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX legal_relations_pkey ON public.legal_relations USING btree (id),8011776,13,0,0
+public,legal_relations,legal_relations_relation_idx,false,false,true,true,btree,CREATE INDEX legal_relations_relation_idx ON public.legal_relations USING btree (relation),696320,890,52623057,247
+public,legal_relations,legal_relations_source_type_source_id_idx,false,false,true,true,btree,"CREATE INDEX legal_relations_source_type_source_id_idx ON public.legal_relations USING btree (source_type, source_id)",1368064,30157,2219797,13
+public,legal_relations,legal_relations_status_idx,false,false,true,true,btree,CREATE INDEX legal_relations_status_idx ON public.legal_relations USING btree (status),466944,917,59427977,5460
+public,legal_relations,legal_relations_target_type_target_id_idx,false,false,true,true,btree,"CREATE INDEX legal_relations_target_type_target_id_idx ON public.legal_relations USING btree (target_type, target_id)",1081344,30129,471229,13
+public,legal_system_alias,legal_system_alias_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX legal_system_alias_pkey ON public.legal_system_alias USING btree (id),8192,0,0,0
+public,legal_system_alias,legal_system_alias_system_id_alias_key,true,false,true,true,btree,"CREATE UNIQUE INDEX legal_system_alias_system_id_alias_key ON public.legal_system_alias USING btree (system_id, alias)",8192,0,0,0
+public,legal_system_issuance,legal_system_issuance_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX legal_system_issuance_pkey ON public.legal_system_issuance USING btree (id),16384,0,0,0
+public,legal_system_issuance,legal_system_issuance_system_idx,false,false,true,true,btree,CREATE INDEX legal_system_issuance_system_idx ON public.legal_system_issuance USING btree (system_id),16384,15,0,0
+public,legal_systems,legal_systems_code_key,true,false,true,true,btree,CREATE UNIQUE INDEX legal_systems_code_key ON public.legal_systems USING btree (code),57344,3429,4028,2845
+public,legal_systems,legal_systems_domain_idx,false,false,true,true,btree,CREATE INDEX legal_systems_domain_idx ON public.legal_systems USING btree (domain),16384,1538,594643,414124
+public,legal_systems,legal_systems_eli_slug_key,true,false,true,true,btree,CREATE UNIQUE INDEX legal_systems_eli_slug_key ON public.legal_systems USING btree (eli_slug),212992,143925,139638,139391
+public,legal_systems,legal_systems_name_key,true,false,true,true,btree,CREATE UNIQUE INDEX legal_systems_name_key ON public.legal_systems USING btree (name),221184,9566,12356,10869
+public,legal_systems,legal_systems_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX legal_systems_pkey ON public.legal_systems USING btree (id),114688,725027,2437704,1400845
+public,legal_systems,legal_systems_sort_order_idx,false,false,true,true,btree,CREATE INDEX legal_systems_sort_order_idx ON public.legal_systems USING btree (sort_order),40960,37,15503,15426
+public,legal_text_provenance,legal_text_provenance_idem,true,false,true,true,btree,"CREATE UNIQUE INDEX legal_text_provenance_idem ON public.legal_text_provenance USING btree (entity_type, entity_id, source_url, text_sha, action)",2179072,11706,3191,33
+public,legal_text_provenance,legal_text_provenance_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX legal_text_provenance_pkey ON public.legal_text_provenance USING btree (id),950272,0,0,0
+public,legal_thesaurus_article_batches,idx_thes_batches_run,false,false,true,true,btree,CREATE INDEX idx_thes_batches_run ON public.legal_thesaurus_article_batches USING btree (run_id),8192,0,0,0
+public,legal_thesaurus_article_batches,legal_thesaurus_article_batches_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX legal_thesaurus_article_batches_pkey ON public.legal_thesaurus_article_batches USING btree (id),8192,0,0,0
+public,legal_thesaurus_candidate_terms,idx_thes_cand_norm,false,false,true,true,btree,CREATE INDEX idx_thes_cand_norm ON public.legal_thesaurus_candidate_terms USING btree (normalized_term),16384,0,0,0
+public,legal_thesaurus_candidate_terms,idx_thes_cand_status,false,false,true,true,btree,CREATE INDEX idx_thes_cand_status ON public.legal_thesaurus_candidate_terms USING btree (status),16384,0,0,0
+public,legal_thesaurus_candidate_terms,legal_thesaurus_candidate_terms_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX legal_thesaurus_candidate_terms_pkey ON public.legal_thesaurus_candidate_terms USING btree (id),16384,0,0,0
+public,legal_thesaurus_concept_domains,idx_thes_cd_unique,true,false,true,true,btree,"CREATE UNIQUE INDEX idx_thes_cd_unique ON public.legal_thesaurus_concept_domains USING btree (concept_id, domain_id)",8192,0,0,0
+public,legal_thesaurus_concept_domains,legal_thesaurus_concept_domains_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX legal_thesaurus_concept_domains_pkey ON public.legal_thesaurus_concept_domains USING btree (id),8192,0,0,0
+public,legal_thesaurus_concepts,idx_thes_concept_domain,false,false,true,true,btree,CREATE INDEX idx_thes_concept_domain ON public.legal_thesaurus_concepts USING btree (legal_domain_primary),49152,0,0,0
+public,legal_thesaurus_concepts,idx_thes_concept_norm,true,false,true,true,btree,CREATE UNIQUE INDEX idx_thes_concept_norm ON public.legal_thesaurus_concepts USING btree (normalized_label),229376,24756,1731,1731
+public,legal_thesaurus_concepts,idx_thes_concept_recurrence,false,false,true,true,btree,CREATE INDEX idx_thes_concept_recurrence ON public.legal_thesaurus_concepts USING btree (recurrence_strength),49152,3,12104,1015
+public,legal_thesaurus_concepts,idx_thes_concept_scope,false,false,true,true,btree,CREATE INDEX idx_thes_concept_scope ON public.legal_thesaurus_concepts USING btree (extraction_scope),40960,13,41774,1015
+public,legal_thesaurus_concepts,legal_thesaurus_concepts_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX legal_thesaurus_concepts_pkey ON public.legal_thesaurus_concepts USING btree (id),278528,297773,297773,286753
+public,legal_thesaurus_definitions,idx_thes_def_concept,false,false,true,true,btree,CREATE INDEX idx_thes_def_concept ON public.legal_thesaurus_definitions USING btree (concept_id),172032,0,0,0
+public,legal_thesaurus_definitions,legal_thesaurus_definitions_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX legal_thesaurus_definitions_pkey ON public.legal_thesaurus_definitions USING btree (id),155648,2,3828,206
+public,legal_thesaurus_domains,idx_thes_domain_name,true,false,true,true,btree,CREATE UNIQUE INDEX idx_thes_domain_name ON public.legal_thesaurus_domains USING btree (name_ar),16384,247,228,228
+public,legal_thesaurus_domains,legal_thesaurus_domains_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX legal_thesaurus_domains_pkey ON public.legal_thesaurus_domains USING btree (id),16384,0,0,0
+public,legal_thesaurus_extraction_runs,legal_thesaurus_extraction_runs_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX legal_thesaurus_extraction_runs_pkey ON public.legal_thesaurus_extraction_runs USING btree (id),16384,4243,4243,4243
+public,legal_thesaurus_occurrences,idx_thes_occ_article,false,false,true,true,btree,CREATE INDEX idx_thes_occ_article ON public.legal_thesaurus_occurrences USING btree (article_id),909312,4140,62103,4002
+public,legal_thesaurus_occurrences,idx_thes_occ_concept,false,false,true,true,btree,CREATE INDEX idx_thes_occ_concept ON public.legal_thesaurus_occurrences USING btree (concept_id),499712,20160,1770163,94366
+public,legal_thesaurus_occurrences,legal_thesaurus_occurrences_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX legal_thesaurus_occurrences_pkey ON public.legal_thesaurus_occurrences USING btree (id),2097152,0,0,0
+public,legal_thesaurus_relations,idx_thes_rel_source,false,false,true,true,btree,CREATE INDEX idx_thes_rel_source ON public.legal_thesaurus_relations USING btree (source_concept_id),90112,10259,36177,1056
+public,legal_thesaurus_relations,idx_thes_rel_target,false,false,true,true,btree,CREATE INDEX idx_thes_rel_target ON public.legal_thesaurus_relations USING btree (target_concept_id),90112,5434,5436,20
+public,legal_thesaurus_relations,legal_thesaurus_relations_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX legal_thesaurus_relations_pkey ON public.legal_thesaurus_relations USING btree (id),172032,0,0,0
+public,legal_thesaurus_review_queue,idx_thes_review_item,false,false,true,true,btree,"CREATE INDEX idx_thes_review_item ON public.legal_thesaurus_review_queue USING btree (item_type, item_id)",16384,0,0,0
+public,legal_thesaurus_review_queue,idx_thes_review_status,false,false,true,true,btree,CREATE INDEX idx_thes_review_status ON public.legal_thesaurus_review_queue USING btree (status),16384,1,1555,318
+public,legal_thesaurus_review_queue,legal_thesaurus_review_queue_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX legal_thesaurus_review_queue_pkey ON public.legal_thesaurus_review_queue USING btree (id),16384,0,0,0
+public,legal_thesaurus_terms,idx_thes_term_concept,false,false,true,true,btree,CREATE INDEX idx_thes_term_concept ON public.legal_thesaurus_terms USING btree (concept_id),278528,0,0,0
+public,legal_thesaurus_terms,idx_thes_term_norm,false,false,true,true,btree,CREATE INDEX idx_thes_term_norm ON public.legal_thesaurus_terms USING btree (normalized_term),229376,0,0,0
+public,legal_thesaurus_terms,legal_thesaurus_terms_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX legal_thesaurus_terms_pkey ON public.legal_thesaurus_terms USING btree (id),286720,0,0,0
+public,legal_thesaurus_text_snapshots,idx_thes_snapshot_article,true,false,true,true,btree,CREATE UNIQUE INDEX idx_thes_snapshot_article ON public.legal_thesaurus_text_snapshots USING btree (article_id),8192,2779,0,0
+public,legal_thesaurus_text_snapshots,idx_thes_snapshot_hash,false,false,true,true,btree,CREATE INDEX idx_thes_snapshot_hash ON public.legal_thesaurus_text_snapshots USING btree (text_hash),8192,0,0,0
+public,legal_thesaurus_text_snapshots,legal_thesaurus_text_snapshots_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX legal_thesaurus_text_snapshots_pkey ON public.legal_thesaurus_text_snapshots USING btree (id),8192,0,0,0
+public,legal_topics,legal_topics_name_key,true,false,true,true,btree,CREATE UNIQUE INDEX legal_topics_name_key ON public.legal_topics USING btree (name),8192,0,0,0
+public,legal_topics,legal_topics_parent_id_idx,false,false,true,true,btree,CREATE INDEX legal_topics_parent_id_idx ON public.legal_topics USING btree (parent_id),8192,0,0,0
+public,legal_topics,legal_topics_path_idx,false,false,true,true,btree,CREATE INDEX legal_topics_path_idx ON public.legal_topics USING btree (path),8192,0,0,0
+public,legal_topics,legal_topics_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX legal_topics_pkey ON public.legal_topics USING btree (id),8192,0,0,0
+public,mcp_auth_codes,mcp_auth_codes_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX mcp_auth_codes_pkey ON public.mcp_auth_codes USING btree (code_hash),16384,8,8,8
+public,mcp_auth_codes,mcp_auth_codes_user_id_idx,false,false,true,true,btree,CREATE INDEX mcp_auth_codes_user_id_idx ON public.mcp_auth_codes USING btree (user_id),16384,0,0,0
+public,mcp_grants,mcp_grants_client_id_idx,false,false,true,true,btree,CREATE INDEX mcp_grants_client_id_idx ON public.mcp_grants USING btree (client_id),16384,0,0,0
+public,mcp_grants,mcp_grants_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX mcp_grants_pkey ON public.mcp_grants USING btree (id),16384,461,470,461
+public,mcp_grants,mcp_grants_previous_refresh_hash_key,true,false,true,true,btree,CREATE UNIQUE INDEX mcp_grants_previous_refresh_hash_key ON public.mcp_grants USING btree (previous_refresh_hash),16384,0,0,0
+public,mcp_grants,mcp_grants_refresh_token_hash_key,true,false,true,true,btree,CREATE UNIQUE INDEX mcp_grants_refresh_token_hash_key ON public.mcp_grants USING btree (refresh_token_hash),16384,12,12,12
+public,mcp_grants,mcp_grants_user_id_idx,false,false,true,true,btree,CREATE INDEX mcp_grants_user_id_idx ON public.mcp_grants USING btree (user_id),16384,0,0,0
+public,mcp_request_windows,mcp_request_windows_pkey,true,true,true,true,btree,"CREATE UNIQUE INDEX mcp_request_windows_pkey ON public.mcp_request_windows USING btree (key, window_start)",16384,550,438,438
+public,mcp_used_refresh_tokens,mcp_used_refresh_tokens_grant_id_idx,false,false,true,true,btree,CREATE INDEX mcp_used_refresh_tokens_grant_id_idx ON public.mcp_used_refresh_tokens USING btree (grant_id),16384,0,0,0
+public,mcp_used_refresh_tokens,mcp_used_refresh_tokens_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX mcp_used_refresh_tokens_pkey ON public.mcp_used_refresh_tokens USING btree (token_hash),16384,0,0,0
+public,messages,messages_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX messages_pkey ON public.messages USING btree (id),8192,0,0,0
+public,permissions,permissions_key_key,true,false,true,true,btree,CREATE UNIQUE INDEX permissions_key_key ON public.permissions USING btree (key),16384,80,69,69
+public,permissions,permissions_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX permissions_pkey ON public.permissions USING btree (id),16384,784,3932,30
+public,preamble_edition,preamble_edition_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX preamble_edition_pkey ON public.preamble_edition USING btree (id),16384,205,205,205
+public,preamble_edition,preamble_edition_system_id_raw_sha256_key,true,false,true,true,btree,"CREATE UNIQUE INDEX preamble_edition_system_id_raw_sha256_key ON public.preamble_edition USING btree (system_id, raw_sha256)",16384,0,0,0
+public,preamble_edition,preamble_edition_system_idx,false,false,true,true,btree,"CREATE INDEX preamble_edition_system_idx ON public.preamble_edition USING btree (system_id, created_at DESC)",16384,15,1,1
+public,preamble_unit,preamble_unit_edition_id_ordinal_key,true,false,true,true,btree,"CREATE UNIQUE INDEX preamble_unit_edition_id_ordinal_key ON public.preamble_unit USING btree (edition_id, ordinal)",16384,0,0,0
+public,preamble_unit,preamble_unit_edition_id_path_key,true,false,true,true,btree,"CREATE UNIQUE INDEX preamble_unit_edition_id_path_key ON public.preamble_unit USING btree (edition_id, path)",16384,0,0,0
+public,preamble_unit,preamble_unit_edition_idx,false,false,true,true,btree,"CREATE INDEX preamble_unit_edition_idx ON public.preamble_unit USING btree (edition_id, ordinal)",16384,419,13978,13978
+public,preamble_unit,preamble_unit_norm_trgm_idx,false,false,true,true,gin,CREATE INDEX preamble_unit_norm_trgm_idx ON public.preamble_unit USING gin (text_normalized gin_trgm_ops),278528,0,0,0
+public,preamble_unit,preamble_unit_norm_tsv_idx,false,false,true,true,gin,"CREATE INDEX preamble_unit_norm_tsv_idx ON public.preamble_unit USING gin (to_tsvector('simple'::regconfig, COALESCE(text_normalized, ''::text)))",106496,0,0,0
+public,preamble_unit,preamble_unit_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX preamble_unit_pkey ON public.preamble_unit USING btree (id),16384,3140,3140,3140
+public,preamble_unit,preamble_unit_system_idx,false,false,true,true,btree,CREATE INDEX preamble_unit_system_idx ON public.preamble_unit USING btree (system_id),16384,3,98,98
+public,preamble_unit,preamble_unit_type_idx,false,false,true,true,btree,CREATE INDEX preamble_unit_type_idx ON public.preamble_unit USING btree (unit_type),16384,3,66,66
+public,referral_redemptions,referral_redemptions_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX referral_redemptions_pkey ON public.referral_redemptions USING btree (id),8192,0,0,0
+public,referral_redemptions,referral_redemptions_refereeId_key,true,false,true,true,btree,"CREATE UNIQUE INDEX ""referral_redemptions_refereeId_key"" ON public.referral_redemptions USING btree (""refereeId"")",8192,0,0,0
+public,referral_redemptions,referral_redemptions_referrerId_idx,false,false,true,true,btree,"CREATE INDEX ""referral_redemptions_referrerId_idx"" ON public.referral_redemptions USING btree (""referrerId"")",8192,0,0,0
+public,research_snapshot_meta,research_snapshot_meta_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX research_snapshot_meta_pkey ON public.research_snapshot_meta USING btree (id),16384,51107,51106,51106
+public,review_decision,review_decision_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX review_decision_pkey ON public.review_decision USING btree (id),8192,0,0,0
+public,review_decision,review_decision_set_idx,false,false,true,true,btree,"CREATE INDEX review_decision_set_idx ON public.review_decision USING btree (change_set_id, decided_at DESC)",8192,0,0,0
+public,review_decision,review_decision_set_reviewer_uq,true,false,true,true,btree,"CREATE UNIQUE INDEX review_decision_set_reviewer_uq ON public.review_decision USING btree (change_set_id, reviewer_id)",8192,0,0,0
+public,review_findings,review_findings_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX review_findings_pkey ON public.review_findings USING btree (id),8192,0,0,0
+public,review_findings,review_findings_session_id_idx,false,false,true,true,btree,CREATE INDEX review_findings_session_id_idx ON public.review_findings USING btree (session_id),8192,2,0,0
+public,review_reports,review_reports_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX review_reports_pkey ON public.review_reports USING btree (id),8192,0,0,0
+public,review_reports,review_reports_session_id_key,true,false,true,true,btree,CREATE UNIQUE INDEX review_reports_session_id_key ON public.review_reports USING btree (session_id),8192,2,0,0
+public,review_sessions,review_sessions_owner_id_created_at_idx,false,false,true,true,btree,"CREATE INDEX review_sessions_owner_id_created_at_idx ON public.review_sessions USING btree (owner_id, created_at)",16384,26,34,0
+public,review_sessions,review_sessions_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX review_sessions_pkey ON public.review_sessions USING btree (id),16384,2,2,2
+public,review_sessions,review_sessions_status_idx,false,false,true,true,btree,CREATE INDEX review_sessions_status_idx ON public.review_sessions USING btree (status),16384,0,0,0
+public,review_suggestions,review_suggestions_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX review_suggestions_pkey ON public.review_suggestions USING btree (id),8192,0,0,0
+public,review_suggestions,review_suggestions_session_id_status_idx,false,false,true,true,btree,"CREATE INDEX review_suggestions_session_id_status_idx ON public.review_suggestions USING btree (session_id, status)",8192,2,0,0
+public,role_permissions,role_permissions_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX role_permissions_pkey ON public.role_permissions USING btree (id),16384,55,55,55
+public,role_permissions,role_permissions_roleId_permissionId_key,true,false,true,true,btree,"CREATE UNIQUE INDEX ""role_permissions_roleId_permissionId_key"" ON public.role_permissions USING btree (""roleId"", ""permissionId"")",16384,837,4707,55
+public,roles,roles_key_key,true,false,true,true,btree,CREATE UNIQUE INDEX roles_key_key ON public.roles USING btree (key),16384,750,746,746
+public,roles,roles_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX roles_pkey ON public.roles USING btree (id),16384,32,32,32
+public,ruling_meta,ruling_meta_city_norm_idx,false,false,true,true,btree,CREATE INDEX ruling_meta_city_norm_idx ON public.ruling_meta USING btree (city_norm),385024,2,102210,0
+public,ruling_meta,ruling_meta_court_type_idx,false,false,true,true,btree,CREATE INDEX ruling_meta_court_type_idx ON public.ruling_meta USING btree (court_type),376832,2,102210,0
+public,ruling_meta,ruling_meta_degree_idx,false,false,true,true,btree,CREATE INDEX ruling_meta_degree_idx ON public.ruling_meta USING btree (degree),352256,2,102210,0
+public,ruling_meta,ruling_meta_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX ruling_meta_pkey ON public.ruling_meta USING btree (case_id),2555904,52704,206015,52672
+public,ruling_meta,ruling_meta_year_h_idx,false,false,true,true,btree,CREATE INDEX ruling_meta_year_h_idx ON public.ruling_meta USING btree (year_h),376832,7,129809,0
+public,ruling_segment_embeddings,idx_ruling_segment_embeddings_hnsw,false,false,true,true,hnsw,CREATE INDEX idx_ruling_segment_embeddings_hnsw ON public.ruling_segment_embeddings USING hnsw (embedding vector_cosine_ops),1047535616,383,16081,15573
+public,ruling_segment_embeddings,ruling_segment_embeddings_pkey,true,true,true,true,btree,"CREATE UNIQUE INDEX ruling_segment_embeddings_pkey ON public.ruling_segment_embeddings USING btree (ruling_id, part, chunk)",11632640,207058,1080310,385411
+public,ruling_segments,ruling_segments_part_norm_gin,false,false,true,true,gin,"CREATE INDEX ruling_segments_part_norm_gin ON public.ruling_segments USING gin (to_tsvector('simple'::regconfig, COALESCE(part_norm, ''::text)))",94027776,422,3227520,0
+public,ruling_segments,ruling_segments_pkey,true,true,true,true,btree,"CREATE UNIQUE INDEX ruling_segments_pkey ON public.ruling_segments USING btree (ruling_id, part)",24322048,493146,3646691,1999043
+public,search_logs,search_logs_created_at_idx,false,false,true,true,btree,CREATE INDEX search_logs_created_at_idx ON public.search_logs USING btree (created_at),8192,0,0,0
+public,search_logs,search_logs_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX search_logs_pkey ON public.search_logs USING btree (id),8192,0,0,0
+public,search_logs,search_logs_user_id_idx,false,false,true,true,btree,CREATE INDEX search_logs_user_id_idx ON public.search_logs USING btree (user_id),8192,0,0,0
+public,search_surface,search_surface_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX search_surface_pkey ON public.search_surface USING btree (id),16384,55,5,5
+public,search_surface,search_surface_work_idx,false,false,true,true,btree,"CREATE INDEX search_surface_work_idx ON public.search_surface USING btree (work_key, valid_on DESC, created_at DESC)",16384,145,176,44
+public,search_surface_member,search_surface_member_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX search_surface_member_pkey ON public.search_surface_member USING btree (id),16384,53,0,0
+public,search_surface_member,search_surface_member_system_idx,false,false,true,true,btree,CREATE INDEX search_surface_member_system_idx ON public.search_surface_member USING btree (system_id),16384,8,8,8
+public,search_surface_member,search_surface_member_work_key_system_id_key,true,false,true,true,btree,"CREATE UNIQUE INDEX search_surface_member_work_key_system_id_key ON public.search_surface_member USING btree (work_key, system_id)",16384,54,9,0
+public,simulation_cases,simulation_cases_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX simulation_cases_pkey ON public.simulation_cases USING btree (id),8192,0,0,0
+public,simulation_cases,simulation_cases_user_id_idx,false,false,true,true,btree,CREATE INDEX simulation_cases_user_id_idx ON public.simulation_cases USING btree (user_id),8192,0,0,0
+public,simulation_decisions,simulation_decisions_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX simulation_decisions_pkey ON public.simulation_decisions USING btree (id),16384,0,0,0
+public,simulation_judgments,simulation_judgments_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX simulation_judgments_pkey ON public.simulation_judgments USING btree (id),16384,0,0,0
+public,simulation_messages,simulation_messages_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX simulation_messages_pkey ON public.simulation_messages USING btree (id),16384,0,0,0
+public,simulation_runs,simulation_runs_case_id_idx,false,false,true,true,btree,CREATE INDEX simulation_runs_case_id_idx ON public.simulation_runs USING btree (case_id),8192,0,0,0
+public,simulation_runs,simulation_runs_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX simulation_runs_pkey ON public.simulation_runs USING btree (id),8192,0,0,0
+public,simulation_sessions,simulation_sessions_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX simulation_sessions_pkey ON public.simulation_sessions USING btree (id),16384,258,258,258
+public,site_config,site_config_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX site_config_pkey ON public.site_config USING btree (id),8192,92679,0,0
+public,site_pages,site_pages_enabled_idx,false,false,true,true,btree,CREATE INDEX site_pages_enabled_idx ON public.site_pages USING btree (enabled),8192,0,0,0
+public,site_pages,site_pages_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX site_pages_pkey ON public.site_pages USING btree (id),8192,0,0,0
+public,site_pages,site_pages_slug_key,true,false,true,true,btree,CREATE UNIQUE INDEX site_pages_slug_key ON public.site_pages USING btree (slug),8192,0,0,0
+public,subscription_activation,subscription_activation_event_id_key,true,false,true,true,btree,CREATE UNIQUE INDEX subscription_activation_event_id_key ON public.subscription_activation USING btree (event_id),8192,0,0,0
+public,subscription_activation,subscription_activation_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX subscription_activation_pkey ON public.subscription_activation USING btree (id),8192,0,0,0
+public,support_messages,support_messages_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX support_messages_pkey ON public.support_messages USING btree (id),16384,23,23,23
+public,support_messages,support_messages_thread_idx,false,false,true,true,btree,"CREATE INDEX support_messages_thread_idx ON public.support_messages USING btree (thread_id, created_at)",16384,531,1202,197
+public,support_threads,support_threads_last_idx,false,false,true,true,btree,CREATE INDEX support_threads_last_idx ON public.support_threads USING btree (last_message_at DESC),16384,15,114,90
+public,support_threads,support_threads_open_user_uidx,true,false,true,true,btree,CREATE UNIQUE INDEX support_threads_open_user_uidx ON public.support_threads USING btree (user_id) WHERE (status = 'open'::text),16384,10,11,8
+public,support_threads,support_threads_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX support_threads_pkey ON public.support_threads USING btree (id),16384,15,18,15
+public,support_threads,support_threads_user_idx,false,false,true,true,btree,CREATE INDEX support_threads_user_idx ON public.support_threads USING btree (user_id),16384,82,94,82
+public,training_progress,training_progress_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX training_progress_pkey ON public.training_progress USING btree (id),8192,0,0,0
+public,unit_version,unit_version_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX unit_version_pkey ON public.unit_version USING btree (id),40960,33,1375,523
+public,unit_version,unit_version_unit_idx,false,false,true,true,btree,"CREATE INDEX unit_version_unit_idx ON public.unit_version USING btree (unit_id, valid_from)",49152,54797,1273,420
+public,usage_credit_buckets,usage_credit_buckets_consume_idx,false,false,true,true,btree,"CREATE INDEX usage_credit_buckets_consume_idx ON public.usage_credit_buckets USING btree (""userId"", status, ""expiresAt"", priority)",8192,0,0,0
+public,usage_credit_buckets,usage_credit_buckets_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX usage_credit_buckets_pkey ON public.usage_credit_buckets USING btree (id),8192,0,0,0
+public,usage_credit_buckets,usage_credit_buckets_source_idx,false,false,true,true,btree,"CREATE INDEX usage_credit_buckets_source_idx ON public.usage_credit_buckets USING btree (""sourceType"", ""sourceReferenceId"")",8192,0,0,0
+public,users,users_clerk_id_key,true,false,true,true,btree,CREATE UNIQUE INDEX users_clerk_id_key ON public.users USING btree (clerk_id),16384,0,0,0
+public,users,users_email_key,true,false,true,true,btree,CREATE UNIQUE INDEX users_email_key ON public.users USING btree (email),16384,5091,5105,5053
+public,users,users_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX users_pkey ON public.users USING btree (id),16384,1407,1470,1271
+public,users,users_referralCode_key,true,false,true,true,btree,"CREATE UNIQUE INDEX ""users_referralCode_key"" ON public.users USING btree (""referralCode"")",16384,0,0,0
+public,users,users_username_key,true,false,true,true,btree,CREATE UNIQUE INDEX users_username_key ON public.users USING btree (username),16384,0,0,0
+public,verification,verification_object_idx,false,false,true,true,btree,"CREATE INDEX verification_object_idx ON public.verification USING btree (object_type, object_id, verified_at DESC)",155648,126963,23062,9934
+public,verification,verification_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX verification_pkey ON public.verification USING btree (id),131072,923,47146,161
+public,work_edition,work_edition_pair,true,false,true,true,btree,"CREATE UNIQUE INDEX work_edition_pair ON public.work_edition USING btree (mixed_system_id, edition_system_id)",16384,6,0,0
+public,work_edition,work_edition_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX work_edition_pkey ON public.work_edition USING btree (id),16384,0,0,0
+uqn_fix,amendment_manual,amendment_manual_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX amendment_manual_pkey ON uqn_fix.amendment_manual USING btree (effect_id),16384,176,0,0
+uqn_fix,amendment_op,amendment_op_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX amendment_op_pkey ON uqn_fix.amendment_op USING btree (op_id),40960,468,504,459
+uqn_fix,amendment_review,amendment_review_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX amendment_review_pkey ON uqn_fix.amendment_review USING btree (id),16384,0,0,0
+uqn_fix,issuance_instrument,issuance_instrument_law_title_source_url_key,true,false,true,true,btree,"CREATE UNIQUE INDEX issuance_instrument_law_title_source_url_key ON uqn_fix.issuance_instrument USING btree (law_title, source_url)",16384,4134,87,87
+uqn_fix,issuance_instrument,issuance_instrument_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX issuance_instrument_pkey ON uqn_fix.issuance_instrument USING btree (id),16384,16,0,0
+uqn_fix,new_law,new_law_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX new_law_pkey ON uqn_fix.new_law USING btree (title),16384,220,214,214
+uqn_fix,new_law_unit,new_law_unit_pkey,true,true,true,true,btree,"CREATE UNIQUE INDEX new_law_unit_pkey ON uqn_fix.new_law_unit USING btree (title, seq)",49152,214,0,0
+uqn_fix,source_snapshot,source_snapshot_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX source_snapshot_pkey ON uqn_fix.source_snapshot USING btree (url),57344,952,575,574
+uqn_fix,supersession_evidence,supersession_evidence_old_title_new_title_relation_key,true,false,true,true,btree,"CREATE UNIQUE INDEX supersession_evidence_old_title_new_title_relation_key ON uqn_fix.supersession_evidence USING btree (old_title, new_title, relation)",16384,17,0,0
+uqn_fix,supersession_evidence,supersession_evidence_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX supersession_evidence_pkey ON uqn_fix.supersession_evidence USING btree (id),16384,17,0,0
+uqn_stage,batch,batch_pkey,true,true,true,true,btree,CREATE UNIQUE INDEX batch_pkey ON uqn_stage.batch USING btree (batch_id),16384,4344,7234,4337
+uqn_stage,effect,effect_pkey,true,true,true,true,btree,"CREATE UNIQUE INDEX effect_pkey ON uqn_stage.effect USING btree (batch_id, effect_id)",90112,462,5788,454
+uqn_stage,supersession,supersession_pkey,true,true,true,true,btree,"CREATE UNIQUE INDEX supersession_pkey ON uqn_stage.supersession USING btree (batch_id, new_source_url)",16384,5,90,0
+uqn_stage,unit,unit_num_idx,false,false,true,true,btree,"CREATE INDEX unit_num_idx ON uqn_stage.unit USING btree (source_id, unit_type, number)",884736,93,35325,148
+uqn_stage,unit,unit_pkey,true,true,true,true,btree,"CREATE UNIQUE INDEX unit_pkey ON uqn_stage.unit USING btree (batch_id, source_id, seq)",1040384,1484,85845,27230
+uqn_stage,work,work_pkey,true,true,true,true,btree,"CREATE UNIQUE INDEX work_pkey ON uqn_stage.work USING btree (batch_id, source_id)",73728,35171,47560,35837

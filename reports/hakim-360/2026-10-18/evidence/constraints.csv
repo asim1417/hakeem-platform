@@ -1,0 +1,411 @@
+schema,table_name,constraint_name,type_code,constraint_type,definition,validated,deferrable,ref_schema,ref_table
+boe,amendment_note,amendment_note_effect_check,c,CHECK,"CHECK ((effect = ANY (ARRAY['amend_article'::text, 'amend_paragraph'::text, 'amend_definition'::text, 'amend_table'::text, 'renumber_merge'::text, 'repeal'::text, 'delete'::text, 'add'::text, 'substitute_phrase'::text, 'general'::text, 'unclassified'::text])))",true,false,,
+boe,amendment_note,amendment_note_law_id_fkey,f,FOREIGN KEY,FOREIGN KEY (law_id) REFERENCES boe.law(id),true,false,boe,law
+boe,amendment_note,amendment_note_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+boe,attachment,attachment_href_key,u,UNIQUE,UNIQUE (href),true,false,,
+boe,attachment,attachment_kind_check,c,CHECK,"CHECK ((kind = ANY (ARRAY['original_document'::text, 'amending_instrument'::text, 'issuance_instrument'::text, 'article_attachment'::text])))",true,false,,
+boe,attachment,attachment_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+boe,attachment_page,attachment_page_attachment_id_fkey,f,FOREIGN KEY,FOREIGN KEY (attachment_id) REFERENCES boe.attachment(id),true,false,boe,attachment
+boe,attachment_page,attachment_page_pkey,p,PRIMARY KEY,"PRIMARY KEY (attachment_id, page_no)",true,false,,
+boe,attachment_target,attachment_target_kind_check,c,CHECK,"CHECK ((kind = ANY (ARRAY['original_document'::text, 'amending_instrument'::text, 'issuance_instrument'::text, 'article_attachment'::text])))",true,false,,
+boe,attachment_target,attachment_target_pkey,p,PRIMARY KEY,PRIMARY KEY (href),true,false,,
+boe,catalog,catalog_pkey,p,PRIMARY KEY,"PRIMARY KEY (guid, run_id)",true,false,,
+boe,catalog,catalog_run_id_fkey,f,FOREIGN KEY,FOREIGN KEY (run_id) REFERENCES boe.crawl_run(id),true,false,boe,crawl_run
+boe,crawl_run,crawl_run_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+boe,diff,diff_law_id_fkey,f,FOREIGN KEY,FOREIGN KEY (law_id) REFERENCES boe.law(id),true,false,boe,law
+boe,diff,diff_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+boe,diff,diff_verdict_check,c,CHECK,"CHECK ((verdict = ANY (ARRAY['identical'::text, 'whitespace_only'::text, 'normalization_only'::text, 'wording'::text, 'missing_in_hakeem'::text, 'missing_in_boe'::text, 'unnumbered_unit'::text, 'shifted'::text, 'version_mismatch'::text])))",true,false,,
+boe,law,law_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+boe,law,law_snapshot_sha256_fkey,f,FOREIGN KEY,FOREIGN KEY (snapshot_sha256) REFERENCES boe.page_snapshot(sha256),true,false,boe,page_snapshot
+boe,match,match_method_check,c,CHECK,"CHECK ((method = ANY (ARRAY['exact_name'::text, 'normalized_name'::text, 'owner'::text])))",true,false,,
+boe,match,match_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+boe,owner_decision,owner_decision_decision_check,c,CHECK,"CHECK ((decision = ANY (ARRAY['موافق'::text, 'مرفوض'::text, 'موافق مع تصحيح'::text, 'مؤجل'::text])))",true,false,,
+boe,owner_decision,owner_decision_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+boe,owner_decision,owner_decision_proposal_id_fkey,f,FOREIGN KEY,FOREIGN KEY (proposal_id) REFERENCES boe.review_proposal(id),true,false,boe,review_proposal
+boe,page_snapshot,page_snapshot_pkey,p,PRIMARY KEY,PRIMARY KEY (sha256),true,false,,
+boe,page_snapshot,page_snapshot_run_id_fkey,f,FOREIGN KEY,FOREIGN KEY (run_id) REFERENCES boe.crawl_run(id),true,false,boe,crawl_run
+boe,related_doc,related_doc_law_id_fkey,f,FOREIGN KEY,FOREIGN KEY (law_id) REFERENCES boe.law(id),true,false,boe,law
+boe,related_doc,related_doc_pkey,p,PRIMARY KEY,"PRIMARY KEY (law_id, target_guid, label)",true,false,,
+boe,review_proposal,review_proposal_category_check,c,CHECK,CHECK (((category >= 1) AND (category <= 4))),true,false,,
+boe,review_proposal,review_proposal_confidence_check,c,CHECK,"CHECK ((confidence = ANY (ARRAY['مؤكد'::text, 'مرجّح'::text, 'يحتاج قرار المالك'::text])))",true,false,,
+boe,review_proposal,review_proposal_note_id_fkey,f,FOREIGN KEY,FOREIGN KEY (note_id) REFERENCES boe.amendment_note(id),true,false,boe,amendment_note
+boe,review_proposal,review_proposal_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+boe,text_block,text_block_kind_check,c,CHECK,"CHECK ((kind = ANY (ARRAY['title'::text, 'year'::text, 'basmala'::text, 'royal_decree'::text, 'cabinet_decision'::text, 'royal_order'::text, 'preamble_other'::text, 'law_title'::text])))",true,false,,
+boe,text_block,text_block_law_id_fkey,f,FOREIGN KEY,FOREIGN KEY (law_id) REFERENCES boe.law(id),true,false,boe,law
+boe,text_block,text_block_pkey,p,PRIMARY KEY,"PRIMARY KEY (law_id, seq)",true,false,,
+boe,unit,unit_law_id_fkey,f,FOREIGN KEY,FOREIGN KEY (law_id) REFERENCES boe.law(id),true,false,boe,law
+boe,unit,unit_pkey,p,PRIMARY KEY,"PRIMARY KEY (law_id, seq)",true,false,,
+boe,vision_reading,vision_reading_note_id_fkey,f,FOREIGN KEY,FOREIGN KEY (note_id) REFERENCES boe.amendment_note(id),true,false,boe,amendment_note
+boe,vision_reading,vision_reading_pkey,p,PRIMARY KEY,PRIMARY KEY (note_id),true,false,,
+boe,vision_reading,vision_reading_status_check,c,CHECK,"CHECK ((status = ANY (ARRAY['found'::text, 'partial'::text, 'not_found'::text, 'consolidated_text'::text, 'unreadable'::text, 'not_applicable'::text, 'wrong_article'::text])))",true,false,,
+boe,vision_reading,vision_reading_verify_verdict_check,c,CHECK,"CHECK ((verify_verdict = ANY (ARRAY['exact'::text, 'minor'::text, 'wrong'::text])))",true,false,,
+boe_inject,manifest,manifest_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+boe_inject,p1_unit_version,p1_unit_version_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+boe_inject,p1_verification,p1_verification_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+boe_inject,unit_version_b64,unit_version_b64_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+boe_inject,unit_version_fix,unit_version_fix_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+boe_inject,unit_version_stage,unit_version_stage_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+boe_inject,verification_fix,verification_fix_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+boe_inject,verification_stage,verification_stage_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,_prisma_migrations,_prisma_migrations_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,ai_usage_events,ai_usage_events_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,annotations,annotations_case_id_fkey,f,FOREIGN KEY,FOREIGN KEY (case_id) REFERENCES cases(id) ON UPDATE CASCADE ON DELETE SET NULL,true,false,public,cases
+public,annotations,annotations_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,annotations,annotations_user_id_fkey,f,FOREIGN KEY,FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE RESTRICT,true,false,public,users
+public,api_keys,api_keys_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,api_request_windows,api_request_windows_api_key_id_fkey,f,FOREIGN KEY,FOREIGN KEY (api_key_id) REFERENCES api_keys(id) ON UPDATE CASCADE ON DELETE CASCADE,true,false,public,api_keys
+public,api_request_windows,api_request_windows_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,app_settings,app_settings_pkey,p,PRIMARY KEY,PRIMARY KEY (key),true,false,,
+public,article_amendments,article_amendments_articleId_fkey,f,FOREIGN KEY,"FOREIGN KEY (""articleId"") REFERENCES legal_articles(id) ON UPDATE CASCADE ON DELETE RESTRICT",true,false,public,legal_articles
+public,article_amendments,article_amendments_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,article_versions,article_versions_article_id_fkey,f,FOREIGN KEY,FOREIGN KEY (article_id) REFERENCES legal_articles(id) ON UPDATE CASCADE ON DELETE RESTRICT,true,false,public,legal_articles
+public,article_versions,article_versions_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,article_versions,article_versions_superseded_by_fkey,f,FOREIGN KEY,FOREIGN KEY (superseded_by) REFERENCES article_versions(id) ON UPDATE CASCADE ON DELETE SET NULL,true,false,public,article_versions
+public,attachments,attachments_caseId_fkey,f,FOREIGN KEY,"FOREIGN KEY (""caseId"") REFERENCES cases(id) ON UPDATE CASCADE ON DELETE SET NULL",true,false,public,cases
+public,attachments,attachments_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,audit_event,audit_event_actor_kind_check,c,CHECK,"CHECK ((actor_kind = ANY (ARRAY['human'::text, 'agent'::text, 'system'::text])))",true,false,,
+public,audit_event,audit_event_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,audit_logs,audit_logs_actorId_fkey,f,FOREIGN KEY,"FOREIGN KEY (""actorId"") REFERENCES users(id) ON UPDATE CASCADE ON DELETE SET NULL",true,false,public,users
+public,audit_logs,audit_logs_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,billing_audit_logs,billing_audit_logs_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,billing_events,billing_events_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,billing_invoice_counters,billing_invoice_counters_pkey,p,PRIMARY KEY,PRIMARY KEY (year),true,false,,
+public,billing_invoices,billing_invoices_order_id_fkey,f,FOREIGN KEY,FOREIGN KEY (order_id) REFERENCES billing_orders(id) ON UPDATE CASCADE ON DELETE SET NULL,true,false,public,billing_orders
+public,billing_invoices,billing_invoices_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,billing_invoices,billing_invoices_user_id_fkey,f,FOREIGN KEY,FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE RESTRICT,true,false,public,users
+public,billing_model_prices,billing_model_prices_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,billing_notifications,billing_notifications_dedupeKey_key,u,UNIQUE,"UNIQUE (""dedupeKey"")",true,false,,
+public,billing_notifications,billing_notifications_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,billing_orders,billing_orders_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,billing_orders,billing_orders_plan_id_fkey,f,FOREIGN KEY,FOREIGN KEY (plan_id) REFERENCES billing_plans(id) ON UPDATE CASCADE ON DELETE SET NULL,true,false,public,billing_plans
+public,billing_orders,billing_orders_subscription_id_fkey,f,FOREIGN KEY,FOREIGN KEY (subscription_id) REFERENCES billing_subscriptions(id) ON UPDATE CASCADE ON DELETE SET NULL,true,false,public,billing_subscriptions
+public,billing_orders,billing_orders_user_id_fkey,f,FOREIGN KEY,FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE RESTRICT,true,false,public,users
+public,billing_payment_methods,billing_payment_methods_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,billing_payment_methods,billing_payment_methods_user_id_fkey,f,FOREIGN KEY,FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE RESTRICT,true,false,public,users
+public,billing_payments,billing_payments_order_id_fkey,f,FOREIGN KEY,FOREIGN KEY (order_id) REFERENCES billing_orders(id) ON UPDATE CASCADE ON DELETE RESTRICT,true,false,public,billing_orders
+public,billing_payments,billing_payments_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,billing_plan_prices,billing_plan_prices_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,billing_plan_prices,billing_plan_prices_plan_id_fkey,f,FOREIGN KEY,FOREIGN KEY (plan_id) REFERENCES billing_plans(id) ON UPDATE CASCADE ON DELETE RESTRICT,true,false,public,billing_plans
+public,billing_plans,billing_plans_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,billing_refunds,billing_refunds_invoice_id_fkey,f,FOREIGN KEY,FOREIGN KEY (invoice_id) REFERENCES billing_invoices(id) ON UPDATE CASCADE ON DELETE SET NULL,true,false,public,billing_invoices
+public,billing_refunds,billing_refunds_payment_id_fkey,f,FOREIGN KEY,FOREIGN KEY (payment_id) REFERENCES billing_payments(id) ON UPDATE CASCADE ON DELETE RESTRICT,true,false,public,billing_payments
+public,billing_refunds,billing_refunds_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,billing_subscriptions,billing_subscriptions_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,billing_subscriptions,billing_subscriptions_plan_id_fkey,f,FOREIGN KEY,FOREIGN KEY (plan_id) REFERENCES billing_plans(id) ON UPDATE CASCADE ON DELETE RESTRICT,true,false,public,billing_plans
+public,billing_subscriptions,billing_subscriptions_user_id_fkey,f,FOREIGN KEY,FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE SET NULL,true,false,public,users
+public,billing_subscriptions,billing_subscriptions_workspace_id_fkey,f,FOREIGN KEY,FOREIGN KEY (workspace_id) REFERENCES billing_workspaces(id) ON UPDATE CASCADE ON DELETE SET NULL,true,false,public,billing_workspaces
+public,billing_trial_grants,billing_trial_grants_pkey,p,PRIMARY KEY,"PRIMARY KEY (""identityHash"")",true,false,,
+public,billing_webhook_events,billing_webhook_events_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,billing_workspace_members,billing_workspace_members_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,billing_workspace_members,billing_workspace_members_user_id_fkey,f,FOREIGN KEY,FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE RESTRICT,true,false,public,users
+public,billing_workspace_members,billing_workspace_members_workspace_id_fkey,f,FOREIGN KEY,FOREIGN KEY (workspace_id) REFERENCES billing_workspaces(id) ON UPDATE CASCADE ON DELETE RESTRICT,true,false,public,billing_workspaces
+public,billing_workspaces,billing_workspaces_owner_id_fkey,f,FOREIGN KEY,FOREIGN KEY (owner_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE RESTRICT,true,false,public,users
+public,billing_workspaces,billing_workspaces_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,bug_reports,bug_reports_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,cases,cases_ownerId_fkey,f,FOREIGN KEY,"FOREIGN KEY (""ownerId"") REFERENCES users(id) ON UPDATE CASCADE ON DELETE RESTRICT",true,false,public,users
+public,cases,cases_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,change_set,change_set_author_id_fkey,f,FOREIGN KEY,FOREIGN KEY (author_id) REFERENCES users(id),true,false,public,users
+public,change_set,change_set_author_kind_check,c,CHECK,"CHECK ((author_kind = ANY (ARRAY['human'::text, 'agent'::text])))",true,false,,
+public,change_set,change_set_check,c,CHECK,CHECK ((((author_kind = 'human'::text) AND (author_id IS NOT NULL)) OR ((author_kind = 'agent'::text) AND (author_agent IS NOT NULL)))),true,false,,
+public,change_set,change_set_kind_check,c,CHECK,"CHECK ((kind = ANY (ARRAY['manual'::text, 'agent_review'::text, 'agent_review_bulk'::text, 'revert'::text, 'emergency_revert'::text])))",true,false,,
+public,change_set,change_set_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,change_set,change_set_reverts_change_set_id_fkey,f,FOREIGN KEY,FOREIGN KEY (reverts_change_set_id) REFERENCES change_set(id),true,false,public,change_set
+public,change_set,change_set_status_check,c,CHECK,"CHECK ((status = ANY (ARRAY['draft'::text, 'checks_failed'::text, 'pending'::text, 'approved'::text, 'rejected'::text, 'published'::text, 'reverted'::text])))",true,false,,
+public,chat_conversations,chat_conversations_branch_from_message_id_fkey,f,FOREIGN KEY,FOREIGN KEY (branch_from_message_id) REFERENCES chat_messages(id) ON UPDATE CASCADE ON DELETE SET NULL,true,false,public,chat_messages
+public,chat_conversations,chat_conversations_case_file_id_fkey,f,FOREIGN KEY,FOREIGN KEY (case_file_id) REFERENCES cases(id) ON UPDATE CASCADE ON DELETE SET NULL,true,false,public,cases
+public,chat_conversations,chat_conversations_judicial_case_id_fkey,f,FOREIGN KEY,FOREIGN KEY (judicial_case_id) REFERENCES judicial_work_cases(id) ON UPDATE CASCADE ON DELETE SET NULL,true,false,public,judicial_work_cases
+public,chat_conversations,chat_conversations_parent_conversation_id_fkey,f,FOREIGN KEY,FOREIGN KEY (parent_conversation_id) REFERENCES chat_conversations(id) ON UPDATE CASCADE ON DELETE SET NULL,true,false,public,chat_conversations
+public,chat_conversations,chat_conversations_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,chat_conversations,chat_conversations_service_key_check,c,CHECK,"CHECK ((service_key = ANY (ARRAY['ask'::text, 'judicial-assistant'::text, 'legal-chat'::text])))",true,false,,
+public,chat_conversations,chat_conversations_status_check,c,CHECK,"CHECK ((status = ANY (ARRAY['active'::text, 'processing'::text, 'error'::text])))",true,false,,
+public,chat_messages,chat_messages_job_id_fkey,f,FOREIGN KEY,FOREIGN KEY (job_id) REFERENCES generation_jobs(id) ON UPDATE CASCADE ON DELETE SET NULL,true,false,public,generation_jobs
+public,chat_messages,chat_messages_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,chat_messages,chat_messages_status_check,c,CHECK,"CHECK ((status = ANY (ARRAY['pending'::text, 'streaming'::text, 'completed'::text, 'failed'::text, 'cancelled'::text])))",true,false,,
+public,consultation_citations,consultation_citations_consultationId_fkey,f,FOREIGN KEY,"FOREIGN KEY (""consultationId"") REFERENCES consultations(id) ON UPDATE CASCADE ON DELETE RESTRICT",true,false,public,consultations
+public,consultation_citations,consultation_citations_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,consultations,consultations_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,consultations,consultations_userId_fkey,f,FOREIGN KEY,"FOREIGN KEY (""userId"") REFERENCES users(id) ON UPDATE CASCADE ON DELETE RESTRICT",true,false,public,users
+public,credit_transactions,credit_transactions_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,doc_cases,doc_cases_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,doc_cases,doc_cases_workspace_id_fkey,f,FOREIGN KEY,FOREIGN KEY (workspace_id) REFERENCES doc_workspaces(id) ON DELETE CASCADE,true,false,public,doc_workspaces
+public,doc_tool_snapshots,doc_tool_snapshots_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,doc_tool_snapshots,doc_tool_snapshots_workspace_id_fkey,f,FOREIGN KEY,FOREIGN KEY (workspace_id) REFERENCES doc_workspaces(id) ON UPDATE CASCADE ON DELETE CASCADE,true,false,public,doc_workspaces
+public,doc_workspaces,doc_workspaces_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,editorial_change,editorial_change_author_id_fkey,f,FOREIGN KEY,FOREIGN KEY (author_id) REFERENCES users(id),true,false,public,users
+public,editorial_change,editorial_change_author_kind_check,c,CHECK,"CHECK ((author_kind = ANY (ARRAY['human'::text, 'agent'::text])))",true,false,,
+public,editorial_change,editorial_change_change_set_id_fkey,f,FOREIGN KEY,FOREIGN KEY (change_set_id) REFERENCES change_set(id),true,false,public,change_set
+public,editorial_change,editorial_change_check,c,CHECK,CHECK ((((author_kind = 'human'::text) AND (author_id IS NOT NULL)) OR ((author_kind = 'agent'::text) AND (author_agent IS NOT NULL)))),true,false,,
+public,editorial_change,editorial_change_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,editorial_change,editorial_change_source_rank_check,c,CHECK,"CHECK ((source_rank = ANY (ARRAY[1, 2, 3])))",true,false,,
+public,editorial_change,editorial_change_status_check,c,CHECK,"CHECK ((status = ANY (ARRAY['draft'::text, 'checks_failed'::text, 'pending'::text, 'approved'::text, 'rejected'::text, 'published'::text, 'reverted'::text])))",true,false,,
+public,editorial_change,editorial_change_target_type_check,c,CHECK,"CHECK ((target_type = ANY (ARRAY['work'::text, 'unit'::text, 'ruling'::text, 'relation'::text, 'principle'::text, 'amendment_op'::text])))",true,false,,
+public,editorial_config,editorial_config_actor_id_fkey,f,FOREIGN KEY,FOREIGN KEY (actor_id) REFERENCES users(id),true,false,public,users
+public,editorial_config,editorial_config_pkey,p,PRIMARY KEY,PRIMARY KEY (version),true,false,,
+public,editorial_config,editorial_config_reason_check,c,CHECK,CHECK ((length(btrim(reason)) >= 5)),true,false,,
+public,editorial_config,editorial_config_version_check,c,CHECK,CHECK ((version >= 1)),true,false,,
+public,embedding_version,embedding_version_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,embeddings,embeddings_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,exercises,exercises_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,extraction_runs,extraction_runs_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,feature_toggles,feature_toggles_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,fiqh_article_alignments,fiqh_article_alignments_fiqh_text_id_fkey,f,FOREIGN KEY,FOREIGN KEY (fiqh_text_id) REFERENCES fiqh_texts(id) ON UPDATE CASCADE ON DELETE RESTRICT,true,false,public,fiqh_texts
+public,fiqh_article_alignments,fiqh_article_alignments_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,fiqh_issue_links,fiqh_issue_links_issue_id_fkey,f,FOREIGN KEY,FOREIGN KEY (issue_id) REFERENCES fiqh_issues(id) ON DELETE CASCADE,true,false,public,fiqh_issues
+public,fiqh_issue_links,fiqh_issue_links_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,fiqh_issues,fiqh_issues_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,fiqh_sources,fiqh_sources_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,fiqh_texts,fiqh_texts_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,fiqh_texts,fiqh_texts_source_id_fkey,f,FOREIGN KEY,FOREIGN KEY (source_id) REFERENCES fiqh_sources(id) ON UPDATE CASCADE ON DELETE RESTRICT,true,false,public,fiqh_sources
+public,folders,folders_parent_id_fkey,f,FOREIGN KEY,FOREIGN KEY (parent_id) REFERENCES folders(id) ON UPDATE CASCADE ON DELETE SET NULL,true,false,public,folders
+public,folders,folders_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,folders,folders_user_id_fkey,f,FOREIGN KEY,FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE RESTRICT,true,false,public,users
+public,generation_jobs,generation_jobs_conversation_id_fkey,f,FOREIGN KEY,FOREIGN KEY (conversation_id) REFERENCES chat_conversations(id) ON UPDATE CASCADE ON DELETE SET NULL,true,false,public,chat_conversations
+public,generation_jobs,generation_jobs_message_id_fkey,f,FOREIGN KEY,FOREIGN KEY (message_id) REFERENCES chat_messages(id) ON UPDATE CASCADE ON DELETE SET NULL,true,false,public,chat_messages
+public,generation_jobs,generation_jobs_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,generic_rate_limit_windows,generic_rate_limit_windows_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,glossary_terms,glossary_terms_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,guardrail_decisions,guardrail_decisions_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,index_sync,index_sync_change_set_id_fkey,f,FOREIGN KEY,FOREIGN KEY (change_set_id) REFERENCES change_set(id),true,false,public,change_set
+public,index_sync,index_sync_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,jds_agent_runs,jds_agent_runs_pkey,p,PRIMARY KEY,PRIMARY KEY (run_id),true,false,,
+public,jds_authority_snapshots,jds_authority_snapshots_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,jds_document_recipes,jds_document_recipes_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,jds_domain_packs,jds_domain_packs_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,jds_procedure_edges,jds_procedure_edges_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,jds_procedure_graphs,jds_procedure_graphs_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,jds_procedure_nodes,jds_procedure_nodes_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,jds_quality_findings,jds_quality_findings_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,jds_recipe_sections,jds_recipe_sections_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,jds_statement_traces,jds_statement_traces_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,judgment_article_links,judgment_article_links_article_id_fkey,f,FOREIGN KEY,FOREIGN KEY (article_id) REFERENCES legal_articles(id) ON UPDATE CASCADE ON DELETE SET NULL,true,false,public,legal_articles
+public,judgment_article_links,judgment_article_links_judgment_id_fkey,f,FOREIGN KEY,FOREIGN KEY (judgment_id) REFERENCES judicial_cases(id) ON UPDATE CASCADE ON DELETE CASCADE,true,false,public,judicial_cases
+public,judgment_article_links,judgment_article_links_legal_system_id_fkey,f,FOREIGN KEY,FOREIGN KEY (legal_system_id) REFERENCES legal_systems(id) ON UPDATE CASCADE ON DELETE SET NULL,true,false,public,legal_systems
+public,judgment_article_links,judgment_article_links_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,judgment_cards,judgment_cards_judgment_id_fkey,f,FOREIGN KEY,FOREIGN KEY (judgment_id) REFERENCES judicial_cases(id) ON UPDATE CASCADE ON DELETE CASCADE,true,false,public,judicial_cases
+public,judgment_cards,judgment_cards_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,judgment_cards,judgment_cards_run_id_fkey,f,FOREIGN KEY,FOREIGN KEY (run_id) REFERENCES extraction_runs(id) ON UPDATE CASCADE ON DELETE SET NULL,true,false,public,extraction_runs
+public,judicial_analyses,judicial_analyses_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,judicial_cases,judicial_cases_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,judicial_doc_chunks,judicial_doc_chunks_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,judicial_principles,judicial_principles_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,judicial_principles,judicial_principles_sourceCaseId_fkey,f,FOREIGN KEY,"FOREIGN KEY (""sourceCaseId"") REFERENCES judicial_cases(id) ON UPDATE CASCADE ON DELETE RESTRICT",true,false,public,judicial_cases
+public,judicial_work_cases,judicial_work_cases_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,law_card,law_card_instruments_check,c,CHECK,CHECK ((jsonb_typeof(instruments) = 'array'::text)),true,false,,
+public,law_card,law_card_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,law_card,law_card_system_id_fkey,f,FOREIGN KEY,FOREIGN KEY (system_id) REFERENCES legal_systems(id),true,false,public,legal_systems
+public,law_card,law_card_text_blocks_check,c,CHECK,CHECK ((jsonb_typeof(text_blocks) = 'array'::text)),true,false,,
+public,legal_article_bis,legal_article_bis_base_number_check,c,CHECK,CHECK ((base_number > 0)),true,false,,
+public,legal_article_bis,legal_article_bis_lawName_label_key,u,UNIQUE,"UNIQUE (""lawName"", label)",true,false,,
+public,legal_article_bis,legal_article_bis_legalSystemId_fkey,f,FOREIGN KEY,"FOREIGN KEY (""legalSystemId"") REFERENCES legal_systems(id)",true,false,public,legal_systems
+public,legal_article_bis,legal_article_bis_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,legal_article_case_links,legal_article_case_links_articleId_fkey,f,FOREIGN KEY,"FOREIGN KEY (""articleId"") REFERENCES legal_articles(id) ON UPDATE CASCADE ON DELETE RESTRICT",true,false,public,legal_articles
+public,legal_article_case_links,legal_article_case_links_caseId_fkey,f,FOREIGN KEY,"FOREIGN KEY (""caseId"") REFERENCES judicial_cases(id) ON UPDATE CASCADE ON DELETE RESTRICT",true,false,public,judicial_cases
+public,legal_article_case_links,legal_article_case_links_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,legal_article_label,legal_article_label_kind_check,c,CHECK,"CHECK ((kind = ANY (ARRAY['annex'::text, 'reg_paragraph'::text])))",true,false,,
+public,legal_article_label,legal_article_label_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,legal_article_label,legal_article_label_unit_id_fkey,f,FOREIGN KEY,FOREIGN KEY (unit_id) REFERENCES legal_articles(id),true,false,public,legal_articles
+public,legal_article_label,legal_article_label_unit_id_key,u,UNIQUE,UNIQUE (unit_id),true,false,,
+public,legal_articles,legal_articles_article_number_positive,c,CHECK,"CHECK ((""articleNumber"" > 0))",true,false,,
+public,legal_articles,legal_articles_legalSystemId_fkey,f,FOREIGN KEY,"FOREIGN KEY (""legalSystemId"") REFERENCES legal_systems(id) ON UPDATE CASCADE ON DELETE SET NULL",true,false,public,legal_systems
+public,legal_articles,legal_articles_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,legal_graph_edges,legal_graph_edges_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,legal_graph_edges,legal_graph_edges_sourceId_fkey,f,FOREIGN KEY,"FOREIGN KEY (""sourceId"") REFERENCES legal_graph_nodes(id) ON UPDATE CASCADE ON DELETE CASCADE",true,false,public,legal_graph_nodes
+public,legal_graph_edges,legal_graph_edges_targetId_fkey,f,FOREIGN KEY,"FOREIGN KEY (""targetId"") REFERENCES legal_graph_nodes(id) ON UPDATE CASCADE ON DELETE CASCADE",true,false,public,legal_graph_nodes
+public,legal_graph_nodes,legal_graph_nodes_articleId_fkey,f,FOREIGN KEY,"FOREIGN KEY (""articleId"") REFERENCES legal_articles(id) ON UPDATE CASCADE ON DELETE SET NULL",true,false,public,legal_articles
+public,legal_graph_nodes,legal_graph_nodes_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,legal_relations,legal_relations_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,legal_system_alias,legal_system_alias_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,legal_system_alias,legal_system_alias_system_id_alias_key,u,UNIQUE,"UNIQUE (system_id, alias)",true,false,,
+public,legal_system_alias,legal_system_alias_system_id_fkey,f,FOREIGN KEY,FOREIGN KEY (system_id) REFERENCES legal_systems(id),true,false,public,legal_systems
+public,legal_system_issuance,legal_system_issuance_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,legal_system_issuance,legal_system_issuance_system_id_fkey,f,FOREIGN KEY,FOREIGN KEY (system_id) REFERENCES legal_systems(id),true,false,public,legal_systems
+public,legal_systems,legal_systems_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,legal_text_provenance,legal_text_provenance_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,legal_thesaurus_article_batches,legal_thesaurus_article_batches_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,legal_thesaurus_article_batches,legal_thesaurus_article_batches_run_id_fkey,f,FOREIGN KEY,FOREIGN KEY (run_id) REFERENCES legal_thesaurus_extraction_runs(id) ON DELETE CASCADE,true,false,public,legal_thesaurus_extraction_runs
+public,legal_thesaurus_candidate_terms,legal_thesaurus_candidate_terms_legal_source_id_fkey,f,FOREIGN KEY,FOREIGN KEY (legal_source_id) REFERENCES legal_systems(id) ON DELETE SET NULL,true,false,public,legal_systems
+public,legal_thesaurus_candidate_terms,legal_thesaurus_candidate_terms_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,legal_thesaurus_candidate_terms,legal_thesaurus_candidate_terms_run_id_fkey,f,FOREIGN KEY,FOREIGN KEY (run_id) REFERENCES legal_thesaurus_extraction_runs(id) ON DELETE SET NULL,true,false,public,legal_thesaurus_extraction_runs
+public,legal_thesaurus_candidate_terms,legal_thesaurus_candidate_terms_source_article_id_fkey,f,FOREIGN KEY,FOREIGN KEY (source_article_id) REFERENCES legal_articles(id) ON DELETE SET NULL,true,false,public,legal_articles
+public,legal_thesaurus_concept_domains,legal_thesaurus_concept_domains_concept_id_fkey,f,FOREIGN KEY,FOREIGN KEY (concept_id) REFERENCES legal_thesaurus_concepts(id) ON DELETE CASCADE,true,false,public,legal_thesaurus_concepts
+public,legal_thesaurus_concept_domains,legal_thesaurus_concept_domains_domain_id_fkey,f,FOREIGN KEY,FOREIGN KEY (domain_id) REFERENCES legal_thesaurus_domains(id) ON DELETE CASCADE,true,false,public,legal_thesaurus_domains
+public,legal_thesaurus_concept_domains,legal_thesaurus_concept_domains_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,legal_thesaurus_concepts,legal_thesaurus_concepts_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,legal_thesaurus_definitions,legal_thesaurus_definitions_concept_id_fkey,f,FOREIGN KEY,FOREIGN KEY (concept_id) REFERENCES legal_thesaurus_concepts(id) ON DELETE CASCADE,true,false,public,legal_thesaurus_concepts
+public,legal_thesaurus_definitions,legal_thesaurus_definitions_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,legal_thesaurus_definitions,legal_thesaurus_definitions_source_article_id_fkey,f,FOREIGN KEY,FOREIGN KEY (source_article_id) REFERENCES legal_articles(id) ON DELETE SET NULL,true,false,public,legal_articles
+public,legal_thesaurus_domains,legal_thesaurus_domains_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,legal_thesaurus_extraction_runs,legal_thesaurus_extraction_runs_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,legal_thesaurus_occurrences,legal_thesaurus_occurrences_article_id_fkey,f,FOREIGN KEY,FOREIGN KEY (article_id) REFERENCES legal_articles(id) ON DELETE SET NULL,true,false,public,legal_articles
+public,legal_thesaurus_occurrences,legal_thesaurus_occurrences_concept_id_fkey,f,FOREIGN KEY,FOREIGN KEY (concept_id) REFERENCES legal_thesaurus_concepts(id) ON DELETE CASCADE,true,false,public,legal_thesaurus_concepts
+public,legal_thesaurus_occurrences,legal_thesaurus_occurrences_legal_source_id_fkey,f,FOREIGN KEY,FOREIGN KEY (legal_source_id) REFERENCES legal_systems(id) ON DELETE SET NULL,true,false,public,legal_systems
+public,legal_thesaurus_occurrences,legal_thesaurus_occurrences_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,legal_thesaurus_occurrences,legal_thesaurus_occurrences_term_id_fkey,f,FOREIGN KEY,FOREIGN KEY (term_id) REFERENCES legal_thesaurus_terms(id) ON DELETE SET NULL,true,false,public,legal_thesaurus_terms
+public,legal_thesaurus_relations,legal_thesaurus_relations_evidence_article_id_fkey,f,FOREIGN KEY,FOREIGN KEY (evidence_article_id) REFERENCES legal_articles(id) ON DELETE SET NULL,true,false,public,legal_articles
+public,legal_thesaurus_relations,legal_thesaurus_relations_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,legal_thesaurus_relations,legal_thesaurus_relations_source_concept_id_fkey,f,FOREIGN KEY,FOREIGN KEY (source_concept_id) REFERENCES legal_thesaurus_concepts(id) ON DELETE CASCADE,true,false,public,legal_thesaurus_concepts
+public,legal_thesaurus_relations,legal_thesaurus_relations_target_concept_id_fkey,f,FOREIGN KEY,FOREIGN KEY (target_concept_id) REFERENCES legal_thesaurus_concepts(id) ON DELETE CASCADE,true,false,public,legal_thesaurus_concepts
+public,legal_thesaurus_review_queue,legal_thesaurus_review_queue_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,legal_thesaurus_terms,legal_thesaurus_terms_concept_id_fkey,f,FOREIGN KEY,FOREIGN KEY (concept_id) REFERENCES legal_thesaurus_concepts(id) ON DELETE CASCADE,true,false,public,legal_thesaurus_concepts
+public,legal_thesaurus_terms,legal_thesaurus_terms_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,legal_thesaurus_text_snapshots,legal_thesaurus_text_snapshots_article_id_fkey,f,FOREIGN KEY,FOREIGN KEY (article_id) REFERENCES legal_articles(id) ON DELETE SET NULL,true,false,public,legal_articles
+public,legal_thesaurus_text_snapshots,legal_thesaurus_text_snapshots_legal_source_id_fkey,f,FOREIGN KEY,FOREIGN KEY (legal_source_id) REFERENCES legal_systems(id) ON DELETE SET NULL,true,false,public,legal_systems
+public,legal_thesaurus_text_snapshots,legal_thesaurus_text_snapshots_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,legal_topics,legal_topics_parent_id_fkey,f,FOREIGN KEY,FOREIGN KEY (parent_id) REFERENCES legal_topics(id) ON UPDATE CASCADE ON DELETE SET NULL,true,false,public,legal_topics
+public,legal_topics,legal_topics_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,mcp_auth_codes,mcp_auth_codes_pkey,p,PRIMARY KEY,PRIMARY KEY (code_hash),true,false,,
+public,mcp_grants,mcp_grants_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,mcp_grants,mcp_grants_user_id_fkey,f,FOREIGN KEY,FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,true,false,public,users
+public,mcp_request_windows,mcp_request_windows_pkey,p,PRIMARY KEY,"PRIMARY KEY (key, window_start)",true,false,,
+public,mcp_used_refresh_tokens,mcp_used_refresh_tokens_pkey,p,PRIMARY KEY,PRIMARY KEY (token_hash),true,false,,
+public,messages,messages_consultationId_fkey,f,FOREIGN KEY,"FOREIGN KEY (""consultationId"") REFERENCES consultations(id) ON UPDATE CASCADE ON DELETE SET NULL",true,false,public,consultations
+public,messages,messages_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,permissions,permissions_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,preamble_edition,preamble_edition_check,c,CHECK,CHECK ((approved_by <> prepared_by)),true,false,,
+public,preamble_edition,preamble_edition_check1,c,CHECK,CHECK (((supersedes_edition_id IS NULL) OR (supersedes_edition_id <> id))),true,false,,
+public,preamble_edition,preamble_edition_completeness_check,c,CHECK,"CHECK ((completeness = ANY (ARRAY['complete'::text, 'partial'::text, 'issuance_line'::text])))",true,false,,
+public,preamble_edition,preamble_edition_legacy_preamble_sha256_check,c,CHECK,CHECK (((legacy_preamble_sha256 IS NULL) OR (legacy_preamble_sha256 ~ '^[0-9a-f]{64}$'::text))),true,false,,
+public,preamble_edition,preamble_edition_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,preamble_edition,preamble_edition_raw_sha256_check,c,CHECK,CHECK ((raw_sha256 ~ '^[0-9a-f]{64}$'::text)),true,false,,
+public,preamble_edition,preamble_edition_raw_text_check,c,CHECK,CHECK ((length(raw_text) > 0)),true,false,,
+public,preamble_edition,preamble_edition_source_name_check,c,CHECK,"CHECK ((source_name = ANY (ARRAY['أم القرى'::text, 'هيئة الخبراء بمجلس الوزراء'::text])))",true,false,,
+public,preamble_edition,preamble_edition_source_url_check,c,CHECK,CHECK ((source_url ~ '^https://'::text)),true,false,,
+public,preamble_edition,preamble_edition_supersedes_edition_id_fkey,f,FOREIGN KEY,FOREIGN KEY (supersedes_edition_id) REFERENCES preamble_edition(id),true,false,public,preamble_edition
+public,preamble_edition,preamble_edition_system_id_fkey,f,FOREIGN KEY,FOREIGN KEY (system_id) REFERENCES legal_systems(id),true,false,public,legal_systems
+public,preamble_edition,preamble_edition_system_id_raw_sha256_key,u,UNIQUE,"UNIQUE (system_id, raw_sha256)",true,false,,
+public,preamble_edition,preamble_edition_units_count_check,c,CHECK,CHECK ((units_count > 0)),true,false,,
+public,preamble_edition,preamble_edition_verify,t,t,TRIGGER DEFERRABLE INITIALLY DEFERRED,true,true,,
+public,preamble_unit,preamble_unit_char_start_check,c,CHECK,CHECK ((char_start >= 0)),true,false,,
+public,preamble_unit,preamble_unit_check,c,CHECK,CHECK ((char_end >= char_start)),true,false,,
+public,preamble_unit,preamble_unit_check1,c,CHECK,CHECK (((unit_type = 'issuing_instrument'::text) = (text_raw = ''::text))),true,false,,
+public,preamble_unit,preamble_unit_check2,c,CHECK,CHECK (((unit_type <> 'issuing_instrument'::text) OR ((parent_id IS NULL) AND (instrument_index IS NOT NULL)))),true,false,,
+public,preamble_unit,preamble_unit_check3,c,CHECK,CHECK (((unit_type = 'issuing_instrument'::text) OR ((char_end - char_start) = length(text_raw)))),true,false,,
+public,preamble_unit,preamble_unit_edition_id_fkey,f,FOREIGN KEY,FOREIGN KEY (edition_id) REFERENCES preamble_edition(id),true,false,public,preamble_edition
+public,preamble_unit,preamble_unit_edition_id_ordinal_key,u,UNIQUE,"UNIQUE (edition_id, ordinal)",true,false,,
+public,preamble_unit,preamble_unit_edition_id_path_key,u,UNIQUE,"UNIQUE (edition_id, path)",true,false,,
+public,preamble_unit,preamble_unit_instrument_index_check,c,CHECK,CHECK (((instrument_index IS NULL) OR (instrument_index > 0))),true,false,,
+public,preamble_unit,preamble_unit_instrument_kind_check,c,CHECK,"CHECK (((instrument_kind IS NULL) OR (instrument_kind = ANY (ARRAY['royal_decree'::text, 'royal_order'::text, 'cabinet_decision'::text, 'other'::text]))))",true,false,,
+public,preamble_unit,preamble_unit_ordinal_check,c,CHECK,CHECK ((ordinal >= 0)),true,false,,
+public,preamble_unit,preamble_unit_parent_id_fkey,f,FOREIGN KEY,FOREIGN KEY (parent_id) REFERENCES preamble_unit(id),true,false,public,preamble_unit
+public,preamble_unit,preamble_unit_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,preamble_unit,preamble_unit_system_id_fkey,f,FOREIGN KEY,FOREIGN KEY (system_id) REFERENCES legal_systems(id),true,false,public,legal_systems
+public,preamble_unit,preamble_unit_unit_type_check,c,CHECK,"CHECK ((unit_type = ANY (ARRAY['issuing_instrument'::text, 'preamble_heading'::text, 'opening'::text, 'recital'::text, 'enacting_formula'::text, 'operative_clause'::text, 'signature'::text, 'unclassified'::text])))",true,false,,
+public,preamble_unit,preamble_unit_verify,t,t,TRIGGER DEFERRABLE INITIALLY DEFERRED,true,true,,
+public,referral_redemptions,referral_redemptions_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,referral_redemptions,referral_redemptions_refereeId_key,u,UNIQUE,"UNIQUE (""refereeId"")",true,false,,
+public,research_snapshot_meta,research_snapshot_meta_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,review_decision,review_decision_change_set_id_fkey,f,FOREIGN KEY,FOREIGN KEY (change_set_id) REFERENCES change_set(id),true,false,public,change_set
+public,review_decision,review_decision_check,c,CHECK,CHECK (((NOT self_approval) OR ((reason IS NOT NULL) AND (length(btrim(reason)) > 0)))),true,false,,
+public,review_decision,review_decision_decision_check,c,CHECK,"CHECK ((decision = ANY (ARRAY['approve'::text, 'reject'::text])))",true,false,,
+public,review_decision,review_decision_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,review_decision,review_decision_reviewer_id_fkey,f,FOREIGN KEY,FOREIGN KEY (reviewer_id) REFERENCES users(id),true,false,public,users
+public,review_findings,review_findings_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,review_findings,review_findings_session_id_fkey,f,FOREIGN KEY,FOREIGN KEY (session_id) REFERENCES review_sessions(id) ON DELETE CASCADE,true,false,public,review_sessions
+public,review_reports,review_reports_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,review_reports,review_reports_session_id_fkey,f,FOREIGN KEY,FOREIGN KEY (session_id) REFERENCES review_sessions(id) ON DELETE CASCADE,true,false,public,review_sessions
+public,review_reports,review_reports_session_id_key,u,UNIQUE,UNIQUE (session_id),true,false,,
+public,review_sessions,review_sessions_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,review_suggestions,review_suggestions_finding_id_fkey,f,FOREIGN KEY,FOREIGN KEY (finding_id) REFERENCES review_findings(id) ON DELETE SET NULL,true,false,public,review_findings
+public,review_suggestions,review_suggestions_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,review_suggestions,review_suggestions_session_id_fkey,f,FOREIGN KEY,FOREIGN KEY (session_id) REFERENCES review_sessions(id) ON DELETE CASCADE,true,false,public,review_sessions
+public,role_permissions,role_permissions_permissionId_fkey,f,FOREIGN KEY,"FOREIGN KEY (""permissionId"") REFERENCES permissions(id) ON UPDATE CASCADE ON DELETE RESTRICT",true,false,public,permissions
+public,role_permissions,role_permissions_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,role_permissions,role_permissions_roleId_fkey,f,FOREIGN KEY,"FOREIGN KEY (""roleId"") REFERENCES roles(id) ON UPDATE CASCADE ON DELETE RESTRICT",true,false,public,roles
+public,roles,roles_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,ruling_meta,ruling_meta_day_h_range,c,CHECK,CHECK (((day_h IS NULL) OR ((day_h >= 1) AND (day_h <= 30)))),true,false,,
+public,ruling_meta,ruling_meta_month_h_range,c,CHECK,CHECK (((month_h IS NULL) OR ((month_h >= 1) AND (month_h <= 12)))),true,false,,
+public,ruling_meta,ruling_meta_pkey,p,PRIMARY KEY,PRIMARY KEY (case_id),true,false,,
+public,ruling_meta,ruling_meta_snapshot_id_fkey,f,FOREIGN KEY,FOREIGN KEY (snapshot_id) REFERENCES research_snapshot_meta(id),true,false,public,research_snapshot_meta
+public,ruling_meta,ruling_meta_year_h_range,c,CHECK,CHECK (((year_h IS NULL) OR ((year_h >= 1300) AND (year_h <= 1500)))),true,false,,
+public,ruling_segment_embeddings,ruling_segment_embeddings_part_check,c,CHECK,"CHECK ((part = ANY (ARRAY['reasons'::text, 'disposition'::text])))",true,false,,
+public,ruling_segment_embeddings,ruling_segment_embeddings_pkey,p,PRIMARY KEY,"PRIMARY KEY (ruling_id, part, chunk)",true,false,,
+public,ruling_segments,ruling_segments_part_check,c,CHECK,"CHECK ((part = ANY (ARRAY['header'::text, 'claims'::text, 'defense'::text, 'evidence'::text, 'reasons'::text, 'disposition'::text, 'appeal'::text, 'other'::text])))",true,false,,
+public,ruling_segments,ruling_segments_pkey,p,PRIMARY KEY,"PRIMARY KEY (ruling_id, part)",true,false,,
+public,search_logs,search_logs_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,search_surface,search_surface_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,search_surface,search_surface_supersedes_surface_id_fkey,f,FOREIGN KEY,FOREIGN KEY (supersedes_surface_id) REFERENCES search_surface(id),true,false,public,search_surface
+public,search_surface,search_surface_surface_system_id_fkey,f,FOREIGN KEY,FOREIGN KEY (surface_system_id) REFERENCES legal_systems(id),true,false,public,legal_systems
+public,search_surface_member,search_surface_member_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,search_surface_member,search_surface_member_role_check,c,CHECK,"CHECK ((role = ANY (ARRAY['mixed'::text, 'edition_old'::text, 'edition_new'::text, 'retired'::text, 'successor'::text])))",true,false,,
+public,search_surface_member,search_surface_member_system_id_fkey,f,FOREIGN KEY,FOREIGN KEY (system_id) REFERENCES legal_systems(id),true,false,public,legal_systems
+public,search_surface_member,search_surface_member_work_key_system_id_key,u,UNIQUE,"UNIQUE (work_key, system_id)",true,false,,
+public,simulation_cases,simulation_cases_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,simulation_cases,simulation_cases_user_id_fkey,f,FOREIGN KEY,FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE RESTRICT,true,false,public,users
+public,simulation_decisions,simulation_decisions_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,simulation_decisions,simulation_decisions_simulationId_fkey,f,FOREIGN KEY,"FOREIGN KEY (""simulationId"") REFERENCES simulation_sessions(id) ON UPDATE CASCADE ON DELETE RESTRICT",true,false,public,simulation_sessions
+public,simulation_judgments,simulation_judgments_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,simulation_judgments,simulation_judgments_simulationId_fkey,f,FOREIGN KEY,"FOREIGN KEY (""simulationId"") REFERENCES simulation_sessions(id) ON UPDATE CASCADE ON DELETE RESTRICT",true,false,public,simulation_sessions
+public,simulation_messages,simulation_messages_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,simulation_messages,simulation_messages_simulationId_fkey,f,FOREIGN KEY,"FOREIGN KEY (""simulationId"") REFERENCES simulation_sessions(id) ON UPDATE CASCADE ON DELETE RESTRICT",true,false,public,simulation_sessions
+public,simulation_runs,simulation_runs_case_id_fkey,f,FOREIGN KEY,FOREIGN KEY (case_id) REFERENCES simulation_cases(id) ON UPDATE CASCADE ON DELETE SET NULL,true,false,public,simulation_cases
+public,simulation_runs,simulation_runs_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,simulation_sessions,simulation_sessions_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,simulation_sessions,simulation_sessions_userId_fkey,f,FOREIGN KEY,"FOREIGN KEY (""userId"") REFERENCES users(id) ON UPDATE CASCADE ON DELETE RESTRICT",true,false,public,users
+public,site_config,site_config_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,site_pages,site_pages_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,site_pages,site_pages_slug_key,u,UNIQUE,UNIQUE (slug),true,false,,
+public,subscription_activation,subscription_activation_event_id_key,u,UNIQUE,UNIQUE (event_id),true,false,,
+public,subscription_activation,subscription_activation_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,support_messages,support_messages_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,support_messages,support_messages_thread_id_fkey,f,FOREIGN KEY,FOREIGN KEY (thread_id) REFERENCES support_threads(id) ON DELETE CASCADE,true,false,public,support_threads
+public,support_threads,support_threads_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,training_progress,training_progress_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,training_progress,training_progress_userId_fkey,f,FOREIGN KEY,"FOREIGN KEY (""userId"") REFERENCES users(id) ON UPDATE CASCADE ON DELETE RESTRICT",true,false,public,users
+public,unit_version,unit_version_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,usage_credit_buckets,usage_credit_buckets_check,c,CHECK,"CHECK ((""remainingMilliUnits"" <= ""grantedMilliUnits""))",true,false,,
+public,usage_credit_buckets,usage_credit_buckets_grantedMilliUnits_check,c,CHECK,"CHECK ((""grantedMilliUnits"" >= 0))",true,false,,
+public,usage_credit_buckets,usage_credit_buckets_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,usage_credit_buckets,usage_credit_buckets_remainingMilliUnits_check,c,CHECK,"CHECK ((""remainingMilliUnits"" >= 0))",true,false,,
+public,usage_credit_buckets,usage_credit_buckets_sourceType_check,c,CHECK,"CHECK ((""sourceType"" = ANY (ARRAY['TRIAL'::text, 'SUBSCRIPTION'::text, 'PURCHASE'::text, 'PROMOTION'::text, 'REFUND'::text, 'ADMIN_GRANT'::text, 'LEGACY_MIGRATION'::text])))",true,false,,
+public,usage_credit_buckets,usage_credit_buckets_status_check,c,CHECK,"CHECK ((status = ANY (ARRAY['active'::text, 'depleted'::text, 'expired'::text, 'revoked'::text])))",true,false,,
+public,usage_credit_buckets,usage_credit_buckets_userId_fkey,f,FOREIGN KEY,"FOREIGN KEY (""userId"") REFERENCES users(id) ON DELETE CASCADE",true,false,public,users
+public,users,users_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,verification,verification_method_check,c,CHECK,"CHECK ((method = ANY (ARRAY['rule'::text, 'manual'::text, 'owner_decision'::text])))",true,false,,
+public,verification,verification_object_type_check,c,CHECK,"CHECK ((object_type = ANY (ARRAY['work'::text, 'unit'::text, 'effect'::text, 'relation'::text])))",true,false,,
+public,verification,verification_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,verification,verification_verified_status_check,c,CHECK,"CHECK ((verified_status = ANY (ARRAY['ساري'::text, 'صادر لم يسرِ بعد'::text, 'ملغى'::text, 'مستبدل'::text, 'ملغى مع بقاء أحكام محددة مؤقتًا'::text, 'إلغاء جزئي معلّق على شرط'::text, 'ملغاة'::text, 'مضافة'::text, 'سجل مخلوط — لا يُعرض'::text])))",true,false,,
+public,work_edition,work_edition_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+public,work_edition,work_edition_role_check,c,CHECK,"CHECK ((role = ANY (ARRAY['old'::text, 'new'::text])))",true,false,,
+uqn_fix,amendment_manual,amendment_manual_pkey,p,PRIMARY KEY,PRIMARY KEY (effect_id),true,false,,
+uqn_fix,amendment_op,amendment_op_confidence_check,c,CHECK,"CHECK ((confidence = ANY (ARRAY['rule_exact'::text, 'needs_review'::text])))",true,false,,
+uqn_fix,amendment_op,amendment_op_op_type_check,c,CHECK,"CHECK ((op_type = ANY (ARRAY['replace_article_text'::text, 'replace_paragraph_text'::text, 'insert_paragraph'::text, 'insert_article'::text, 'append_text'::text, 'delete_paragraph'::text, 'repeal_article'::text, 'substitute_phrase'::text, 'replace_definition'::text, 'replace_definition_entry'::text, 'replace_law'::text, 'repeal_law'::text, 'rename_law'::text])))",true,false,,
+uqn_fix,amendment_op,amendment_op_pkey,p,PRIMARY KEY,PRIMARY KEY (op_id),true,false,,
+uqn_fix,amendment_op,amendment_op_source_url_fkey,f,FOREIGN KEY,FOREIGN KEY (source_url) REFERENCES uqn_fix.source_snapshot(url),true,false,uqn_fix,source_snapshot
+uqn_fix,amendment_review,amendment_review_check,c,CHECK,CHECK (((decision <> 'approved_with_edit'::text) OR (corrected IS NOT NULL))),true,false,,
+uqn_fix,amendment_review,amendment_review_decision_check,c,CHECK,"CHECK ((decision = ANY (ARRAY['approved'::text, 'rejected'::text, 'approved_with_edit'::text])))",true,false,,
+uqn_fix,amendment_review,amendment_review_op_id_fkey,f,FOREIGN KEY,FOREIGN KEY (op_id) REFERENCES uqn_fix.amendment_op(op_id),true,false,uqn_fix,amendment_op
+uqn_fix,amendment_review,amendment_review_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+uqn_fix,issuance_instrument,issuance_instrument_instrument_kind_check,c,CHECK,"CHECK ((instrument_kind = ANY (ARRAY['cabinet_decision'::text, 'royal_order'::text, 'royal_circular'::text, 'royal_decree'::text])))",true,false,,
+uqn_fix,issuance_instrument,issuance_instrument_law_title_source_url_key,u,UNIQUE,"UNIQUE (law_title, source_url)",true,false,,
+uqn_fix,issuance_instrument,issuance_instrument_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+uqn_fix,issuance_instrument,issuance_instrument_status_check,c,CHECK,CHECK ((status = 'proven'::text)),true,false,,
+uqn_fix,new_law,new_law_pkey,p,PRIMARY KEY,PRIMARY KEY (title),true,false,,
+uqn_fix,new_law,new_law_status_check,c,CHECK,CHECK ((status = 'ساري'::text)),true,false,,
+uqn_fix,new_law,new_law_text_source_url_fkey,f,FOREIGN KEY,FOREIGN KEY (text_source_url) REFERENCES uqn_fix.source_snapshot(url),true,false,uqn_fix,source_snapshot
+uqn_fix,new_law,new_law_text_verification_check,c,CHECK,"CHECK ((text_verification = ANY (ARRAY['pending_official_match'::text, 'matched_official'::text])))",true,false,,
+uqn_fix,new_law_unit,new_law_unit_pkey,p,PRIMARY KEY,"PRIMARY KEY (title, seq)",true,false,,
+uqn_fix,new_law_unit,new_law_unit_title_fkey,f,FOREIGN KEY,FOREIGN KEY (title) REFERENCES uqn_fix.new_law(title),true,false,uqn_fix,new_law
+uqn_fix,new_law_unit,new_law_unit_unit_type_check,c,CHECK,"CHECK ((unit_type = ANY (ARRAY['preamble'::text, 'article'::text])))",true,false,,
+uqn_fix,source_snapshot,source_snapshot_pkey,p,PRIMARY KEY,PRIMARY KEY (url),true,false,,
+uqn_fix,supersession_evidence,supersession_evidence_old_title_new_title_relation_key,u,UNIQUE,"UNIQUE (old_title, new_title, relation)",true,false,,
+uqn_fix,supersession_evidence,supersession_evidence_pkey,p,PRIMARY KEY,PRIMARY KEY (id),true,false,,
+uqn_fix,supersession_evidence,supersession_evidence_relation_check,c,CHECK,"CHECK ((relation = ANY (ARRAY['replace'::text, 'repeal'::text, 'repeal_with_saving'::text])))",true,false,,
+uqn_fix,supersession_evidence,supersession_evidence_status_check,c,CHECK,"CHECK ((status = ANY (ARRAY['proven'::text, 'not_proven'::text])))",true,false,,
+uqn_stage,batch,batch_pkey,p,PRIMARY KEY,PRIMARY KEY (batch_id),true,false,,
+uqn_stage,effect,effect_batch_id_fkey,f,FOREIGN KEY,FOREIGN KEY (batch_id) REFERENCES uqn_stage.batch(batch_id),true,false,uqn_stage,batch
+uqn_stage,effect,effect_effect_type_check,c,CHECK,"CHECK ((effect_type = ANY (ARRAY['amend'::text, 'insert'::text, 'delete'::text, 'repeal'::text, 'replace'::text, 'enact'::text, 'amend_or_repeal_unclassified'::text])))",true,false,,
+uqn_stage,effect,effect_pkey,p,PRIMARY KEY,"PRIMARY KEY (batch_id, effect_id)",true,false,,
+uqn_stage,effect,effect_status_check,c,CHECK,"CHECK ((status = ANY (ARRAY['pending_review'::text, 'confirmed'::text, 'rejected'::text, 'applied'::text])))",true,false,,
+uqn_stage,supersession,supersession_batch_id_fkey,f,FOREIGN KEY,FOREIGN KEY (batch_id) REFERENCES uqn_stage.batch(batch_id),true,false,uqn_stage,batch
+uqn_stage,supersession,supersession_pkey,p,PRIMARY KEY,"PRIMARY KEY (batch_id, new_source_url)",true,false,,
+uqn_stage,unit,unit_batch_id_source_id_fkey,f,FOREIGN KEY,"FOREIGN KEY (batch_id, source_id) REFERENCES uqn_stage.work(batch_id, source_id) ON DELETE CASCADE",true,false,uqn_stage,work
+uqn_stage,unit,unit_check,c,CHECK,"CHECK (((unit_type = ANY (ARRAY['article'::text, 'clause'::text])) = (number IS NOT NULL)))",true,false,,
+uqn_stage,unit,unit_pkey,p,PRIMARY KEY,"PRIMARY KEY (batch_id, source_id, seq)",true,false,,
+uqn_stage,unit,unit_seq_check,c,CHECK,CHECK ((seq >= 1)),true,false,,
+uqn_stage,unit,unit_unit_type_check,c,CHECK,"CHECK ((unit_type = ANY (ARRAY['enacting_instrument'::text, 'approval_instrument'::text, 'preamble'::text, 'article'::text, 'clause'::text, 'unstructured_body'::text])))",true,false,,
+uqn_stage,work,work_batch_id_fkey,f,FOREIGN KEY,FOREIGN KEY (batch_id) REFERENCES uqn_stage.batch(batch_id),true,false,uqn_stage,batch
+uqn_stage,work,work_dataset_check,c,CHECK,"CHECK ((dataset = ANY (ARRAY['laws'::text, 'regulations'::text])))",true,false,,
+uqn_stage,work,work_numbering_check,c,CHECK,"CHECK ((numbering = ANY (ARRAY['articles'::text, 'clauses'::text])))",true,false,,
+uqn_stage,work,work_pkey,p,PRIMARY KEY,"PRIMARY KEY (batch_id, source_id)",true,false,,
+uqn_stage,work,work_published_hijri_check,c,CHECK,CHECK (((published_hijri IS NULL) OR (published_hijri ~ '^\d{4}-\d{2}-\d{2}$'::text) OR (published_hijri = ''::text))),true,false,,
+uqn_stage,work,work_review_status_check,c,CHECK,"CHECK ((review_status = ANY (ARRAY['pending'::text, 'accepted'::text, 'rejected'::text, 'needs_fix'::text])))",true,false,,

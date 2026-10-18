@@ -1,0 +1,53 @@
+# الخلاصة التنفيذية — HKM-031
+
+**القياس:** 2026-10-18 من 11:41:39 UTC. **البيئة:** إنتاج Neon الأساسي لحكيم، وقراءة HTTP عامة لـ `hakeemai.net`، وكود `main@d4ee69a`. **الثقة:** الأرقام أدناه ناتجة عن `SELECT` على الكتالوج أو عدّ مباشر، إلا ما وُسم غير متحقق.
+
+## ما ثَبت في هذه الجلسة
+
+حكيم يعمل على مستودع عام واحد (`asim1417/hakeem-platform`، أُنشئ 2026-06-02، 1,627 التزامًا حتى هذا الرأس). الموقع العام يرد من Vercel خلف Cloudflare في منطقة `iad1`. الصحة العامة قالت إن القاعدة متصلة ومفاتيح Clerk الحية متطابقة، وإن Moyasar غير مهيأ. مسار `/mcp` بلا رمز أعاد `401` خلال المهلة القصيرة، ومكتبا `/admin/legal` و`/dashboard/legal-core` يحيلان إلى تسجيل الدخول.
+
+قاعدة الإنتاج هي مشروع `misty-base-66693229`، الفرع `br-rapid-salad-aq782ea2`، PostgreSQL 17.11، الامتدادات `vector 0.8.0` و`pg_trgm 1.6`. الحجم نحو 6.02 مليار بايت. المخططات: `public` (139 جدولًا)، `boe` (16)، `boe_inject` (8)، `uqn_fix` (8)، `uqn_stage` (6). لا سياسات RLS، ولا فهرس غير صالح، ولا قيد غير معتمد. في `public`: 362 فهرس B-tree، و12 GIN، و4 HNSW.
+
+مطابقة Prisma على هذا الرأس:
+
+- 71 نموذجًا كلها لها جدول في `public`. لا عمود Prisma مفقود بالاسم.
+- 68 جدولًا في `public` بلا نموذج Prisma، ومنها `_prisma_migrations`.
+- 27 عمودًا في PostgreSQL بلا حقل Prisma: 19 على `users`، و`instrument_kind` على `legal_systems`، وستة على `legal_articles` (`search_norm` و`norm_*`)، و`search_norm` على `judicial_cases`.
+- فرق إلزامية على `legal_articles.keywords` و`training_progress.badges`: Prisma يعرّفهما `String[]` مطلوبين، وPostgreSQL يجعل `text[]` قابلًا للإفراغ. الصفوف الفارغة فعليًا = 0.
+- `AuditSubject` يضيف `BILLING`. أحد عشر enum للفوترة موجودة في القاعدة خارج Prisma.
+- `UserRole` يضم الآن `SUPER_ADMIN` و`JUDGE`. وصف `DB_RUNBOOK.md` المؤرخ 2026-09-25 (غياب القيمتين) لم يعد يصف الإنتاج.
+
+`_prisma_migrations` يحوي صفًا واحدًا: `20260604120000_add_judicial_cases`. مجلد `prisma/migrations` يحوي 39 دليلًا، وفي المستودع 175 ملف SQL. إعادة بناء الإنتاج بأمر Prisma وحده غير مثبتة.
+
+## الأعداد الحية مقابل لقطة السجل (17 أكتوبر)
+
+| المؤشر | لقطة السجل | هذه القراءة | الحكم |
+|---|---:|---:|---|
+| `legal_systems` | 1,146 | 1,155 | زاد |
+| `legal_articles` | 28,606 ثم 28,622 بعد HKM-002 | 28,731 | زاد |
+| `search_norm` الفارغ في المواد | 0 بعد الملء | 0 | ما زال مغلقًا |
+| `judicial_cases` | 51,105 | 51,105 | ثابت |
+| `law_card` | 505 | 509 | زاد |
+| `unit_version` | 309 | 346 | زاد |
+| `search_surface` | 50 | 56 | زاد |
+| وثائق `boe.law` بلا مطابقة `guid` | 33 | 33 | ثابت |
+| ملاحظات `boe.amendment_note` بـ `needs_review` | 676 / 1,819 | 676 / 1,819 | ثابت |
+| فروق `boe.diff` | 16,414 محسوبة 16 أكتوبر 13:54 UTC | نفس العدد ونفس `computed_at` | لم تُعد الحساب |
+| أنظمة يختلف `articleCount` عن عدد الصفوف | 7 | 10 | زاد؛ ليس حكمًا بنقص النص |
+| أنظمة بلا مواد | 83 | 83 | ثابت |
+
+`instrument_kind` على `legal_systems` فارغ في الصفوف الـ1,155 كلها. العمود موجود ولا يحمل تصنيف الأداة.
+
+## حالة المكتب والبحث
+
+نسخة `editorial_config` رقم 1 كُتبت في 2026-10-18 00:28:26 UTC وبها `writeEnabled=true` و`requireMfa=true`. جداول `change_set` و`editorial_change` و`review_decision` و`index_sync` ما زالت بلا صفوف، و`audit_event` صف واحد. صفر الطابور لا يعني غياب الكود: الإدراج يحدث عند النشر، ولا يوجد عامل يفرّغ `index_sync` (لا cron في `vercel.json` ولا workflow بهذا الاسم). قيمة `EDITORIAL_DESK_WRITE` في Vercel غير مقروءة هنا، فهي تستطيع أن تقفل الكتابة فوق اللوحة.
+
+المتجهات نموذج `text-embedding-3-small` بأبعاد 1536: 17,325 مادة، و4,066 مبدأ، و50,273 حكمًا في `embeddings`. المواد بلا متجه مقالة: 11,406 من 28,731. هذا نطاق HKM-029 المفتوح (#772 و#780) ولم يُعد بناؤه. تغطية مقاطع الأحكام: كل الأحكام الـ51,105 لها مقاطع، و51,103 لها متجهات مقاطع. أجزاء المقاطع: رأس 51,105، منطوق 51,082، أسباب 50,628، دعوى 49,686، دفاع 26,594.
+
+`legal_relations` أغلبه `RELATED_TO` (64,801) مع 13 `SUPERSEDES`. `legal_graph_edges` طبقة أخرى: 1,081 `IMPLEMENTS` و37 `PROCEDURE_FOR` و12 `GOVERNED_BY`، كلها `VERIFIED`. لا يُستنتج غياب علاقة من جدول واحد.
+
+## ما لم يُفحص
+
+واجهة Neon للاحتفاظ بالنقطة الزمنية وعلم الحماية، وSHA نشر Vercel الحالي، وعنقود OpenSearch (نجحت workflow فهرسة في 06:07 UTC على `09ceb8b`، وهذا ليس عدّ الوثائق)، وقاعدة Rasd، وHostinger، وSupabase، وأسماء أسرار GitHub (الواجهة أعادت 403)، وحماية فرع `main` (403)، واختبار استعادة، ومجموعة بحث معيارية، ورحلة بعد تسجيل الدخول. مهلات `/mcp` ذات 300 ثانية تبقى `ROOT_CAUSE_UNPROVEN`.
+
+خطة الاستعادة في [DR_READINESS.md](DR_READINESS.md) تنتظر إذنًا محددًا قبل أي فرع أو نسخة. السجل المرتب في [FINDINGS_REGISTER.csv](FINDINGS_REGISTER.csv) و[REMEDIATION_ROADMAP.md](REMEDIATION_ROADMAP.md).

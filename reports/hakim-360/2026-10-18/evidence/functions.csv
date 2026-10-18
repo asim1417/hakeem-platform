@@ -1,0 +1,162 @@
+schema,name,args,kind,language,security_definer
+boe,forbid_change,,function,plpgsql,false
+public,array_to_halfvec,"double precision[], integer, boolean",function,c,false
+public,array_to_halfvec,"numeric[], integer, boolean",function,c,false
+public,array_to_halfvec,"integer[], integer, boolean",function,c,false
+public,array_to_halfvec,"real[], integer, boolean",function,c,false
+public,array_to_sparsevec,"integer[], integer, boolean",function,c,false
+public,array_to_sparsevec,"double precision[], integer, boolean",function,c,false
+public,array_to_sparsevec,"real[], integer, boolean",function,c,false
+public,array_to_sparsevec,"numeric[], integer, boolean",function,c,false
+public,array_to_vector,"real[], integer, boolean",function,c,false
+public,array_to_vector,"numeric[], integer, boolean",function,c,false
+public,array_to_vector,"integer[], integer, boolean",function,c,false
+public,array_to_vector,"double precision[], integer, boolean",function,c,false
+public,avg,halfvec,aggregate,internal,false
+public,avg,vector,aggregate,internal,false
+public,billing_audit_logs_guard,,function,plpgsql,false
+public,billing_invoices_guard,,function,plpgsql,false
+public,binary_quantize,vector,function,c,false
+public,binary_quantize,halfvec,function,c,false
+public,cosine_distance,"halfvec, halfvec",function,c,false
+public,cosine_distance,"vector, vector",function,c,false
+public,cosine_distance,"sparsevec, sparsevec",function,c,false
+public,editorial_append_only,,function,plpgsql,false
+public,editorial_change_draft_only,,function,plpgsql,false
+public,editorial_guard_change,,function,plpgsql,false
+public,editorial_guard_change_set,,function,plpgsql,false
+public,gin_extract_query_trgm,"text, internal, smallint, internal, internal, internal, internal",function,c,false
+public,gin_extract_value_trgm,"text, internal",function,c,false
+public,gin_trgm_consistent,"internal, smallint, text, integer, internal, internal, internal, internal",function,c,false
+public,gin_trgm_triconsistent,"internal, smallint, text, integer, internal, internal, internal",function,c,false
+public,gtrgm_compress,internal,function,c,false
+public,gtrgm_consistent,"internal, text, smallint, oid, internal",function,c,false
+public,gtrgm_decompress,internal,function,c,false
+public,gtrgm_distance,"internal, text, smallint, oid, internal",function,c,false
+public,gtrgm_in,cstring,function,c,false
+public,gtrgm_options,internal,function,c,false
+public,gtrgm_out,gtrgm,function,c,false
+public,gtrgm_penalty,"internal, internal, internal",function,c,false
+public,gtrgm_picksplit,"internal, internal",function,c,false
+public,gtrgm_same,"gtrgm, gtrgm, internal",function,c,false
+public,gtrgm_union,"internal, internal",function,c,false
+public,hakeem_append_only,,function,plpgsql,false
+public,halfvec,"halfvec, integer, boolean",function,c,false
+public,halfvec_accum,"double precision[], halfvec",function,c,false
+public,halfvec_add,"halfvec, halfvec",function,c,false
+public,halfvec_avg,double precision[],function,c,false
+public,halfvec_cmp,"halfvec, halfvec",function,c,false
+public,halfvec_combine,"double precision[], double precision[]",function,c,false
+public,halfvec_concat,"halfvec, halfvec",function,c,false
+public,halfvec_eq,"halfvec, halfvec",function,c,false
+public,halfvec_ge,"halfvec, halfvec",function,c,false
+public,halfvec_gt,"halfvec, halfvec",function,c,false
+public,halfvec_in,"cstring, oid, integer",function,c,false
+public,halfvec_l2_squared_distance,"halfvec, halfvec",function,c,false
+public,halfvec_le,"halfvec, halfvec",function,c,false
+public,halfvec_lt,"halfvec, halfvec",function,c,false
+public,halfvec_mul,"halfvec, halfvec",function,c,false
+public,halfvec_ne,"halfvec, halfvec",function,c,false
+public,halfvec_negative_inner_product,"halfvec, halfvec",function,c,false
+public,halfvec_out,halfvec,function,c,false
+public,halfvec_recv,"internal, oid, integer",function,c,false
+public,halfvec_send,halfvec,function,c,false
+public,halfvec_spherical_distance,"halfvec, halfvec",function,c,false
+public,halfvec_sub,"halfvec, halfvec",function,c,false
+public,halfvec_to_float4,"halfvec, integer, boolean",function,c,false
+public,halfvec_to_sparsevec,"halfvec, integer, boolean",function,c,false
+public,halfvec_to_vector,"halfvec, integer, boolean",function,c,false
+public,halfvec_typmod_in,cstring[],function,c,false
+public,hamming_distance,"bit, bit",function,c,false
+public,hkm023b_preamble_edition_check,,function,plpgsql,false
+public,hkm023b_preamble_unit_check,,function,plpgsql,false
+public,hkm023b_verify_preamble_edition,p_edition text,function,plpgsql,false
+public,hnsw_bit_support,internal,function,c,false
+public,hnsw_halfvec_support,internal,function,c,false
+public,hnsw_sparsevec_support,internal,function,c,false
+public,hnswhandler,internal,function,c,false
+public,inner_product,"sparsevec, sparsevec",function,c,false
+public,inner_product,"vector, vector",function,c,false
+public,inner_product,"halfvec, halfvec",function,c,false
+public,ivfflat_bit_support,internal,function,c,false
+public,ivfflat_halfvec_support,internal,function,c,false
+public,ivfflathandler,internal,function,c,false
+public,jaccard_distance,"bit, bit",function,c,false
+public,l1_distance,"vector, vector",function,c,false
+public,l1_distance,"sparsevec, sparsevec",function,c,false
+public,l1_distance,"halfvec, halfvec",function,c,false
+public,l2_distance,"halfvec, halfvec",function,c,false
+public,l2_distance,"vector, vector",function,c,false
+public,l2_distance,"sparsevec, sparsevec",function,c,false
+public,l2_norm,sparsevec,function,c,false
+public,l2_norm,halfvec,function,c,false
+public,l2_normalize,sparsevec,function,c,false
+public,l2_normalize,vector,function,c,false
+public,l2_normalize,halfvec,function,c,false
+public,set_limit,real,function,c,false
+public,show_limit,,function,c,false
+public,show_trgm,text,function,c,false
+public,similarity,"text, text",function,c,false
+public,similarity_dist,"text, text",function,c,false
+public,similarity_op,"text, text",function,c,false
+public,sparsevec,"sparsevec, integer, boolean",function,c,false
+public,sparsevec_cmp,"sparsevec, sparsevec",function,c,false
+public,sparsevec_eq,"sparsevec, sparsevec",function,c,false
+public,sparsevec_ge,"sparsevec, sparsevec",function,c,false
+public,sparsevec_gt,"sparsevec, sparsevec",function,c,false
+public,sparsevec_in,"cstring, oid, integer",function,c,false
+public,sparsevec_l2_squared_distance,"sparsevec, sparsevec",function,c,false
+public,sparsevec_le,"sparsevec, sparsevec",function,c,false
+public,sparsevec_lt,"sparsevec, sparsevec",function,c,false
+public,sparsevec_ne,"sparsevec, sparsevec",function,c,false
+public,sparsevec_negative_inner_product,"sparsevec, sparsevec",function,c,false
+public,sparsevec_out,sparsevec,function,c,false
+public,sparsevec_recv,"internal, oid, integer",function,c,false
+public,sparsevec_send,sparsevec,function,c,false
+public,sparsevec_to_halfvec,"sparsevec, integer, boolean",function,c,false
+public,sparsevec_to_vector,"sparsevec, integer, boolean",function,c,false
+public,sparsevec_typmod_in,cstring[],function,c,false
+public,strict_word_similarity,"text, text",function,c,false
+public,strict_word_similarity_commutator_op,"text, text",function,c,false
+public,strict_word_similarity_dist_commutator_op,"text, text",function,c,false
+public,strict_word_similarity_dist_op,"text, text",function,c,false
+public,strict_word_similarity_op,"text, text",function,c,false
+public,subvector,"vector, integer, integer",function,c,false
+public,subvector,"halfvec, integer, integer",function,c,false
+public,sum,halfvec,aggregate,internal,false
+public,sum,vector,aggregate,internal,false
+public,vector,"vector, integer, boolean",function,c,false
+public,vector_accum,"double precision[], vector",function,c,false
+public,vector_add,"vector, vector",function,c,false
+public,vector_avg,double precision[],function,c,false
+public,vector_cmp,"vector, vector",function,c,false
+public,vector_combine,"double precision[], double precision[]",function,c,false
+public,vector_concat,"vector, vector",function,c,false
+public,vector_dims,halfvec,function,c,false
+public,vector_dims,vector,function,c,false
+public,vector_eq,"vector, vector",function,c,false
+public,vector_ge,"vector, vector",function,c,false
+public,vector_gt,"vector, vector",function,c,false
+public,vector_in,"cstring, oid, integer",function,c,false
+public,vector_l2_squared_distance,"vector, vector",function,c,false
+public,vector_le,"vector, vector",function,c,false
+public,vector_lt,"vector, vector",function,c,false
+public,vector_mul,"vector, vector",function,c,false
+public,vector_ne,"vector, vector",function,c,false
+public,vector_negative_inner_product,"vector, vector",function,c,false
+public,vector_norm,vector,function,c,false
+public,vector_out,vector,function,c,false
+public,vector_recv,"internal, oid, integer",function,c,false
+public,vector_send,vector,function,c,false
+public,vector_spherical_distance,"vector, vector",function,c,false
+public,vector_sub,"vector, vector",function,c,false
+public,vector_to_float4,"vector, integer, boolean",function,c,false
+public,vector_to_halfvec,"vector, integer, boolean",function,c,false
+public,vector_to_sparsevec,"vector, integer, boolean",function,c,false
+public,vector_typmod_in,cstring[],function,c,false
+public,word_similarity,"text, text",function,c,false
+public,word_similarity_commutator_op,"text, text",function,c,false
+public,word_similarity_dist_commutator_op,"text, text",function,c,false
+public,word_similarity_dist_op,"text, text",function,c,false
+public,word_similarity_op,"text, text",function,c,false
+uqn_fix,forbid_change,,function,plpgsql,false

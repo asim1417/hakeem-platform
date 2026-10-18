@@ -1,0 +1,23 @@
+area,identified,inspected,evidence_linked,tested,reviewed,blocked_reason
+git history and open PRs,yes,yes,EXECUTION_LOG.md,read-only gh and git,self,secret names and branch protection HTTP 403
+Neon primary catalog,yes,yes,DATABASE_CATALOG.csv,SELECT read only,self,none
+Prisma drift,yes,yes,SCHEMA_DIFF_MATRIX.csv,parser plus catalog,self,full semantic type mapping beyond nullability is partial
+migrations and SQL lineage,yes,yes,MIGRATION_CHRONOLOGY.md,counts and applied row,self,which SQL file applied on which day is incomplete
+RLS roles grants,yes,yes,SECURITY_ACCESS_MATRIX.csv,catalog,self,which Vercel secret uses which role
+PITR and protected flag,yes,no,DR_READINESS.md,not run,self,Neon API not available
+restore drill,yes,no,SCHEMA_REBUILD_PLAN.md,not run,self,needs owner authorization
+legal systems and articles,yes,yes,LEGAL_DATA_QUALITY.md,aggregate SQL,self,official text samples not re-compared to BOE pages
+judicial corpus,yes,yes,JUDICIAL_CORPUS.md,aggregate SQL,self,no judgment text exported
+BOE provenance,yes,yes,LEGAL_DATA_QUALITY.md,stored diff not recomputed,self,33 unmatched docs not individually decided
+search indexes,yes,partial,SEARCH_INDEX_AUDIT.md,SQL counts; OpenSearch not connected,self,no cluster credential
+search benchmark,yes,no,SEARCH_INDEX_AUDIT.md,not run,self,no approved golden set execution in this session
+RAG citation guards,yes,code,SEARCH_INDEX_AUDIT.md,not executed,self,no model calls
+MCP runtime,yes,partial,API_MCP_RUNTIME.md,unauthenticated 401 only,self,no traces for historical 300s timeouts
+editorial desk,yes,yes,EDITORIAL_DESK_AUDIT.md,SQL config plus code,self,authenticated write test forbidden
+storage backend,yes,code,STORAGE_AUDIT.md,not probed,self,env values not read
+public UI and SEO,yes,partial,PUBLIC_UI_AUDIT.md,curl robots sitemap legal health,self,no login and no browser session
+billing,yes,partial,INTEGRATION_CATALOG.csv,health says Moyasar unset; enums exist,self,no payment call
+Rasd Hostinger Supabase,yes,docs only,HISTORICAL_TIMELINE.md,not connected,self,no credentials
+CI lineage,yes,partial,HISTORICAL_TIMELINE.md,last 25 runs,self,full Actions history not exported
+DR plan,yes,yes,DR_READINESS.md,plan only,self,execution gated
+independent QA,yes,self only,README.md,spot-checked admin auth false positive,self,aman-tech skill absent
