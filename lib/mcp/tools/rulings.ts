@@ -8,8 +8,9 @@
  */
 import { prisma } from "@/lib/prisma";
 import { normalizeArabic } from "@/lib/modules/legal-core/bm25-tokenizer";
-import { extractHijriYear, redactPII, splitRulingQuery } from "@/lib/modules/legal-core/rulings-search";
+import { extractHijriYear, splitRulingQuery } from "@/lib/modules/legal-core/rulings-search";
 import { rulingNumbersSql, rulingRedactedTextSql } from "@/lib/modules/legal-core/ruling-redacted-sql";
+import { maskRulingText, safeChunkBounds } from "@/lib/mcp/ruling-privacy";
 import { segmentRuling, type SegmentType } from "@/lib/rulings/research/segment";
 
 /** السنة الهجرية من نصّ التاريخ (أرقام هندية أو لاتينية) — كان التعبير السابق يلتقط اللاتينية فقط. */
@@ -37,13 +38,8 @@ export async function getRuling(rulingId: string, offset = 0, maxChars = 30000, 
   }
   const lo = target?.start ?? 0;
   const hi = target?.end ?? full.length;
-  let start = Math.max(lo, Math.min(lo + offset, hi));
-  let end = Math.min(hi, start + maxChars);
-  // لا تُقطع الشريحة داخل رقم: redactPII يحتاج الرقم كاملًا، وإلا تسرّبت هوية أو جوال على نصفين
-  // عبر نداءين بإزاحتين متقاربتين. نمدّ الحدّين خارج أي سلسلة أرقام وفواصل.
-  const numeric = /[0-9\u0660-\u0669\s\u00a0+\-]/;
-  while (start > lo && numeric.test(full[start - 1]) && numeric.test(full[start])) start--;
-  while (end < hi && numeric.test(full[end]) && numeric.test(full[end - 1])) end++;
+  // حدود لا تقسم جملة (اسمًا) ولا رقمًا على نداءين، فلا يفلت نصفه من الحجب (HKM-012).
+  const { start, end } = safeChunkBounds(full, lo, hi, offset, maxChars);
   const chunk = full.slice(start, end);
   const nextOffset = start + chunk.length < hi ? start - lo + chunk.length : null;
 
@@ -58,7 +54,7 @@ export async function getRuling(rulingId: string, offset = 0, maxChars = 30000, 
     offset: start - lo, // داخل الجزء المطلوب (أو النص كله)
     returned_chars: chunk.length,
     next_offset: nextOffset, // null = انتهى الجزء/النص
-    text: redactPII(chunk),
+    text: maskRulingText(chunk), // HKM-012: الأرقام الشخصية وأسماء الأفراد
   };
 }
 
@@ -140,8 +136,8 @@ export async function enumerateRulings(
 
   // مقتطف حول أول لفظ مطابق (لا صدر الحكم) — للغرض التصنيفي (سياق اللفظ).
   const results = rows.map((r) => {
-    // الحجب قبل القص، فلا يقطع القصُّ رقمًا يفلت من الحجب.
-    const txt = redactPII(r.judgmentText ?? "");
+    // الحجب قبل القص، فلا يقطع القصُّ رقمًا أو اسمًا يفلت من الحجب (HKM-012: والأسماء).
+    const txt = maskRulingText(r.judgmentText);
     let idx = -1;
     for (const t of parts.map((p) => p.text).filter(Boolean)) {
       const i = txt.indexOf(t);

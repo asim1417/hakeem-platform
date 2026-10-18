@@ -31,7 +31,12 @@ const STOP = new Set([
 ]);
 
 const markerAlt = ROLE_MARKERS.sort((a, b) => b.length - a.length).map((m) => m.replace(/ /g, "\\s+")).join("|");
-const ROLE_RE = new RegExp(`(^|[^\\u0621-\\u064A])((?:ال|و|ف|ل)?(?:${markerAlt}))(\\s*[:/،-]?\\s*)((?:${AR}\\s*){1,5})`, "g");
+// الصفة المعرّفة بعد حرف جر ملتصق: «للمدعي» (ل + المدعي بحذف الألف)، و«بالمدعي» و«كالمدعي» و«وللمدعي» (HKM-012، الأمر ٠٨).
+const lilAlt = ROLE_MARKERS.filter((m) => m.startsWith("ال")).map((m) => m.slice(2).replace(/ /g, "\\s+")).join("|");
+const ROLE_RE = new RegExp(
+  `(^|[^\\u0621-\\u064A])((?:[وف]?[بكل]?)(?:${markerAlt})|[وف]?لل(?:${lilAlt}))(\\s*[:/،-]?\\s*)((?:${AR}\\s*){1,5})`,
+  "g",
+);
 const NASAB_RE = new RegExp(`${AR}(?:\\s+(?:بن|بنت|ابن|ابنة)\\s+${AR})+(?:\\s+(?:آل\\s+)?${AR})?`, "g");
 
 const ROLE_WORDS = new Set(ROLE_MARKERS.filter((m) => !m.includes(" ")));

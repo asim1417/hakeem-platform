@@ -136,6 +136,7 @@ function matches(r: Row, where: Where): boolean {
 const fakePrisma = {
   judicialCase: {
     findMany: async ({ where }: { where: Where }) => rows.filter((r) => matches(r, where)),
+    findUnique: async ({ where }: { where: { id: string } }) => rows.find((r) => r.id === where.id) ?? null,
     update: noWrite, updateMany: noWrite, create: noWrite, delete: noWrite, deleteMany: noWrite,
   },
   async $queryRawUnsafe(sql: string, ...params: unknown[]) {
@@ -158,13 +159,15 @@ async function main() {
   const before = dbFingerprint();
   const { redactPII, stripPiiFromQuery, splitRulingQuery, searchRulingsDirect, findRulingIdsRedacted } = await import("../lib/modules/legal-core/rulings-search");
   const { searchJudgments, buildJudgmentSnippet } = await import("../lib/modules/legal-core/judgment-search");
-  const { enumerateRulings } = await import("../lib/mcp/tools/rulings");
+  const { enumerateRulings, getRuling } = await import("../lib/mcp/tools/rulings");
+  const { searchRulings: mcpSearchRulings } = await import("../lib/mcp/adapter");
   const { HakeemPublishedJudgmentsConnector } = await import("../lib/modules/due-diligence/judgments");
 
   type Path = { name: string; run: (q: string) => Promise<{ ids: string[]; texts: string[]; total?: number }> };
   const paths: Path[] = [
     { name: "/api/legal-core/search", run: async (q) => { const r = await searchJudgments(q, 1, 20); return { ids: r.map((x) => x.id), texts: r.map((x) => x.snippet) }; } },
     { name: "searchRulingsDirect", run: async (q) => { const r = await searchRulingsDirect({ query: q, limit: 20 }); return { ids: r.hits.map((h) => h.id), texts: r.hits.map((h) => `${h.snippet} ${h.disposition ?? ""}`), total: r.total }; } },
+    { name: "MCP search", run: async (q) => { const r = await mcpSearchRulings(q, undefined, undefined, 20); return { ids: r.results.map((x) => x.ruling_id), texts: r.results.map((x) => `${x.snippet} ${x.disposition ?? ""}`), total: r.total }; } },
     { name: "MCP enumerate", run: async (q) => { const r = (await enumerateRulings([q])) as { total: number; results?: Array<{ ruling_id: string; snippet: string }> }; return { ids: (r.results ?? []).map((x) => x.ruling_id), texts: (r.results ?? []).map((x) => x.snippet), total: r.total }; } },
     { name: "صفحة الأحكام (المعرّفات المنقّحة)", run: async (q) => { const p = splitRulingQuery(q); const ids = p.sensitive || p.numbers.length ? await findRulingIdsRedacted(p, { limit: 5000 }) : []; return { ids, texts: [], total: ids.length }; } },
   ];
@@ -212,7 +215,7 @@ async function main() {
     for (const [q, id] of keep) {
       if (p.name.startsWith("صفحة") && !splitRulingQuery(q).sensitive && !splitRulingQuery(q).numbers.length) continue; // الصفحة: النص العربي الخالص على الخام كما كان
       // MCP وsearchRulingsDirect يبحثان في العنوان والمتن (search_norm) لا الاستئناف، كما كانا.
-      if ((p.name === "MCP enumerate" || p.name === "searchRulingsDirect") && q === "لائحة استئناف") continue;
+      if ((p.name === "MCP enumerate" || p.name === "MCP search" || p.name === "searchRulingsDirect") && q === "لائحة استئناف") continue;
       const r = await p.run(q);
       ok(r.ids.includes(id), `${p.name}: «${q}» يجد ${id}`);
       ok(r.texts.every((t) => !PII_LEAK.test(t)), `${p.name}: مقتطفات «${q}» بلا بيانات محجوبة`);
@@ -226,6 +229,19 @@ async function main() {
   ok(!PII_LEAK.test(buildJudgmentSnippet(rows[1].judgmentText, "مقاولات")), "buildJudgmentSnippet يحجب قبل القص");
   const mcp = (await enumerateRulings(["مقاولات", "مقاولة"], undefined, undefined, false, 50, undefined, 520)) as { results: Array<{ snippet: string }> };
   ok(mcp.results.length > 0 && mcp.results.every((r) => !PII_LEAK.test(r.snippet)), "MCP: المقتطفات بلا رقم ولا جزء منه");
+  // HKM-012 (الأمر ٠٨): hakeem_get_ruling بشرائح قصيرة متتالية لا يسرّب رقمًا ولا جزءًا منه على حد شريحة.
+  for (const row of rows) {
+    for (const size of [17, 41, 97]) {
+      let offset: number | null = 0;
+      let leak = false;
+      for (let g = 0; offset !== null && g < 400; g++) {
+        const r = (await getRuling(row.id, offset, size)) as { text?: string; next_offset?: number | null };
+        if (PII_LEAK.test(r.text ?? "")) leak = true;
+        offset = r.next_offset ?? null;
+      }
+      ok(!leak, `MCP get_ruling: ${row.id} بشرائح ${size} حرفًا بلا رقم محجوب`);
+    }
+  }
   ok(JSON.stringify(rows) === frozen, "النص الأصلي في الذاكرة كما هو");
   ok(dbFingerprint() === before, "النص الأصلي في القاعدة كما هو (بصمة الجدول قبل الاختبار وبعده)");
   ok(sqlLog.every((s) => !/\b(UPDATE|DELETE|INSERT|TRUNCATE|DROP|ALTER)\b/i.test(s)), "كل الاستعلامات قراءة فقط");
