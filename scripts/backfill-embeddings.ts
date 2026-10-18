@@ -10,6 +10,9 @@
  */
 import { prisma } from "@/lib/prisma";
 
+/** سجلات المسار لا تُقرأ من جلسة التطوير، والتعليقات التوضيحية تُقرأ عبر API: ملخص بلا نصوص ولا أسرار. */
+const sanitize = (s: string) => s.replace(/postgres(?:ql)?:\/\/\S+/gi, "[رابط]").replace(/\bsk-[A-Za-z0-9_-]+/g, "[مفتاح]").slice(0, 900);
+
 async function main() {
   const libPath = "./hkm-029/embed-lib.mjs";
   const toolPath = "./hkm-029/embed-articles.mjs";
@@ -17,7 +20,8 @@ async function main() {
   const run = workflowArgsToRun(process.argv.slice(2));
   if (run) {
     const { main: embedArticles } = await import(toolPath);
-    await embedArticles([], run);
+    const result = await embedArticles([], run);
+    console.log(`::notice title=HKM-029 embeddings::${sanitize(JSON.stringify(result))}`);
     return;
   }
   console.error("الكتابة على جدول embeddings موقوفة. المتجه الجديد يُضاف في embedding_version، والصف القائم لا يُستبدل.");
@@ -27,7 +31,7 @@ async function main() {
 
 main()
   .catch((error) => {
-    console.error(error instanceof Error ? error.message : "فشل");
+    console.error(`::error title=HKM-029 embeddings::${sanitize(error instanceof Error ? error.message : "فشل")}`);
     process.exitCode = 1;
   })
   .finally(() => prisma.$disconnect());
