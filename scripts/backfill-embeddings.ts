@@ -8,27 +8,7 @@
  * بقائمتها المجمّدة: scope=missing تجريب بلا كتابة، وscope=all مع limit = العدد المعتمد كتابة في
  * embedding_version فقط. أي هدف آخر موقوف كما كان.
  */
-import { execFileSync } from "node:child_process";
-import { createRequire } from "node:module";
 import { prisma } from "@/lib/prisma";
-
-/**
- * pg ليس من تبعيات المشروع (القفل)، والأداة جُرّبت عليه محليًا. في المسار يُثبَّت مؤقتًا بالنسخة نفسها
- * بلا حفظ ولا سكربتات تثبيت، ثم يُستورد. لا يمس package.json ولا القفل.
- */
-const PG_VERSION = "8.23.1";
-function ensurePg(): void {
-  const req = createRequire(`${process.cwd()}/package.json`);
-  try {
-    req.resolve("pg");
-    req.resolve("pg-connection-string");
-    return;
-  } catch {
-    execFileSync("npm", ["install", "--no-save", "--ignore-scripts", "--no-audit", "--no-fund", `pg@${PG_VERSION}`], { stdio: "inherit" });
-    req.resolve("pg");
-    req.resolve("pg-connection-string");
-  }
-}
 
 /** سجلات المسار لا تُقرأ من جلسة التطوير، والتعليقات التوضيحية تُقرأ عبر API: ملخص بلا نصوص ولا أسرار. */
 const sanitize = (s: string) => s.replace(/postgres(?:ql)?:\/\/\S+/gi, "[رابط]").replace(/\bsk-[A-Za-z0-9_-]+/g, "[مفتاح]").slice(0, 900);
@@ -38,7 +18,11 @@ async function main() {
   const toolPath = "./hkm-029/embed-articles.mjs";
   const argv = process.argv.slice(2);
   // قبل استيراد الأداة: embed-lib يستورد drift-lib الذي يستورد pg-connection-string.
-  if (argv[argv.indexOf("--target") + 1] === "articles" && argv.includes("--target")) ensurePg();
+  if (argv.includes("--target") && argv[argv.indexOf("--target") + 1] === "articles") {
+    const pgHelper = "./hkm-029/ensure-pg.mjs";
+    const { ensurePg } = await import(pgHelper);
+    console.log(`::notice title=HKM-029 pg::${ensurePg()}`);
+  }
   const { workflowArgsToRun } = await import(libPath);
   const run = workflowArgsToRun(argv);
   if (run) {
