@@ -63,5 +63,27 @@ const renamed = auditLawNumbering([
 ]);
 ok(renamed.matched === 3 && renamed.mismatched === 0, "الرقم «حالياً» يُقرأ لا «سابقاً»");
 
+// الأمر ٠٨: نظام المحاكم التجارية — العنوان رقمي مشتق من الرقم («المادة 77») والعدد الرسمي في أول سطر من المتن.
+const cc = auditLawNumbering([
+  { articleNumber: 75, title: "المادة 75", firstLine: "المادة السابعة والسبعون" },
+  { articleNumber: 76, title: "المادة 76", firstLine: "المادة الثامنة والسبعون" },
+  { articleNumber: 77, title: "المادة 77", firstLine: "المادة التاسعة والسبعون" },
+  { articleNumber: 78, title: "المادة 78", firstLine: "المادة الثمانون" },
+  { articleNumber: 79, title: "المادة 79", firstLine: "المادة الحادية والثمانون:" },
+]);
+ok(cc.status === "shift" && cc.fromContent === 5 && cc.runs[0]?.offset === 2 && cc.runs[0]?.count === 5, "العنوان الرقمي المشتق لا يغطي العدد المكتوب في أول سطر المتن (انزياح +2)");
+ok(numeric.numericTitles === 2 && numeric.fromContent === 0, "العنوان الرقمي بلا عدد في المتن يُعدّ ويُعلَّم دائريًّا");
+const emptyTitle = auditLawNumbering([
+  { articleNumber: 1, title: null, firstLine: "المادة الأولى:" },
+  { articleNumber: 2, title: "أحكام عامة", firstLine: "المادة الثانية" },
+]);
+ok(emptyTitle.status === "clean" && emptyTitle.fromContent === 2, "العنوان الخالي من العدد يُقرأ من أول سطر في المتن");
+const digitsLine = auditLawNumbering([{ articleNumber: 1, title: null, firstLine: "المادة 5" }, { articleNumber: 2, title: null, firstLine: "المادة 6 يُعمل بهذا النظام" }]);
+ok(digitsLine.parsed === 0 && digitsLine.status === "no_ordinal_titles", "أول سطر بالأرقام لا يُعدّ عددًا مكتوبًا");
+const longLine = auditLawNumbering([{ articleNumber: 1, title: null, firstLine: "المادة الأولى من هذا النظام تسري على كل من يمارس النشاط التجاري في المملكة العربية السعودية بلا استثناء" }]);
+ok(longLine.parsed === 0, "السطر الطويل (متن لا عنوان) لا يُقرأ منه عدد");
+const wordFirst = auditLawNumbering([{ articleNumber: 3, title: "المادة الثالثة", firstLine: "المادة الرابعة" }]);
+ok(wordFirst.matched === 1 && wordFirst.fromContent === 0, "العنوان المكتوب بالكلمات مقدَّم على أول سطر في المتن");
+
 console.log(failed === 0 ? "✓ تدقيق الترقيم" : `✗ فشل ${failed}`);
 process.exit(failed === 0 ? 0 : 1);

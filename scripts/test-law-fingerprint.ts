@@ -1,5 +1,14 @@
 /** HKM-028: اختبار البصمة والمقارنة ببيانات مصطنعة (بلا قاعدة). */
-import { compareFingerprint, fingerprintArticle, fingerprintClean, normalizeForFingerprint } from "../lib/modules/legal-core/law-fingerprint";
+import { readdirSync, readFileSync } from "node:fs";
+import path from "node:path";
+import {
+  FINGERPRINT_NORMALIZATION,
+  compareFingerprint,
+  fingerprintArticle,
+  fingerprintClean,
+  normalizeForFingerprint,
+  type LawFingerprint,
+} from "../lib/modules/legal-core/law-fingerprint";
 
 let failed = 0;
 const ok = (c: boolean, m: string) => {
@@ -33,6 +42,22 @@ const extra = compareFingerprint(fp, [...law, { articleNumber: 4, title: "الم
 ok(extra.extra.join() === "4", "المادة الزائدة");
 const retitled = compareFingerprint(fp, [law[0], { ...law[1], title: "المادة الثالثة" }, law[2]]);
 ok(retitled.titleMismatch.join() === "2" && !retitled.textMismatch.length, "العنوان المختلف");
+
+// ملفات البصمات المحفوظة: بنية سليمة، ومواد متصلة من 1 بلا تكرار، وتطبيع مطابق للكود.
+const FP_DIR = path.join(process.cwd(), "data/law-fingerprints");
+const HEX = /^[0-9a-f]{32}$/;
+for (const f of readdirSync(FP_DIR).filter((x) => x.endsWith(".json"))) {
+  const file = JSON.parse(readFileSync(path.join(FP_DIR, f), "utf8")) as LawFingerprint;
+  const nums = file.articles.map((a) => a[0]);
+  ok(Boolean(file.lawName && file.source && file.verifiedAt), `${f}: الاسم والمصدر وتاريخ التحقق`);
+  ok(file.normalization === FINGERPRINT_NORMALIZATION, `${f}: التطبيع مطابق للكود`);
+  ok(nums.every((n, i) => n === i + 1), `${f}: ${nums.length} مادة متصلة من 1 بلا تكرار`);
+  ok(file.articles.every((a) => HEX.test(a[1]) && HEX.test(a[2])), `${f}: كل بصمة md5 سداسية`);
+}
+// نظام المحاكم التجارية: 96 مادة كما في الهيئة.
+const cc = JSON.parse(readFileSync(path.join(FP_DIR, "commercial-courts.json"), "utf8")) as LawFingerprint;
+ok(cc.lawName === "نظام المحاكم التجارية" && cc.articles.length === 96, "بصمة نظام المحاكم التجارية: 96 مادة");
+ok(cc.articles[17][1] === fingerprintArticle(18, "المادة 18", "")[1], "عنوان المادة 18 في البصمة بتمثيل حكيم الرقمي");
 
 console.log(failed === 0 ? "✓ بصمة النظام" : `✗ فشل ${failed}`);
 process.exit(failed === 0 ? 0 : 1);
