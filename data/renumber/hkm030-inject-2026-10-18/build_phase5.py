@@ -370,6 +370,30 @@ I.unit("cmpzcv7lj0aikvtrkrhr4i7zg", "918-5", "b740ca1ab8779581aaa6d3032d6c71ac",
 b5.append(I)
 BATCHES["5"] = b5
 
+# ── الدفعة 6 ──
+b6 = []
+# نظام المرافعات الشرعية — المرسوم الملكي م/101. م7 وم222 من هيئة الخبراء بتاريخ المرسوم 2021-06-24، فيُوحَّد عليه. الحذف بلا إعادة ترقيم.
+# «حذف الفصل (الثالث) من الباب (الثالث عشر)»: الفصل غير معنون في النص المخزن؛ عُيّن بالمواد 227–235 (الاستحكام) لأن هيئة الخبراء
+# تعلّمها «مادة معدلة» متصلة بين م226 وم236 غير المعلّمتين (ingest/boe-corpus-2026-09-28/data/parsed/unit.jsonl، css_class).
+# خارج النطاق: ثانياً (نظام الطرق والمباني ليس في حكيم).
+HEAD = RE(r"^المادة [^:\n]+:\n", "")  # سطر العنوان في النص المخزن القديم لا يدخل في نص المادة (كنسخ هيئة الخبراء م7 وم222)
+I = Inst("17876", "مرسوم ملكي رقم م/101 وتاريخ 1442/11/14هـ", "2021-06-24T00:00:00Z", "1442/11/22")
+I.unit("cmpwia1ak01ohnxffr3fu3yg9", "m101-31", "7311c0b8ad36eabbc3db1a37431a9f69", I.item("2- حذف الفقرة (ب)", "3- تعديل الفقرة (1)"),
+       [HEAD, S("⏎ب -⍽إصدار صكوك الاستحكام بملكية العقار أو وقفيته.", "")])
+I.unit("cmpwibrqf01yvnxffw9356wo6", "m101-218", "b7774181af3f11a1661159855e2e8f50", I.item("3- تعديل الفقرة (1)", "4- حذف المادة"),
+       [HEAD, S("تسري أحكام تنحي القضاة على الاستحكام، وتسري كذلك على الإنهاءات الأخرى إذا كانت فيها خصومة، أو كان للقاضي فيها مصلحة مباشرة.",
+          P(I.Q("«1- ", end="»"), "."))])
+CH = I.item("6- حذف الفصل", "\n\nثانياً")
+REPEALS["6"] = [(I, "cmpwibsq001z1nxffx2506efl", "m101-221", "25c4edb5e64e87b9f9e09ec23404d2d9", I.item("4- حذف المادة", "5- تعديل الفقرة (هـ)"))] + [
+    (I, u, f"m101-ch3-{n}", m, CH, "؛ الفصل الثالث من الباب الثالث عشر (المواد 227–235 بتعليم هيئة الخبراء)") for n, u, m in (
+        (227, "cmpwibup501zdnxffw1bx0bjc", "ed7419072fd0a460cca8f8fa30305bfd"), (228, "cmpwibv1201zfnxffenof6sdz", "43808b08220436d0b8df048c5a76e5e8"),
+        (229, "cmpwibvcw01zhnxffybrwb8h9", "542fca56c59ac11820cc4491baa9e333"), (230, "cmpwibvoq01zjnxff79lt6uxi", "deb5e95d63d4be234da240581410ccf0"),
+        (231, "cmpwibw6g01zlnxffft4r6sby", "dde375d15891a6840d094b0c0c822bd4"), (232, "cmpwibwia01znnxffeq003gox", "1f1efca11676113cc5dd709d10a476c1"),
+        (233, "cmpwibwu401zpnxff33rdwndv", "00bb55efc375be76061ce8b708a68f78"), (234, "cmpwibx6201zrnxffdl3dt4tp", "5cd58a3ad88e054dde4500126c15b4b3"),
+        (235, "cmpwibxhw01ztnxff76xoufpe", "3be896f21b50c305a71b7c2ba64b69bf"))]
+b6.append(I)
+BATCHES["6"] = b6
+
 q = lambda s: "'" + s.replace("'", "''") + "'"
 def jpart(parts):  # أجزاء النص إلى JSON: نص حرفي، أو ["@", url, موضع, طول, md5] لما يُقتطع من اللقطة
     out = [x[1] if x[0] == "lit" else ["@", x[1], x[2], x[3], md5(x[4])] for x in parts]
@@ -400,9 +424,9 @@ def build(batch):
             rows.append(dict(id=vid, unit=u["unit"], url=I.url, frm=u["frm"], edits=len(u["edits"]), prev=u["prev"],
                              expected_md5=md5(nfc(text(u["edits"][0][1]))) if whole else None))
     vids = []
-    for I, uid, key, base_md5, ev in REPEALS.get(batch, []):
+    for I, uid, key, base_md5, ev, *extra in REPEALS.get(batch, []):
         vid = "hkm30v-" + hashlib.sha256(f"{uid}@{I.frm[:10]}@{key}".encode()).hexdigest()[:24]; vids.append(vid)
-        note = f"؛ نُشر في أم القرى {I.pub}هـ؛ نافذ من {I.frm[:10]} (HKM-030 المرحلة 5)"
+        note = f"؛ نُشر في أم القرى {I.pub}هـ؛ نافذ من {I.frm[:10]}{''.join(extra)} (HKM-030 المرحلة 5)"
         quote = f"left(btrim(regexp_replace({compose(chr(39) * 2, [('append', [ev])])}, '\\s+', ' ', 'g')), 560) || {q(note)}"
         st.append(f"INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, evidence_quote, method, verified_by, verified_at) "
                   f"SELECT {q(vid)}, 'unit', {q(uid)}, 'ملغاة', {q(I.ins)}, {q(I.url)}, {quote}, 'manual', 'hkm030-uqn-inject-2026-10-18', now() "
