@@ -140,6 +140,23 @@ rows.push({
   appealText: null,
   caseNo: "رقم القضية - القرار: ٤٤٧٠٠٠٠٠٠٩", decisionNo: null, court: "المحكمة العامة", decisionDateText: null,
 });
+for (const [id, court, text] of [
+  // «الخياط» مهنة في حكمين، واسم في الثالث: لفظ غير ملوّث (ثلث عيّنته)، فالعدد الصغير يُحسب من المرئي.
+  ["r10", "المحكمة العامة", "الأسباب: وحيث إن محل الخياط مستأجر بعقد مكتوب.\nمنطوق الحكم: حكمت الدائرة بفسخ الإيجار."],
+  ["r11", "المحكمة التجارية", "الأسباب: وحيث إن الخياط سلّم الأثواب متأخرًا.\nمنطوق الحكم: حكمت الدائرة بالتعويض."],
+  ["r12", "المحكمة العمالية", "الوقائع: أقام المدعي/ قيصر الخياط دعواه بطلب أجر متأخر.\nمنطوق الحكم: حكمت الدائرة برفض الدعوى."],
+  // «حسن» اسم في ثلاثة أحكام فيها «النية» أيضًا، و«حسن النية» عبارة في حكمين.
+  ["r14", "المحكمة التجارية", "الأسباب: وحيث إن المشتري حسن النية فلا يُلزم بالرد.\nمنطوق الحكم: حكمت الدائرة برفض الدعوى."],
+  ["r15", "المحكمة العامة", "الأسباب: وحيث إن الحائز حسن النية يتملك الثمار.\nمنطوق الحكم: حكمت الدائرة بما يلي."],
+  ["r16", "المحكمة العامة", "الوقائع: أقام المدعي/ حسن مروان دعواه.\nالأسباب: وحيث إن النية لا تثبت إلا ببينة.\nمنطوق الحكم: حكمت الدائرة بالرفض."],
+  ["r17", "المحكمة العامة", "الوقائع: حضر المدعى عليه/ حسن هلال.\nالأسباب: وحيث إن النية محلها القلب.\nمنطوق الحكم: حكمت الدائرة بالرفض."],
+  ["r18", "المحكمة العامة", "الوقائع: حضر الشاهد/ حسن زيدان.\nالأسباب: وحيث إن النية غير ظاهرة.\nمنطوق الحكم: حكمت الدائرة بالرفض."],
+  // اسم بالأشكال المعروضة (نص مستخرج من PDF).
+  ["r13", "المحكمة العامة", "ﺍﻟﻮﻗﺎﺋﻊ: ﺃﻗﺎﻡ ﺍﻟﻤﺪﻋﻲ/ ﻣﺮﻭﺍﻥ ﺍﻟﺴﻨﺪﻱ ﺩﻋﻮﺍﻩ.\nمنطوق الحكم: حكمت الدائرة بإلزام المدعى عليه."],
+] as const) {
+  rows.push({ ...base, id, sourceId: Number(id.slice(1)), createdAt: new Date("2023-12-01"), judgmentTitle: "حكم", judgmentText: text, appealText: null,
+    caseNo: `رقم القضية - القرار: ٤٤٧٠٠٠٠٠${id.slice(1).padStart(2, "٠")}`, decisionNo: null, court, decisionDateText: null });
+}
 const NAME_WORDS = ["غانم", "الموسوي", "زيدان", "الفلاني", "قيصر", "الطاهري", "رجاء", "السندي", "مروان", "هلال"];
 const nameLeak = (t: string) => NAME_WORDS.filter((w) => t.includes(w));
 const frozen = JSON.stringify(rows);
@@ -219,6 +236,7 @@ const PII_LEAK = new RegExp(`${ID_LAT}|${ID_IND}|${IQAMA_LAT}|${MOB_IND}|0551234
 
 async function main() {
   setupDb();
+  (await import("../lib/mcp/name-taint")).clearTaintCache();
   const before = dbFingerprint();
   const { redactPII, stripPiiFromQuery, splitRulingQuery, searchRulingsDirect, findRulingIdsRedacted } = await import("../lib/modules/legal-core/rulings-search");
   const { searchJudgments, buildJudgmentSnippet } = await import("../lib/modules/legal-core/judgment-search");
@@ -342,7 +360,7 @@ async function main() {
     const s = await mcpSearchRulings(q, undefined, undefined, 20);
     ok(s.results.length === 0 && s.total === 0, `MCP search: «${q}» (اسم) لا يعيد حكمًا ولا عددًا (${s.results.length}/${s.total})`);
   }
-  type Enum = { total: number; by_court: Array<{ court: string | null; count: number }>; results?: Array<{ ruling_id: string; snippet: string }>; counts_page_only?: boolean };
+  type Enum = { terms: string[]; total: number; by_court: Array<{ court: string | null; count: number }>; results?: Array<{ ruling_id: string; snippet: string }>; counts_page_only?: boolean };
   for (const q of ["غانم", "الموسوي", "رجاء السندي", "الطاهري"]) {
     const e = (await enumerateRulings([q])) as Enum;
     ok((e.results ?? []).length === 0 && e.total === 0 && e.by_court.length === 0, `MCP enumerate: «${q}» (اسم) لا يعيد حكمًا ولا عددًا ولا توزيعًا`);
@@ -389,12 +407,42 @@ async function main() {
     const e = (await enumerateRulings([q])) as Enum;
     ok((e.results ?? []).length === 0 && e.total === 0, `MCP enumerate: «${q}» (في المتن أو الاستئناف أو التوقيع) لا يعيد حكمًا ولا عددًا`);
   }
-  const { lexicalGroupTainted, enumerateTermTainted } = await import("../lib/mcp/name-taint");
-  const { arabicLexicalGroups } = await import("../lib/mcp/ruling-privacy");
-  ok(await lexicalGroupTainted(arabicLexicalGroups("الموسوي")[0]), "عيّنة اللفظ: «الموسوي» لفظ اسم");
-  ok(!(await lexicalGroupTainted(arabicLexicalGroups("توريد")[0])), "عيّنة اللفظ: «توريد» ليس لفظ اسم");
-  ok(!(await lexicalGroupTainted(arabicLexicalGroups("سونجشانج")[0])), "عيّنة اللفظ: لفظ غائب ليس لفظ اسم (عيّنة فارغة)");
-  ok(await enumerateTermTainted({ text: "السندي", numbers: [], sensitive: false }, `r."search_norm" ILIKE $1`, ["%السندي%"]), "عيّنة الحصر: «السندي» (في الاستئناف وحده) لفظ اسم");
+  const { lexicalQueryTainted, enumerateTermTainted } = await import("../lib/mcp/name-taint");
+  const { checkedLexicalGroups, enumeratePhrase, phraseTsQuery } = await import("../lib/mcp/ruling-privacy");
+  const LQ = (t: string) => lexicalQueryTainted(checkedLexicalGroups(t), enumeratePhrase(t));
+  ok(await LQ("الموسوي"), "عيّنة الاستعلام: «الموسوي» اسم");
+  ok(!(await LQ("توريد")), "عيّنة الاستعلام: «توريد» ليس اسمًا");
+  ok(!(await LQ("سونجشانج")), "عيّنة الاستعلام: لفظ غائب ليس اسمًا (عيّنة فارغة)");
+  ok(await LQ("حسن") && !(await LQ("حسن النية")), "عيّنة الاستعلام: «حسن» اسم غالبًا، و«حسن النية» عبارة ظاهرة خارج الأسماء");
+  const phS = enumeratePhrase("السندي")!;
+  ok(
+    await enumerateTermTainted({ text: "السندي", numbers: [], sensitive: false, phrase: phS }, `to_tsvector('simple', coalesce(r."search_norm",'')) @@ to_tsquery('simple', $1)`, [phraseTsQuery(phS)]),
+    "عيّنة الحصر: «السندي» (في الاستئناف وحده) لفظ اسم",
+  );
+  // جولة الأمن الثانية: الإجمالي في البحث لا يكشف عدد القاعدة، والعدد الصغير في الحصر من المرئي، والأشكال المعروضة.
+  const k1 = await mcpSearchRulings("الخياط", undefined, undefined, 1);
+  const k20 = await mcpSearchRulings("الخياط", undefined, undefined, 20);
+  ok(k1.total === 1 && k1.total_is_lower_bound === true, `MCP search: limit=1 — الإجمالي عدد ما أُعيد (${k1.total}، ${k1.total_is_lower_bound})`);
+  ok(k20.total === 2 && k20.total_is_lower_bound === false && !k20.results.some((x) => x.ruling_id === "r12"), `MCP search: limit=20 — المرئي وحده (${k20.results.map((x) => x.ruling_id).join("،")})`);
+  const ek = (await enumerateRulings(["الخياط"])) as Enum;
+  ok(ek.total === 2 && !ek.by_court.some((c) => c.court === "المحكمة العمالية"), `MCP enumerate: العدد الصغير من المرئي (${ek.total}، ${ek.by_court.map((c) => c.court).join("،")})`);
+  const ekc = (await enumerateRulings(["الخياط"], "العمالية", undefined, true)) as Enum;
+  ok(ekc.total === 0 && ekc.by_court.length === 0, "MCP enumerate: خلية المحكمة التي فيها الاسم وحده = 0");
+  const em = (await enumerateRulings(["موس"])) as Enum;
+  ok(em.total === 0, "MCP enumerate: لا جزء كلمة («موس» لا تطابق «الموسوي»)");
+  const eq = (await enumerateRulings(["؟؟"])) as Enum;
+  ok(eq.total === 0 && (eq.results ?? []).length === 0 && eq.terms.length === 0, "MCP enumerate: لفظ بلا كلمة دالّة لا يُحصر");
+  const g13 = (await getRuling("r13", 0, 5000)) as { text?: string };
+  ok((g13.text ?? "").length > 0 && !/مروان|السندي/.test(g13.text ?? ""), "MCP get_ruling: اسم بالأشكال المعروضة محجوب (NFKC)");
+  for (const q of ["ﻣﺮﻭﺍﻥ ﺍﻟﺴﻨﺪﻱ", "ﺍﻟﺴﻨﺪﻱ"]) {
+    const sp = await mcpSearchRulings(q, undefined, undefined, 20);
+    const ep = (await enumerateRulings([q])) as Enum;
+    ok(sp.results.length === 0 && sp.total === 0 && ep.total === 0, `MCP: استعلام بالأشكال المعروضة «${q}» لا يعيد حكمًا ولا عددًا`);
+  }
+  const sN = await mcpSearchRulings("حسن النية", undefined, undefined, 20);
+  ok(sN.results.map((x) => x.ruling_id).sort().join(",") === "r14,r15", `MCP search: «حسن النية» يجد العبارة ولا يجد أحكام الاسم (${sN.results.map((x) => x.ruling_id).join("،")})`);
+  const sHs = await mcpSearchRulings("حسن", undefined, undefined, 20);
+  ok(sHs.results.length === 0 && sHs.total === 0, "MCP search: «حسن» وحده اسم غالبًا فلا يطابق شيئًا");
   const sH = await mcpSearchRulings("سالم", undefined, undefined, 20);
   ok(sH.results.length === 0 && sH.total === 0, `MCP search: لفظ يطابق داخل الأسماء غالبًا («سالم») لا يطابق شيئًا ولو ورد كلمةً عامة في حكم آخر (${sH.results.length}/${sH.total})`);
   const s7 = await mcpSearchRulings("أجرة متأخرة", undefined, undefined, 20);

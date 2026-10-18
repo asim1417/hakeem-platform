@@ -7,11 +7,16 @@ import { NAME_MASK } from "../lib/rulings/research/mask";
 import { redactPII } from "../lib/modules/legal-core/rulings-search";
 import { excerptFrom } from "../lib/modules/legal-core/ruling-excerpts";
 import {
-  arabicLexicalGroups,
+  checkedLexicalGroups,
   containsVisible,
+  enumeratePhrase,
+  normWordList,
+  phraseInWords,
+  phraseTsQuery,
   enumerateTermVisible,
   lexicalVisible,
   maskBySegments,
+  maskedMatchWords,
   maskedSearchNorm,
   normWords,
   productionSearchNorm,
@@ -201,7 +206,7 @@ const maskedN = maskedSearchNorm(ROW);
 ok(leaks(maskedN).length === 0 && maskedN.includes("توريد") && maskedN.includes("اعترض"), "النسخة المحجوبة: لا اسم في العنوان والمتن والاستئناف، والباقي كما هو");
 const mW = normWords(maskedN);
 const rW = normWords(rawN);
-const G = (q: string) => arabicLexicalGroups(q);
+const G = (q: string) => checkedLexicalGroups(q);
 ok(!lexicalVisible(mW, G("غانم الموسوي")), "البحث: الاسم لا يطابق النسخة المحجوبة");
 ok(!lexicalVisible(mW, G("توريد غانم")), "البحث: لفظ عام + اسم (AND) لا يطابق");
 ok(!lexicalVisible(mW, G("غانم شي")) && !lexicalVisible(mW, G("غانم القضا")), "البحث: حشو لا يطابق في JS لا ينقذ الاسم (لا شرط «قبل الحجب»)");
@@ -211,13 +216,29 @@ ok(lexicalVisible(mW, G("توريد بضاعة")) && lexicalVisible(mW, G("اع�
 ok(lexicalVisible(mW, G("4470000005")), "البحث: لا مجموعات عربية = لا فحص");
 ok(semanticNameHit(rW, mW, G("دعوى غانم الموسوي")), "الدلالي: لفظ في الحكم داخل اسم يُسقطه");
 ok(!semanticNameHit(rW, mW, G("ثمن البضاعة المسلمة")), "الدلالي: بلا لفظ داخل اسم يبقى");
-const E = (text: string, numbers: string[] = []) => ({ text, numbers, sensitive: /[0-9A-Za-z@]/.test(text) });
-const er = { maskedNorm: maskedN, maskedTitleText: () => `${maskRulingText(ROW.judgmentTitle)}\n${maskRulingText(ROW.judgmentText)}`, caseNo: ROW.caseNo, decisionNo: ROW.decisionNo };
+const E = (text: string, numbers: string[] = []) => {
+  const sensitive = /[0-9A-Za-z@]/.test(text);
+  return { text, numbers, sensitive, phrase: text && !sensitive ? enumeratePhrase(text) : null };
+};
+const er = { maskedWords: () => normWordList(maskedN), maskedTitleText: () => `${maskRulingText(ROW.judgmentTitle)}\n${maskRulingText(ROW.judgmentText)}`, caseNo: ROW.caseNo, decisionNo: ROW.decisionNo };
 ok(!enumerateTermVisible(E("غانم"), er) && !enumerateTermVisible(E("زيدان الفلاني"), er), "الحصر: الاسم (في المتن أو الاستئناف) لا يطابق");
 ok(enumerateTermVisible(E("توريد"), er) && enumerateTermVisible(E("التجارية"), er), "الحصر: لفظ عام أو اسم المحكمة يطابق");
 ok(enumerateTermVisible(E("", ["4470000005"]), er), "الحصر: رقم القضية لا يمسّه الحجب");
 ok(!enumerateTermVisible(E("غانم", ["4470000005"]), er), "الحصر: رقم القضية + اسم (AND) لا يطابق");
 ok(!enumerateTermVisible(E("توريد", ["4470000099"]), er), "الحصر: رقم آخر لا يطابق");
+// مسار أجزاء الأحكام لا سقف له: لفظ في الأسباب بعد الحرف 20000 يُرى في النسخة المحجوبة، والاسم هناك لا يُرى.
+const LONG = { judgmentText: `${"س ".repeat(10_500)}الأسباب: وحيث إن الإقالة ثابتة، وحضر المدعي/ غانم الموسوي.` };
+const lw = maskedMatchWords(LONG);
+ok(lexicalVisible(lw, G("الإقالة")) && !lexicalVisible(lw, G("الموسوي")), "النسخة المحجوبة: المتن كاملًا بعد سقف search_norm");
+// عبارة الحصر بكلمات كاملة ومسافاتها (tsquery «<N>»).
+const ph = enumeratePhrase("عقد في البيع")!;
+ok(ph.groups.length === 2 && ph.gaps[0] === 2 && /\(.*عقد.*\) <2> \(.*البيع.*\)/.test(phraseTsQuery(ph)), `العبارة: كلمة الوقف المحذوفة مسافة («${phraseTsQuery(ph).slice(0, 40)}…»)`);
+ok(phraseInWords("هذا عقد في البيع".split(" "), ph) && !phraseInWords("عقد البيع".split(" "), ph), "العبارة: المسافة تُحترم");
+ok(phraseInWords(normWordList("بالعقد المبرم"), enumeratePhrase("العقد المبرم")!), "العبارة: السوابق من صيغ الكلمة");
+ok(!phraseInWords(normWordList("سونجشانج"), enumeratePhrase("نجش")!) && !phraseInWords(normWordList("الموسوي"), enumeratePhrase("موس")!), "العبارة: لا جزء كلمة");
+ok(enumeratePhrase("؟؟") === null && enumeratePhrase("في من") === null, "العبارة: لا كلمة دالّة = لا لفظ");
+ok(enumeratePhrase("ﻋﻘﺪ")!.groups[0].includes("عقد"), "العبارة: NFKC للأشكال المعروضة");
+ok(G("ﻏﺎﻧﻢ").length === 1 && G("ﻏﺎﻧﻢ")[0].includes("غانم") && G("Ghanem").length === 1, "البحث: كل لفظ فيه حرف يُفحص (الأشكال المعروضة بعد NFKC واللاتيني)");
 ok(containsVisible(["الفسخ"], ["مبدأ الفسخ", "x"]) && !containsVisible(["غانم"], ["مبدأ", maskRulingText("قرر المدعي/ غانم الموسوي")]), "التخريج: الاحتواء على النسخة المحجوبة");
 
 // ٥) الأداء خطي: نصوص طويلة كثيفة الصفات والسلاسل والمراسي.
@@ -233,6 +254,11 @@ for (const [label, t] of [
   ok(ms < 1500, `الأداء: ${label} (${t.length} حرف) في ${ms.toFixed(0)}ms`);
 }
 
+// ٥-ب) NFKC: الأشكال المعروضة و«ﷲ».
+const pres = maskRulingText("ﺍﻟﻤﺪﻋﻲ/ ﻏﺎﻧﻢ ﺍﻟﻤﻮﺳﻮﻱ ﺿﺪ ﺍﻟﻤﺪﻋﻰ ﻋﻠﻴﻪ/ ﺯﻳﺪﺍﻥ ﺍﻟﻔﻼﻧﻲ");
+ok(leaks(pres).length === 0 && pres.includes(NAME_MASK), `الأشكال المعروضة تُحجب بعد NFKC → «${pres}»`);
+ok(maskRulingText("فقرة عن ابن السبيل في الزكاة").includes("ابن السبيل"), "«ابن السبيل» مصطلح لا نسب");
+
 // ٦) حجب زائد أُزيل، وصيغ تفلت أُغلقت (جولة المراجعة الأولى على #785).
 const keptR2: Array<[string, string]> = [
   ["وأرفق صورة هوية وطنية للمدعي", "صورة + مرسى"],
@@ -245,6 +271,13 @@ const keptR2: Array<[string, string]> = [
   ["أصدرت الدائرة حكمها القاضي بإلزام المدعى عليه", "«القاضي» بلا فاصل"],
   ["ضد الحكم الابتدائي", "«ضد» بلا فاصل"],
   ["المدعي/ شركة النخيل للتجارة سجل تجاري رقم (...)", "منشأة قبل السجل التجاري"],
+  ["وانتهت رخصة إقامة العامل بتاريخ ١٤٤٥/٠١/٠١", "«انتهت» قبل المرسى"],
+  ["وتبين فقدان هوية وطنية رقم (...)", "«فقدان» قبل المرسى"],
+  ["وطلب استخراج بدل فاقد هوية وطنية رقم (...)", "«بدل فاقد» قبل المرسى"],
+  ["وثبت أن المكفول هندي الجنسية", "«المكفول» قبل الجنسية"],
+  ["استقدم عاملا منزليا إندونيسي الجنسية", "«عاملا منزليا» قبل الجنسية"],
+  ["وكان المتوفى سوري الجنسية", "«المتوفى» قبل الجنسية"],
+  ["مخالفة تزوير هوية وطنية رقم (...)", "«تزوير» قبل المرسى"],
 ];
 for (const [src, label] of keptR2) {
   const out = maskRulingText(src);
