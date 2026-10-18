@@ -23,8 +23,13 @@ def parse_fix(note):
     return out
 EFF = {}
 _eff_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data', 'effective_corrections.jsonl')
-if '--no-effective-corrections' not in sys.argv and os.path.exists(_eff_path):
+if '--no-effective-corrections' in sys.argv:
+    print('تنبيه: تصحيحات السريان معطّلة بالعلم — تُعتمد تواريخ الحزمة الافتراضية ولا يُمنع ما عولج بمهام أخرى')
+elif os.path.exists(_eff_path):
     EFF = {e['op_id']: e for e in (json.loads(l) for l in open(_eff_path, encoding='utf-8') if l.strip())}
+else:
+    # بلا الملف يُقبل «موافق» على ما عولج بمهمة أخرى وعلى ما تغيّر تاريخه: لا استيراد صامت.
+    sys.exit(f'خطأ: ملف تصحيحات السريان غير موجود ({_eff_path}). أعده أو مرّر --no-effective-corrections صراحةً')
 warns = []
 def apply_eff(op_id, dec, fix, note):
     e = EFF.get(op_id)

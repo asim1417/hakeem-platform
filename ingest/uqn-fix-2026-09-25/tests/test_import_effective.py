@@ -2,7 +2,7 @@
 python tests/test_import_effective.py"""
 import json, os, sys, tempfile, openpyxl
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(HERE)
-EFF = {e['op_id']: e for e in (json.loads(l) for l in open(os.path.join(ROOT, 'data', 'effective_corrections.jsonl')))}
+EFF = {e['op_id']: e for e in (json.loads(l) for l in open(os.path.join(ROOT, 'data', 'effective_corrections.jsonl'), encoding='utf-8'))}
 changed = next(k for k, e in EFF.items() if e['changed'])
 failed = [k for k, e in EFF.items() if e['requires_effective_in_note']][:2]
 silent = next(k for k, e in EFF.items() if e['basis'] == 'silent_art71')
@@ -25,4 +25,10 @@ assert failed[0] in errs and failed[0] not in rows
 assert json.loads(rows[failed[1]][2])['effective_from_hijri'] == '1448-01-01'
 assert rows[silent][1] == 'rejected' and 'سند السريان' in rows[silent][4]
 assert handled in errs and handled not in rows
-print('5/5 ناجحة')
+# غياب ملف التصحيحات يوقف الاستيراد بدل أن يعمل بصمت
+lone = os.path.join(tempfile.mkdtemp(), 'scripts'); os.makedirs(lone)
+g2 = {'__name__': '__main__', '__file__': os.path.join(lone, 'import_review.py')}
+try: exec(open(g['__file__'], encoding='utf-8').read(), g2); stopped = None
+except SystemExit as e: stopped = e.code
+assert isinstance(stopped, str) and 'غير موجود' in stopped and 'rows' not in g2, stopped
+print('6/6 ناجحة')
