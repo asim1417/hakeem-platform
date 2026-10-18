@@ -1,0 +1,10 @@
+file,change_vs_a1733679,domain,present_on_origin_main,observed_on_hakeemai_net,evidence
+lib/modules/legal-core/effective-text.ts,amendment basis drops the effective date and keeps the instrument,legal display,yes,no,live /legal/نظام-العمل/5 cache MISS still contains old templates سارية من and من تاريخ plus an ISO date
+lib/modules/legal-core/verified-status.ts,versionLine and amendmentLine drop the date,legal display,yes,no,same page contains النسخة السارية من and an ISO date removed by this commit
+lib/modules/legal-core/legal-citation-guard.ts,citation note uses the instrument instead of النسخة من date,citations,yes,not observed on the public page,code diff only; MCP verify was not called
+components/legal/ArticlePresentation.tsx,version list heading no longer prints validFrom,legal display,yes,not isolated,component diff; page fingerprint matches the old strings
+app/law/[id]/art/[n]/page.tsx,two lines removed,legal display,yes,page returned 200 without the old date phrases,short page had zero ISO dates; not sufficient alone
+components/law/LawDocument.tsx,two lines removed,legal display,yes,unverified,diff only
+scripts/test-effective-text.ts,expectations updated to the new wording,tests,yes,not a runtime asset,diff only
+docs/PROJECT_STATUS.md,ledger lines,docs,yes,not runtime,diff only
+prisma/schema.prisma,no change in this range,database,same,same,git diff --stat a1733679 origin/main has no prisma file

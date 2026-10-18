@@ -23,4 +23,10 @@ DR plan,yes,yes,DR_READINESS.md,plan only,self,execution gated
 independent QA,yes,self only,README.md,spot-checked admin auth false positive,self,aman-tech skill absent
 legislative versions and provenance,yes,yes,LEGISLATIVE_VERSION_AUDIT.md; SOURCE_PROVENANCE_ATLAS.md,aggregate SQL 12:47Z,self,decree text not copied; BOE pages not refetched
 PDPL and observability and cost,yes,yes,SECURITY_PDPL_FLOW.md; OPERATIONS_OBSERVABILITY.md; COST_CAPACITY.md,local redaction tests; repo search; billing counts,self,no PDPL certification; hosted dashboards outside the repo unread
-schema rebuild and restore drill,yes,no,SCHEMA_REBUILD_PLAN.md; RECOVERY_RUNBOOK.md,not run,self,owner authorization still required
+schema rebuild and restore drill,yes,plan only,DISASTER_RECOVERY_EXECUTION_PLAN.md; RECOVERY_APPROVAL_GATES.md,not run,self,owner authorization still required; Neon PITR API unread
+deployment SHA,yes,partial,DEPLOYMENT_SOURCE_RECONCILIATION.md,HTML fingerprint and GitHub deployments,self,Vercel domain alias API unread
+prisma semantic diff,yes,yes,SCHEMA_SEMANTIC_DIFF.csv; PRISMA_COMPATIBILITY_AUDIT.md,migrate diff inspect only,self,diff SQL not executed
+migration provenance,yes,yes,MIGRATION_APPLICATION_MATRIX.csv,39 files versus live tables,self,exact apply timestamp unknown except the one ledger row
+write surface,yes,yes,BACKEND_WRITE_SURFACE_AUDIT.csv,code read,self,EDITORIAL_DESK_WRITE value on Vercel unread
+MCP timeout cause,yes,partial,MCP_TIMEOUT_ROOT_CAUSE.md,code trace,self,no Vercel traces
+search sync worker,yes,yes,INDEX_SYNC_WORKER_VERIFICATION.md,repo search and live count 0,self,OpenSearch document count unread
