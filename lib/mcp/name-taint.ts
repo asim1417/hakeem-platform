@@ -15,9 +15,9 @@
 import { maskPersonalData } from "@/lib/rulings/research/mask";
 import { runRulingSearchSql } from "@/lib/modules/legal-core/rulings-search";
 import {
+  SEARCH_NORM_TEXT_CAP,
   enumerateTermVisible,
   lexicalVisible,
-  maskedMatchWords,
   maskedSearchNorm,
   normWordList,
   phraseInWords,
@@ -31,7 +31,9 @@ import {
 export const TAINT_SAMPLE = 12;
 export const TAINT_RATIO = 0.5;
 
-export const INDEX_FIELDS_SQL = `r."id", r."court", r."judgmentTitle", r."judgmentText", r."appealText", r."caseNo", r."decisionNo", r."cityName"`;
+// المتن والاستئناف بسقف search_norm (العيّنة تطابق search_norm وحده، وهو مبني منهما مقصوصين): يحدّ كلفة الحجب في
+// العيّنة فيبقى دون أدنى الزمن، ويقلّل المنقول.
+export const INDEX_FIELDS_SQL = `r."id", r."court", r."judgmentTitle", left(r."judgmentText", ${SEARCH_NORM_TEXT_CAP}) AS "judgmentText", left(r."appealText", ${SEARCH_NORM_TEXT_CAP}) AS "appealText", r."caseNo", r."decisionNo", r."cityName"`;
 export type IndexRow = RulingIndexFields & { id: string };
 
 /** لفظ اسم إن لم يطابق النسخةَ المحجوبة في نصف العيّنة فأكثر. العيّنة الفارغة: اللفظ غائب، فلا يُحكم بشيء. */
@@ -50,7 +52,7 @@ const inflight = new Map<string, Promise<boolean>>();
 const MAX_CONCURRENT = 4;
 /** طابور الانتظار مسقوف وانتظاره محدود؛ الامتلاء والمهلة خطأ، والخطأ عند المستدعي اسم (السقوط مغلقًا). */
 const MAX_WAITING = 32;
-const WAIT_MS = 5_000;
+let waitMs = 5_000;
 let running = 0;
 const waiting: Array<() => void> = [];
 
@@ -68,7 +70,7 @@ async function withSlot<T>(fn: () => Promise<T>): Promise<T> {
         const i = waiting.indexOf(wake);
         if (i !== -1) waiting.splice(i, 1);
         reject(new Error("name-taint: wait timeout"));
-      }, WAIT_MS);
+      }, waitMs);
       waiting.push(wake);
     });
   }
@@ -85,7 +87,7 @@ async function withSlot<T>(fn: () => Promise<T>): Promise<T> {
  * أدنى زمن لحساب عيّنة غير محفوظة: عيّنة لفظ الاسم فيها أحكام تُحجب، وعيّنة اللفظ الغائب فارغة، فيختلف زمنهما.
  * الحد الأدنى يسوّيهما (الحجب في العيّنة دونه عادةً)، والانتظار خارج فتحة التوازي.
  */
-let sampleFloorMs = 500;
+let sampleFloorMs = 1_000;
 /** للاختبار: يغيّر أدنى زمن العيّنة. */
 export function setTaintSampleFloorMs(ms: number): void {
   sampleFloorMs = ms;
@@ -115,10 +117,16 @@ export function clearTaintCache(): void {
   cache.clear();
 }
 
-/** للاختبار: حالة حد التوازي. */
+/** للاختبار: حالة حد التوازي، وتشغيل مهمة في فتحته، ومهلة الانتظار. */
 export function taintSlotState(): { running: number; waiting: number } {
   return { running, waiting: waiting.length };
 }
+export const taintLimiterForTest = {
+  run: <T>(fn: () => Promise<T>): Promise<T> => withSlot(fn),
+  setWaitMs: (ms: number): void => {
+    waitMs = ms;
+  },
+};
 
 const TSV = `to_tsvector('simple', coalesce(r."search_norm",''))`;
 
@@ -143,17 +151,24 @@ export async function lexicalQueryTainted(groups: string[][], phrase: PhraseQuer
   if (!groups.length) return false;
   const andQ = groups.map((g) => `(${g.join(" | ")})`).join(" & ");
   const phQ = phrase && phrase.groups.length >= 2 ? phraseTsQuery(phrase) : null;
+  // كلمات النسخة المحجوبة من search_norm وحده (ما تطابقه العيّنة)، محسوبة مرة لكل حكم في العيّنتين.
+  const memo = new Map<string, string[]>();
+  const wordsOf = (r: IndexRow): string[] => {
+    let w = memo.get(r.id);
+    if (!w) memo.set(r.id, (w = normWordList(maskedSearchNorm(r))));
+    return w;
+  };
   const [andTainted, phraseTainted] = await Promise.all([
     cached(`sa:${andQ}`, async () => {
       const rows = await sampleRows(`${TSV} @@ to_tsquery('simple', $1)`, [andQ]);
-      return taintedBySample(rows, (r) => lexicalVisible(maskedMatchWords(r), groups));
+      return taintedBySample(rows, (r) => lexicalVisible(new Set(wordsOf(r)), groups));
     }),
     phQ && phrase
       ? cached(`sp:${phQ}`, async () => {
           const rows = await sampleRows(`${TSV} @@ to_tsquery('simple', $1)`, [phQ]);
           // عيّنة العبارة الفارغة لا تشهد بشيء، فيبقى الحكم للعيّنة الأولى.
           if (!rows.length) return true;
-          return taintedBySample(rows, (r) => phraseInWords(normWordList(maskedSearchNorm(r)), phrase));
+          return taintedBySample(rows, (r) => phraseInWords(wordsOf(r), phrase));
         })
       : Promise.resolve(true),
   ]);

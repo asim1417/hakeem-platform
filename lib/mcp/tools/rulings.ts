@@ -187,8 +187,9 @@ export async function enumerateRulings(
   // العدد والتوزيع.
   // - ألفاظ بلا حرف (رقم القضية أو القرار، أو نص أرقام): لا يمسّها حجب الأسماء، فمن القاعدة كاملًا.
   // - لفظ فيه حرف: من الأحكام الظاهرة وحدها، على مسح مسقوف بترتيب المعرّف. عدد القاعدة يشمل أحكامًا لا تطابق إلا
-  //   داخل اسم، فيُستخرج منه بالفرق أو بالشمول والاستبعاد عدد أحكام الاسم. يُعدّ حتى COUNT_CAP حكمًا ظاهرًا، وما
-  //   فوقه total_is_lower_bound (ولا يزيد الرقم على السقف، فلا يكشف موضع الدفعة عدد المسقط فيها). والصفحات بلا سقف.
+  //   داخل اسم، فيُستخرج منه بالفرق أو بالشمول والاستبعاد عدد أحكام الاسم. يُعدّ حتى COUNT_CAP حكمًا ظاهرًا في أول
+  //   SCAN_CAP مطابقة، وtotal_is_lower_bound بلوغ السقف وحده (ولا يزيد الرقم عليه، فلا يكشف موضع الدفعة عدد المسقط
+  //   فيها). ولا يعكس العلم بلوغ المسح حده: كان يميّز الخلية التي تكثر فيها المطابقات داخل الأسماء. والصفحات بلا سقف.
   //   الوضع يُحدَّد بالألفاظ قبل الفحص، فلا يختلف مسار لفظ اسم عن لفظ غائب.
   const lettersMode = prepared.some(termHasLetters);
   let base: EnumBase;
@@ -209,7 +210,11 @@ export async function enumerateRulings(
       by_court: byCourtRows.map((c) => ({ court: c.court, count: Number(c.n) })),
     };
   } else {
-    const key = `${whereSql}\u0000${JSON.stringify(params)}`;
+    // المفتاح من شروط الألفاظ كلها قبل إبدال لفظ الاسم بـ FALSE، ومعه علم التلوث والمرشحات: لو بُني بعد الإبدال
+    // لاشترك كل لفظَي اسم بالمرشحات نفسها في مفتاح، فيكشف الحفظُ (بالزمن) أن الاسم الثاني في القاعدة.
+    const keyParams: unknown[] = [];
+    const keyConds = prepared.map((t) => termCond(t, keyParams));
+    const key = JSON.stringify([keyConds, keyParams, tainted, court ?? null, yearH ?? null]);
     let counted = countCacheGet(key);
     if (!counted) {
       head = await scanVisible(null, COUNT_CAP);
@@ -219,7 +224,7 @@ export async function enumerateRulings(
       for (const r of rows) m.set(r.court, (m.get(r.court) ?? 0) + 1);
       counted = {
         total: rows.length,
-        lowerBound: capped || !head.exhausted,
+        lowerBound: capped,
         byCourt: [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 30).map(([c, count]) => ({ court: c, count })),
       };
       countCacheSet(key, counted);
@@ -228,13 +233,12 @@ export async function enumerateRulings(
   }
   if (countOnly) return base;
 
-  // الصفحة: من المعرّفات المطابقة بعد المؤشر تُقرأ دفعات ويُعاد الظاهر منها؛ والمتابعة إن وُجد بعد آخر صف معروض صف
-  // ظاهر (لا صفحة أخيرة فارغة تكشف مسقطًا بعده)، أو بلغ المسح سقفه. والمؤشر آخر صف معروض فقط، فلا يُكشف معرّف صف
-  // لم يُعَد.
-  const scan = !cursor && head ? head : await scanVisible(cursor || null, size + 1);
+  // الصفحة: من المعرّفات المطابقة بعد المؤشر تُقرأ دفعات ويُعاد الظاهر منها. والمؤشر آخر صف معروض متى كانت الصفحة
+  // غير فارغة، فيُختم كل حصر بصفحة فارغة بلا مؤشر: لا يكشف وجود المؤشر ولا خلو الصفحة التالية أن بعد آخر صف معروض
+  // أحكامًا مسقطة، ولا أن المسح بلغ حده. ولا يُكشف معرّف صف لم يُعَد.
+  const scan = !cursor && head ? head : await scanVisible(cursor || null, size);
   const pageRows = scan.rows.slice(0, size);
-  const more = scan.rows.length > size || !scan.exhausted;
-  const nextCursor = more && pageRows.length ? pageRows[pageRows.length - 1].id : null;
+  const nextCursor = pageRows.length ? pageRows[pageRows.length - 1].id : null;
   const results = pageRows.map((r): EnumResult => {
     // الحجب قبل القص، فلا يقطع القصُّ رقمًا أو اسمًا يفلت من الحجب (HKM-012: والأسماء).
     const txt = maskRulingText(r.judgmentText);

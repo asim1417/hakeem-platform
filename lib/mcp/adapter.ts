@@ -243,12 +243,9 @@ export async function searchRulings(query: string, court?: string, yearH?: numbe
   // وما تعذّر جلب نصه لا يُعاد.
   const results: Hit[] = [];
   let withheld = 0;
-  // آخر دفعة مرشحين كانت ممتلئة (أو تعذّر جلب التالية): قد يكون بعدها مرشحون لم يُفحصوا.
-  let moreCandidates = false;
   let r = first;
   for (let round = 0; r && round < 2 && results.length < pageCap; round++) {
     const hits = r.hits;
-    moreCandidates = hits.length >= batch;
     const rows = hits.length
       ? await prisma.judicialCase
           .findMany({
@@ -297,11 +294,10 @@ export async function searchRulings(query: string, court?: string, yearH?: numbe
     r = await searchRulingsDirect({ query: q, court, yearH, limit: batch, offset: batch }).catch(() => null);
   }
   // عدد القاعدة يشمل أحكامًا لا تطابق إلا داخل اسم، فلا يُعاد لاستعلام فيه لفظ: الإجمالي عدد ما أُعيد،
-  // وtotal_is_lower_bound أن الصفحة امتلأت، أو أن النافذة انتهت ومرشحوها لم ينفدوا (فقد يكون بعدها ما يظهر).
-  // ولاستعلام الأرقام وحدها (رقم القضية أو القرار) عدد القاعدة كما كان (مسقوف بـ٥٠٠٠).
+  // وtotal_is_lower_bound امتلاء الصفحة وحده (لا امتلاء نافذة المرشحين: كان يميّز الخلية التي تكثر فيها المطابقات
+  // داخل الأسماء). ولاستعلام الأرقام وحدها (رقم القضية أو القرار) عدد القاعدة كما كان (مسقوف بـ٥٠٠٠).
   if (groups.length || withheld > 0) {
-    const lowerBound = results.length >= pageCap || (withheld > 0 && moreCandidates);
-    return { query, count: results.length, total: results.length, total_is_lower_bound: lowerBound, results };
+    return { query, count: results.length, total: results.length, total_is_lower_bound: results.length >= pageCap, results };
   }
   return { query, count: results.length, total: first?.total ?? 0, total_is_lower_bound: first?.totalCapped ?? false, results };
 }
