@@ -1,0 +1,11 @@
+{
+ "batch": "HKM-029",
+ "source": "جرد الإنتاج بالقراءة 18/10/2026 نحو 03:40 بتوقيت الرياض (Neon br-rapid-salad-aq782ea2): مكافئ SQL لـ buildSearchNorm على 28,632 مادة؛ المخزَّن يطابق المتوقع في 28,631، والصف الباقي فرقه رمز «²» الذي يعدّه الكود رقمًا (سليم). لا صف في shifted ولا content_changed. يُعاد التجميد بـ npm run audit:index-drift -- --freeze قبل أي تطبيق.",
+ "frozen_at": "2026-10-18T00:40:00Z",
+ "scope": [
+  "shifted",
+  "content_changed"
+ ],
+ "expected_count": 0,
+ "rows": []
+}
