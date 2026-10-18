@@ -5,7 +5,7 @@
  * تتبع Node الرابط إلى مساره الحقيقي، فتُحل تبعيات pg من مجلده.
  */
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, symlinkSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, realpathSync, symlinkSync } from "node:fs";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -13,16 +13,30 @@ import path from "node:path";
 export const PG_VERSION = "8.23.1";
 const NAMES = ["pg", "pg-connection-string"];
 
-function resolvable(root) {
+function resolveErrors(root) {
   const req = createRequire(path.join(root, "package.json"));
-  return NAMES.every((n) => {
+  return NAMES.flatMap((n) => {
     try {
       req.resolve(n);
-      return true;
-    } catch {
-      return false;
+      return [];
+    } catch (e) {
+      return [`${n}: ${String(e?.code ?? "")} ${String(e?.message ?? "").split("\n")[0].slice(0, 120)}`];
     }
   });
+}
+const resolvable = (root) => resolveErrors(root).length === 0;
+
+/** وصف حالة الروابط بلا أسرار (للتعليق التوضيحي عند الفشل). */
+function describe(root, prefix) {
+  return NAMES.map((n) => {
+    const link = path.join(root, "node_modules", n);
+    let kind = "غائب";
+    try {
+      const st = lstatSync(link);
+      kind = st.isSymbolicLink() ? `رابط→${(() => { try { return realpathSync(link); } catch { return "مكسور"; } })()}` : st.isDirectory() ? "مجلد" : "ملف";
+    } catch {}
+    return `${n}=[${kind}، package.json:${existsSync(path.join(link, "package.json"))}، الهدف:${existsSync(path.join(prefix, "node_modules", n, "package.json"))}]`;
+  }).join(" ");
 }
 
 /** يعيد "present" إن كان pg قابلًا للحل من root، وإلا يثبّته ويربطه ويعيد "installed". */
@@ -39,6 +53,7 @@ export function ensurePg(root = process.cwd(), prefix = path.join(tmpdir(), "hkm
     if (!existsSync(target)) throw new Error(`لم يُثبَّت ${n}`);
     if (!existsSync(link)) symlinkSync(target, link, "dir");
   }
-  if (!resolvable(root)) throw new Error("pg غير قابل للحل بعد التثبيت");
+  const errs = resolveErrors(root);
+  if (errs.length) throw new Error(`pg غير قابل للحل بعد التثبيت: ${errs.join(" | ")} — ${describe(root, prefix)}`);
   return "installed";
 }
