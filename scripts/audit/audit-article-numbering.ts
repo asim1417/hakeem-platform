@@ -1,6 +1,6 @@
 /**
  * HKM-028: تدقيق ترقيم كل الأنظمة في legal_articles، بقراءة فقط (SET TRANSACTION READ ONLY).
- * يقرأ الرقم والعنوان فقط (لا نصوص المواد)، ويطبع خلاصة وجدول الأنظمة غير النظيفة.
+ * يقرأ الرقم والعنوان وأول سطر من المتن (يُقطع إلى 200 حرف ولا يُطبع)، ويطبع خلاصة وجدول الأنظمة غير النظيفة.
  *   npx tsx scripts/audit/audit-article-numbering.ts [--json ملف]
  */
 import { writeFileSync } from "node:fs";
@@ -20,7 +20,7 @@ async function main() {
       return tx.$queryRawUnsafe<Array<NumberingRow & { lawName: string }>>(
         // الصفوف غير المادية (درجة «مكرر» ≥ NON_ARTICLE_BIS) ليست مواد، فلا تدخل في التدقيق.
         // أول سطر من المتن مقطوعًا إلى 80 حرفًا فقط (لا النص): مصدر العدد الترتيبي حين يكون العنوان رقميًّا (الأمر ٠٨).
-        `SELECT "lawName", "articleNumber", title, left(btrim(split_part(btrim(content), E'\\n', 1)), 80) AS "firstLine"
+        `SELECT "lawName", "articleNumber", title, left(btrim(split_part(btrim(content), E'\\n', 1)), 200) AS "firstLine"
            FROM legal_articles WHERE "articleBis" < ${NON_ARTICLE_BIS}`,
       );
     });

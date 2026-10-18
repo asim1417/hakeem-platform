@@ -26,15 +26,21 @@ const ROW25 = "cmpwi8ymt01i1nxfflwry8fwb";
 const BEFORE = {
   law: "ba8a3c0c3fabd128b435ac1e1ada8d27",
   boe: "bcc84d876543e77599fd032a93fe72d8",
-  links: "fad8b54b4b4a015d0370a994288456c6:14519",
+  links: "59b457ae8b31e76f9c72c1e31b304f08:14519",
   nodes: "b89c81af6eb322c06eb8a6bf729839d7:96",
   occ: "8a50f942d0358b372769c60910403f18:290",
 };
+// مواضع المكنز على الصفين 18 و25: 13، منها 7 مصطلحها من ذيل نصي 19 و26 فلا يبقى في المتن الجديد.
+// تُترك (المكنز مشتق ويُعاد استخراجه للنظام) ويُثبَّت عددها بحارس.
+const OCC_ON_REPLACED = 13;
+const OCC_STALE_AFTER_REPLACE = 7;
 // بصمات ما بعد التنفيذ: من البروفة على الفرع المعزول hkm028-cc-repair-trial-2026-10-18 (br-quiet-wave-aq2o2t0h،
-// من الإنتاج عند LSN 5/6A078A78). حتمية: لا تتوقف على وقت التنفيذ. يشترطها التراجع.
+// من الإنتاج عند LSN 5/6A078A78)، وبصمة الروابط بتعريفها الجديد (مع نص الاستشهاد) من الفرع نفسه بعد التنفيذ.
+// أكّدتها الجولة الثانية بالخطة الحالية على hkm028-cc-repair-trial-r2-2026-10-18 (br-purple-smoke-aq5by0mu، LSN 5/6A1639D8).
+// حتمية: لا تتوقف على وقت التنفيذ. يشترطها التراجع، ويشترطها التنفيذ في آخره.
 const AFTER = {
   law: "2107cff131551938dbe0582bf5d1bd90",
-  links: "ac397969cdba1add9e50ae509bc51e82:14519",
+  links: "e881c97aeb327fc7458ce97ebd76bdc4:14519",
   nodes: "c50cdd6140d911967d89e2a1cfe2cb84:96",
   occ: "8a50f942d0358b372769c60910403f18:290",
 };
@@ -57,9 +63,11 @@ const boeHeading = (h: string) => `(CASE WHEN ${h} LIKE 'المادة%' THEN btr
 const citedNumber = (x: string) => `(regexp_match(translate(coalesce(${x}, ''), '٠١٢٣٤٥٦٧٨٩', '0123456789'), '([0-9]+)'))[1]::int`;
 const sha16 = (x: string) => `left(encode(sha256(convert_to(${x}, 'UTF8')), 'hex'), 16)`;
 const lawIds = `(SELECT id FROM legal_articles WHERE "lawName" = ${L})`;
-const lawFp = `(SELECT md5(string_agg(id || ':' || "articleNumber" || ':' || "articleBis" || ':' || md5(content) || ':' || md5(title) || ':' || md5(search_norm), ',' ORDER BY "articleNumber", "articleBis", id)) FROM legal_articles WHERE "lawName" = ${L})`;
+// md5(coalesce(...)) حتى لا يُسقط NULL صفًّا من البصمة بصمت.
+const lawFp = `(SELECT md5(string_agg(id || ':' || "articleNumber" || ':' || "articleBis" || ':' || md5(content) || ':' || md5(title) || ':' || md5(coalesce(search_norm, '∅')), ',' ORDER BY "articleNumber", "articleBis", id)) FROM legal_articles WHERE "lawName" = ${L})`;
 const boeFp = `(SELECT md5(string_agg(article_number || ':' || body_sha256 || ':' || coalesce(heading,''), ',' ORDER BY seq)) FROM boe.unit WHERE law_id = ${BOE})`;
-const linksFp = `(SELECT md5(string_agg(k.id || ':' || k."articleId" || ':' || k."reviewStatus", ',' ORDER BY k.id)) || ':' || count(*) FROM legal_article_case_links k WHERE k."articleId" IN ${lawIds})`;
+// نص الاستشهاد داخل البصمة: تعديله يغيّر وجهة الرابط، فيرفض الحارس الأول التنفيذ.
+const linksFp = `(SELECT md5(string_agg(k.id || ':' || k."articleId" || ':' || k."reviewStatus" || ':' || md5(coalesce(k."citedText", '')), ',' ORDER BY k.id)) || ':' || count(*) FROM legal_article_case_links k WHERE k."articleId" IN ${lawIds})`;
 const nodesFp = `(SELECT md5(string_agg(g.id || ':' || g."articleId" || ':' || g.number, ',' ORDER BY g.id)) || ':' || count(*) FROM legal_graph_nodes g WHERE g.law = ${L})`;
 const occFp = `(SELECT md5(string_agg(o.id || ':' || o.article_id || ':' || o.article_number, ',' ORDER BY o.id)) || ':' || count(*) FROM legal_thesaurus_occurrences o WHERE o.article_id IN ${lawIds})`;
 const linksConsistent = `NOT EXISTS (SELECT 1 FROM legal_article_case_links k JOIN legal_articles a ON a.id = k."articleId" WHERE a."lawName" = ${L} AND (a."articleBis" <> 0 OR ${citedNumber('k."citedText"')} IS DISTINCT FROM a."articleNumber"))`;
@@ -68,6 +76,10 @@ const aligned = `NOT EXISTS (SELECT 1 FROM legal_articles a LEFT JOIN boe.unit u
 const officialText = (u: string) => `${boeHeading(`${u}.heading`)} || E'\\n' || btrim(${u}.body)`;
 
 const s: string[] = [];
+// ٠. لقطة متسقة وقفل: REPEATABLE READ (أول جملة في المعاملة)، وقفل صفوف النظام وروابطها حتى التثبيت.
+s.push(`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ`);
+s.push(`SELECT count(*) AS locked_articles FROM (SELECT id FROM legal_articles WHERE "lawName" = ${L} FOR UPDATE) x`);
+s.push(`SELECT count(*) AS locked_links FROM (SELECT k.id FROM legal_article_case_links k WHERE k."articleId" IN ${lawIds} FOR UPDATE) x`);
 // ١. حالة البداية
 s.push(guard("guard_law_fingerprint", `${lawFp} = ${q(BEFORE.law)}`));
 s.push(guard("guard_boe_fingerprint", `${boeFp} = ${q(BEFORE.boe)}`));
@@ -85,6 +97,10 @@ for (const [id, own, extra] of [[ROW18, 18, 19], [ROW25, 25, 26]] as const) {
   s.push(guard(`guard_merged_${own}`, `(SELECT count(*) FROM legal_articles x JOIN boe.unit u ON u.law_id = ${BOE} AND u.article_number IN (${own}, ${extra}) WHERE x.id = ${q(id)} AND x."lawName" = ${L} AND x."articleBis" = 0 AND x."articleNumber" = ${own} AND position(${letters("u.body")} IN ${letters("x.content")}) > 0) = 2`));
 }
 s.push(guard("guard_no_provenance_yet", `NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE entity_id IN ${lawIds} AND source = 'boe' AND action = 'versioned_replace')`));
+// لا نسخة في unit_version للصفين (تُعرض قبل content لو وُجدت، فلا يظهر الاستبدال).
+s.push(guard("guard_no_unit_versions", `NOT EXISTS (SELECT 1 FROM unit_version WHERE unit_id IN (${q(ROW18)}, ${q(ROW25)}))`));
+// مواضع المكنز على الصفين: العدد ومن مصطلحه لا يبقى في المتن الرسمي الجديد (تُترك لإعادة استخراج المكنز).
+s.push(guard("guard_occ_on_replaced", `(SELECT count(*) FROM legal_thesaurus_occurrences WHERE article_id IN (${q(ROW18)}, ${q(ROW25)})) = ${OCC_ON_REPLACED} AND (SELECT count(*) FROM legal_thesaurus_occurrences o JOIN legal_articles a ON a.id = o.article_id JOIN boe.unit u ON u.law_id = ${BOE} AND u.article_number = a."articleNumber" WHERE a.id IN (${q(ROW18)}, ${q(ROW25)}) AND position(o.occurrence_text IN ${officialText("u")}) = 0) = ${OCC_STALE_AFTER_REPLACE}`));
 s.push(`CREATE TEMP TABLE cr_links_before ON COMMIT DROP AS SELECT k.id, k."articleId" FROM legal_article_case_links k WHERE k."articleId" IN ${lawIds}`);
 s.push(`CREATE TEMP TABLE cr_before ON COMMIT DROP AS SELECT id, md5(content) AS mc, title, keywords, classification, chapter, status FROM legal_articles WHERE "lawName" = ${L}`);
 
@@ -116,6 +132,10 @@ s.push(guard("guard_search_norm", `NOT EXISTS (SELECT 1 FROM legal_articles a WH
 s.push(guard("guard_others_unchanged", `(SELECT count(*) FROM legal_articles a JOIN cr_before b ON b.id = a.id WHERE a.id NOT IN (${q(ROW18)}, ${q(ROW25)}) AND md5(a.content) = b.mc AND a.title = b.title AND a.keywords IS NOT DISTINCT FROM b.keywords AND a.classification IS NOT DISTINCT FROM b.classification AND a.chapter IS NOT DISTINCT FROM b.chapter AND a.status = b.status) = (SELECT count(*) FROM cr_before) - 2 AND (SELECT count(*) FROM legal_articles a JOIN cr_before b ON b.id = a.id WHERE a.id IN (${q(ROW18)}, ${q(ROW25)}) AND a.title = b.title AND a.keywords IS NOT DISTINCT FROM b.keywords AND a.status = b.status) = 2`));
 s.push(guard("guard_provenance", `(SELECT count(*) FROM legal_text_provenance p JOIN cr_before b ON b.id = p.entity_id WHERE p.source = 'boe' AND p.action = 'versioned_replace' AND md5(p.previous_text) = b.mc) = 2`));
 s.push(guard("guard_occ_unchanged", `${occFp} = ${q(BEFORE.occ)}`));
+// الحالة النهائية = ما بلغته البروفة حرفًا (وإلا يتعذّر التراجع المشروط بها).
+s.push(guard("guard_law_fingerprint_is_after", `${lawFp} = ${q(AFTER.law)}`));
+s.push(guard("guard_links_fingerprint_is_after", `${linksFp} = ${q(AFTER.links)}`));
+s.push(guard("guard_nodes_fingerprint_is_after", `${nodesFp} = ${q(AFTER.nodes)}`));
 
 writeFileSync(`${dir}/statements.json`, JSON.stringify(s, null, 1) + "\n");
 console.log(`statements ${s.length}`);
@@ -125,6 +145,7 @@ if (!AFTER.law) {
   console.log("rollback: بصمات ما بعد التنفيذ غير مملوءة بعد (تُملأ من البروفة)");
 } else {
   const r: string[] = [];
+  r.push(`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ`);
   r.push(guard("guard_law_fingerprint_after", `${lawFp} = ${q(AFTER.law)}`));
   r.push(guard("guard_links_fingerprint_after", `${linksFp} = ${q(AFTER.links)}`));
   r.push(guard("guard_nodes_fingerprint_after", `${nodesFp} = ${q(AFTER.nodes)}`));
