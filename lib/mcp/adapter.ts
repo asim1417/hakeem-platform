@@ -24,7 +24,7 @@ import { matchThesaurusConcepts } from "@/lib/modules/legal-thesaurus/concept-in
 import { prismaSqlClient } from "@/lib/modules/legal-core/sql-port";
 import { getSiteUrl } from "@/lib/modules/config/site-url";
 import { getLawTool } from "@/lib/mcp/tools/get-law";
-import { maskedRulingExcerpts } from "@/lib/mcp/ruling-privacy";
+import { maskRulingText, maskedRulingExcerpts } from "@/lib/mcp/ruling-privacy";
 
 /** مقتطف نصّي بطول ثابت (عقد المخرجات). */
 const SNIPPET = 400;
@@ -200,15 +200,19 @@ export async function searchRulings(query: string, court?: string, yearH?: numbe
   const hits = r?.hits ?? [];
   // HKM-012 (الأمر ٠٨، المسار ٣): المقتطف والمنطوق من النص المحجوب كاملًا (أسماء الأفراد والأرقام)،
   // لا من مقتطف خام محجوب بعد قصّه. الإزاحات في parts تبقى على النص الخام لـ hakeem_get_ruling.
-  const texts = hits.length
-    ? new Map(
-        (await prisma.judicialCase.findMany({ where: { id: { in: hits.map((h) => h.id) } }, select: { id: true, judgmentText: true } })).map(
-          (x) => [x.id, x.judgmentText ?? ""] as const,
-        ),
-      )
-    : new Map<string, string>();
+  const rows = hits.length
+    ? await prisma.judicialCase
+        .findMany({ where: { id: { in: hits.map((h) => h.id) } }, select: { id: true, judgmentText: true } })
+        .catch(() => null)
+    : [];
+  const texts = new Map((rows ?? []).map((x) => [x.id, x.judgmentText ?? ""] as const));
   const results = hits.map((h) => {
-    const masked = maskedRulingExcerpts(texts.get(h.id) ?? "", query, h.matchedBy === "semantic" ? h.matchedIn : null);
+    const raw = texts.get(h.id);
+    // تعذّر جلب النص: يُحجب المقتطف القائم نفسه (أضعف على الحدود، لكن لا يمر اسم بلا حجب).
+    const masked =
+      raw === undefined
+        ? { snippet: maskRulingText(h.snippet), disposition: h.disposition ? maskRulingText(h.disposition) : null }
+        : maskedRulingExcerpts(raw, query, h.matchedBy === "semantic" ? { part: h.matchedIn, originalSnippet: h.snippet } : null);
     return {
       ruling_id: h.id,
       case_number: h.decisionNo ?? h.caseNo ?? null,

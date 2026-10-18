@@ -99,7 +99,17 @@ const rows: Row[] = [
     appealText: `قدّم المستأنف صاحب الإقامة ${IQAMA_LAT} لائحة استئناف.`,
     caseNo: "رقم القضية - القرار: ٤٤٧٠٠٠٠٠٠٢", decisionNo: null, court: "المحكمة العمالية", decisionDateText: null,
   },
+  {
+    // HKM-012 (الأمر ٠٨): أسماء أفراد مصطنعة بعد صفات الأطراف، بلا أرقام شخصية.
+    ...base, id: "r5", sourceId: 5, createdAt: new Date("2024-01-01"),
+    judgmentTitle: "حكم توريد",
+    judgmentText: `الوقائع: أقام المدعي/ غانم الموسوي دعواه ضد المدعى عليه/ زيدان الفلاني بطلب ثمن توريد بضاعة.\nوحضر وكيل المدعي المحامي قيصر الطاهري وقرر ما جاء في الصحيفة.\nالأسباب: وحيث إن المدعي/ غانم الموسوي أثبت توريد البضاعة، وحيث شهدت الشاهدة/ رجاء السندي بالتسليم.\nمنطوق الحكم: حكمت الدائرة بإلزام المدعى عليه زيدان الفلاني بأن يدفع للمدعي/ غانم الموسوي ثمن التوريد.`,
+    appealText: null,
+    caseNo: "رقم القضية - القرار: ٤٤٧٠٠٠٠٠٠٥", decisionNo: null, court: "المحكمة التجارية", decisionDateText: null,
+  },
 ];
+const NAME_WORDS = ["غانم", "الموسوي", "زيدان", "الفلاني", "قيصر", "الطاهري", "رجاء", "السندي"];
+const nameLeak = (t: string) => NAME_WORDS.filter((w) => t.includes(w));
 const frozen = JSON.stringify(rows);
 
 function setupDb() {
@@ -229,6 +239,25 @@ async function main() {
   ok(!PII_LEAK.test(buildJudgmentSnippet(rows[1].judgmentText, "مقاولات")), "buildJudgmentSnippet يحجب قبل القص");
   const mcp = (await enumerateRulings(["مقاولات", "مقاولة"], undefined, undefined, false, 50, undefined, 520)) as { results: Array<{ snippet: string }> };
   ok(mcp.results.length > 0 && mcp.results.every((r) => !PII_LEAK.test(r.snippet)), "MCP: المقتطفات بلا رقم ولا جزء منه");
+  // HKM-012 (الأمر ٠٨، المسار ٣): أدوات الأحكام في الموصل لا تُخرج اسم فرد (البحث والحصر والجلب بكل شرائحه وأجزائه).
+  const s5 = await mcpSearchRulings("توريد", undefined, undefined, 20);
+  const s5hit = s5.results.find((x) => x.ruling_id === "r5");
+  ok(Boolean(s5hit) && nameLeak(`${s5hit?.snippet ?? ""} ${s5hit?.disposition ?? ""}`).length === 0, `MCP search: مقتطف r5 ومنطوقه بلا اسم فرد (${nameLeak(`${s5hit?.snippet ?? ""} ${s5hit?.disposition ?? ""}`).join("،") || "لا تسرّب"})`);
+  const e5 = (await enumerateRulings(["توريد"])) as { results: Array<{ ruling_id: string; snippet: string }> };
+  const e5hit = e5.results.find((x) => x.ruling_id === "r5");
+  ok(Boolean(e5hit) && nameLeak(e5hit?.snippet ?? "").length === 0, "MCP enumerate: مقتطف r5 بلا اسم فرد");
+  for (const part of [undefined, "reasons", "disposition"] as const) {
+    for (const size of [9, 23, 61, 400]) {
+      let offset: number | null = 0;
+      let joined = "";
+      for (let g = 0; offset !== null && g < 400; g++) {
+        const r = (await getRuling("r5", offset, size, part)) as { text?: string; next_offset?: number | null };
+        joined += r.text ?? "";
+        offset = r.next_offset ?? null;
+      }
+      ok(joined.length > 0 && nameLeak(joined).length === 0, `MCP get_ruling: r5${part ? ` (${part})` : ""} بشرائح ${size} بلا اسم فرد`);
+    }
+  }
   // HKM-012 (الأمر ٠٨): hakeem_get_ruling بشرائح قصيرة متتالية لا يسرّب رقمًا ولا جزءًا منه على حد شريحة.
   for (const row of rows) {
     for (const size of [17, 41, 97]) {

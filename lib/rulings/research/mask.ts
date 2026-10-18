@@ -4,7 +4,9 @@
  * يعيد استعمال redactPII القائم (الهوية والإقامة والجوال والآيبان والبريد، مع حماية أرقام
  * المواد والصكوك والتواريخ)، ويضيف حجب أسماء الأفراد بقاعدتين محافظتين:
  *   ١. سلاسل النسب: «محمد بن عبدالله بن سعد القحطاني» ← [اسم].
- *   ٢. ما يلي صفة الطرف: «المدعي/ سعد الدوسري» ← «المدعي/ [اسم]».
+ *   ٢. ما يلي صفة الطرف: «المدعي/ سعد الدوسري» ← «المدعي/ [اسم]». صفة الطرف تحتاج فاصلًا بعدها
+ *      («/» أو «:» أو «-» أو قوس) أو كلمة محرّكة قبلها («حضر»، «بإلزام»)، واللقب («السيد»، «المحامي»،
+ *      «المدعو») لا يحتاج. ويتوقف الاسم عند كلمة قاطعة أو صفة أو كلمة منوّنة، وبحد أربع كلمات.
  * لا تحجب أسماء الشركات والجهات (ليست بيانات شخصية)، ولا الصفات نفسها، ولا أرقام المواد.
  * الحجب قاعدي وقد يفوته اسم بلا صفة ولا نسب؛ لذا يُقاس على العيّنة الذهبية ويُراجع.
  */
@@ -13,14 +15,20 @@ import { redactPII } from "../../modules/legal-core/rulings-search";
 export const NAME_MASK = "[اسم]";
 
 const AR = "[\\u0621-\\u064A]+";
-// صفات يليها اسم شخص طبيعي (لا «شركة» ولا «مؤسسة» ولا «الجهة»).
-const ROLE_MARKERS = [
-  "المدعي", "المدعية", "المدعى عليه", "المدعى عليها", "المدعيان", "المدعى عليهما",
-  "المستأنف", "المستأنفة", "المستأنف ضده", "المستأنف ضدها",
-  "السيد", "السيدة", "المواطن", "المواطنة", "المقيم", "المقيمة", "الأستاذ", "الأستاذة",
-  "المحامي", "المحامية", "وكيل", "وكيله", "وكيلها", "وكيلهم", "وكيلة", "المدعو", "المدعوة",
-  "الشاهد", "الشاهدة", "الكفيل", "الضامن",
+// صفات الأطراف: يُحجب ما بعدها إن تلاها فاصل («/» أو «:» أو «-» أو قوس)، أو سبقها «حضر/بحضور».
+// بلا ذلك يليها غالبًا فعل أو وصف («وحيث إن المدعي طلب…»، «للمدعي بمبلغ…») فلا يُحجب (HKM-012، الأمر ٠٨).
+const PARTY_MARKERS = [
+  "المدعي", "المدعية", "المدعيان", "المدعون", "المدعى عليه", "المدعى عليها", "المدعى عليهما", "المدعى عليهم",
+  "المستأنف", "المستأنفة", "المستأنف ضده", "المستأنف ضدها", "المستأنف عليه", "المستأنف عليها",
+  "المعترض", "المعترضة", "المعترض ضده", "المتهم", "المتهمة", "طالب التنفيذ", "المنفذ ضده", "المنفذ ضدها",
+  "الشاهد", "الشاهدة", "الكفيل", "الضامن", "الوكيل", "الوكيلة", "وكيل", "وكيله", "وكيلها", "وكيلهم", "وكيلة",
 ];
+// ألقاب يليها اسم الشخص دائمًا: يُحجب ما بعدها بلا فاصل.
+const TITLE_MARKERS = [
+  "السيد", "السيدة", "المواطن", "المواطنة", "المقيم", "المقيمة", "الأستاذ", "الأستاذة", "المحامي", "المحامية", "المدعو", "المدعوة",
+];
+const ROLE_MARKERS = [...PARTY_MARKERS, ...TITLE_MARKERS];
+const TITLES = new Set(TITLE_MARKERS);
 // ما يقطع الاسم بعد الصفة (حروف وأفعال وصفات تابعة).
 const STOP = new Set([
   "بأن", "بان", "أن", "ان", "إن", "على", "علي", "في", "عن", "من", "إلى", "الى", "ضد", "مع", "الذي", "التي",
@@ -28,34 +36,82 @@ const STOP = new Set([
   "شركة", "مؤسسة", "الشركة", "المؤسسة", "بنك", "البنك", "الجهة", "وزارة", "الوزارة", "هيئة", "الهيئة",
   "وكالة", "بالوكالة", "أصالة", "اصالة", "ولم", "ولا", "لم", "لا", "قدم", "تقدم", "يطلب", "طلب", "وطلب",
   "أنه", "انه", "أنها", "انها", "فقد", "وحضر", "حضر", "الحاضر", "الحاضرة", "و", "ثم", "بعد", "قبل",
+  "بما", "مما", "كما", "أفاد", "أفادت", "وأفاد", "وأفادت", "أقر", "أقرت", "وأقر", "وأقرت", "قرر", "وقرر",
+  "بمبلغ", "مبلغ", "الجنسية", "سعودي", "سعودية", "يوافق", "وذلك", "وهو", "وهي", "هو", "هي",
+  "بدفع", "بسداد", "بتسليم", "بإعادة", "بالتعويض", "برد", "بأداء", "بإخلاء", "بالمبلغ", "بمبالغ", "يدفع", "تدفع",
+  "أبرم", "أبرمت", "ذكر", "وذكر", "أجاب", "وأجاب", "أنكر", "وأنكر", "اعترض", "واعترض", "قال", "وقال", "أوضح", "وأوضح",
+  "أضاف", "وأضاف", "طالب", "وطالب", "دفع", "ودفع", "التزم", "استلم", "يملك", "يقيم", "المقيم", "الساكن",
 ]);
 
-const markerAlt = ROLE_MARKERS.sort((a, b) => b.length - a.length).map((m) => m.replace(/ /g, "\\s+")).join("|");
-// الصفة المعرّفة بعد حرف جر ملتصق: «للمدعي» (ل + المدعي بحذف الألف)، و«بالمدعي» و«كالمدعي» و«وللمدعي» (HKM-012، الأمر ٠٨).
-const lilAlt = ROLE_MARKERS.filter((m) => m.startsWith("ال")).map((m) => m.slice(2).replace(/ /g, "\\s+")).join("|");
-const ROLE_RE = new RegExp(
-  `(^|[^\\u0621-\\u064A])((?:[وف]?[بكل]?)(?:${markerAlt})|[وف]?لل(?:${lilAlt}))(\\s*[:/،-]?\\s*)((?:${AR}\\s*){1,5})`,
+const alt = (list: string[]) => [...list].sort((a, b) => b.length - a.length).map((m) => m.replace(/ /g, "\\s+")).join("|");
+const markerAlt = alt(ROLE_MARKERS);
+// المعرّفة بعد حرف جر ملتصق: «للمدعي» (ل + المدعي بحذف الألف)، و«بالمدعي» و«كالمدعي» و«وللمدعي».
+const lilAlt = alt(ROLE_MARKERS.filter((m) => m.startsWith("ال")).map((m) => m.slice(2)));
+// الصفة وحدها (والفاصل بعدها)؛ الكلمات بعدها تُقرأ يدويًا، فالصفة المرفوضة لا تبتلع صفة تالية.
+const MARKER_RE = new RegExp(
+  `(^|[^\\u0621-\\u064A])((?:[وف]?[بكل]?)(?:${markerAlt})|[وف]?لل(?:${lilAlt}))(?![\\u0621-\\u064A\\u064B-\\u0652])` +
+    `(\\s*(?:[:/\\-–—(]\\s*){0,2})`,
   "g",
 );
 const NASAB_RE = new RegExp(`${AR}(?:\\s+(?:بن|بنت|ابن|ابنة)\\s+${AR})+(?:\\s+(?:آل\\s+)?${AR})?`, "g");
+// كلمة قبل الصفة تجعل ما بعدها اسمًا بلا فاصل: «حضر المدعي فلان»، «بإلزام المدعى عليه فلان».
+const TRIGGER_BEFORE = /(?:^|[^ء-ي])[وف]?(?:حضر|حضرت|بحضور|حضور|إلزام|بإلزام|الزام|بالزام|ألزم|ألزمت)\s+$/;
+// الكلمة بحركاتها: «عقدًا» كلمة واحدة لا «عقد» ثم «ًا».
+const TOKEN_RE = /\s*([\u0621-\u064A\u064B-\u0652]+)/y;
 
 const ROLE_WORDS = new Set(ROLE_MARKERS.filter((m) => !m.includes(" ")));
+const markerOf = (role: string): string => {
+  const r = role.replace(/\s+/g, " ");
+  return ROLE_MARKERS.find((m) => r.endsWith(m)) ?? ROLE_MARKERS.find((m) => m.startsWith("ال") && r.endsWith(m.slice(2))) ?? r;
+};
 
-/** يحجب الاسم الذي يلي صفة الطرف (حتى ٤ كلمات، ويتوقف عند أول كلمة قاطعة). صفة تالية تبقى. */
+/**
+ * يحجب الاسم الذي يلي صفة الطرف (حتى ٤ كلمات، ويتوقف عند أول كلمة قاطعة أو صفة أخرى).
+ * صفة الطرف تحتاج فاصلًا بعدها أو كلمة محرّكة قبلها («حضر»، «إلزام»)، واللقب لا يحتاج.
+ */
 function maskAfterRoles(text: string): string {
-  return text.replace(ROLE_RE, (all, pre: string, role: string, sep: string, words: string) => {
-    const toks = words.trim().split(/\s+/);
-    let i = 0;
-    const kept: string[] = [];
-    while (i < toks.length && ROLE_WORDS.has(toks[i])) kept.push(toks[i++]); // «وكيله المحامي …»
-    const name: string[] = [];
-    while (i < toks.length && !STOP.has(toks[i]) && !ROLE_WORDS.has(toks[i]) && name.length < 4) name.push(toks[i++]);
-    if (!name.length) return all;
-    const rest = toks.slice(i).join(" ");
-    const trailing = /\s$/.test(words) ? " " : "";
-    const head = kept.length ? `${kept.join(" ")} ` : "";
-    return `${pre}${role}${sep}${head}${NAME_MASK}${rest ? " " + rest : ""}${trailing}`;
-  });
+  let out = "";
+  let last = 0;
+  MARKER_RE.lastIndex = 0;
+  for (let m = MARKER_RE.exec(text); m; m = MARKER_RE.exec(text)) {
+    const [all, pre, role, sep] = m;
+    const roleStart = m.index + pre.length;
+    const end = m.index + all.length;
+    if (!all.length) {
+      MARKER_RE.lastIndex++;
+      continue;
+    }
+    const hasSep = /[:/\-–—(]/.test(sep);
+    const isTitle = TITLES.has(markerOf(role));
+    const trigger = TRIGGER_BEFORE.test(text.slice(Math.max(0, roleStart - 16), roleStart));
+    // المرفوضة: يُستأنف بعد الصفة نفسها لا بعد الفاصل، فيبقى الفاصل حدًّا قبل الصفة التالية («وكيله المحامي …»).
+    if (!hasSep && !isTitle && !trigger) {
+      MARKER_RE.lastIndex = roleStart + role.length;
+      continue;
+    }
+    // الكلمات بعد الفاصل: أسماء حتى ٤، وتتوقف عند كلمة قاطعة أو صفة.
+    TOKEN_RE.lastIndex = end;
+    let nameEnd = -1;
+    let count = 0;
+    for (let t = TOKEN_RE.exec(text); t && count < 4; t = TOKEN_RE.exec(text)) {
+      const w = t[1];
+      // المنوّن والمشكول ليس اسم علم في نصوص الأحكام («عقدًا»، «مبلغًا»).
+      if (STOP.has(w) || ROLE_WORDS.has(w) || /[\u064B-\u0652]/.test(w)) break;
+      nameEnd = TOKEN_RE.lastIndex;
+      count++;
+      // اسم لا يمتد عبر فاصل جملة أو سطر.
+      if (/^[^\S\n]*\n/.test(text.slice(nameEnd))) break;
+    }
+    if (count === 0) {
+      MARKER_RE.lastIndex = roleStart + role.length;
+      continue;
+    }
+    const nameStart = end + (text.slice(end).match(/^\s*/)?.[0].length ?? 0);
+    out += text.slice(last, nameStart) + NAME_MASK;
+    last = nameEnd;
+    MARKER_RE.lastIndex = nameEnd;
+  }
+  return out + text.slice(last);
 }
 
 /** يحجب سلاسل النسب («فلان بن فلان …»). */
@@ -66,5 +122,12 @@ function maskNasab(text: string): string {
 /** الحجب الكامل: أرقام شخصية (redactPII) ثم الأسماء. */
 export function maskPersonalData(text: string | null | undefined): string {
   if (!text) return "";
-  return maskAfterRoles(maskNasab(redactPII(text))).replace(/(\[اسم\]\s*){2,}/g, `${NAME_MASK} `);
+  // تمريرات متتالية: الصفة الثانية في «المدعي/ فلان ضد المدعى عليه/ فلان» تقع داخل كلمات التقاط الأولى.
+  let out = maskNasab(redactPII(text));
+  for (let i = 0; i < 4; i++) {
+    const next = maskAfterRoles(out);
+    if (next === out) break;
+    out = next;
+  }
+  return out.replace(/(\[اسم\]\s*){2,}/g, `${NAME_MASK} `);
 }

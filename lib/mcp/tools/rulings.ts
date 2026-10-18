@@ -10,7 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { normalizeArabic } from "@/lib/modules/legal-core/bm25-tokenizer";
 import { extractHijriYear, splitRulingQuery } from "@/lib/modules/legal-core/rulings-search";
 import { rulingNumbersSql, rulingRedactedTextSql } from "@/lib/modules/legal-core/ruling-redacted-sql";
-import { maskRulingText, safeChunkBounds } from "@/lib/mcp/ruling-privacy";
+import { maskRulingText, sliceMasked } from "@/lib/mcp/ruling-privacy";
 import { segmentRuling, type SegmentType } from "@/lib/rulings/research/segment";
 
 /** السنة الهجرية من نصّ التاريخ (أرقام هندية أو لاتينية) — كان التعبير السابق يلتقط اللاتينية فقط. */
@@ -38,23 +38,24 @@ export async function getRuling(rulingId: string, offset = 0, maxChars = 30000, 
   }
   const lo = target?.start ?? 0;
   const hi = target?.end ?? full.length;
-  // حدود لا تقسم جملة (اسمًا) ولا رقمًا على نداءين، فلا يفلت نصفه من الحجب (HKM-012).
-  const { start, end } = safeChunkBounds(full, lo, hi, offset, maxChars);
-  const chunk = full.slice(start, end);
-  const nextOffset = start + chunk.length < hi ? start - lo + chunk.length : null;
+  // HKM-012 (الأمر ٠٨): الحجب قبل القص — يُحجب الحكم (أو الجزء المطلوب) كاملًا ثم تُقتطع الشريحة،
+  // فلا يفلت نصف اسم أو رقم على حد شريحة. الإزاحات وtotal_chars في النص المحجوب.
+  const maskedFull = maskRulingText(full);
+  const maskedTarget = target ? maskRulingText(full.slice(lo, hi)) : maskedFull;
+  const slice = sliceMasked(maskedTarget, offset, maxChars);
 
   return {
     ruling_id: r.id,
     case_number: r.decisionNo ?? r.caseNo ?? null,
     court: r.court ?? null,
     year_h: hijriYear(r.decisionDateText),
-    total_chars: full.length,
+    total_chars: maskedFull.length,
     part: target?.type ?? null,
-    parts, // خريطة الأجزاء بإزاحاتها في النص الكامل
-    offset: start - lo, // داخل الجزء المطلوب (أو النص كله)
-    returned_chars: chunk.length,
-    next_offset: nextOffset, // null = انتهى الجزء/النص
-    text: maskRulingText(chunk), // HKM-012: الأرقام الشخصية وأسماء الأفراد
+    parts, // خريطة الأجزاء بإزاحاتها في النص الكامل الخام (لاختيار part)
+    offset: slice.offset, // داخل الجزء المطلوب (أو النص كله) بعد الحجب
+    returned_chars: slice.text.length,
+    next_offset: slice.nextOffset, // null = انتهى الجزء/النص
+    text: slice.text, // HKM-012: الأرقام الشخصية وأسماء الأفراد محجوبة
   };
 }
 
