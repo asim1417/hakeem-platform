@@ -2,8 +2,7 @@ import { DeskHeader, DeskNav, deskNavAccess } from "@/components/editorial/DeskN
 import { DeskRoot, PageDenied, ReadOnlyBanner } from "@/components/editorial/ui";
 import { WorkStatusForm } from "@/components/editorial/WorkStatusForm";
 import { canProposeLaws } from "@/lib/modules/editorial/access";
-import { requireEditorialPage } from "@/lib/modules/editorial/guard";
-import { isEditorialWriteEnabled } from "@/lib/modules/editorial/write-gate";
+import { requireEditorialPage, deskPageWriteContext } from "@/lib/modules/editorial/guard";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +10,7 @@ export default async function NewWorkStatusPage() {
   // الصلاحية المرفوضة تُعرض داخل الصفحة بلا تحويل (ق١٥-٢)؛ من لا يرى المكتب أصلًا يُحوَّل كما كان.
   const actor = await requireEditorialPage("view");
   const allowed = canProposeLaws(actor.access);
-  const writeEnabled = isEditorialWriteEnabled();
+  const { writeEnabled, banner } = await deskPageWriteContext(actor);
   return (
     <DeskRoot>
       <DeskHeader
@@ -21,7 +20,7 @@ export default async function NewWorkStatusPage() {
       <DeskNav current="/admin/legal/new" access={deskNavAccess(actor.access)} />
       {allowed ? (
         <>
-          <ReadOnlyBanner writeEnabled={writeEnabled} />
+          <ReadOnlyBanner {...banner} />
           <div className="dk-card mt-6 max-w-3xl">
             <WorkStatusForm writeEnabled={writeEnabled} />
           </div>

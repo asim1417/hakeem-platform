@@ -8,13 +8,16 @@ import { freshActor } from "./desk-tx";
 import { assertDeskIntegrity } from "./integrity";
 import {
   bindingFor,
+  controlsOf,
+  DEFAULT_EDITORIAL_CONFIG,
   loadEditorialConfig,
   lockConfigExclusive,
   parseEditorialConfig,
+  type DeskControls,
   type EditorialConfig,
 } from "./policy";
 import { EditorialError, type EditorialActor } from "./types";
-import { assertEditorialWriteEnabled } from "./write-gate";
+import { assertEditorialWriteEnabled, envLockMessage, envWriteLock, envWriteSwitch, MFA_REQUIRED_MESSAGE } from "./write-gate";
 
 export interface SettingsUser {
   id: string;
@@ -63,6 +66,7 @@ export async function saveEditorialSettings(
   actor: EditorialActor,
   input: SaveSettingsInput,
 ): Promise<{ version: number }> {
+  // حفظ التكليفات والسياسات مسموح والكتابة مقفلة (يجهّز المالك فريقه قبل التشغيل)، إلا بمفتاح الطوارئ.
   assertEditorialWriteEnabled();
   await assertDeskIntegrity(db);
   const reason = typeof input?.reason === "string" ? input.reason.trim() : "";
@@ -82,6 +86,10 @@ export async function saveEditorialSettings(
     const previous = loaded?.config ?? null;
     const owner = await freshActor(tx, actor, previous ?? next);
     assertOwner(owner);
+    // مفتاح الكتابة وشرط التحقق الثنائي لا يتغيران بالحفظ العام؛ يُنقلان من النسخة السابقة كما هما.
+    const controls = controlsOf(previous);
+    if (controls.requireMfa && owner.mfa !== true) throw new EditorialError("MFA_REQUIRED", MFA_REQUIRED_MESSAGE);
+    next.controls = controls;
     const latest = await tx.query<{ version: number }>(`SELECT version FROM editorial_config ORDER BY version DESC LIMIT 1`);
     const current = latest[0] ? Number(latest[0].version) : 0;
     if (current !== input.baseVersion) {
@@ -133,6 +141,77 @@ export async function saveEditorialSettings(
       },
     });
     return { version };
+  });
+}
+
+// ── مفتاح الكتابة وشرط التحقق الثنائي (قرار المالك 17/10/2026 22:13) ─────────
+
+export interface DeskSwitchInput {
+  baseVersion: number;
+  reason: string;
+  writeEnabled: boolean;
+  /** غيابه = يبقى كما هو. */
+  requireMfa?: boolean;
+}
+
+/**
+ * نسخة إعدادات جديدة لا تغيّر إلا المفتاح: التكليفات والسياسات تُنقل كما هي. للمالك وحده، بسبب مكتوب.
+ * - لا يمر ببوابة الكتابة (وإلا لما شُغّلت)، لكن مفتاح الطوارئ يمنع التشغيل.
+ * - التشغيل مع شرط التحقق الثنائي يتطلب التحقق الثنائي لحساب المالك نفسه؛ الإيقاف مسموح دائمًا.
+ * - التشغيل يتطلب سلامة الجداول والمشغّلات (assertDeskIntegrity).
+ */
+export async function setDeskWriteSwitch(db: EditorialDb, actor: EditorialActor, input: DeskSwitchInput): Promise<{ version: number; controls: DeskControls }> {
+  assertOwner(actor);
+  const reason = typeof input?.reason === "string" ? input.reason.trim() : "";
+  if (reason.length < 5) throw new EditorialError("REASON_REQUIRED", "سبب تغيير المفتاح مطلوب (خمسة أحرف على الأقل).");
+  if (reason.length > 2000) throw new EditorialError("INVALID_INPUT", "السبب أطول من المسموح.");
+  if (typeof input.writeEnabled !== "boolean" || (input.requireMfa !== undefined && typeof input.requireMfa !== "boolean")) {
+    throw new EditorialError("INVALID_INPUT", "قيمة المفتاح غير صالحة.");
+  }
+  if (!Number.isInteger(input.baseVersion) || input.baseVersion < 0) throw new EditorialError("INVALID_INPUT", "رقم النسخة الأساس غير صالح.");
+  // قفل البيئة (طوارئ أو نسخة معاينة) يمنع التشغيل من هذه النسخة؛ الإيقاف مسموح دائمًا.
+  if (input.writeEnabled && envWriteSwitch() === "kill") throw new EditorialError("WRITE_DISABLED", envLockMessage(envWriteLock()));
+  if (input.writeEnabled) await assertDeskIntegrity(db);
+
+  return db.transaction(async (tx) => {
+    await lockConfigExclusive(tx);
+    // نسخة مخزّنة تالفة = INVALID_STATE يُرمى كما هو (مراجعة الجودة ن١): لا يُكتب الافتراض فوق التكليفات بصمت.
+    const loaded = await loadEditorialConfig(tx);
+    const previous = loaded.version > 0 ? loaded.config : null;
+    const base = previous ?? DEFAULT_EDITORIAL_CONFIG;
+    const owner = await freshActor(tx, actor, base);
+    assertOwner(owner);
+    const latest = await tx.query<{ version: number }>(`SELECT version FROM editorial_config ORDER BY version DESC LIMIT 1`);
+    const current = latest[0] ? Number(latest[0].version) : 0;
+    if (current !== input.baseVersion) {
+      throw new EditorialError("CONFLICT", "حُفظت نسخة أحدث من الإعدادات بعد فتحها؛ أعد تحميلها ثم عدّل.", {
+        baseVersion: input.baseVersion,
+        currentVersion: current,
+      });
+    }
+    const before = controlsOf(previous);
+    const after: DeskControls = { writeEnabled: input.writeEnabled, requireMfa: input.requireMfa ?? before.requireMfa };
+    // التحقق الثنائي للمالك شرط لما يفتح فقط: تشغيل الكتابة والشرط قائم. التشديد (إعادة الشرط) والإيقاف مسموحان دائمًا (ن٤).
+    if (after.writeEnabled && !before.writeEnabled && after.requireMfa && owner.mfa !== true) throw new EditorialError("MFA_REQUIRED", MFA_REQUIRED_MESSAGE);
+    if (before.writeEnabled === after.writeEnabled && before.requireMfa === after.requireMfa) {
+      throw new EditorialError("INVALID_STATE", "لا تغيير: المفتاح على هذه الحالة أصلًا.");
+    }
+    // تحت قفل البيئة (طوارئ أو نسخة معاينة) لا يُسمح إلا بالإيقاف وحده؛ تغيير شرط التحقق الثنائي من هنا مرفوض (مراجعة الجودة خ٢).
+    if (envWriteSwitch() === "kill" && (after.writeEnabled || after.requireMfa !== before.requireMfa)) {
+      throw new EditorialError("WRITE_DISABLED", `${envLockMessage(envWriteLock())} الإيقاف وحده مسموح من هنا.`);
+    }
+    const next: EditorialConfig = parseEditorialConfig({ ...JSON.parse(JSON.stringify(base)), controls: after });
+    const version = current + 1;
+    await tx.query(`INSERT INTO editorial_config (version, config, reason, actor_id) VALUES ($1, $2::jsonb, $3, $4)`, [version, JSON.stringify(next), reason, owner.id]);
+    await recordAudit(tx, owner, {
+      action: "config.switch",
+      objectType: "editorial_config",
+      objectId: String(version),
+      before: { controls: before },
+      after: { controls: after },
+      detail: { version, baseVersion: input.baseVersion, reason, controls: after, mfa: owner.mfa ?? null, afterHash: fingerprint(next) },
+    });
+    return { version, controls: after };
   });
 }
 

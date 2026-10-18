@@ -4,18 +4,17 @@ import { ACTOR_KIND_LABEL, auditActionLabel, objectTypeLabel } from "@/component
 import { fmtDateTime } from "@/components/editorial/logic";
 import { DeskRoot, LoadFailed, Ltr, Message, NotMigrated, ReadOnlyBanner } from "@/components/editorial/ui";
 import { canReadAudit } from "@/lib/modules/editorial/access";
-import { editorialDb, requireEditorialPage } from "@/lib/modules/editorial/guard";
+import { editorialDb, requireEditorialPage, deskPageWriteContext } from "@/lib/modules/editorial/guard";
 import { intakeCounts } from "@/lib/modules/editorial/intake";
 import { loadEditorialConfig } from "@/lib/modules/editorial/policy";
 import { deskCounts, listAudit } from "@/lib/modules/editorial/read";
-import { isEditorialWriteEnabled } from "@/lib/modules/editorial/write-gate";
 
 export const dynamic = "force-dynamic";
 
 export default async function EditorialDeskPage() {
   const actor = await requireEditorialPage("view");
   const db = editorialDb();
-  const writeEnabled = isEditorialWriteEnabled();
+  const { writeEnabled, banner } = await deskPageWriteContext(actor);
   const auditAllowed = canReadAudit(actor.access);
   const [desk, intake, audit] = await Promise.all([
     deskCounts(db),
@@ -32,7 +31,7 @@ export default async function EditorialDeskPage() {
         lead="كل تغيير على الأنظمة والأحكام يمر بمُعِدّ ثم معتمِد غير المُعِدّ، ويُنشر صفًّا جديدًا بسنده، ويُسجّل في سجل لا يُعدَّل."
       />
       <DeskNav current="/admin/legal" access={deskNavAccess(actor.access)} />
-      <ReadOnlyBanner writeEnabled={writeEnabled} />
+      <ReadOnlyBanner {...banner} />
       {desk === null ? (
         <div className="mt-4">
           {migrated === false ? <NotMigrated /> : <LoadFailed what="قراءة عدّادات المكتب" retryHref="/admin/legal" />}

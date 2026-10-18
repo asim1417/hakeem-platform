@@ -514,3 +514,56 @@ export function kbdPrefFromCookie(cookie: string | null | undefined): boolean {
 export function kbdPrefCookie(on: boolean, secure: boolean): string {
   return `${KBD_COOKIE}=${on ? "1" : "0"}; path=/admin/legal; max-age=${60 * 60 * 24 * 365}; samesite=lax${secure ? "; secure" : ""}`;
 }
+
+// ── مفتاح الكتابة: نصوص التأكيد (مراجعة الجودة خ١ وخ٥ والملاحظة ٣ على 4f67df4) ─────────
+
+export interface SwitchConfirmInput {
+  /** الحالة المطلوبة بعد التأكيد. */
+  next: { writeEnabled: boolean; requireMfa: boolean };
+  /** مفتاح اللوحة الآن. */
+  writeEnabled: boolean;
+  env: "kill" | "force_on" | "panel";
+  lock: "env_zero" | "preview" | null;
+}
+
+export interface SwitchConfirmCopy {
+  title: string;
+  consequence: string;
+  variant: "approve" | "destructive";
+}
+
+const LOGGED = "يُسجَّل باسمك وبسببك.";
+
+/** عنوان التأكيد وأثره بحسب الفعل والبيئة، صادقًا في كل حالة: لوحة، وتشغيل قسري، وطوارئ، ومعاينة. */
+export function deskSwitchConfirmCopy(i: SwitchConfirmInput): SwitchConfirmCopy {
+  const toggling = i.next.writeEnabled !== i.writeEnabled;
+  if (toggling && i.next.writeEnabled) {
+    return {
+      title: "تشغيل الكتابة في المكتب؟",
+      consequence:
+        i.env === "force_on"
+          ? `يُحفظ المفتاح مفتوحًا. الكتابة في المكتب مفتوحة أصلًا، وزر اعتماد المبادئ القديم موقوف أصلًا، ما دام EDITORIAL_DESK_WRITE=1 في إعدادات النشر؛ يظهر أثر المفتاح حين يُزال المتغير. ${LOGGED}`
+          : `تُفتح الأفعال كلها لمن له تكليف: الاعتماد والنشر والتراجع، ويتوقف زر اعتماد المبادئ القديم ويُحال إلى المكتب. ${LOGGED}`,
+      variant: "approve",
+    };
+  }
+  if (toggling) {
+    const consequence =
+      i.env === "force_on"
+        ? `يُحفظ المفتاح مقفلًا، لكن الكتابة في المكتب تبقى مفتوحة وزر اعتماد المبادئ القديم موقوفًا ما دام EDITORIAL_DESK_WRITE=1 في إعدادات النشر. ${LOGGED}`
+        : i.env === "kill" && i.lock === "preview"
+          ? `هذه نسخة معاينة تشارك قاعدة الإنتاج: يُقفل المفتاح للموقع الأساسي أيضًا، فتتوقف الكتابة هناك فورًا، ويعود زر اعتماد المبادئ القديم إلى عمله. ${LOGGED}`
+          : i.env === "kill"
+            ? `يُحفظ المفتاح مقفلًا ويعود زر اعتماد المبادئ القديم إلى عمله. الكتابة في المكتب مقفلة أصلًا بمفتاح الطوارئ، وتبقى مقفلة حين يُزال. ${LOGGED}`
+            : `تُقفل كل كتابة في المكتب فورًا، ويعود زر اعتماد المبادئ القديم إلى عمله. ${LOGGED}`;
+    return { title: "إيقاف الكتابة في المكتب؟", consequence, variant: "destructive" };
+  }
+  return i.next.requireMfa
+    ? { title: "اشتراط التحقق الثنائي للكتابة؟", consequence: "لن يكتب في المكتب إلا حساب فعّل التحقق الثنائي.", variant: "destructive" }
+    : {
+        title: "إلغاء شرط التحقق الثنائي؟",
+        consequence: `يكتب في المكتب من له تكليف ولو لم يفعّل التحقق الثنائي. هذا يخالف القرار الافتراضي؛ ${LOGGED}`,
+        variant: "destructive",
+      };
+}
+

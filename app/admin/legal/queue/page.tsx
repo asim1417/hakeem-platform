@@ -9,11 +9,10 @@ import { QueueFrame, type QueueTabDef } from "@/components/editorial/QueueFrame"
 import { btnClass, DeskRoot, isMissingRelation, LoadFailed, Message, NotMigrated, ReadOnlyBanner } from "@/components/editorial/ui";
 import { canPublish, canReview } from "@/lib/modules/editorial/access";
 import { pgErrorCode } from "@/lib/modules/editorial/db";
-import { editorialDb, requireEditorialPage } from "@/lib/modules/editorial/guard";
+import { editorialDb, requireEditorialPage, deskPageWriteContext } from "@/lib/modules/editorial/guard";
 import { listAmendmentQueue, listPrincipleQueue } from "@/lib/modules/editorial/intake";
 import { listChangeSetsDetailed } from "@/lib/modules/editorial/read";
 import { isEditorialError } from "@/lib/modules/editorial/types";
-import { isEditorialWriteEnabled } from "@/lib/modules/editorial/write-gate";
 
 export const dynamic = "force-dynamic";
 
@@ -112,7 +111,7 @@ function Filters({ tab, search, chips, fields }: { tab: TabKey; search: Search; 
 export default async function EditorialQueuePage({ searchParams = {} }: { searchParams?: Search }) {
   const actor = await requireEditorialPage("view");
   const db = editorialDb();
-  const writeEnabled = isEditorialWriteEnabled();
+  const { writeEnabled, banner } = await deskPageWriteContext(actor);
   const tab: TabKey = TABS.some((t) => t.key === searchParams.tab) ? (searchParams.tab as TabKey) : "amendments";
   const reviewer = canReview(actor.access);
   const publisher = canPublish(actor.access);
@@ -277,7 +276,7 @@ export default async function EditorialQueuePage({ searchParams = {} }: { search
         lead="يعرض مقترحات الذكاء الاصطناعي ودفعات المحررين بسندها. الاعتماد لمعتمِد غير المُعِدّ، والوكيل يقترح فقط."
       />
       <DeskNav current="/admin/legal/queue" access={deskNavAccess(actor.access)} />
-      <ReadOnlyBanner writeEnabled={writeEnabled} />
+      <ReadOnlyBanner {...banner} />
       {!reviewer ? (
         <div className="mt-4">
           <Message tone="info">تعرض الطابور دون صلاحية الاعتماد؛ تُطلب من المالك.</Message>

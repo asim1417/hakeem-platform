@@ -30,9 +30,17 @@ export interface EditorialPolicy {
   enabled: boolean;
 }
 
+/** مفتاح الكتابة وشرط التحقق الثنائي، يحرّرهما المالك من صفحة الإعدادات (لا من الحفظ العام). */
+export interface DeskControls {
+  writeEnabled: boolean;
+  requireMfa: boolean;
+}
+
 export interface EditorialConfig {
   bindings: EditorialBinding[];
   policies: Record<ItemKind, EditorialPolicy>;
+  /** غيابه (النسخ القديمة) = القيم الافتراضية: الكتابة مقفلة، والتحقق الثنائي مشروط. */
+  controls?: DeskControls;
 }
 
 const bindingSchema = z
@@ -54,9 +62,12 @@ const policySchema = z
   })
   .strict();
 
+const controlsSchema = z.object({ writeEnabled: z.boolean(), requireMfa: z.boolean() }).strict();
+
 export const editorialConfigSchema = z
   .object({
     bindings: z.array(bindingSchema).max(500),
+    controls: controlsSchema.optional(),
     policies: z
       .object({
         set_work_status: policySchema,
@@ -84,6 +95,13 @@ export const editorialConfigSchema = z
   });
 
 export const DEFAULT_POLICY: EditorialPolicy = { minApprovals: 1, ownerSelfApproval: true, enabled: true };
+
+/** الافتراض الآمن (قرار المالك 17/10/2026): الكتابة مقفلة حتى يشغّلها، والتحقق الثنائي شرط لها. */
+export const DEFAULT_CONTROLS: DeskControls = { writeEnabled: false, requireMfa: true };
+
+export function controlsOf(config: Pick<EditorialConfig, "controls"> | null | undefined): DeskControls {
+  return config?.controls ? { ...config.controls } : { ...DEFAULT_CONTROLS };
+}
 
 /** القيم الافتراضية تحفظ الأمر: معتمِد واحد غير المُعِدّ، واعتماد المالك الذاتي المسبَّب مسموح، ولا تكليف لأحد. */
 export const DEFAULT_EDITORIAL_CONFIG: EditorialConfig = {
