@@ -149,3 +149,12 @@ export async function applyEffectiveText<T extends { id: string; content: string
     return { ...row, content: e.text, status: e.repealed ? "ملغاة" : "معدّلة" };
   });
 }
+
+/**
+ * النص الذي يُفهرس للبحث (BM25): النص الساري إن كانت للمادة نسخة سارية، وإلا النص الأصلي.
+ * المادة الملغاة تُفهرس بنصها الأصلي لا بسطر الإلغاء، فتبقى قابلة للعثور عليها وتُعلَّم ملغاة وقت العرض.
+ */
+export function searchableText(baseText: string | null, effective: EffectiveArticleText | null | undefined): string {
+  if (effective && effective.source === "unit_version") return effective.text;
+  return baseText ?? "";
+}
