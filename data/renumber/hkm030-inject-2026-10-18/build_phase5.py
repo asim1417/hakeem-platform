@@ -50,9 +50,12 @@ def RE(pat, rep): return ("re", P(pat), P(rep))  # تعبير نمطي يجب أ
 def RENUM(lo, hi, d=-1):  # إعادة ترقيم الفقرات lo..hi بإزاحة d («.4 - » ← «.3 - »)؛ الترتيب يمنع التصادم
     ns = range(lo, hi + 1) if d < 0 else range(hi, lo - 1, -1)
     return [RE(rf"([.:]\s?){n}(\s?-\s)", rf"\1{n + d}\2") for n in ns]
+def RENUM2(lo, hi, d=-1):  # مثل RENUM مع قبول «ـ» و«–» علامةً للترقيم («3 ـ التنسيق»)
+    ns = range(lo, hi + 1) if d < 0 else range(hi, lo - 1, -1)
+    return [RE(rf"([.:]\s?){n}(\s?[-ـ–]\s?)", rf"\1{n + d}\2") for n in ns]
 text = lambda parts: "".join(x[-1] if x[0] == "src" else x[1] for x in parts)
 
-BATCHES = {}
+BATCHES, REPEALS = {}, {}  # REPEALS: مواد حذفتها الأداة كاملة ← تسجيل تحقق «ملغاة» (نمط المرحلة 2)، بلا نسخة
 # ── الدفعة 1 ──
 b1 = []
 I = Inst("26925", "قرار مجلس الوزراء رقم 430 وتاريخ 1446/6/23هـ", "2025-01-17T00:00:00Z", "1446/7/17")
@@ -278,6 +281,50 @@ I.unit("cmpzcvci50bvgvtrkpdu0j2rj", "412-11", "4306118a649bd1ec626301b7334e4b6a"
 b3.append(I)
 BATCHES["3"] = b3
 
+# ── الدفعة 4 ──
+b4 = []
+# تنظيم المدن الصناعية م4: البند (رابعاً) من قرار 403 (مستبقى في الدفعة 2) حدّد قرار 545 بدء العمل به «من تاريخ 1/1/1444هـ» (2022-07-30
+# بالمحوّل hijri_converter المطابق لترويسات الصفحات)، ثم أضاف القرار 545 نفسه الفقرة (8) وأعاد الترتيب (نافذ من نشره 2022-08-12).
+I = Inst("17111", "قرار مجلس الوزراء رقم 403 وتاريخ 1442/7/18هـ (البند رابعاً، نافذ من 1/1/1444هـ بقرار مجلس الوزراء رقم 545)", "2022-07-30T00:00:00Z", "1442/7/28")
+M4 = I.Q("رابعـاً: تعديل المادة (الرابعة)، لتكون بالنص الآتي:", end="”")
+I.unit("cmpzcv6870a5bvtrkuofbqi77", "403-4", "c6f9965b0f4880446c6e53511c252078", I.item("رابعـاً: تعديل المادة (الرابعة)", "خامساً:"), [W(M4)], prev="hkm30u-7cb769db4b73df5d8befd3d0")
+b4.append(I)
+v403 = "hkm30u-" + hashlib.sha256(f"cmpzcv6870a5bvtrkuofbqi77@2022-07-30@403-4".encode()).hexdigest()[:24]
+I = Inst("19886", "قرار مجلس الوزراء رقم 545 وتاريخ 1444/1/3هـ", "2022-08-12T00:00:00Z", "1444/1/14")
+I.unit("cmpzcv6870a5bvtrkuofbqi77", "545-4", md5(nfc(text(M4))), I.item("أولاً: تعديل المادة (الرابعة)", "ثانياً:"),
+       [S("8- اثنان من القطاع الخاص", P("8- ", I.Q("تنص على الآتي: «", end="»"), "\n\n9- اثنان من القطاع الخاص"))], prev=v403)
+b4.append(I)
+
+# تنظيم مجلس شؤون الأسرة — قرار 443. م2 وم4 وم6 وم7 من هيئة الخبراء. مستبقى: م3 (الأساس قائمة 1437 الأصلية، وتشير الأداة إلى فقرات
+# فرعية «ك- وزارة الخارجية» و«م- وزارة المالية» و«س، ع، ف» أدخلتها تعديلات 1439 و1441 غير الموجودة في الأساس).
+I = Inst("19202", "قرار مجلس الوزراء رقم 443 وتاريخ 1443/7/22هـ", "2022-03-30T00:00:00Z", "1443/8/27")
+I.unit("cmpzcv9t60b3svtrkaszmkpsp", "443-8", "61b6a6c129fb3148b27aa9b55ed17b36", I.item("8- إضافة فقرة إلى المادة (الثامنة)", "9- تعديل صدر"),
+       [RENUM2(2, 10, +1), S("1 - إعداد جداول أعمال المجلس.", P("1 - إعداد جداول أعمال المجلس.", I.Q('بالنص الآتي: "', after="8- إضافة فقرة إلى المادة (الثامنة)"), "."))])
+I.unit("cmpzcv9t60b3tvtrkmw4c8saq", "443-9", "70e2085556e6f0e96cb4ba71cd3a1d3b", I.item("9- تعديل صدر", "10- تعديل المادة (العاشرة)"),
+       [S("يخصص للمجلس ميزانية (قسم) ضمن ميزانية وزارة العمل والتنمية الاجتماعية، ويصرف منها بقرار من الرئيس", I.Q('لتصبح بالنص الآتي: "', end='.."', after="9- تعديل صدر")),
+        S("أ - ما يخصص له من اعتمادات ضمن ميزانية وزارة العمل والتنمية الاجتماعية.", P(I.Q('لتصبح بالنص الآتي: "', after="وتعديل الفقرة الفرعية (أ)"), "."))])
+I.unit("cmpzcv9t60b3uvtrkyflz1mam", "443-10", "3e5c8c3435ab96e2bb03f5fe24aebdae", I.item("10- تعديل المادة (العاشرة)", "ثانياً:"),
+       [W(P(I.Q('لتصبح بالنص الآتي: "', after="10- تعديل المادة (العاشرة)"), "."))])
+b4.append(I)
+
+# نظام براءات الاختراع م2 — المرسوم الملكي م/45 (م18 وم19 طُبّقتا في المرحلة 1 بالتاريخ نفسه). مستبقى: «الستين مكرر» (مادة جديدة).
+# التعريفان بلا رمزي البندين (أ، ب) لأن تعريفات الأساس غير مرمّزة.
+I = Inst("23816", "مرسوم ملكي رقم م/45 وتاريخ 1445/3/10هـ", "2023-10-06T00:00:00Z", "1445/3/21")
+I.unit("cmpz66r7l04ytcwg2n65g001i", "m45-2", "6242fefafb9e4dd7b3b24a5dcab7da96", I.item("1- إضافة تعريفين", "2- تعديل المادة (الثامنة عشرة)"),
+       [A(" ", I.Q("أ- ", end="\n", after="1- إضافة تعريفين"), " ", I.Q("ب- ", end="\n", after="1- إضافة تعريفين"))])
+b4.append(I)
+
+# نظام خدمة حجاج الداخل — المرسوم الملكي م/109. م21 من هيئة الخبراء بتاريخ 2024-01-07 (تاريخ المرسوم 1445/6/25هـ بالمحوّل)، فيُوحَّد
+# تاريخ بنود المرسوم عليه. الحذف بلا إعادة ترقيم (الأداة لم تنص عليها). م23 محذوفة كاملة: تسجيل تحقق «ملغاة» (REPEALS).
+I = Inst("24380", "المرسوم الملكي رقم م/109 وتاريخ 1445/6/25هـ", "2024-01-07T00:00:00Z", "1445/7/7")
+I.unit("cmpz6l8tr0a0jcwg2jyjf72y0", "m109-19", "c3130154f1aa752b666aeff1d37edb66", I.item("1- حذف الفقرة (2)", "2- تعديل المادة (الحادية والعشرين)"),
+       [SP("2 - إذا وجد اعتراض على قرار اللجنة", "3 - تقوم وزارة الحج", "")])
+I.unit("cmpz6l99x0a0pcwg2tld0de9p", "m109-22", "e94de636a94bb101ef67cea043e5c7df", I.item("3- حذف الفقرة (2)", "5- حذف المادة"),
+       [SP("2 - يجوز لمن صدر بحقه قرار العقوبة", "4 - تحال القضايا والشكاوى ضد", "")])
+REPEALS["4"] = [(I, "cmpz6lajb0a0rcwg248f8vtit", "m109-23", "e8a0c1ec69d7a21397f24a70b1746f2e", I.item("5- حذف المادة", "\nثانياً"))]
+b4.append(I)
+BATCHES["4"] = b4
+
 q = lambda s: "'" + s.replace("'", "''") + "'"
 def jpart(parts):  # أجزاء النص إلى JSON: نص حرفي، أو ["@", url, موضع, طول, md5] لما يُقتطع من اللقطة
     out = [x[1] if x[0] == "lit" else ["@", x[1], x[2], x[3], md5(x[4])] for x in parts]
@@ -307,8 +354,19 @@ def build(batch):
             whole = u["edits"][0][0] == "whole" and len(u["edits"]) == 1
             rows.append(dict(id=vid, unit=u["unit"], url=I.url, frm=u["frm"], edits=len(u["edits"]), prev=u["prev"],
                              expected_md5=md5(nfc(text(u["edits"][0][1]))) if whole else None))
-    ids = ",".join(q(r["id"]) for r in rows)
-    st.append(f"SELECT 1/(CASE WHEN (SELECT count(*) FROM unit_version WHERE id IN ({ids}))={len(rows)} THEN 1 ELSE 0 END) AS guard_after")
+    vids = []
+    for I, uid, key, base_md5, ev in REPEALS.get(batch, []):
+        vid = "hkm30v-" + hashlib.sha256(f"{uid}@{I.frm[:10]}@{key}".encode()).hexdigest()[:24]; vids.append(vid)
+        note = f"؛ نُشر في أم القرى {I.pub}هـ؛ نافذ من {I.frm[:10]} (HKM-030 المرحلة 5)"
+        quote = f"left(btrim(regexp_replace({compose(chr(39) * 2, [('append', [ev])])}, '\\s+', ' ', 'g')), 560) || {q(note)}"
+        st.append(f"INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, evidence_quote, method, verified_by, verified_at) "
+                  f"SELECT {q(vid)}, 'unit', {q(uid)}, 'ملغاة', {q(I.ins)}, {q(I.url)}, {quote}, 'manual', 'hkm030-uqn-inject-2026-10-18', now() "
+                  f"WHERE (SELECT md5(content) FROM legal_articles WHERE id={q(uid)})={q(base_md5)} "
+                  f"AND NOT EXISTS (SELECT 1 FROM verification WHERE object_id={q(uid)} AND verified_status='ملغاة')")
+        rows.append(dict(id=vid, unit=uid, url=I.url, frm=I.frm, repeal=True))
+    ids = ",".join(q(r["id"]) for r in rows if not r.get("repeal"))
+    st.append(f"SELECT 1/(CASE WHEN (SELECT count(*) FROM unit_version WHERE id IN ({ids}))={len(rows) - len(vids)}"
+              + (f" AND (SELECT count(*) FROM verification WHERE id IN ({','.join(map(q, vids))}))={len(vids)}" if vids else "") + " THEN 1 ELSE 0 END) AS guard_after")
     st.append(f"SELECT md5(string_agg(id||':'||md5(body), ',' ORDER BY id)) fp, string_agg(id||':'||md5(body), ',' ORDER BY id) rows FROM unit_version WHERE id IN ({ids})")
     json.dump(rows, open(OUT + f"plan5_{batch}.json", "w"), ensure_ascii=False, indent=1)
     json.dump(st, open(OUT + f"statements5_{batch}.json", "w"), ensure_ascii=False, indent=1)
