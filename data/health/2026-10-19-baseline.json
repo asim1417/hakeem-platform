@@ -1,0 +1,23 @@
+{
+ "at": "2026-10-19T08:54:36Z",
+ "note": "خط الأساس قبل دفعات 19 أكتوبر (scripts/db-health.sql)",
+ "systems": 1155,
+ "systems_empty": 83,
+ "articles": 28705,
+ "text_compared": 16245,
+ "text_same": 13591,
+ "text_diff_amended_expected": 582,
+ "text_diff_note_unapplied": 118,
+ "text_diff_unexplained": 1954,
+ "text_pct": 83.7,
+ "amended_articles": 589,
+ "versions": 648,
+ "systems_with_status": 504,
+ "systems_with_effective": 498,
+ "articles_with_status": 1156,
+ "articles_repealed": 322,
+ "legacy_repeals_unrecorded": 223,
+ "search_norm_missing": 0,
+ "embedded_articles": 17296,
+ "embedded_pct": 60.3
+}
