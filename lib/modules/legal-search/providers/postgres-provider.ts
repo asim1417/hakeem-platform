@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { findRelevantLegalArticles } from "@/lib/modules/legal-core/legal-retrieval";
+import { maskPersonalData } from "@/lib/rulings/research/mask";
 import type { RawResult, SearchProvider, SearchQuery } from "./search-provider";
 
 // مزوّد البحث النصّي على PostgreSQL — متاح دائماً (قاعدة المنصّة الأساسية).
@@ -8,6 +9,14 @@ import type { RawResult, SearchProvider, SearchQuery } from "./search-provider";
 //   إلى كلمات/مشتقّات ويرتّب بالصلة — فيعمل مع الأسئلة الطبيعية لا العبارة الكاملة فقط.
 // الأحكام/المبادئ: تفكيك خفيف للسؤال إلى كلمات دالّة + مطابقة OR، بدل مطابقة
 //   العبارة الكاملة التي كانت لا تجد شيئاً لسؤال طبيعي مثل «هل يجوز فسخ العقد بسبب الغبن».
+// HKM-012: هذا المزوّد لا يعرف دور المستخدم، فمقتطفات الأحكام والمبادئ تُحجب للجميع بـ maskPersonalData
+//   (الأرقام الشخصية وأسماء الأفراد) كمسار الموصل، والحجب قبل القص (كان المقتطف يُقص من النص الخام
+//   فتخرج أسماء الأطراف في ديباجة الحكم). النص المخزَّن لا يُمس.
+
+/** مقتطف من نص محجوب كاملًا ثم مقصوص (الحجب قبل القص). */
+export function maskedSnippet(text: string | null | undefined, max = 200): string {
+  return maskPersonalData(text).slice(0, max);
+}
 
 // كلمات وقف خفيفة شائعة في صياغة الأسئلة — تُستبعد كي لا تُفسد المطابقة.
 const QUESTION_STOPWORDS = new Set<string>([
@@ -112,7 +121,7 @@ export const postgresProvider: SearchProvider = {
           type: "ruling",
           id: r.id,
           title: `حكم ${r.decisionNo ?? r.caseNo ?? r.id}${r.court ? ` — ${r.court}` : ""}`,
-          snippet: (r.judgmentText ?? "").slice(0, 200),
+          snippet: maskedSnippet(r.judgmentText),
           score,
           source: "postgres",
           reason: `تطابق نصّي في ${inTitle ? "عنوان الحكم" : "نص الحكم"}${reviewed ? "" : " (غير مُراجَع)"}`,
@@ -133,8 +142,8 @@ export const postgresProvider: SearchProvider = {
         results.push({
           type: "principle",
           id: p.id,
-          title: `مبدأ: ${p.title}`,
-          snippet: p.principleText.slice(0, 200),
+          title: `مبدأ: ${maskPersonalData(p.title)}`,
+          snippet: maskedSnippet(p.principleText),
           score: reviewed ? 0.7 : 0.6,
           source: "postgres",
           reason: `تطابق نصّي في المبدأ${reviewed ? "" : " (غير مُراجَع)"}`,

@@ -18,7 +18,8 @@
  *                 هيئة الخبراء، لم تُفكَّك) | legacy_text (legal_systems.preamble بوسم «مقدمة غير مكتملة») | none
  *                 («المقدمة غير متوفرة» مع رابط المصدر الرسمي). legacy يُعاد دائمًا إن وُجد ولو اختير غيره.
  *     body        المتن: أقسام (divisions) بترتيب المواد، كل قسم عنوان الباب/الفصل كما في legal_articles.chapter
- *                 ومواده (ArticleView) بحالة كل مادة (ساري/معدّل/ملغى أو null = غير مؤكد) ومصدرها، وعدّادات.
+ *                 ومواده (ArticleView) بحالة كل مادة (ساري/معدّل/ملغى/مستبدل أو null = غير مؤكد) ومصدرها، وعدّادات.
+ *                 «مستبدل» (HKM-030): تُعرض باهتة بنصها لا كملغاة (المعيار الواحد isReplacedStatus في verified-status).
  *     outgoingRepeals  ما ألغته أداة هذا النظام من مواد أنظمة أخرى (مشتق بمطابقة رقم الأداة وسنتها؛ derived=true).
  *
  * ── الحالات ────────────────────────────────────────────────────────────────────
@@ -37,10 +38,22 @@ import { isMissingRelation, relationExists, type SqlClient } from "./sql-port";
 import { parseInstrumentHeading, type InstrumentKind, type PreambleCompleteness, type PreambleUnitType } from "./preamble-parser";
 import { classifyPreambleSignals, extractPreambleSignals } from "./preamble-signals";
 import { computeSurface, todayRiyadh, unitStatusAsOf, workStatusAsOf, type SearchSurface } from "./search-surface";
-import { citationFlagsFromVerification, textAsOf, UNVERIFIED_NOTICE, type UnitVersionRecord, type VerificationRecord } from "./verified-status";
+import {
+  citationFlagsFromVerification,
+  effectiveDateFromEvidence,
+  isRepealedStatus,
+  isReplacedStatus,
+  textAsOf,
+  UNVERIFIED_NOTICE,
+  type UnitVersionRecord,
+  type VerificationRecord,
+} from "./verified-status";
 import { resolveWorkKind, type WorkKind } from "./work-kind";
 import { resolveSystemSlug } from "./eli";
 import { NON_ARTICLE_BIS, articleKey, articleLabel } from "./article-key";
+
+// المعيار الواحد لحالتي الإلغاء والاستبدال ويوم النفاذ في verified-status (HKM-030)؛ يُعاد تصديره لمن استورده من هنا.
+export { effectiveDateFromEvidence } from "./verified-status";
 
 export const NOT_AVAILABLE = "غير متوفر";
 export const PREAMBLE_INCOMPLETE_LABEL = "مقدمة غير مكتملة";
@@ -52,7 +65,8 @@ export const BOE_LAW_STATUSES = ["مسودة", "تحت الإجراء", "سار�
 export type BoeLawStatus = (typeof BOE_LAW_STATUSES)[number];
 
 export type RepealType = "express_partial" | "replacement" | "express_total" | "implicit" | "temporal";
-export type ArticleStatus = "ساري" | "معدّل" | "ملغى";
+/** «مستبدل» حالة مستقلة (HKM-030، قرار المالك HKM-026/028): تُعرض باهتة بنصها لا كملغاة. */
+export type ArticleStatus = "ساري" | "معدّل" | "ملغى" | "مستبدل";
 
 export interface SystemRef {
   id: string;
@@ -236,7 +250,8 @@ export interface LawPageData {
   preamble: PreambleView;
   body: {
     divisions: DivisionView[];
-    counts: { total: number; inForce: number; amended: number; repealed: number; unverified: number };
+    /** replaced: المواد المستبدلة (باهتة بنصها)، لا تُعدّ ضمن repealed. */
+    counts: { total: number; inForce: number; amended: number; repealed: number; replaced: number; unverified: number };
   };
   outgoingRepeals: OutgoingRepeal[];
 }
@@ -273,12 +288,6 @@ export function toBoeStatus(hakeem: string | null): BoeLawStatus | null {
     default:
       return null; // «صادر لم يسرِ بعد»، «سجل مخلوط»، أو لا سجل
   }
-}
-
-/** «… — من 2024-06-13» في نص الأداة (سجلات fix-2026-09-25). */
-export function effectiveDateFromEvidence(instrument: string | null): string | null {
-  const m = String(instrument ?? "").match(/من\s+(\d{4}-\d{2}-\d{2})/);
-  return m ? m[1] : null;
 }
 
 /** مفتاح الأداة للمطابقة: الرقم بلا مسافات + السنة الهجرية. */
@@ -647,7 +656,7 @@ export async function getLawPageData(db: SqlClient, systemId: string, opts: LawP
   }
   const repealerRefs = await systemRefs(db, [...repealerIds]);
 
-  const counts = { total: 0, inForce: 0, amended: 0, repealed: 0, unverified: 0 };
+  const counts = { total: 0, inForce: 0, amended: 0, repealed: 0, replaced: 0, unverified: 0 };
   const articleViews: ArticleView[] = articles.map((a) => {
     const rec = unitVer.get(a.id) ?? null;
     const label = rec ? unitStatusAsOf(rec.verifiedStatus, { status: derived.status, derived: derived.derived }) : null;
@@ -661,12 +670,13 @@ export async function getLawPageData(db: SqlClient, systemId: string, opts: LawP
     let inherited = false;
     let repealedLaterOn: string | null = null;
 
-    if (label === "ملغاة" || label === "ملغى" || label === "مستبدل") {
+    // الملغاة والمستبدلة بالمعيار الواحد (verified-status): المستبدلة حالة مستقلة تُعرض باهتة بنصها (HKM-030).
+    if (isRepealedStatus(label) || isReplacedStatus(label)) {
       const evDate = effectiveDateFromEvidence(rec?.evidenceInstrument ?? null);
       const k = instrumentKey(rec?.evidenceInstrument ?? null);
       const sid = k ? idx.get(k) ?? null : null;
       repeal = {
-        type: label === "مستبدل" ? "replacement" : "express_partial",
+        type: isReplacedStatus(label) ? "replacement" : "express_partial",
         typeDerived: true,
         instrument: rec?.evidenceInstrument ?? null,
         url: rec?.evidenceUrl ?? null,
@@ -682,7 +692,7 @@ export async function getLawPageData(db: SqlClient, systemId: string, opts: LawP
         status = vs.some((v) => v.validFrom.slice(0, 10) <= asOf) ? "معدّل" : "ساري";
         statusSource = "verification";
       } else {
-        status = "ملغى";
+        status = isReplacedStatus(label) ? "مستبدل" : "ملغى";
         statusSource = "verification";
       }
     } else if (repealedWork) {
@@ -704,6 +714,7 @@ export async function getLawPageData(db: SqlClient, systemId: string, opts: LawP
     if (status === "ساري") counts.inForce++;
     else if (status === "معدّل") counts.amended++;
     else if (status === "ملغى") counts.repealed++;
+    else if (status === "مستبدل") counts.replaced++;
     else counts.unverified++;
 
     const bis = Number(a.articleBis) || 0;

@@ -28,16 +28,24 @@ const INSTRUMENT_5 = "مرسوم ملكي رقم م/46 وتاريخ 5/6/1436هـ
 const REPEAL_BY = "مرسوم ملكي رقم م/94 وتاريخ 1442/10/22هـ";
 
 type Row = {
-  id: string; lawName: string; legalSystemId: string; articleNumber: number; title: string; content: string;
+  id: string; lawName: string; legalSystemId: string; articleNumber: number; articleBis: number; title: string; content: string;
   status: string | null; classification: string | null; chapter: string | null; keywords: string[];
   royalDecree: string | null; effectiveFrom: Date | null; updatedAt: Date; createdAt: Date;
 };
-const mk = (id: string, n: number, content: string): Row => ({
-  id, lawName: LAW, legalSystemId: SYS, articleNumber: n, title: `المادة ${n}`, content, status: "سارية",
+// HKM-028/030: الصفوف تحمل articleBis (0 للأصل) وإلا أسقطها شرط «articleBis < 100» في كل مستهلك.
+const mk = (id: string, n: number, content: string, bis = 0): Row => ({
+  id, lawName: LAW, legalSystemId: SYS, articleNumber: n, articleBis: bis, title: `المادة ${n}`, content, status: "سارية",
   classification: null, chapter: "الباب الأول", keywords: [], royalDecree: null, effectiveFrom: null,
   updatedAt: new Date("2026-01-01"), createdAt: new Date("2026-01-01"),
 });
-const ARTICLES: Row[] = [mk("a4", 4, "نص المادة الرابعة"), mk("a5", 5, ORIGINAL_5), mk("a6", 6, "نص المادة السادسة قبل إلغائها")];
+const BIS_5 = "نص المادة الخامسة مكرر";
+const ARTICLES: Row[] = [
+  mk("a4", 4, "نص المادة الرابعة"),
+  mk("a5", 5, ORIGINAL_5),
+  mk("a5b", 5, BIS_5, 1),
+  mk("a6", 6, "نص المادة السادسة قبل إلغائها"),
+  mk("h1", 7, "عنوان ليس مادة", 100), // صف ليس مادة (درجة مكرر ≥ 100): لا يُعرض ولا يُستشهد به
+];
 const UNIT_VERSIONS = [
   { id: "boe26-labor5", unit_id: "a5", body: AMENDED_5, valid_from: new Date("2015-03-25T00:00:00Z"), evidence_instrument: INSTRUMENT_5, evidence_url: "https://laws.boe.gov.sa/x" },
 ];
@@ -119,7 +127,7 @@ async function main() {
   ok(g6.repealed === true && String(g6.text).includes(REPEAL_BY) && g6.text !== ARTICLES[2].content, "hakeem_get_article: الملغاة تُرجع الإلغاء وسنده");
 
   // MCP hakeem_get_articles_range
-  const r = (await range.handleRange({ law_id: SYS, from_article: 4, to_article: 6 })) as { articles: Array<{ article_number: number; text: string; repealed: boolean }> };
+  const r = (await range.handleRange({ law_id: SYS, from_article: 4, to_article: 6 })) as { articles: Array<{ article_id: string; article_number: number; article_bis: number; text: string; repealed: boolean }> };
   ok(r.articles.find((a) => a.article_number === 5)?.text === AMENDED_5, "hakeem_get_articles_range: م5 معدّلة");
   ok(r.articles.find((a) => a.article_number === 6)?.repealed === true, "hakeem_get_articles_range: م6 ملغاة");
   ok(r.articles.find((a) => a.article_number === 4)?.text === "نص المادة الرابعة", "hakeem_get_articles_range: م4 بلا سجلات كما هي");
@@ -170,6 +178,27 @@ async function main() {
   ok(vNew.verdict === "الإحالة صحيحة والنص مطابق", "verifyCitation: النص الساري مطابق");
   const vRep = (await adapter.verifyCitation(LAW, "6")) as Record<string, unknown>;
   ok(vRep.repealed === true && String(vRep.actual_text).includes(REPEAL_BY), "verifyCitation: الملغاة");
+
+  // HKM-030: «مكرر» في الإحالة والوسم
+  const vBis = (await adapter.verifyCitation(LAW, "5 مكرر")) as Record<string, unknown>;
+  ok(vBis.actual_text === BIS_5 && vBis.article_bis === 1, "verifyCitation: «5 مكرر» تُطابق الصف المكرر لا الأصل");
+  const vBisExplicit = (await adapter.verifyCitation(LAW, "٥", undefined, 1)) as Record<string, unknown>;
+  ok(vBisExplicit.actual_text === BIS_5, "verifyCitation: درجة «مكرر» الصريحة مع رقم عربي-هندي");
+  const vBis2 = (await adapter.verifyCitation(LAW, "5 مكرر 2")) as Record<string, unknown>;
+  ok(String(vBis2.verdict).includes("غير موجودة") && vBis2.article_bis === 2, "verifyCitation: «5 مكرر 2» غير موجودة (لا تسقط إلى الأصل)");
+  ok(vNew.article_bis === 0, "verifyCitation: الأصل article_bis = 0");
+  const p = adapter.parseArticleCitation("المادة ١٢ مكررًا");
+  ok(p?.n === 12 && p?.bis === 1, "parseArticleCitation: «المادة ١٢ مكررًا» → 12 / 1");
+  const byNumAll = await retrieval.getArticlesByNumber(5, LAW);
+  const bisHit = byNumAll.find((a) => a.articleId === "a5b");
+  ok(bisHit?.citationLabel === `${LAW}، المادة ٥ مكرر` && byNumAll[0]?.citationLabel === `${LAW}، المادة ٥`, "citationLabel: «المادة ٥ مكرر» للمكرر و«المادة ٥» للأصل");
+  const fullBis = await retrieval.getArticleFullContext("a5b").catch(() => null);
+  ok(fullBis?.citationLabel === `${LAW}، المادة ٥ مكرر`, "getArticleFullContext: وسم «مكرر»");
+  const gBis = (await adapter.getArticle("a5b")) as Record<string, unknown>;
+  ok(gBis.article_bis === 1 && g5.article_bis === 0, "hakeem_get_article: article_bis");
+  ok(r.articles.some((a) => a.article_id === "a5b" && a.article_bis === 1), "hakeem_get_articles_range: article_bis للمكرر");
+  const arAll = (await tools.get_articles_range(LAW, 4, 7)).data as Array<{ id: string; articleBis: number }>;
+  ok(arAll.some((a) => a.id === "a5b" && a.articleBis === 1) && !arAll.some((a) => a.id === "h1"), "get_articles_range: يشمل المكرر ويستبعد الصف الذي ليس مادة");
 
   // البحث: الملغى مستبعد افتراضيًا
   surface.__resetSurfaceCache();

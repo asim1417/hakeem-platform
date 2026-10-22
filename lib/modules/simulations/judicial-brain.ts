@@ -4,7 +4,7 @@
 import { buildLegalContextForAI, buildCitationBlock, searchLegalCore, type LegalCoreResult } from "@/lib/modules/legal-core/legal-retrieval";
 import { rerankArticles } from "@/lib/modules/agents/thinking/rerank";
 import { resolveGoverningSystems } from "@/lib/modules/agents/thinking/resolve-scope";
-import { articleStatusBadge } from "@/lib/modules/legal-core/article-status";
+import { articleStatusBadge, isRepealedKind } from "@/lib/modules/legal-core/article-status";
 import { collectAllowedArticleNumbers, verifyNarrativeGrounding } from "@/lib/modules/grounding/verify-guard";
 
 // مصطلحاتٌ تُبرز نظام الإثبات في الاسترجاع (عبء الإثبات · البيّنة · الشهادة · اليمين …).
@@ -150,7 +150,7 @@ export async function groundForJudge(text: string, limit = 6, scopeSystems?: str
   // ثمّ إعادة ترتيبٍ بالسلطة والحالة — فلا تتسرّب موادُّ تنظيميّة لا تصلح سندًا موضوعيًّا للحكم.
   const denoised = results.filter((r) => !isAdminNoise(r));
   const noiseFree = denoised.length >= Math.min(limit, 3) ? denoised : results;
-  const inForce = noiseFree.filter((r) => articleStatusBadge(r.status)?.label !== "منسوخة");
+  const inForce = noiseFree.filter((r) => !isRepealedKind(articleStatusBadge(r.status)?.kind));
   const pooled = inForce.length >= Math.min(limit, 3) ? inForce : noiseFree;
   const top = rerankArticles(pooled).slice(0, limit);
   return toGrounding(top);

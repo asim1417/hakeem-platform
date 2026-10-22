@@ -6,12 +6,14 @@
  * article_versions لا تُستعمل هنا: هي للقراءة التاريخية فقط.
  *
  * حدود معروفة:
- * - سجل الإلغاء بلا تاريخ إلغاء، فيُطبَّق الإلغاء على أي asOf (حتى الماضي)، ويغلب أي نسخة.
+ * - سجل الإلغاء بلا يوم نفاذ في نص أداته («— من YYYY-MM-DD») يُطبَّق على أي asOf (حتى الماضي)، ويغلب أي نسخة.
+ *   وإن حمل يومًا وكان asOf قبله فلا يُطبَّق (statusEffectiveAsOf، كصفحة النظام /law — HKM-030).
  * - تعذّر قراءة الجدولين = النص المحفوظ (سقوط آمن كما في verification-read).
  */
 import { prisma } from "@/lib/prisma";
 import {
   citationFlagsFromVerification,
+  statusEffectiveAsOf,
   textAsOf,
   type UnitVersionRecord,
   type VerificationRecord,
@@ -55,7 +57,7 @@ export function resolveEffectiveText(input: {
   const flags = citationFlagsFromVerification(input.verification);
   const base = input.baseText ?? "";
 
-  if (flags.repealed) {
+  if (flags.repealed && statusEffectiveAsOf(input.verification, asOf)) {
     return {
       articleId: input.articleId,
       text: repealLine(input.verification),
@@ -157,4 +159,19 @@ export async function applyEffectiveText<T extends { id: string; content: string
 export function searchableText(baseText: string | null, effective: EffectiveArticleText | null | undefined): string {
   if (effective && effective.source === "unit_version") return effective.text;
   return baseText ?? "";
+}
+
+/**
+ * دفعة واحدة: النص الذي يُفهرس لكل صف (searchableText) باستعلامَي النسخ والتحقق نفسيهما.
+ * المصدر الواحد لكل مُفهرِس (BM25 وsearch_norm وOpenSearch) كي يطابق البحثُ النصَّ المعروض.
+ * تعذّر القراءة = النص المحفوظ (سقوط آمن).
+ */
+export async function searchableTexts(
+  rows: Array<{ id: string; content: string | null }>,
+  asOf?: Date,
+): Promise<Map<string, string>> {
+  const effective = await effectiveArticleTexts(rows, asOf).catch(() => new Map<string, EffectiveArticleText>());
+  const out = new Map<string, string>();
+  for (const r of rows) out.set(r.id, searchableText(r.content, effective.get(r.id)));
+  return out;
 }

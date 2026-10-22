@@ -3,7 +3,11 @@ import { embeddingFingerprint } from "../lib/modules/legal-core/embedding-finger
 import {
   assertNoVersionOverlap,
   citationFlagsFromVerification,
+  effectiveDateFromEvidence,
+  isRepealedStatus,
+  isReplacedStatus,
   presentArticle,
+  statusEffectiveAsOf,
   textAsOf,
   type UnitVersionRecord,
   type VerificationRecord,
@@ -53,6 +57,19 @@ const faded = presentArticle({ baseText: base, versions: [], verification: repea
 ok(faded.faded && faded.badge === "ملغاة" && faded.text !== base && faded.text.includes("م/51 لعام 1445"), "الملغاة تُعرض بسطر إلغائها وسنده");
 const replacedView = presentArticle({ baseText: base, versions: [], verification: { ...repealed, verifiedStatus: "مستبدل" } });
 ok(replacedView.faded && replacedView.badge === "مستبدل" && replacedView.text === base, "المستبدل يبقى ظاهرًا بوسمه");
+
+// HKM-030: المعيار الواحد لحالتي الإلغاء والاستبدال، ويوم النفاذ من نص الأداة («— من YYYY-MM-DD»).
+ok(isRepealedStatus("ملغاة") && isRepealedStatus("ملغى") && !isRepealedStatus("مستبدل") && !isRepealedStatus(null), "isRepealedStatus: ملغاة/ملغى فقط");
+ok(isReplacedStatus("مستبدل") && !isReplacedStatus("ملغاة") && !isReplacedStatus(undefined), "isReplacedStatus: مستبدل فقط");
+ok(effectiveDateFromEvidence("م/99 وتاريخ 1445/1/1هـ — من 2024-06-13") === "2024-06-13" && effectiveDateFromEvidence("م/51 لعام 1445") === null, "يوم النفاذ من نص الأداة أو null");
+const datedRepeal: VerificationRecord = { ...repealed, evidenceInstrument: "م/99 وتاريخ 1445/1/1هـ — من 2024-06-13" };
+ok(statusEffectiveAsOf(datedRepeal, new Date("2024-01-01T12:00:00Z")) === false && statusEffectiveAsOf(datedRepeal, new Date("2024-06-13T12:00:00Z")) === true && statusEffectiveAsOf(repealed, new Date("2000-01-01T12:00:00Z")) === true, "الإلغاء المؤرخ لا يُطبَّق قبل يومه، وغير المؤرخ يُطبَّق على أي تاريخ");
+const beforeRepeal = presentArticle({ baseText: base, versions: [], verification: datedRepeal, asOf: new Date("2024-01-01T12:00:00Z") });
+ok(!beforeRepeal.faded && beforeRepeal.badge === null && beforeRepeal.text === base && beforeRepeal.unverifiedNotice === null, "«كما في تاريخ» قبل نفاذ الإلغاء: النص ظاهر بلا وسم إلغاء (كصفحة /law)");
+const afterRepeal = presentArticle({ baseText: base, versions: [], verification: datedRepeal, asOf: new Date("2024-07-01T12:00:00Z") });
+ok(afterRepeal.faded && afterRepeal.badge === "ملغاة" && afterRepeal.text !== base, "وبعد يوم النفاذ: ملغاة بسطر إلغائها");
+const beforeReplace = presentArticle({ baseText: base, versions: [], verification: { ...datedRepeal, verifiedStatus: "مستبدل" }, asOf: new Date("2024-01-01T12:00:00Z") });
+ok(!beforeReplace.faded && beforeReplace.badge === null && beforeReplace.text === base, "المستبدل المؤرخ قبل يومه يُعرض ساريًا بنصه");
 
 ok(citationFlagsFromVerification(null).inForce === false && citationFlagsFromVerification(null).repealed === false, "بلا تحقق ليس ساريًا ولا ملغى");
 ok(citationFlagsFromVerification({ ...repealed, verifiedStatus: "ساري" }).inForce === true, "سجل ساري يجعل الإحالة نافذة");

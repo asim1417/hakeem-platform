@@ -33,6 +33,8 @@
     "test:ruling-pii-surface": "tsx scripts/test-ruling-pii-surface.ts",
     "test:mcp-ruling-privacy": "tsx scripts/test-mcp-ruling-privacy.ts",
     "test:ruling-display": "tsx scripts/test-ruling-display.ts",
+    "test:postgres-provider-privacy": "tsx scripts/test-postgres-provider-privacy.ts",
+    "test:article-status": "tsx scripts/test-article-status.ts",
     "test:law-fingerprint": "tsx scripts/test-law-fingerprint.ts",
     "test:numbering-audit": "tsx scripts/test-numbering-audit.ts",
     "test:preamble-parser": "tsx scripts/test-preamble-parser.ts",

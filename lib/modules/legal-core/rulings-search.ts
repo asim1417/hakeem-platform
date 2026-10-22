@@ -206,7 +206,11 @@ export interface RulingSearchOptions {
   numbers?: string[];
   limit?: number;
   offset?: number;
-  /** false = بلا المسار الدلالي (موصل MCP: المتجهات مبنية من النص الخام وفيه الأسماء، فتُزيح أحكامُ الاسم غيرَها). */
+  /**
+   * HKM-012: المسار الدلالي **معطّل افتراضيًا** في كل المسارات (الموقع والوكلاء والموصل)، لأن متجهات الأحكام
+   * مبنية من النص الخام وفيه أسماء الأفراد، فلفظ الاسم يجلب أحكامه. true = تفعيل صريح (لفهرس يُبنى لاحقًا
+   * من النص المحجوب، أو لقياس القراءة فقط).
+   */
   semantic?: boolean;
 }
 
@@ -528,8 +532,8 @@ export async function searchRulingsDirect(input: RulingSearchOptions): Promise<{
   const sql = await buildRulingSearchSql(opts);
   if (!sql) return { hits: [], total: 0, totalCapped: false, ms: Date.now() - started };
   const { countSql, rowsSql, params, indexPlan } = sql;
-  // المسار الدلالي (متجهات الأسباب والمنطوق) يجري بالتوازي مع اللفظي، للصفحة الأولى فقط.
-  const semanticQ = input.semantic !== false && offset === 0 && rawTokens.length >= SEMANTIC_MIN_TOKENS
+  // المسار الدلالي (متجهات الأسباب والمنطوق) يجري بالتوازي مع اللفظي، للصفحة الأولى فقط — وبتفعيل صريح وحده (HKM-012).
+  const semanticQ = input.semantic === true && offset === 0 && rawTokens.length >= SEMANTIC_MIN_TOKENS
     ? semanticRulingCandidates(opts.query).catch(() => [])
     : Promise.resolve([]);
 

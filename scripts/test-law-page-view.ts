@@ -73,7 +73,7 @@ const basePre: PreambleView = { kind: "none", label: null, completeness: null, u
 
 // ── U-3 المرشحات وعدّاداتها ──
 {
-  const counts = { total: 10, inForce: 5, amended: 2, repealed: 3, unverified: 0 };
+  const counts = { total: 10, inForce: 5, amended: 2, repealed: 3, replaced: 0, unverified: 0 };
   const c = V.filterCounts(counts);
   ok(c.all === 10 && c.amended === 2 && c.repealed === 3 && c.live === 7, "U-3.3 العدّادات: الكل ١٠، المعدّل ٢، الملغى ٣، إخفاء الملغى ٧");
   const tones: V.ArticleTone[] = ["amended", "amended", "repealed", "repealed", "repealed", "plain", "plain", "plain", "plain", "plain"];
@@ -106,6 +106,10 @@ const basePre: PreambleView = { kind: "none", label: null, completeness: null, u
 // ── U-6/U-7 الحالة والإلغاء ──
 {
   ok(V.articleTone("معدّل") === "amended" && V.articleTone("ملغى") === "repealed" && V.articleTone("ساري") === "plain" && V.articleTone(null) === "plain", "U-6.1/U-7a.1 حالة العرض من حالة المادة");
+  // HKM-030: المستبدلة حالة عرض مستقلة (باهتة بنصها)، لا تُعدّ ملغاة في المرشحات ولا في الإحالة.
+  ok(V.articleTone("مستبدل") === "replaced" && !V.matchesFilter("replaced", "repealed") && V.matchesFilter("replaced", "live") && V.matchesFilter("replaced", "all"), "U-7b.1 المستبدلة: حالة عرض replaced، تظهر مع «إخفاء الملغى» لا مع «الملغى فقط»");
+  const citeReplaced = V.citationText("نظام اصطناعي", { number: 7, label: "7", status: "مستبدل", statusLabel: "مستبدل", repeal: { type: "replacement", typeDerived: true, instrument: "م/32", url: null, quote: null, effectiveDate: "2021-06-01", effectiveDateSource: "search_surface", repealingSystem: null, repealingSystemBasis: null, repealingArticle: null } }, "https://x/7");
+  ok(citeReplaced.includes("— مستبدلة منذ 2021-06-01 —") && !citeReplaced.includes("ملغاة"), "U-7b.1 إحالة المستبدلة «مستبدلة منذ …» لا «ملغاة»");
   const r: RepealInfo = { type: "express_partial", typeDerived: true, instrument: "مرسوم ملكي رقم م/43 وتاريخ 1443/5/26هـ", url: null, quote: null, effectiveDate: null, effectiveDateSource: null, repealingSystem: { id: "s", name: "نظام الإثبات", slug: "نظام-الاثبات" }, repealingSystemBasis: "instrument_number", repealingArticle: null };
   const s = V.repealSentence(r);
   ok(s.includes("بموجب نظام الإثبات") && s.includes("م/43") && s.endsWith(`نافذة من ${NOT_AVAILABLE}.`), "U-7a.2 بيان الإلغاء: الأداة والنظام الملغي، وتاريخ النفاذ «غير متوفر» لا يُخترع");

@@ -3,17 +3,17 @@
 // (عدد الأحكام المستشهِدة) و**الحالة السارية** (المنسوخة تُؤخَّر). فتصل أفضل المواد للتحليل
 // ضمن سقف الـ٤٠، لا مجرّد ترتيب الاسترجاع. لا تلمس نواة البحث ولا الأمن.
 // ─────────────────────────────────────────────────────────────────────────────
-import { articleStatusBadge } from "@/lib/modules/legal-core/article-status";
+import { articleStatusBadge, isRepealedKind } from "@/lib/modules/legal-core/article-status";
 import type { LegalCoreResult } from "@/lib/modules/legal-core/legal-retrieval";
 
-/** ترجيح الحالة: الساري يُقدَّم، المنسوخ يُؤخَّر (دون إقصاء). */
+/** ترجيح الحالة: الساري يُقدَّم، الملغى/المستبدل يُؤخَّر (دون إقصاء). */
 function statusBonus(status: string | null | undefined): number {
   const b = articleStatusBadge(status);
   if (!b) return 0;
-  if (b.label === "سارية") return 0.1;
-  if (b.label === "منسوخة") return -0.15;
-  if (b.label === "موقوفة") return -0.05;
-  return 0; // معدّلة
+  if (b.kind === "in_force") return 0.1;
+  if (isRepealedKind(b.kind)) return -0.15;
+  if (b.kind === "suspended" || b.kind === "not_yet") return -0.05;
+  return 0; // معدّلة أو إلغاء جزئي معلّق
 }
 
 /**

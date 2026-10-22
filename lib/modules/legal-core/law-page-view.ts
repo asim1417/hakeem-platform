@@ -82,9 +82,10 @@ export const LAW_FILTERS: ReadonlyArray<{ id: LawFilter; label: string }> = [
 ];
 export const parseFilter = (v: string | null | undefined): LawFilter => (v === "amended" || v === "repealed" || v === "live" ? v : "all");
 
-/** حالة العرض للمادة: تُشتق من الحالة بالتاريخ (asOf) كما أعادها العقد. */
-export type ArticleTone = "amended" | "repealed" | "plain";
-export const articleTone = (s: ArticleStatus | null): ArticleTone => (s === "معدّل" ? "amended" : s === "ملغى" ? "repealed" : "plain");
+/** حالة العرض للمادة: تُشتق من الحالة بالتاريخ (asOf) كما أعادها العقد. replaced: باهتة بنصها، ليست ملغاة (HKM-030). */
+export type ArticleTone = "amended" | "repealed" | "replaced" | "plain";
+export const articleTone = (s: ArticleStatus | null): ArticleTone =>
+  s === "معدّل" ? "amended" : s === "ملغى" ? "repealed" : s === "مستبدل" ? "replaced" : "plain";
 
 export function filterCounts(counts: LawPageData["body"]["counts"]): Record<LawFilter, number> {
   return { all: counts.total, amended: counts.amended, repealed: counts.repealed, live: counts.total - counts.repealed };
@@ -205,7 +206,14 @@ export const REPEAL_NON_RETRO = "يبقى النص حاكمًا للوقائع �
 /** الاستناد المنسوخ يحمل الرابط المستقل للمادة (ع-١٥). */
 /** الإحالة بوسم المادة («103 مكرر») لا برقمها وحده، فلا تُنسب المكررة إلى أصلها. */
 export function citationText(systemName: string, a: Pick<ArticleView, "number" | "label" | "status" | "statusLabel" | "repeal">, absoluteArticleUrl: string): string {
-  const suffix = a.status === "ملغى" ? `ملغاة${a.repeal?.effectiveDate ? ` منذ ${a.repeal.effectiveDate}` : ""}` : a.status === "معدّل" ? "معدّلة" : a.statusLabel;
+  const suffix =
+    a.status === "ملغى"
+      ? `ملغاة${a.repeal?.effectiveDate ? ` منذ ${a.repeal.effectiveDate}` : ""}`
+      : a.status === "مستبدل"
+        ? `مستبدلة${a.repeal?.effectiveDate ? ` منذ ${a.repeal.effectiveDate}` : ""}`
+        : a.status === "معدّل"
+          ? "معدّلة"
+          : a.statusLabel;
   return `${systemName}، المادة (${a.label || a.number}) — ${suffix} — ${absoluteArticleUrl}`;
 }
 
