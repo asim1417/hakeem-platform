@@ -150,6 +150,19 @@
       "fingerprint": "6380f43bde91e11bdca6de39362f7b52 (606 صفًا) = البروفة",
       "restore_point": "br-wild-wind-aq20xnh3",
       "verified_by": "hkm030-publication-rule-2026-10-22"
+    },
+    {
+      "name": "remaining_37_verified_against_sources",
+      "scope": "الـ37 الباقية بلا حالة فُحصت ضد boe.law/boe.catalog/uqn_stage.work/uqn_stage.effect/uqn_fix.source_snapshot: التبغ ← ساري (الصيغة المعدّلة 1445 هي المدخلة)؛ 6 بصفحة كاملة عند الهيئة ← ساري؛ الغرف التجارية والصناعية 1400 ← مستبدل (نص النظام الجديد عند الهيئة)؛ العمل التطوعي 1441 ← مستبدل (م/89 لعام 1448، من 2026-09-11)؛ 28 غير موجودة بأي اسم في المصدرين",
+      "verified_by": [
+        "hkm030-publication-rule-2026-10-22 (التبغ)",
+        "hkm030-found-in-sources-2026-10-22 (8)"
+      ],
+      "fingerprints": {
+        "tobacco_row_id": "hkm30w-af3cc2d763222da11555ee05",
+        "eight": "de90dd6aed40482b232dbb3211bf2b54"
+      },
+      "restore_point": "br-wild-wind-aq20xnh3"
     }
   ],
   "decided_without_writing": {
