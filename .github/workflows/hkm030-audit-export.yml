@@ -1,0 +1,45 @@
+name: HKM-030 Audit Export (read-only)
+
+# يصدّر مصنف فحص قاعدة الأنظمة (xlsx) من Neon قراءةً فقط ويرفعه artifact.
+# لا كتابة على القاعدة. يقرأ عبر NEON_DATABASE_URL.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+    steps:
+      - name: تحقق من السر
+        run: |
+          if [ -z "$DATABASE_URL" ]; then echo "::error::NEON_DATABASE_URL مفقود."; exit 1; fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npm run db:generate
+      - name: "🛡️ حارس هدف Neon (قراءة فقط)"
+        run: npx tsx scripts/verify-neon-target.ts
+      - name: تصدير JSON
+        run: npx tsx scripts/hkm-030/export-audit.ts audit-out
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: بناء المصنف
+        run: |
+          pip install openpyxl==3.1.5
+          python3 scripts/hkm-030/build-audit-xlsx.py audit-out "hakeem-db-audit-$(date -u +%Y-%m-%d).xlsx"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hakeem-db-audit
+          path: |
+            hakeem-db-audit-*.xlsx
+            audit-out/*.json
+          retention-days: 14
