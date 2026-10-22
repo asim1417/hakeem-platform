@@ -158,3 +158,18 @@ export function searchableText(baseText: string | null, effective: EffectiveArti
   if (effective && effective.source === "unit_version") return effective.text;
   return baseText ?? "";
 }
+
+/**
+ * دفعة واحدة: النص الذي يُفهرس لكل صف (searchableText) باستعلامَي النسخ والتحقق نفسيهما.
+ * المصدر الواحد لكل مُفهرِس (BM25 وsearch_norm وOpenSearch) كي يطابق البحثُ النصَّ المعروض.
+ * تعذّر القراءة = النص المحفوظ (سقوط آمن).
+ */
+export async function searchableTexts(
+  rows: Array<{ id: string; content: string | null }>,
+  asOf?: Date,
+): Promise<Map<string, string>> {
+  const effective = await effectiveArticleTexts(rows, asOf).catch(() => new Map<string, EffectiveArticleText>());
+  const out = new Map<string, string>();
+  for (const r of rows) out.set(r.id, searchableText(r.content, effective.get(r.id)));
+  return out;
+}

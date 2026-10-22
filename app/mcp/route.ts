@@ -120,12 +120,13 @@ const handler = createMcpHandler(
           "التحقق من صحة إحالة نظامية قبل عزوها: هل المادة رقم كذا من نظام كذا موجودة فعلًا؟ وهل النص المنسوب إليها مطابق؟ يمنع اختلاق المواد. أرجِع: verdict (صحيحة/غير موجودة/نصها مختلف) + النص الفعلي.",
         inputSchema: z.object({
           law_name: z.string().describe("اسم النظام"),
-          article_number: z.string().describe("رقم المادة"),
+          article_number: z.string().describe("رقم المادة (يقبل «12 مكرر» و«12 مكرر 2»)"),
           claimed_text: z.string().optional().describe("النص المنسوب للمادة (اختياري — للمطابقة الحرفية)"),
+          article_bis: z.number().int().min(0).optional().describe("درجة «مكرر» (اختياري: 0 للأصل، 1 لـ«مكرر»، 2 لـ«مكرر 2»…) — تغلب ما في article_number"),
         }),
       },
-      async ({ law_name, article_number, claimed_text }, ctx) =>
-        runMcpTool("hakeem_verify_citation", ctx, () => hakeem.verifyCitation(law_name, article_number, claimed_text))
+      async ({ law_name, article_number, claimed_text, article_bis }, ctx) =>
+        runMcpTool("hakeem_verify_citation", ctx, () => hakeem.verifyCitation(law_name, article_number, claimed_text, article_bis))
     );
 
     // ٨) البحث الموضوعي الشامل (توسيع مكنز + بحث هجين + حصر لفظي، مجمّع حسب النظام)

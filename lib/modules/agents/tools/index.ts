@@ -105,8 +105,8 @@ export async function get_articles_range(systemName: string, from: number, to: n
   try {
     const rows = await prisma.legalArticle.findMany({
       where: { lawName: { contains: systemName, mode: "insensitive" }, articleNumber: { gte: Math.min(from, to), lte: Math.max(from, to) }, ...ARTICLE_ROWS },
-      select: { id: true, articleNumber: true, title: true, content: true, status: true },
-      orderBy: { articleNumber: "asc" },
+      select: { id: true, articleNumber: true, articleBis: true, title: true, content: true, status: true },
+      orderBy: [{ articleNumber: "asc" }, { articleBis: "asc" }], // الأصل ثم «مكرر» (HKM-030)
       take: 100,
     }).then((r) => applyEffectiveText(r));
     return ok(rows, "legal_core.legal_articles", rows.length ? 0.9 : 0.3);

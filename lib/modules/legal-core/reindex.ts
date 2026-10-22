@@ -1,10 +1,15 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // إعادة فهرسة بحث النواة — يملأ legal_articles.search_norm (النصّ العربي المُطبَّع الذي
 // يعتمده الاسترجاع المفهرس). يُشغَّل من واجهة الإدارة بعد استيراد الأنظمة كي تُطابِق الخدمات
-// موادَّ المكتبة. آمنٌ للاستئناف: يملأ الفارغ فقط ما لم يُطلب إعادة بناء الكلّ. نفس منطق backfill CLI.
+// موادَّ المكتبة. آمنٌ للاستئناف: يملأ الفارغ فقط ما لم يُطلب إعادة بناء الكلّ أو المتغيّر فقط.
+// نفس منطق backfill CLI.
+// HKM-030: المتن المفهرس هو النص الساري (unit_version) بالمصدر الواحد (effective-text)، والصفوف
+// التي ليست مواد (درجة «مكرر» ≥ 100) تُستبعد.
 // ─────────────────────────────────────────────────────────────────────────────
 import { prisma } from "@/lib/prisma";
 import { buildSearchNorm } from "@/lib/modules/legal-core/search-norm";
+import { searchableTexts } from "@/lib/modules/legal-core/effective-text";
+import { NON_ARTICLE_BIS } from "@/lib/modules/legal-core/article-key";
 
 const BATCH = 200;
 
@@ -16,10 +21,13 @@ type Row = {
   keywords: string[];
   classification: string | null;
   chapter: string | null;
-  has: boolean;
+  search_norm: string | null;
 };
 
 export interface ReindexResult { scanned: number; updated: number; total: number; }
+
+/** نطاق إعادة الفهرسة: الفارغ فقط (false)، أو الكل (true)، أو الفارغ والمختلف عن القيمة المحسوبة ("stale"). */
+export type ReindexScope = boolean | "stale";
 
 /** يضمن وجود عمود search_norm وفهرس GIN (idempotent) — البناء على Vercel يتخطّى الهجرات. */
 async function ensureSearchColumn(): Promise<void> {
@@ -29,18 +37,20 @@ async function ensureSearchColumn(): Promise<void> {
     .catch(() => undefined);
 }
 
-/** يعيد فهرسة عمود search_norm لكلّ مواد النواة (أو الفارغ فقط). يعيد عدّادات النتيجة. */
-export async function reindexSearchNorm(all = false): Promise<ReindexResult> {
+/** يعيد فهرسة عمود search_norm لمواد النواة (الفارغ فقط، أو الكل، أو المتغيّر). يعيد عدّادات النتيجة. */
+export async function reindexSearchNorm(scope: ReindexScope = false): Promise<ReindexResult> {
   await ensureSearchColumn();
+  const all = scope === true;
+  const stale = scope === "stale";
   let cursor = "";
   let scanned = 0;
   let updated = 0;
   for (;;) {
     const rows = await prisma.$queryRawUnsafe<Row[]>(
-      `SELECT id, "lawName", title, content, keywords, classification, chapter,
-              (search_norm IS NOT NULL AND length(search_norm) > 0) AS has
+      `SELECT id, "lawName", title, content, keywords, classification, chapter, search_norm
        FROM legal_articles
        WHERE id > $1
+         AND "articleBis" < ${NON_ARTICLE_BIS}
        ORDER BY id
        LIMIT ${BATCH}`,
       cursor
@@ -48,11 +58,17 @@ export async function reindexSearchNorm(all = false): Promise<ReindexResult> {
     if (!rows.length) break;
     cursor = rows[rows.length - 1].id;
     scanned += rows.length;
-    const pending = all ? rows : rows.filter((r) => !r.has);
+    const texts = await searchableTexts(rows);
+    const computed = rows.map((r) => ({
+      id: r.id,
+      stored: r.search_norm ?? "",
+      norm: buildSearchNorm({ ...r, content: texts.get(r.id) ?? r.content ?? "" }),
+    }));
+    const pending = computed.filter((c) => all || !c.stored || (stale && c.norm !== c.stored));
     await Promise.all(
-      pending.map((r) =>
+      pending.map((c) =>
         prisma
-          .$executeRawUnsafe(`UPDATE legal_articles SET search_norm = $2 WHERE id = $1`, r.id, buildSearchNorm(r))
+          .$executeRawUnsafe(`UPDATE legal_articles SET search_norm = $2 WHERE id = $1`, c.id, c.norm)
           .then(() => { updated += 1; })
           .catch(() => { /* تجاهل صفّاً فاشلاً دون كسر الدفعة */ })
       )

@@ -9,6 +9,8 @@
 // حارس الإسناد يتجاهل الرقم صفر أصلًا (يشترط n>0)، فلا تعارض مع تأريض أرقام المواد.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { articleLabel } from "./article-key";
+
 /** رقم المادة المخصَّص للديباجة (تمهيد النظام/المرسوم) — ليست مادّةً موضوعيّة مرقّمة. */
 export const PREAMBLE_ARTICLE_NUMBER = 0;
 
@@ -20,24 +22,28 @@ export function isPreamble(articleNumber: number | string | null | undefined): b
   return Number(articleNumber) === PREAMBLE_ARTICLE_NUMBER;
 }
 
-/** وحدة الإشارة: «الديباجة» للرقم صفر، وإلّا «المادة {رقم}» (بأرقامٍ عربيّة). */
-export function articleUnitLabel(articleNumber: number | string | null | undefined): string {
+/**
+ * وحدة الإشارة: «الديباجة» للرقم صفر، وإلّا «المادة {رقم}» (بأرقامٍ عربيّة).
+ * HKM-030: درجة «مكرر» (articleBis) تُلحق بالوسم نفسه الذي يستعمله article-key: «المادة ١٢ مكرر»، «المادة ١٢ مكرر 2».
+ */
+export function articleUnitLabel(articleNumber: number | string | null | undefined, articleBis = 0): string {
   if (isPreamble(articleNumber)) return PREAMBLE_TITLE;
   const n = typeof articleNumber === "number" ? articleNumber : Number(articleNumber);
-  const shown = Number.isFinite(n) ? n.toLocaleString("ar-SA") : String(articleNumber ?? "");
+  const shown = Number.isFinite(n) ? articleLabel(n, articleBis, true) : String(articleNumber ?? "");
   return `المادة ${shown}`;
 }
 
 /**
  * مرجع استنادٍ كامل: «{النظام}{sep}{الوحدة}». sep الافتراضيّ «، » (فاصلة عربيّة) كما في
- * buildSingleCitationLabel؛ ومرّر « · » لصيغة الحواشي.
+ * buildSingleCitationLabel؛ ومرّر « · » لصيغة الحواشي. articleBis: درجة «مكرر» (0 للأصل).
  */
 export function formatArticleRef(
   systemName: string | null | undefined,
   articleNumber: number | string | null | undefined,
-  sep: string = "، "
+  sep: string = "، ",
+  articleBis = 0
 ): string {
   const sys = (systemName ?? "").trim();
-  const unit = articleUnitLabel(articleNumber);
+  const unit = articleUnitLabel(articleNumber, articleBis);
   return sys ? `${sys}${sep}${unit}` : unit;
 }
