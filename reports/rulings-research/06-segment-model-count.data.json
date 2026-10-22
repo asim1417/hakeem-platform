@@ -1,0 +1,27 @@
+{
+  "measuredAt": "2026-10-17T05:31:42.792Z",
+  "model": "claude-haiku-5-5",
+  "version": "segment-model-v1",
+  "mode": "count",
+  "regions": 3846,
+  "sampled": 200,
+  "sampleTokens": 250077,
+  "sampleChars": 261796,
+  "charsPerToken": 1.05,
+  "projectedInputTokens": 4691532,
+  "projectedOutputTokens": 307680,
+  "usd": {
+    "claude-haiku-5-5": {
+      "standard": 0.62,
+      "batch": 0.31
+    },
+    "claude-haiku-4-5": {
+      "standard": 6.23,
+      "batch": 3.11
+    },
+    "claude-sonnet-5-5": {
+      "standard": 12.46,
+      "batch": 6.23
+    }
+  }
+}
