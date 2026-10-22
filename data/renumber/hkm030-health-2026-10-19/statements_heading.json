@@ -1,0 +1,20 @@
+{
+  "batch": "hkm030-heading-strip-2026-10-19",
+  "applied": "2026-10-19 على الإنتاج br-rapid-salad-aq782ea2 بعد بروفة br-mute-silence-aq71idn7؛ نقطة الاسترجاع br-delicate-base-aq9lpq93",
+  "scope": "المرحلة 2: مواد يبدأ متنها بعنوان «المادة …» متبوعًا بنقطتين أو سطر جديد (744 مادة). حذف العنوان فقط من legal_articles.content؛ لا تغيير في بقية النص.",
+  "fingerprint": "37c30192304e17769aa45f90570c9c3e (md5 لمعرّفات المواد والمتن بعد الحذف، 744 صفًا، البروفة = الإنتاج)",
+  "statements": [
+    {
+      "name": "provenance",
+      "sql": "INSERT INTO legal_text_provenance (source, source_id, source_url, article_id, action, previous_text, created_at) SELECT 'hakeem', 'hkm030-heading-strip-2026-10-19', 'internal:hakeem/legal_articles/'||id, id, 'heading_strip', content, now() FROM legal_articles WHERE \"articleBis\" < 100 AND content ~ '^\\s*المادة\\s'"
+    },
+    {
+      "name": "strip",
+      "sql": "UPDATE legal_articles SET content = regexp_replace(content, '^\\s*المادة\\s[^\\n:]{1,45}?\\s*(?:[:：]\\s*|\\n\\s*)', ''), \"updatedAt\" = now() WHERE \"articleBis\" < 100 AND content ~ '^\\s*المادة\\s'"
+    },
+    {
+      "name": "search_norm",
+      "sql": "UPDATE legal_articles a SET search_norm = uqn_fix.hkm30_search_norm(a.\"lawName\", a.title, a.content, a.keywords, a.classification, a.chapter) WHERE a.id IN (SELECT article_id FROM legal_text_provenance WHERE source_id = 'hkm030-heading-strip-2026-10-19') AND NOT EXISTS (SELECT 1 FROM unit_version v WHERE v.unit_id = a.id AND v.valid_from <= now())"
+    }
+  ]
+}
