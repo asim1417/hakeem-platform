@@ -9,6 +9,7 @@ import { recordSearch } from "@/lib/modules/legal-search/search-log";
 import { getDidYouMeanSuggestions } from "@/lib/modules/legal-search/suggestions";
 import { LegalPageHeader, LegalAlert } from "@/components/ui/legal";
 import { articleStatusBadge, type StatusTone } from "@/lib/modules/legal-core/article-status";
+import { latestVerifications } from "@/lib/modules/legal-core/verification-read";
 import { HighlightedSearchText, joinSearchTerms } from "@/components/SearchHighlight";
 import { SearchAutocomplete } from "@/components/SearchAutocomplete";
 import { SearchModeTabs } from "@/components/search/SearchModeTabs";
@@ -118,6 +119,8 @@ export default async function LegalSearchPage({
   const didYouMean = q.length >= 2 && data && data.results.length === 0 ? await getDidYouMeanSuggestions(q) : [];
 
   const all = data?.results ?? [];
+  // HKM-030: شارة حالة المادة من آخر سجل تحقق (دفعة واحدة لمواد النتائج)، مع السقوط إلى العمود القديم في meta.status.
+  const verifiedStatus = await latestVerifications("unit", all.filter((r) => r.type === "article").map((r) => r.id));
   const counts: Record<string, number> = {
     all: all.length,
     article: all.filter((r) => r.type === "article").length,
@@ -446,7 +449,7 @@ export default async function LegalSearchPage({
               const meta = TYPE_META[r.type as EntityType] ?? TYPE_META.article;
               const Icon = meta.icon;
               const href = detailHref(r);
-              const st = r.type === "article" ? articleStatusBadge(metaStr(r, "status")) : null;
+              const st = r.type === "article" ? articleStatusBadge(verifiedStatus.get(r.id)?.verifiedStatus ?? metaStr(r, "status")) : null;
               const statusColor: Record<StatusTone, string> = {
                 emerald: "var(--emerald)",
                 amber: "var(--gold-dark)",

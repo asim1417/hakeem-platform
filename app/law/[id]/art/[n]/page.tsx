@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
-import { Ban, BookOpen, ChevronLeft, ChevronRight, PencilLine } from "lucide-react";
+import { ArrowLeftRight, Ban, BookOpen, ChevronLeft, ChevronRight, PencilLine } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { prismaSqlClient } from "@/lib/modules/legal-core/sql-port";
 import { getLawPageData, NOT_AVAILABLE, type ArticleView, type LawPageData } from "@/lib/modules/legal-core/law-page-data";
@@ -77,6 +77,23 @@ function StatusBox({ a }: { a: ArticleView }) {
           <dd>{r.repealingSystem ? <Link href={lawPath(r.repealingSystem.slug)}>{r.repealingSystem.name}</Link> : NOT_AVAILABLE}</dd>
         </dl>
         <p className="keep">{REPEAL_NON_RETRO}</p>
+      </section>
+    );
+  }
+  // HKM-030: المستبدلة باهتة بنصها، لا كملغاة (قرار المالك HKM-026/028)، كما في /legal.
+  if (tone === "replaced") {
+    const r = a.repeal;
+    return (
+      <section className="fn" aria-labelledby="st-h" style={{ maxWidth: "none" }}>
+        <p className="fn-title" id="st-h">
+          <ArrowLeftRight aria-hidden size={18} /> مادة مستبدلة — النص الظاهر نصها قبل الاستبدال{r?.effectiveDate ? <>، نافذًا من <LtrDates text={r.effectiveDate} /></> : null}.
+        </p>
+        <dl>
+          <dt>أداة الاستبدال</dt>
+          <dd>{r?.url && r.instrument ? <a href={r.url} rel="noopener noreferrer" target="_blank">{r.instrument}</a> : orNA(r?.instrument)}</dd>
+          <dt>النظام البديل</dt>
+          <dd>{r?.repealingSystem ? <Link href={lawPath(r.repealingSystem.slug)}>{r.repealingSystem.name}</Link> : NOT_AVAILABLE}</dd>
+        </dl>
       </section>
     );
   }
@@ -175,6 +192,7 @@ function ArticleDoc({ data, a, division, prev, next, id, url, tone, paras }: {
               <span className="art-tags">
                 {tone === "amended" ? <span className="tag tag--amended"><PencilLine aria-hidden size={16} /> معدّلة</span> : null}
                 {tone === "repealed" ? <span className="tag tag--repealed"><Ban aria-hidden size={16} /> ملغاة</span> : null}
+                {tone === "replaced" ? <span className="tag tag--replaced"><ArrowLeftRight aria-hidden size={16} /> مستبدلة</span> : null}
               </span>
             </div>
             <div className="art-text">
