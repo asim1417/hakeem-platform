@@ -41,10 +41,11 @@ const vec = (t) => {
 const sha = (s) => createHash("sha256").update(s, "utf8").digest("hex");
 
 async function setup(c) {
-  await c.query(`DROP TABLE IF EXISTS embedding_version, embeddings, legal_articles, legal_systems CASCADE`);
+  await c.query(`DROP TABLE IF EXISTS embedding_version, embeddings, unit_version, legal_articles, legal_systems CASCADE`);
   await c.query(`CREATE EXTENSION IF NOT EXISTS vector`);
   await c.query(`CREATE TABLE legal_systems (id text PRIMARY KEY, name text)`);
   await c.query(`CREATE TABLE legal_articles (id text PRIMARY KEY, "lawName" text, "articleNumber" int, "articleBis" int DEFAULT 0, title text, content text, "legalSystemId" text)`);
+  await c.query(`CREATE TABLE unit_version (id text PRIMARY KEY, unit_id text NOT NULL, body text NOT NULL, valid_from timestamptz NOT NULL, evidence_instrument text, evidence_url text, created_at timestamptz NOT NULL DEFAULT now())`);
   await c.query(`CREATE TABLE embeddings (id text PRIMARY KEY, owner_type text, owner_id text, embedding vector(1536), content_hash text, UNIQUE (owner_type, owner_id))`);
   await c.query(`CREATE TABLE embedding_version (id text PRIMARY KEY, owner_type text NOT NULL, owner_id text NOT NULL, embedding vector(1536), model text NOT NULL, content_hash text NOT NULL, created_at timestamptz NOT NULL DEFAULT now())`);
   await c.query(`CREATE OR REPLACE FUNCTION hakeem_append_only() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'append-only table %', TG_TABLE_NAME; END; $$`);
@@ -57,6 +58,9 @@ async function setup(c) {
     ["a4", "نظام تجريبي", 4, 0, "المادة 4", "نص الرابعة له نسخة سليمة", "s1"],
     ["a5", "نظام تجريبي", 5, 0, "المادة 5", "نص الخامسة له نسخة قديمة", "s1"],
     ["a6", "نظام تجريبي", 6, 1, "المادة 6 مكرر", "نص السادسة مكرر قديم", "s1"],
+    ["a7", "نظام تجريبي", 7, 0, "المادة 7", "نص السابعة قبل التعديل", "s1"], // نسخة سارية → النص الساري غير المضمَّن = قديم
+    ["a8", "نظام تجريبي", 8, 0, "المادة 8", "نص الثامنة قبل تعديل لم يسرِ", "s1"], // نسخة مستقبلية → النص الأصلي = سليم
+    ["a9", "نظام تجريبي", 9, 0, "المادة 9", "نص التاسعة الأصلي", "s1"], // نسختان ساريتان بلا متجه → مفقود، والأحدث هي المضمَّنة
     ["c18", "نظام المحاكم التجارية", 18, 0, "المادة 18", "المادة الثامنة عشرة\nللمحكمة أن تفصل", "s2"],
     ["c19", "نظام المحاكم التجارية", 19, 0, "المادة 19", "المادة التاسعة عشرة\nيجب في الدعاوى", "s2"],
     ["c26", "نظام المحاكم التجارية", 26, 0, "المادة 26", "المادة السادسة والعشرون\nللمحكمة عند تخلف", "s2"],
@@ -64,6 +68,12 @@ async function setup(c) {
     ["c93", "نظام المحاكم التجارية", 93, 100, "مرفق", "صف غير مادي قديم", "s2"],
   ];
   for (const a of arts) await c.query(`INSERT INTO legal_articles VALUES ($1,$2,$3,$4,$5,$6,$7)`, a);
+  const ver = (id, unit, body, from) => c.query(`INSERT INTO unit_version (id, unit_id, body, valid_from, evidence_instrument) VALUES ($1, $2, $3, $4, 'مرسوم تجريبي')`, [id, unit, body, from]);
+  await ver("u7", "a7", "نص السابعة بعد التعديل الساري", "2026-01-01");
+  await ver("u8", "a8", "نص الثامنة بعد تعديل مستقبلي", "2099-01-01");
+  await ver("u9a", "a9", "نص التاسعة نسخة أولى", "2025-01-01");
+  await ver("u9b", "a9", "نص التاسعة النسخة السارية الأحدث", "2026-01-01");
+  await ver("u9c", "a9", "نص التاسعة نسخة لم تسرِ", "2099-01-01");
   const text = (sys, title, content) => [sys, title, content].filter(Boolean).join("\n");
   const emb = async (id, owner, hash) =>
     c.query(`INSERT INTO embeddings VALUES ($1, 'article', $2, $3::vector, $4)`, [id, owner, `[${vec(owner).join(",")}]`, hash]);
@@ -73,6 +83,8 @@ async function setup(c) {
   await emb("e4", "a4", sha("قديم"));
   await emb("e5", "a5", sha(text("نظام تجريبي", "المادة 5", "نص الخامسة له نسخة قديمة")));
   await emb("e6", "a6", sha("قديم"));
+  await emb("e7", "a7", sha(text("نظام تجريبي", "المادة 7", "نص السابعة قبل التعديل"))); // بصمة النص الأصلي لا الساري = قديم
+  await emb("e8", "a8", sha(text("نظام تجريبي", "المادة 8", "نص الثامنة قبل تعديل لم يسرِ"))); // النسخة لم تسرِ = سليم
   await emb("e18", "c18", sha("قديم"));
   await emb("e93", "c93", sha("قديم"));
   const fp4 = sha(`${text("نظام تجريبي", "المادة 4", "نص الرابعة له نسخة سليمة")}\ntext-embedding-3-small`);
@@ -102,9 +114,11 @@ async function main() {
 
     await setup(c);
     const m = await freeze(c);
-    ok(m.selected === 6 && m.stale === 4 && m.missing === 2, `الاختيار: القديمة a2 وa5 (نسخة قديمة) وa6 (مكرر) و18، والمفقودتان 19 و26 فقط (${m.selected}/${m.stale}/${m.missing})`);
+    ok(m.selected === 9 && m.stale === 5 && m.missing === 4, `الاختيار: القديمة a2 وa5 (نسخة قديمة) وa6 (مكرر) وa7 (نسخة سارية) و18، والمفقودة a9 و19 و26 و27 (${m.selected}/${m.stale}/${m.missing})`);
     const ids = (await c.query(`${SUMMARY_SQL.replace(/SELECT \(SELECT count[\s\S]*$/, "")} SELECT string_agg(id, ',' ORDER BY id) AS ids FROM sel`)).rows[0].ids;
-    ok(ids === "a2,a5,a6,c18,c19,c26", `المعرّفات المختارة (${ids}): لا a1 السليم، ولا a3 قبل حذف التطويل، ولا a4 بنسخته السليمة، ولا c27 ولا الصف غير المادي`);
+    ok(ids === "a2,a5,a6,a7,a9,c18,c19,c26,c27", `المعرّفات المختارة (${ids}): لا a1 السليم، ولا a3 قبل حذف التطويل، ولا a4 بنسخته السليمة، ولا a8 (نسخته لم تسرِ)، ولا الصف غير المادي`);
+    const bodies = (await c.query(`${SUMMARY_SQL.replace(/SELECT \(SELECT count[\s\S]*$/, "")} SELECT id, body FROM sel WHERE id IN ('a7', 'a9', 'a2') ORDER BY id`)).rows;
+    ok(JSON.stringify(bodies.map((r) => r.body)) === JSON.stringify(["نص المادة الثانية بعد التعديل", "نص السابعة بعد التعديل الساري", "نص التاسعة النسخة السارية الأحدث"]), "النص المضمَّن = أحدث نسخة سارية (valid_from <= now())، وإلا content");
 
     let calls = 0;
     const deps = { ...real, embed: async (texts) => { calls += texts.length; return texts.map(vec); } };
@@ -112,31 +126,34 @@ async function main() {
     ok(dry.mode === "dry-run" && dry.written === 0 && calls === 1 && (await versions(c)) === 2, "التجريب: نداء اختبار واحد ولا كتابة");
     ok(dry.sql_hash_mismatch === 0, "بصمة SQL المكافئة = بصمة الكود (buildEmbeddingText وembeddingFingerprint) لكل الصفوف");
 
-    await rejects(() => runEmbed(c, { ...m, selected: m.selected + 1, stale: m.stale + 1 }, deps, { apply: true, approvedRows: 7, url: URL_ }), /تغيّر منذ التجميد/, "قائمة لا تطابق الاختيار الحي توقف الكل");
+    await rejects(() => runEmbed(c, { ...m, selected: m.selected + 1, stale: m.stale + 1 }, deps, { apply: true, approvedRows: 10, url: URL_ }), /تغيّر منذ التجميد/, "قائمة لا تطابق الاختيار الحي توقف الكل");
     await c.query(`UPDATE legal_articles SET content = content || ' تعديل' WHERE id = 'a2'`);
-    await rejects(() => runEmbed(c, m, deps, { apply: true, approvedRows: 6, url: URL_ }), /state_md5/, "تغيّر متن بعد التجميد يوقف الكل");
+    await rejects(() => runEmbed(c, m, deps, { apply: true, approvedRows: 9, url: URL_ }), /state_md5/, "تغيّر متن بعد التجميد يوقف الكل");
     await c.query(`UPDATE legal_articles SET content = 'نص المادة الثانية بعد التعديل' WHERE id = 'a2'`);
 
     // تغيّر متن أثناء التوليد (بين القراءة والكتابة) → إلغاء المعاملة.
     const racing = { ...real, embed: async (texts) => { if (texts.length > 1) await c.query(`UPDATE legal_articles SET title = 'المادة 2 معدلة' WHERE id = 'a2'`); return texts.map(vec); } };
-    await rejects(() => runEmbed(c, m, racing, { apply: true, approvedRows: 6, url: URL_ }), /تغيّر بين القراءة والكتابة/, "تغيّر متن أثناء التوليد يلغي الكتابة");
+    await rejects(() => runEmbed(c, m, racing, { apply: true, approvedRows: 9, url: URL_ }), /تغيّر بين القراءة والكتابة/, "تغيّر متن أثناء التوليد يلغي الكتابة");
     ok((await versions(c)) === 2, "لا صف جديد بعد الإلغاء");
     await c.query(`UPDATE legal_articles SET title = 'المادة 2' WHERE id = 'a2'`);
 
     const failing = { ...real, embed: async (texts) => texts.map((t, i) => (i === texts.length - 1 && texts.length > 1 ? null : vec(t))) };
-    await rejects(() => runEmbed(c, m, failing, { apply: true, approvedRows: 6, url: URL_ }), /متجه غير صالح/, "فشل متجه واحد = لا كتابة");
+    await rejects(() => runEmbed(c, m, failing, { apply: true, approvedRows: 9, url: URL_ }), /متجه غير صالح/, "فشل متجه واحد = لا كتابة");
     const short = { ...real, embed: async (texts) => texts.map((t) => vec(t).slice(1)) };
     await rejects(() => runEmbed(c, m, short, { apply: false, approvedRows: null, url: URL_ }), /متجه غير صالح/, "التجريب يكشف طولًا غير 1536");
     ok((await versions(c)) === 2, "لا صف جديد بعد فشل النموذج");
 
-    const res = await runEmbed(c, m, deps, { apply: true, approvedRows: 6, url: URL_ });
-    ok(res.mode === "apply" && res.written === 6 && (await versions(c)) === 8, "الكتابة: 6 نسخ جديدة، والنسختان القديمتان باقيتان (إضافة فقط)");
+    const res = await runEmbed(c, m, deps, { apply: true, approvedRows: 9, url: URL_ });
+    ok(res.mode === "apply" && res.written === 9 && (await versions(c)) === 11, "الكتابة: 9 نسخ جديدة، والنسختان القديمتان باقيتان (إضافة فقط)");
     const after = (await c.query(SUMMARY_SQL)).rows[0];
     ok(after.selected === 0, "بعد الكتابة: لا قديم ولا مفقود في النطاق");
+    const fpOf = (title, body) => real.fingerprint(real.buildText({ systemName: "نظام تجريبي", title, content: body }));
+    const written = (await c.query(`SELECT DISTINCT ON (owner_id) owner_id, content_hash FROM embedding_version WHERE owner_id IN ('a7', 'a9') ORDER BY owner_id, created_at DESC`)).rows;
+    ok(written.length === 2 && written[0].content_hash === fpOf("المادة 7", "نص السابعة بعد التعديل الساري") && written[1].content_hash === fpOf("المادة 9", "نص التاسعة النسخة السارية الأحدث"), "البصمة المكتوبة = بصمة النص الساري (النسخة لا content)");
     const latest = (await c.query(`SELECT DISTINCT ON (owner_id) owner_id, model, vector_dims(embedding) AS d FROM embedding_version ORDER BY owner_id, created_at DESC`)).rows;
     ok(latest.every((r) => r.model === "text-embedding-3-small" && r.d === 1536), "أحدث نسخة لكل مادة بالنموذج والطول الصحيحين");
-    ok((await c.query(`SELECT count(*)::int AS n FROM embeddings`)).rows[0].n === 8, "جدول embeddings لم يُمس");
-    await rejects(() => runEmbed(c, m, deps, { apply: true, approvedRows: 6, url: URL_ }), /تغيّر منذ التجميد/, "التشغيل الثاني مرفوض");
+    ok((await c.query(`SELECT count(*)::int AS n FROM embeddings`)).rows[0].n === 10, "جدول embeddings لم يُمس");
+    await rejects(() => runEmbed(c, m, deps, { apply: true, approvedRows: 9, url: URL_ }), /تغيّر منذ التجميد/, "التشغيل الثاني مرفوض");
     await rejects(() => c.query(`UPDATE embedding_version SET model = 'x'`), /append-only/, "مشغّل الإضافة فقط يمنع التعديل");
 
     // embedBatch الحقيقي على خادم محلي محاكى (الطلب والنموذج والترتيب).

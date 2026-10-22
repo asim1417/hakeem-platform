@@ -5,8 +5,8 @@
  *
  * فرع التشغيل aman/hkm-029-embeddings وحده (هذا الالتزام لا يُدمج، ويُرجع بعد التشغيل): مسار
  * backfill-embeddings.yml بـ target=articles يشغّل أداة HKM-029 المحصورة (scripts/hkm-029/embed-articles.mjs)
- * بقائمتها المجمّدة: scope=missing تجريب بلا كتابة، وscope=all مع limit = العدد المعتمد كتابة في
- * embedding_version فقط. أي هدف آخر موقوف كما كان.
+ * بقائمتها المجمّدة (HKM-030: كل القديمة والمفقودة بالنص الساري): scope=missing تجريب بلا كتابة يطبع
+ * الملخص وتقدير الرموز، وscope=all مع limit = العدد المعتمد كتابة في embedding_version فقط. أي هدف آخر موقوف كما كان.
  */
 import { prisma } from "@/lib/prisma";
 

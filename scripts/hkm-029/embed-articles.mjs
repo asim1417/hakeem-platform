@@ -1,16 +1,17 @@
 /**
- * HKM-029 — إعادة بناء متجهات المواد القديمة (ومتجهي المادتين 19 و26 من نظام المحاكم التجارية) بقائمة مجمّدة.
+ * HKM-029/HKM-030 — إعادة بناء متجهات المواد القديمة والمفقودة كلها بالنص الساري، بقائمة مجمّدة.
  *
  * يضيف صفوفًا في embedding_version فقط (جدول إضافة فقط بمشغّل)، ولا يمس embeddings ولا legal_articles.
  * البحث يقرأ أحدث نسخة لكل مادة (lib/modules/legal-search/vector-source.ts)، فيحل الجديد محل القديم دون حذفه.
  *
- *   تجريب (افتراضي): يقرأ في لقطة REPEATABLE READ READ ONLY، ويطابق الاختيار الحي بالقائمة المجمّدة،
- *     ويحسب النصوص والبصمات، ويجرّب نداءً واحدًا لنموذج التضمين (الطول 1536). لا يكتب شيئًا.
- *   كتابة (--apply --approved-rows <العدد>): يولّد كل المتجهات أولًا ويتحقق منها، ثم معاملة واحدة تقفل
- *     الصفوف (FOR SHARE) وتعيد بصمة الحالة وتشترط ألا نسخة بالبصمة نفسها، ثم تُدرج وتتحقق ثم تثبّت.
- *     أي اختلاف أو فشل نداء قبل المعاملة = لا كتابة.
+ *   تجريب (افتراضي): يقرأ في لقطة REPEATABLE READ READ ONLY، ويطبع ملخص الاختيار الحي (أعداد وبصمات فقط)،
+ *     ويطابقه بالقائمة المجمّدة، ويحسب النصوص والبصمات وتقدير الرموز، ويجرّب نداءً واحدًا لنموذج التضمين
+ *     (الطول 1536). لا يكتب شيئًا.
+ *   كتابة (--apply --approved-rows <العدد>): يولّد كل المتجهات أولًا (دفعات بسقف عدد وحروف، مع إعادة
+ *     محاولة) ويتحقق منها، ثم معاملة واحدة تقفل الصفوف (FOR SHARE) وتعيد بصمة الحالة وتشترط ألا نسخة
+ *     بالبصمة نفسها، ثم تُدرج وتتحقق ثم تثبّت. أي اختلاف أو فشل نداء قبل المعاملة = لا كتابة.
  *
- *   npx tsx scripts/hkm-029/embed-articles.mjs [--apply --approved-rows 940]
+ *   npx tsx scripts/hkm-029/embed-articles.mjs [--apply --approved-rows <العدد المجمّد>]
  *   على الإنتاج يلزم: CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED، والعدد المعتمد = القائمة.
  */
 import { randomUUID } from "node:crypto";
@@ -19,6 +20,7 @@ import { pathToFileURL } from "node:url";
 import { Client } from "pg";
 import {
   EMBED_BATCH,
+  EMBED_BATCH_CHARS,
   EMBED_MODEL,
   ROWS_SQL,
   STATE_FOR_IDS_SQL,
@@ -27,10 +29,15 @@ import {
   assertSummaryMatches,
   assertVectors,
   chunk,
+  chunkByChars,
   embedTargetGate,
+  embedWithRetry,
   parseEmbedArgs,
   vectorLiteral,
 } from "./embed-lib.mjs";
+
+/** الملخص الحي (أعداد وبصمات لا نصوص) يُطبع دائمًا: هو ما يُجمَّد عليه بـ freeze-manifest.mjs. */
+const printLive = (live) => console.log(JSON.stringify({ live_summary: live }));
 
 export const DEFAULT_MANIFEST = new URL("./embed-manifest.json", import.meta.url);
 
@@ -44,6 +51,7 @@ export async function readSelection(client, manifest, deps) {
   await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
   try {
     const live = (await client.query(SUMMARY_SQL)).rows[0];
+    printLive(live);
     assertSummaryMatches(manifest, live);
     const rows = (await client.query(ROWS_SQL)).rows;
     if (rows.length !== manifest.selected) throw new Error(`توقف: الصفوف ${rows.length} ≠ ${manifest.selected}`);
@@ -79,9 +87,15 @@ export async function runEmbed(client, manifest, deps, opts) {
     return { ...summary, mode: "dry-run", probe: "ok", written: 0 };
   }
 
-  // ١) كل المتجهات قبل أي كتابة.
+  // ١) كل المتجهات قبل أي كتابة: دفعات بسقف العدد والحروف، وإعادة محاولة للدفعة الفاشلة، وتقدّم بلا نصوص.
   const vectors = [];
-  for (const batch of chunk(items, EMBED_BATCH)) vectors.push(...(await deps.embed(batch.map((x) => x.text))));
+  const batches = chunkByChars(items, EMBED_BATCH, EMBED_BATCH_CHARS);
+  for (const [i, batch] of batches.entries()) {
+    const got = await embedWithRetry(deps.embed, batch.map((x) => x.text));
+    assertVectors(got, batch.length);
+    vectors.push(...got);
+    if ((i + 1) % 10 === 0 || i + 1 === batches.length) console.error(`[HKM-030] متجهات ${vectors.length}/${items.length} (دفعة ${i + 1}/${batches.length})`);
+  }
   assertVectors(vectors, items.length);
 
   // ٢) معاملة واحدة: قفل، وإعادة البصمة، وشرط عدم التكرار، وإدراج، وتحقق.
