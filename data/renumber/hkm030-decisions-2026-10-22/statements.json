@@ -163,6 +163,13 @@
         "eight": "de90dd6aed40482b232dbb3211bf2b54"
       },
       "restore_point": "br-wild-wind-aq20xnh3"
+    },
+    {
+      "name": "text_match_two_regulations",
+      "scope": "مطابقة بالنص ضد uqn_stage.unit: لائحة التقارير الطبية (p=23144) واللائحة التنفيذية لنظام الكهرباء/الهيئة السعودية (p=18640) ← ساري بقاعدة النشر",
+      "fingerprint": "03f902e6f760de4e26f8a417754cf49a (صفان) = البروفة",
+      "verified_by": "hkm030-publication-rule-2026-10-22",
+      "restore_point": "br-wild-wind-aq20xnh3"
     }
   ],
   "decided_without_writing": {
