@@ -1,0 +1,44 @@
+{
+  "batch": "hkm030-decisions-2026-10-22",
+  "owner_word": "«نفذها كلها» (22 أكتوبر 2026) على بنود تقرير الفحص التي كانت تنتظر قرارًا",
+  "applied": "الإنتاج br-rapid-salad-aq782ea2؛ بروفة br-mute-silence-aq71idn7 لكل معاملة؛ نقاط الاسترجاع: br-misty-lab-aq4azblk (قبل تواريخ النفاذ) وbr-super-meadow-aqxqd950 (قبل تحقق أداة الاستبدال)",
+  "transactions": [
+    {
+      "name": "effective_from_publication_and_approval",
+      "scope": "598 نظامًا بلا تاريخ نفاذ: 20 بند نفاذ «من تاريخ الموافقة/صدورها» ← تاريخ قرار الموافقة من uqn_stage.work محوّلًا بـ hijridate (Umm al-Qura)؛ 412 بلا بند نفاذ ← تاريخ النشر في أم القرى (آخر نشر لعنوان النظام)؛ 1 من law_card؛ بقي 165 بلا مصدر تاريخ (منها 8 أنظمة خليجية «وفق الإجراءات الدستورية» أو بلا تاريخ موافقة)",
+      "fingerprint": "91fff3dd336ba78208aa24eaff4b58d7 (md5 لمعرّف النظام وتاريخ نفاذه لكل ما له تاريخ، 990 صفًا) = البروفة",
+      "statements": [
+        "UPDATE legal_systems s SET preamble_effective_from = v.g::timestamp, \"updatedAt\" = now() FROM (VALUES (id, gregorian)×20) v WHERE s.id=v.id AND s.preamble_effective_from IS NULL",
+        "UPDATE legal_systems s SET preamble_effective_from = x.pub FROM (SELECT DISTINCT ON (s2.id) s2.id, w.published_gregorian FROM legal_systems s2 JOIN uqn_stage.work w ON w.title=s2.name AND w.published_gregorian IS NOT NULL WHERE s2.preamble_effective_from IS NULL AND coalesce(w.effective_clause,'')='' ORDER BY s2.id, w.published_gregorian DESC) x WHERE x.sid=s.id",
+        "UPDATE legal_systems s SET preamble_effective_from = c.published_gregorian FROM law_card c WHERE c.system_id=s.id AND s.preamble_effective_from IS NULL AND NOT EXISTS (uqn work)"
+      ],
+      "approval_dates": [["1c9c9a16e0ff4a9480f52f36e86b94e6","1444-01-04","2022-08-02"],["85b510187c58409ca05e31e78f242043","1444-06-24","2023-01-17"],["f5ff09606509494b9ae1cfb881d39d67","1443-11-15","2022-06-14"],["839c299a1528457ba8e790bcfc6e8b73","1445-02-06","2023-08-22"],["15189bfbac2f46c6b7ab55739bf1d330","1444-08-08","2023-02-28"],["781064b38d504b94b19d15497ba1882a","1444-04-07","2022-11-01"],["02cfc1ed3380409c8ef105375a65ccef","1445-03-11","2023-09-26"],["07da5be8f7bd4eea93c626678c241a01","1447-07-17","2026-01-06"],["b2b20e3951ad444289849b3b07d47afc","1448-02-28","2026-08-11"],["6895df40f718425a9be7452f8353e072","1445-11-27","2024-06-04"],["4298da377bb845038698f464b364bf53","1445-11-27","2024-06-04"],["d36cd03075ca440e82251b4e42718aec","1445-11-27","2024-06-04"],["c85249b8e2fc4323a59f6236cf59fdbd","1445-11-27","2024-06-04"],["f1863a84e0044d7984dd98e11407fb82","1445-11-27","2024-06-04"],["9446391bfa2840cb93c8b8557b32abd1","1445-11-27","2024-06-04"],["978b0bceb8f34ed6b0d13c7324aad65d","1445-11-27","2024-06-04"],["7ff7c9854446480ebefa1100024abfc5","1445-11-27","2024-06-04"],["1960c4de6d58463db9cb338d370a399c","1445-11-27","2024-06-04"],["e7da314ac258483fb3eaab18eb112bd3","1445-11-27","2024-06-04"],["557d59af827347748b6304106f1366d6","1445-11-27","2024-06-04"]]
+    },
+    {
+      "name": "replaced_instrument_verification",
+      "scope": "179 تحقق «مستبدل» (دفعة fix-2026-09-25، 10 أنظمة، 9 صفحات أم القرى) كان evidence_instrument فيها مرسوم النظام القديم؛ إدراج تحقق جديد لكل منها (append-only، supersedes_verification_id = القديم) بالأداة الجديدة من uqn_stage.work/effect للصفحة نفسها، بصيغة «<الأداة الجديدة> — <اسم النظام الجديد> (يحل محل <الأداة القديمة>) — من <تاريخ النفاذ القديم نفسه>»",
+      "instruments": {
+        "details?p=27462": "قرار مجلس الوزراء رقم (212) وتاريخ 1447/3/17هـ — تنظيم المركز الوطني لسلامة النقل",
+        "decisions-and-regulations/4001668": "قرار مجلس الوزراء رقم (219) وتاريخ 1448/2/28هـ — تنظيم الهيئة العامة للطرق",
+        "details?p=24964": "قرار مجلس الوزراء رقم (921) وتاريخ 1445/10/28هـ — تنظيم هيئة الصحة العامة",
+        "details?p=27339": "المرسوم الملكي رقم (م/29) وتاريخ 1447/2/10هـ — نظام الإحصاء",
+        "details?p=24689": "المرسوم الملكي رقم (م/159) وتاريخ 1445/8/22هـ — نظام الخطوط الحديدية",
+        "details?p=27293": "المرسوم الملكي رقم (م/14) وتاريخ 1447/1/19هـ — نظام تملك غير السعوديين للعقار",
+        "decisions-and-regulations/4000299": "قرار مجلس الوزراء رقم (560) وتاريخ 1447/8/8هـ — نظام حقوق المؤلف (رقم المرسوم الملكي غير مدوّن في بياناتنا)",
+        "council-of-ministers-decisions/4000668": "قرار مجلس الوزراء رقم (716) وتاريخ 1447/9/21هـ — تنظيم مكتبة الملك فهد الوطنية",
+        "details?p=27461": "المرسوم الملكي رقم (م/56) وتاريخ 1447/3/12هـ — نظام نزع ملكية العقارات للمصلحة العامة ووضع اليد المؤقت على العقارات"
+      },
+      "fingerprint": "7fa39568dee9ad9a813b9fbff173c323 (179 صفًا) = البروفة",
+      "verified_by": "hkm030-replaced-instrument-2026-10-22"
+    },
+    {
+      "name": "search_norm_stale",
+      "scope": "4 مواد لها نسخة سارية وsearch_norm مختلف عن المحسوب من النص الساري",
+      "statement": "UPDATE legal_articles SET search_norm = uqn_fix.hkm30_search_norm(lawName, title, <latest unit_version body>, keywords, classification, chapter) WHERE articleBis<100 AND differs"
+    }
+  ],
+  "decided_without_writing": {
+    "wording_precedence": "اختلاف الألفاظ مع هيئة الخبراء (1,936 مادة بتشابه ≥0.3): العينة تُظهر أن الفرق في الأغلب ترقيم الفقرات والعناوين الفرعية وعلامات الترقيم التي تحذفها نسخة الهيئة (مثال: نظام الاستثمار م4 تشابه 0.991؛ نصنا يحمل «1-» و«أ-»)، لا اختلاف في الحكم. القرار: يبقى نصنا (من أم القرى) هو المعتمد، ولا يُستبدل بنص الهيئة؛ المواد بتشابه ≥0.95 (1,052) تُعدّ متطابقة في الحكم وتُحسب كذلك في المقياس، وما دونها (227 بين 0.3 و0.95) يُراجع بالعين لاحقًا.",
+    "empty_systems": "الـ83 نظامًا بلا مواد كلها تحمل preamble (نصًّا كاملًا) وتُعرض في القائمة بوسم «النص كاملًا»، فلا حاجة لإخفائها؛ تحميل مرفقاتها مادةً مادةً يحتاج زحفًا (R1/R3)."
+  }
+}
