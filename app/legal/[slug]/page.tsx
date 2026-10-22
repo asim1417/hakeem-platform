@@ -13,6 +13,7 @@ import { LawCardPanel, LawTextBlocks } from "@/components/legal/LawCard";
 import { resolveWorkKind } from "@/lib/modules/legal-core/work-kind";
 import { AsOfForm } from "@/components/legal/ArticlePresentation";
 import { ARTICLE_ROWS, articleKey, articleLabel } from "@/lib/modules/legal-core/article-key";
+import { parseAsOfParam } from "@/lib/modules/legal-core/law-page-view";
 
 export const revalidate = 3600;
 
@@ -44,14 +45,15 @@ export default async function LegalSystemPage({
   searchParams,
 }: {
   params: { slug: string };
-  searchParams?: { asOf?: string };
+  searchParams?: Record<string, string | string[] | undefined>;
 }) {
   const system = await resolveSystem(decodeURIComponent(params.slug));
   if (!system) notFound();
 
   const slug = resolveSystemSlug(system.eliSlug, system.name);
-  const asOfRaw = searchParams?.asOf?.trim() ?? "";
-  const asOf = /^\d{4}-\d{2}-\d{2}$/.test(asOfRaw) ? new Date(`${asOfRaw}T12:00:00Z`) : undefined;
+  // «كما في تاريخ»: يُقبل asOf وasof معًا (HKM-030، كصفحة /law).
+  const asOfRaw = parseAsOfParam(searchParams) ?? "";
+  const asOf = asOfRaw ? new Date(`${asOfRaw}T12:00:00Z`) : undefined;
   const kind = resolveWorkKind(system.name, await storedInstrumentKind(system.id));
   const articles = await prisma.legalArticle
     .findMany({
@@ -69,7 +71,7 @@ export default async function LegalSystemPage({
     issuanceInstrument(system.name),
     lawCard(system.id),
     // الإلغاء يُعرض بشريطه الخاص أدناه؛ الوجه هنا للإحالة إلى النسخة السارية فقط.
-    loadSearchSurface(asOfRaw && /^\d{4}-\d{2}-\d{2}$/.test(asOfRaw) ? asOfRaw : undefined, { includeRepealed: true }),
+    loadSearchSurface(asOfRaw || undefined, { includeRepealed: true }),
   ]);
   const recordedFlags = citationFlagsFromVerification(workVerification);
   // الانتقال بتاريخ السريان من وجه البحث: الصادر يصير ساريًا يوم نفاذه، والسابق يصير مستبدلًا.

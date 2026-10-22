@@ -289,6 +289,7 @@
 [data-law] .tag svg { width: 16px; height: 16px; }
 [data-law] .tag--amended { color: var(--law-tag-amended-fg); background: var(--law-tag-amended-bg); box-shadow: inset 0 0 0 1px var(--law-tag-amended-edge); }
 [data-law] .tag--repealed { color: var(--law-tag-repealed-fg); background: var(--law-tag-repealed-bg); }
+[data-law] .tag--replaced { color: var(--law-text-secondary); box-shadow: inset 0 0 0 1px var(--law-text-secondary); }
 [data-law] .tag--incomplete { color: var(--law-tag-incomplete-fg); background: var(--law-tag-incomplete-bg); box-shadow: inset 0 0 0 1px var(--law-tag-incomplete-edge); }
 [data-law] .pre-none { margin: 0 16px; padding: 16px; border: 1px dashed var(--law-border-control); border-radius: var(--r-md); font: 400 16px/28px var(--law-font-ui); color: var(--law-text); }
 @media (min-width: 1024px) { [data-law] .pre-none { margin-inline: 24px; } }
@@ -310,6 +311,9 @@
 @media (min-width: 1024px) { [data-law] .art { margin: 8px 8px 0; padding: 20px 24px; border-radius: var(--r-md); } }
 [data-law] .art--amended { background: var(--law-bg-amended); border-inline-start-color: var(--law-edge-amended); }
 [data-law] .art--repealed { background: var(--law-bg-repealed); border-inline-start-color: var(--law-edge-repealed); }
+/* HKM-030: المستبدلة باهتة بنصها، لا بألوان الإلغاء. */
+[data-law] .art--replaced { border-inline-start-color: var(--law-text-secondary); }
+[data-law] .art--replaced .art-text { color: var(--law-text-secondary); }
 [data-law] .art-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
 [data-law] .art-h { margin: 0; font: 700 var(--law-article-title-size)/var(--law-article-title-leading) var(--law-font-text); color: var(--law-text-article-title); }
 [data-law] .art-tags { display: flex; flex-wrap: wrap; gap: 6px; }

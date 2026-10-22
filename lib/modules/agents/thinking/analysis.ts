@@ -56,8 +56,8 @@ function groundingBlock(citations: VerifiedCitation[]): string {
     .slice(0, 40)
     .map((c, i) => {
       const badge = articleStatusBadge(c.status);
-      // نُبرز غير السارية فقط (منسوخة/معدّلة/موقوفة) كي ينتبه التحليل ولا يبني على ملغى.
-      const flag = badge && badge.label !== "سارية" ? ` ⚠️[${badge.label}]` : "";
+      // نُبرز غير السارية فقط (ملغاة/مستبدلة/معدّلة/موقوفة…) كي ينتبه التحليل ولا يبني على ملغى.
+      const flag = badge && badge.kind !== "in_force" ? ` ⚠️[${badge.label}]` : "";
       return `[${i + 1}] ${c.citationLabel}${flag}${c.quote ? `: ${c.quote.slice(0, 400)}` : ""}`;
     })
     .join("\n");

@@ -848,7 +848,10 @@ CREATE TABLE ruling_segment_embeddings (ruling_id text, part text, chunk int def
 INSERT INTO ruling_segment_embeddings (ruling_id, part, start_char, end_char, content_hash, embedding, model, extractor_version, segment_version) VALUES ('r5','reasons',0,40,'h','${vec}','m','v','v'), ('r6','reasons',0,40,'h','${vec}','m','v','v');`);
     clearRulingTablesCache();
     try {
+      // الدلالي بتفعيل صريح وحده (HKM-012): الافتراض معطّل في كل المسارات.
       await searchRulingsDirect({ query: "ثمن توريد بضاعة متأخرة", limit: 5 });
+      ok(calls === 0, "الدلالي معطّل افتراضيًا في searchRulingsDirect (لا استدعاء للتضمين بلا semantic:true)");
+      await searchRulingsDirect({ query: "ثمن توريد بضاعة متأخرة", limit: 5, semantic: true });
       const internal = calls;
       const before = calls;
       for (const q of ["غانم الموسوي ثمن توريد بضاعة", "غانم القرشي ثمن توريد بضاعة", "ثمن توريد بضاعة متأخرة"]) await mcpSearchRulings(q, undefined, undefined, 20);

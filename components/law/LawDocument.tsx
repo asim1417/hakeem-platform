@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Fragment } from "react";
-import { Ban, ExternalLink, Info, PencilLine, ArrowLeft, TriangleAlert, FileText, ChevronDown } from "lucide-react";
+import { Ban, ExternalLink, Info, PencilLine, ArrowLeft, ArrowLeftRight, TriangleAlert, FileText, ChevronDown } from "lucide-react";
 import type { ArticleView, DateValue, DivisionView, LawPageData, RepealInfo } from "@/lib/modules/legal-core/law-page-data";
 import { NOT_AVAILABLE } from "@/lib/modules/legal-core/law-page-data";
 import { sanitizeDisplayText as clean } from "@/lib/modules/legal-core/display-text";
@@ -356,6 +356,11 @@ function ArticleBlock({ a, data, id, base, level }: { a: ArticleView; data: LawP
               <Ban aria-hidden size={16} /> ملغاة
             </span>
           ) : null}
+          {tone === "replaced" ? (
+            <span className="tag tag--replaced">
+              <ArrowLeftRight aria-hidden size={16} /> مستبدلة
+            </span>
+          ) : null}
         </span>
         <span className="art-tools">
           <CopyAction kind="text" label={`نسخ نص ${a.heading}`} value={`${a.heading}\n${shown}`} />
@@ -384,6 +389,12 @@ function ArticleBlock({ a, data, id, base, level }: { a: ArticleView; data: LawP
         )}
       </div>
       {a.repealedLaterOn ? <p className="art-note">أُلغيت لاحقًا في <LtrDates text={a.repealedLaterOn} /></p> : null}
+      {tone === "replaced" ? (
+        <p className="art-note">
+          مادة مستبدلة — النص الظاهر نصها قبل الاستبدال.{a.repeal?.instrument ? <> بموجب <LtrDates text={a.repeal.instrument} /></> : null}
+          {a.repeal?.effectiveDate ? <>، نافذة من <LtrDates text={a.repeal.effectiveDate} /></> : null}
+        </p>
+      ) : null}
       {a.amendment?.pendingFrom && tone !== "repealed" ? <p className="art-note">عُدّلت لاحقًا في <LtrDates text={a.amendment.pendingFrom} /></p> : null}
       {tone === "amended" && a.amendment || showRepealFn ? (
         <div className="art-foot">

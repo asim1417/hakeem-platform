@@ -57,6 +57,27 @@ export function isAllowedStatus(value: string | null | undefined): value is Veri
   return VERIFIED_STATUSES.includes(String(value ?? "") as VerifiedStatus);
 }
 
+/** المعيار الواحد لحالتي الإلغاء والاستبدال (HKM-030): تستعمله صفحتا المادة (/legal و/law) ومصدر النص الساري. */
+export const isRepealedStatus = (value: string | null | undefined): boolean => REPEALED.has(String(value ?? ""));
+/** «مستبدل» ليس إلغاءً: المادة تُعرض باهتة بنصها (قرار المالك HKM-026/028). */
+export const isReplacedStatus = (value: string | null | undefined): boolean => String(value ?? "") === "مستبدل";
+
+/** «… — من 2024-06-13» في نص الأداة (سجلات fix-2026-09-25): يوم نفاذ الإلغاء أو الاستبدال. */
+export function effectiveDateFromEvidence(instrument: string | null | undefined): string | null {
+  const m = String(instrument ?? "").match(/من\s+(\d{4}-\d{2}-\d{2})/);
+  return m ? m[1] : null;
+}
+
+/**
+ * هل الإلغاء/الاستبدال نافذ في التاريخ المطلوب؟ سجل بلا يوم نفاذ في نص أدواته = نافذ على أي asOf (كما كان).
+ * وإن حمل يومًا وكان asOf قبله، فالمادة تُعرض بنصها (كصفحة النظام /law: «أُلغيت لاحقًا في …»).
+ */
+export function statusEffectiveAsOf(verification: VerificationRecord | null, asOf: Date): boolean {
+  const evDate = effectiveDateFromEvidence(verification?.evidenceInstrument);
+  if (!evDate || Number.isNaN(asOf.getTime())) return true;
+  return asOf.toISOString().slice(0, 10) >= evDate;
+}
+
 /** علم الحارس من سجل التحقق فقط. بلا سجل: ليس نافذًا وليس ملغى. */
 export function citationFlagsFromVerification(record: VerificationRecord | null): {
   inForce: boolean;
@@ -133,9 +154,12 @@ export function presentArticle(input: {
 
   // نسخة موثّقة في unit_version سند كافٍ: لا تُعرض «قيد التحقق» على مادة معدّلة بأداة معروفة.
   const unverified = input.versions.length === 0 && (!input.verification || !isAllowedStatus(input.verification.verifiedStatus));
-  const replaced = flags.statusLabel === "مستبدل";
+  // الإلغاء أو الاستبدال المؤرخ بعد asOf لا يُطبَّق بعد (كصفحة النظام /law).
+  const effectiveNow = statusEffectiveAsOf(input.verification, asOf);
+  const repealed = flags.repealed && effectiveNow;
+  const replaced = isReplacedStatus(flags.statusLabel) && effectiveNow;
   const conditional = flags.statusLabel.startsWith("ملغى مع") || flags.statusLabel.startsWith("إلغاء جزئي");
-  const faded = flags.repealed || replaced;
+  const faded = repealed || replaced;
   const badge = unverified ? null : faded || conditional || NOT_YET.has(flags.statusLabel) ? flags.statusLabel : null;
   const instrument = input.verification?.evidenceInstrument?.trim() || null;
 
@@ -146,7 +170,7 @@ export function presentArticle(input: {
 
   // قرار المالك (16/10/2026): الملغاة نصها الرئيسي سطر الإلغاء وسنده، كبقية المسارات.
   // النص المحفوظ يبقى مطويًا في «النسخ السابقة» للقراءة التاريخية.
-  const repealText = flags.repealed ? `أُلغيت هذه المادة${instrument ? ` بموجب ${instrument}` : ""}` : null;
+  const repealText = repealed ? `أُلغيت هذه المادة${instrument ? ` بموجب ${instrument}` : ""}` : null;
 
   return {
     text: repealText ?? picked.text,

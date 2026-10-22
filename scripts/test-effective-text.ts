@@ -80,6 +80,14 @@ const repWithVersion = resolveEffectiveText({
 });
 ok(repWithVersion.repealed && repWithVersion.text === repealLine(repVer), "الإلغاء يغلب أي نسخة سابقة");
 
+// HKM-030: إلغاء مؤرخ في نص أداته («— من YYYY-MM-DD») لا يُطبَّق على asOf قبل يومه (كصفحة النظام /law).
+const datedVer: VerificationRecord = { ...repVer, evidenceInstrument: "م/99 وتاريخ 1445/1/1هـ — من 2024-06-13" };
+const beforeDated = resolveEffectiveText({ articleId: rep.object_id, baseText: stale, versions: [], verification: datedVer, asOf: new Date("2024-01-01T12:00:00Z") });
+ok(!beforeDated.repealed && beforeDated.text === stale && beforeDated.source === "original", "إلغاء مؤرخ: قبل يومه يُعاد النص (لا سطر الإلغاء)");
+const afterDated = resolveEffectiveText({ articleId: rep.object_id, baseText: stale, versions: [], verification: datedVer, asOf: new Date("2024-06-13T12:00:00Z") });
+ok(afterDated.repealed && afterDated.text === repealLine(datedVer), "إلغاء مؤرخ: من يومه فصاعدًا سطر الإلغاء");
+ok(resolveEffectiveText({ articleId: rep.object_id, baseText: stale, versions: [], verification: repVer, asOf: new Date("1990-01-01T12:00:00Z") }).repealed, "إلغاء بلا يوم نفاذ: يُطبَّق على أي تاريخ كما كان");
+
 // صفحة المادة: سطر الإلغاء وسنده، والنص المحفوظ في «النسخ السابقة»
 const repView = presentArticle({ baseText: stale, versions: [], verification: repVer });
 ok(repView.text === repealLine(repVer) && repView.text !== stale && repView.badge === "ملغاة", "صفحة المادة: الملغاة بسطر إلغائها وسنده كالوصف وJSON-LD");
