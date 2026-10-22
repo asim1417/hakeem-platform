@@ -1,7 +1,7 @@
 {
   "batch": "hkm030-meta-2026-10-22",
   "scope": "بيانات وصفية بلا زحف (بإذن المالك «نفذ كل ما لا يحتاج زحف»): نوع الأداة لكل نظام من اسمه، تصنيف من بطاقة هيئة الخبراء ومن النظام الأم، ربط اللوائح/القواعد بنظامها الأم بالاسم (إدراج فقط في legal_relations)، تاريخ الحكم من ruling_meta إلى judicial_cases، وتصحيح articleCount. لا مساس بنصوص المواد ولا بالمشغّلات.",
-  "procedure": "بروفة على br-mute-silence-aq71idn7 (بعد reset_from_parent) → نقطة استرجاع no_compute على الإنتاج → المعاملة نفسها على br-rapid-salad-aq782ea2 → البصمة = البروفة",
+  "procedure": "المعاملة الأولى (نوع الأداة، التصنيف من الهيئة، روابط IMPLEMENTS، التصنيف من الأم، articleCount) نُفّذت كمعاملة واحدة ببصمة f03368a5fab27a1d4b14a67942a7557e = البروفة. تاريخ الحكم نُفّذ على حدة في 16 دلوًا مستقلًا (أول حرف من md5(case_id)) + دفعتين أوليين (6000 و3000 بترتيب case_id) لأن تحديث 51 ألف صف يرفع الفهارس الأربعة GIN فيتجاوز مهلة النقل 60 ثانية ويُلغى؛ كل دلو مستقل وقابل للإعادة (يختار الصفوف التي تاريخها فارغ فقط).",
   "statements": [
     {
       "name": "guard_before",
@@ -25,7 +25,9 @@
     },
     {
       "name": "ruling_decision_date",
-      "sql": "UPDATE judicial_cases c SET \"decisionDate\" = r.decision_date_g::timestamp, \"updatedAt\" = now() FROM ruling_meta r WHERE r.case_id=c.id AND c.\"decisionDate\" IS NULL AND r.decision_date_g IS NOT NULL AND r.date_g_method='tabular'"
+      "sql": "UPDATE judicial_cases c SET \"decisionDate\" = r.decision_date_g::timestamp, \"updatedAt\" = now() FROM ruling_meta r WHERE r.case_id=c.id AND c.\"decisionDate\" IS NULL AND r.decision_date_g IS NOT NULL AND r.date_g_method='tabular'",
+      "sql_as_applied": "WITH pick AS (SELECT r.case_id, r.decision_date_g FROM ruling_meta r JOIN judicial_cases c ON c.id=r.case_id WHERE c.\"decisionDate\" IS NULL AND r.decision_date_g IS NOT NULL AND r.date_g_method='tabular' AND substr(md5(r.case_id),1,1)=$BUCKET), upd AS (UPDATE judicial_cases c SET \"decisionDate\" = p.decision_date_g::timestamp, \"updatedAt\" = now() FROM pick p WHERE p.case_id=c.id RETURNING 1) SELECT count(*) FROM upd",
+      "note": "النسخة الأصلية (صف واحد لكل الأحكام) أُبقيت للمرجع؛ المطبّق هو sql_as_applied لكل دلو 0–f"
     },
     {
       "name": "article_count",
@@ -36,5 +38,6 @@
       "sql": "SELECT (SELECT count(*) FROM legal_systems WHERE coalesce(instrument_kind,'')='') kind_null, (SELECT count(*) FROM legal_systems WHERE coalesce(classification,'')='') class_null, (SELECT count(*) FROM legal_relations WHERE relation='IMPLEMENTS' AND source_type='system') implements, (SELECT count(*) FROM judicial_cases WHERE \"decisionDate\" IS NOT NULL) dated, (SELECT count(*) FROM legal_systems s WHERE s.\"articleCount\" <> (SELECT count(*) FROM legal_articles x WHERE x.\"legalSystemId\"=s.id AND x.\"articleBis\"<100)) count_mismatch, md5((SELECT string_agg(id||'|'||coalesce(instrument_kind,'')||'|'||coalesce(classification,'')||'|'||\"articleCount\", ';' ORDER BY id) FROM legal_systems)||(SELECT string_agg(id||'|'||source_id||'|'||target_id||'|'||status, ';' ORDER BY id) FROM legal_relations WHERE relation='IMPLEMENTS')||(SELECT md5(string_agg(id||'|'||\"decisionDate\", ';' ORDER BY id)) FROM judicial_cases WHERE \"decisionDate\" IS NOT NULL)) fp"
     }
   ],
-  "note_guard": "الحارس يقسم على عدٍّ صفري من استعلام فرعي لا على ثابت 1/0 لأن المخطط يطوي الثابت ويرمي الخطأ قبل تقييم CASE"
+  "note_guard": "الحارس يقسم على عدٍّ صفري من استعلام فرعي لا على ثابت 1/0 لأن المخطط يطوي الثابت ويرمي الخطأ قبل تقييم CASE",
+  "applied": "2026-10-22 على الإنتاج br-rapid-salad-aq782ea2؛ نقطة الاسترجاع br-calm-thunder-aqn4raj0؛ بروفة br-mute-silence-aq71idn7 (بعد reset_from_parent)"
 }
