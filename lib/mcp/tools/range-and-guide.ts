@@ -30,7 +30,7 @@ export async function handleRange(args: { law_id: string; from_article: number; 
       ...ARTICLE_ROWS,
     },
     orderBy: [{ articleNumber: "asc" }, { articleBis: "asc" }],
-    select: { id: true, articleNumber: true, content: true },
+    select: { id: true, articleNumber: true, articleBis: true, content: true },
   });
 
   // النص الساري لكل مادة (المصدر الواحد)، والملغاة تُرجع سطر الإلغاء.
@@ -44,6 +44,7 @@ export async function handleRange(args: { law_id: string; from_article: number; 
       return {
         article_id: a.id,
         article_number: a.articleNumber,
+        article_bis: a.articleBis ?? 0, // درجة «مكرر» (0 للأصل) — HKM-030
         text: e?.text ?? a.content,
         repealed: e?.repealed ?? false,
         text_basis: e?.basis ?? null,

@@ -50,6 +50,21 @@ function toArticleNumber(raw: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/**
+ * HKM-030: يحلّل إحالة المادة كما تصل نصًّا: «12»، «12 مكرر»، «12 مكرر 2»، «١٢ مكرر»، «المادة 12 مكررًا».
+ * يعيد الرقم ودرجة «مكرر» (0 للأصل، 1 لـ«مكرر» بلا رقم). الأرقام العربية-الهندية تُوحَّد.
+ */
+export function parseArticleCitation(raw: string): { n: number; bis: number } | null {
+  const ascii = String(raw ?? "").replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x660)).replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 0x6f0));
+  // «مكرر» وصِيَغه («مكررًا»، «مكررة»): اللاحقة حروف عربية/تشكيل متّصلة بالكلمة فقط.
+  const m = ascii.match(/(\d+)\s*(?:\(?\s*(مكرر[ء-يً-ْ]*)\s*(\d+)?\s*\)?)?/);
+  if (!m) return null;
+  const n = Number.parseInt(m[1], 10);
+  if (!Number.isFinite(n)) return null;
+  const bis = m[2] ? (m[3] ? Number.parseInt(m[3], 10) : 1) : 0;
+  return { n, bis: Number.isFinite(bis) ? bis : 1 };
+}
+
 // ١) البحث في المواد — يعيد استخدام محرّك البحث الهجين (BM25/postgres + دلالي + رسم معرفي).
 export async function searchArticles(query: string, lawId?: string, limit = 10) {
   // حين يُطلب حصرٌ بنظام معيّن نوسّع سقف الجلب ثم نُصفّي (المحرّك لا يقيّد بالنظام).
@@ -67,6 +82,7 @@ export async function searchArticles(query: string, lawId?: string, limit = 10) 
           legalSystemId: true,
           lawName: true,
           articleNumber: true,
+          articleBis: true,
           content: true,
           legalSystem: { select: { id: true, name: true } },
         },
@@ -88,6 +104,7 @@ export async function searchArticles(query: string, lawId?: string, limit = 10) 
       law: r.legalSystem?.name ?? r.lawName,
       law_id: r.legalSystem?.id ?? r.legalSystemId,
       article_number: r.articleNumber,
+      article_bis: r.articleBis ?? 0, // درجة «مكرر» (0 للأصل) — HKM-030
       snippet: snippet(e?.text ?? r.content),
       repealed: e?.repealed ?? false,
     };
@@ -111,6 +128,7 @@ export async function getArticle(articleId: string) {
     issued_by: a.royalDecree ?? null, // أداة الإصدار على مستوى المادة (المرسوم الملكي)
     issued_date_h: null, // لا يوجد تاريخ هجري منظّم في المخطط الحالي
     article_number: a.articleNumber,
+    article_bis: a.articleBis ?? 0, // درجة «مكرر» (0 للأصل) — HKM-030
     // status بقيمه المعهودة (سارية/معدّلة/ملغاة)؛ verified_status = حالة سجل التحقق.
     status: e?.repealed ? "ملغاة" : e?.source === "unit_version" ? "معدّلة" : a.status ?? null,
     verified_status: e?.status ?? null,
@@ -315,9 +333,12 @@ export async function searchRulings(query: string, court?: string, yearH?: numbe
 }
 
 // ٧) حارس الإحالات — التحقق قبل العزو (يمنع اختلاق المواد).
-export async function verifyCitation(lawName: string, articleNumber: string, claimedText?: string) {
-  const n = toArticleNumber(articleNumber);
+export async function verifyCitation(lawName: string, articleNumber: string, claimedText?: string, articleBis?: number) {
+  // HKM-030: «12 مكرر» يُحلَّل من النص (أو تصل درجة «مكرر» صراحةً) فتُطابَق الصف المكرر لا الأصل.
+  const parsed = parseArticleCitation(articleNumber);
+  const n = parsed?.n ?? toArticleNumber(articleNumber);
   if (n === null) return { verdict: "رقم المادة غير صالح", law_name: lawName, article_number: articleNumber };
+  const bis = Number.isFinite(articleBis) && (articleBis as number) >= 0 ? Math.trunc(articleBis as number) : parsed?.bis ?? 0;
 
   // حلّ اسم النظام بثبات (1.1): مطابقة تامّة/بادئة وحيدة فقط تُعدّ حاسمة (الاحتواء ليس حاسمًا).
   const resolved = await resolveLaw(lawName);
@@ -332,15 +353,15 @@ export async function verifyCitation(lawName: string, articleNumber: string, cla
   // نبحث المادة عبر معرّف النظام إن وُجد، وإلا عبر اسم النظام على المادة مباشرة.
   const article = await prisma.legalArticle.findFirst({
     where: system
-      ? { OR: [{ legalSystemId: system.id }, { lawName: system.name }], articleNumber: n, articleBis: 0 }
-      : { lawName: { contains: lawName, mode: "insensitive" }, articleNumber: n, articleBis: 0 },
-    select: { id: true, articleNumber: true, content: true, lawName: true, legalSystem: { select: { name: true } } },
+      ? { OR: [{ legalSystemId: system.id }, { lawName: system.name }], articleNumber: n, articleBis: bis }
+      : { lawName: { contains: lawName, mode: "insensitive" }, articleNumber: n, articleBis: bis },
+    select: { id: true, articleNumber: true, articleBis: true, content: true, lawName: true, legalSystem: { select: { name: true } } },
   });
 
   const resolvedLaw = system?.name ?? article?.legalSystem?.name ?? article?.lawName ?? lawName;
 
   if (!system && !article) return { verdict: "النظام غير موجود بهذا الاسم", law_name: lawName };
-  if (!article) return { verdict: "المادة غير موجودة في هذا النظام", law: resolvedLaw, article_number: articleNumber };
+  if (!article) return { verdict: "المادة غير موجودة في هذا النظام", law: resolvedLaw, article_number: articleNumber, article_bis: bis };
 
   const [verification, effective] = await Promise.all([
     latestVerification("unit", article.id),
@@ -367,6 +388,7 @@ export async function verifyCitation(lawName: string, articleNumber: string, cla
             : "المادة موجودة لكن النص المنسوب غير مطابق",
       law: resolvedLaw,
       article_number: articleNumber,
+      article_bis: bis,
       repealed: flags.repealed,
       status: amended && !flags.inForce ? "ساري" : flags.statusLabel,
       actual_text: actualText,
@@ -377,6 +399,7 @@ export async function verifyCitation(lawName: string, articleNumber: string, cla
     verdict: flags.repealed ? "الإحالة صحيحة — لكن المادة ملغاة" : inForce ? "الإحالة صحيحة" : "الإحالة صحيحة — الحالة قيد التحقق",
     law: resolvedLaw,
     article_number: articleNumber,
+    article_bis: bis,
     repealed: flags.repealed,
     status: amended && !flags.inForce ? "ساري" : flags.statusLabel,
     actual_text: actualText,

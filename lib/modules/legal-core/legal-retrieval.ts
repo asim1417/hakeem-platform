@@ -9,6 +9,7 @@ import {
   normalizeArabicText
 } from "./arabic-morphology";
 import { formatArticleRef } from "./article-ref";
+import { ARTICLE_ROWS, NON_ARTICLE_BIS } from "./article-key";
 
 // إسقاط خفيف للترتيب الكامل (بلا نصّ المادة `content`): يكفي العنوان/الاسم/التصنيف/
 // الكلمات المفتاحية للتهديف على مستوى النظام، فيُرتَّب آلاف المطابقات بنقلٍ خفيف.
@@ -17,6 +18,7 @@ const LIGHT_ARTICLE_SELECT = {
   lawName: true,
   legalSystemId: true,
   articleNumber: true,
+  articleBis: true,
   title: true,
   classification: true,
   chapter: true,
@@ -42,6 +44,8 @@ export type LegalCoreResult = {
   systemName: string;
   systemId: string | null;
   articleNumber: number;
+  /** درجة «مكرر» (HKM-028/030): 0 للأصل، 1 لـ«مكرر»، 2 لـ«مكرر 2»… */
+  articleBis?: number;
   articleTitle: string;
   articleText: string;
   classification: string | null;
@@ -344,9 +348,11 @@ export function inDbRecallSql(cap: number): string {
   // بلا ts_rank_cd: الترتيب في القاعدة يعيد تحليل نصّ كل مادة مطابقة (to_tsvector لكل صف)،
   // وسؤال من ثلاث كلمات يتوسّع إلى ~32 كلمة فيطابق ~16 ألف مادة → 1.5–4.5 ث. والتطبيق يعيد
   // تهديف كل الصفوف وترتيبها على أي حال (السقف أكبر من الكوربوس)؛ ORDER BY id للثبات فقط (20 مللي ث).
-  return `SELECT id, "lawName", "legalSystemId", "articleNumber", title, classification, chapter, keywords, status
+  // HKM-030: الصفوف التي ليست مواد (درجة «مكرر» ≥ 100) تُستبعد من الاستدعاء، وتُحمل الدرجة للوسم.
+  return `SELECT id, "lawName", "legalSystemId", "articleNumber", "articleBis", title, classification, chapter, keywords, status
        FROM legal_articles
        WHERE search_norm IS NOT NULL
+         AND "articleBis" < ${NON_ARTICLE_BIS}
          AND to_tsvector('simple', coalesce(search_norm, '')) @@ to_tsquery('simple', $1)
        ORDER BY id
        LIMIT ${cap}`;
@@ -373,6 +379,7 @@ async function inDbLightCandidates(words: string[], cap: number): Promise<LightA
           lawName: string;
           legalSystemId: string | null;
           articleNumber: number;
+          articleBis: number;
           title: string;
           classification: string | null;
           chapter: string | null;
@@ -480,6 +487,7 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
 
   const where: Record<string, unknown> = {
     AND: [
+      ARTICLE_ROWS, // HKM-030: صفوف المواد فقط (درجة «مكرر» < 100)
       buildSystemFilter(systemIds),
       buildSurfaceFilter([...surface.hidden], [...hiddenNames]),
       buildDomainFilter(options.domain),
@@ -768,7 +776,8 @@ export async function getArticlesByNumber(
   opts: { asOf?: string; surface?: "current" | "archive" } = {}
 ): Promise<LegalCoreResult[]> {
   if (!Number.isFinite(articleNumber) || articleNumber <= 0) return [];
-  const where: Record<string, unknown> = { articleNumber };
+  // الرقم يطابق الأصل و«مكرر» معًا (يُميَّزان بالوسم)؛ الصفوف التي ليست مواد تُستبعد.
+  const where: Record<string, unknown> = { articleNumber, ...ARTICLE_ROWS };
   const hint = (systemHint ?? "").replace(/^من\s+/, "").trim();
   const { surface, hiddenNames } =
     opts.surface === "archive" ? { surface: EMPTY_SURFACE, hiddenNames: new Set<string>() } : await loadSearchSurface(opts.asOf, { includeRepealed: true });
@@ -796,6 +805,7 @@ export async function getArticlesByNumber(
     await prisma.legalArticle.findMany({
       where: Object.keys(surfaceFilter).length ? { AND: [where, surfaceFilter] } : where,
       include: { legalSystem: { select: { id: true, name: true } } },
+      orderBy: [{ articleBis: "asc" }, { id: "asc" }], // الأصل قبل «مكرر»
       take: 12
     })
   );
@@ -885,12 +895,13 @@ export async function getArticleFullContext(articleId: string) {
     articleId: article.id,
     systemName: article.legalSystem?.name ?? article.lawName,
     articleNumber: article.articleNumber,
+    articleBis: article.articleBis,
     articleTitle: article.title,
     articleText: article.content,
     classification: article.classification,
     chapter: article.chapter,
     status: article.status,
-    citationLabel: buildSingleCitationLabel(article.lawName, article.articleNumber),
+    citationLabel: buildSingleCitationLabel(article.lawName, article.articleNumber, article.articleBis),
     related: related.filter((item) => item.articleId !== article.id),
     fiqhIssues: getFiqhIssuesForArticle(article.lawName, article.articleNumber)
   };
@@ -926,9 +937,9 @@ export function buildCitationBlock(articles: LegalCoreResult[]) {
   return articles.map((article) => `- ${article.citationLabel}: ${article.articleText.slice(0, 600)}`).join("\n");
 }
 
-function buildSingleCitationLabel(systemName: string, articleNumber: number) {
-  // الديباجة (رقم صفر) تُعرَض «{النظام}، الديباجة» لا «المادة ٠».
-  return formatArticleRef(systemName, articleNumber);
+function buildSingleCitationLabel(systemName: string, articleNumber: number, articleBis = 0) {
+  // الديباجة (رقم صفر) تُعرَض «{النظام}، الديباجة» لا «المادة ٠»؛ و«مكرر» يُلحق بالرقم (HKM-030).
+  return formatArticleRef(systemName, articleNumber, undefined, articleBis);
 }
 
 function normalizeFields(fields?: string[]) {
@@ -1090,13 +1101,14 @@ function mapArticleResult(
     systemName,
     systemId: article.legalSystemId,
     articleNumber: article.articleNumber,
+    articleBis: article.articleBis ?? 0,
     articleTitle: article.title,
     articleText: article.content,
     classification: article.classification,
     status: article.status,
     chapter: article.chapter,
     relevanceReason: query ? `تطابق ${matchTypeLabel(searchType)} مع: ${query.slice(0, 80)}` : "نتيجة عامة من النواة القانونية.",
-    citationLabel: buildSingleCitationLabel(systemName, article.articleNumber),
+    citationLabel: buildSingleCitationLabel(systemName, article.articleNumber, article.articleBis ?? 0),
     internalUrl: `/dashboard/legal-core/articles/${article.id}${query ? `?q=${encodeURIComponent(query)}` : ""}`,
     relevanceScore,
     matchedTerms,
