@@ -8,10 +8,11 @@ import { getSiteUrl } from "@/lib/modules/config/site-url";
 import { issuanceInstrument, latestVerification, latestVerifications, lawCard, storedInstrumentKind, unitVersionsFor } from "@/lib/modules/legal-core/verification-read";
 import { citationFlagsFromVerification, presentArticle, UNVERIFIED_NOTICE } from "@/lib/modules/legal-core/verified-status";
 import { sanitizeDisplayText } from "@/lib/modules/legal-core/display-text";
-import { loadSearchSurface } from "@/lib/modules/legal-core/search-surface";
+import { loadSearchSurface, unitStatusAsOf, workStatusAsOf } from "@/lib/modules/legal-core/search-surface";
 import { LawCardPanel, LawTextBlocks } from "@/components/legal/LawCard";
 import { resolveWorkKind } from "@/lib/modules/legal-core/work-kind";
 import { AsOfForm } from "@/components/legal/ArticlePresentation";
+import { ARTICLE_ROWS, articleKey, articleLabel } from "@/lib/modules/legal-core/article-key";
 
 export const revalidate = 3600;
 
@@ -56,9 +57,9 @@ export default async function LegalSystemPage({
     .findMany({
       // حارس عرض (DATA-001): استبعاد المواد ذات الرقم ≤ 0 (مثل سجل «المادة ٠») من
       // القائمة والتنقل — دون تعديل أي بيانات في القاعدة.
-      where: { AND: [{ OR: [{ legalSystemId: system.id }, { lawName: system.name }] }, { articleNumber: { gt: 0 } }] },
-      select: { id: true, articleNumber: true, title: true, content: true },
-      orderBy: { articleNumber: "asc" },
+      where: { AND: [{ OR: [{ legalSystemId: system.id }, { lawName: system.name }] }, { articleNumber: { gt: 0 } }, ARTICLE_ROWS] },
+      select: { id: true, articleNumber: true, articleBis: true, title: true, content: true },
+      orderBy: [{ articleNumber: "asc" }, { articleBis: "asc" }],
     })
     .catch(() => []);
   const [flags, versionsById, workVerification, issuance, card, surfaceState] = await Promise.all([
@@ -70,7 +71,12 @@ export default async function LegalSystemPage({
     // الإلغاء يُعرض بشريطه الخاص أدناه؛ الوجه هنا للإحالة إلى النسخة السارية فقط.
     loadSearchSurface(asOfRaw && /^\d{4}-\d{2}-\d{2}$/.test(asOfRaw) ? asOfRaw : undefined, { includeRepealed: true }),
   ]);
-  const workFlags = citationFlagsFromVerification(workVerification);
+  const recordedFlags = citationFlagsFromVerification(workVerification);
+  // الانتقال بتاريخ السريان من وجه البحث: الصادر يصير ساريًا يوم نفاذه، والسابق يصير مستبدلًا.
+  const byDate = workStatusAsOf(system.id, recordedFlags.statusLabel, surfaceState.surface);
+  const workFlags = byDate.derived
+    ? { inForce: byDate.status === "ساري", repealed: false, statusLabel: byDate.status }
+    : recordedFlags;
   const statusTone =
     workFlags.statusLabel === UNVERIFIED_NOTICE
       ? "unverified"
@@ -116,7 +122,7 @@ export default async function LegalSystemPage({
     legislationJurisdiction: "SA",
     inLanguage: "ar",
     url: `${BASE}/legal/${encodeURIComponent(slug)}`,
-    hasPart: articles.slice(0, 200).map((a) => ({ "@type": "Legislation", name: `المادة ${a.articleNumber}`, url: `${BASE}/legal/${encodeURIComponent(slug)}/${a.articleNumber}` })),
+    hasPart: articles.slice(0, 200).map((a) => ({ "@type": "Legislation", name: `المادة ${articleLabel(a.articleNumber, a.articleBis)}`, url: `${BASE}/legal/${encodeURIComponent(slug)}/${articleKey(a.articleNumber, a.articleBis)}` })),
   };
 
   return (
@@ -170,18 +176,20 @@ export default async function LegalSystemPage({
         {articles.length ? (
           <ol className="mt-8 space-y-6">
             {articles.map((a) => {
-              const verification = flags.get(a.id) ?? null;
+              // حالة المادة تتبع انتقال عملها بالتاريخ (لا تبقى «صادر لم يسرِ بعد» بعد سريان النظام).
+              const recorded = flags.get(a.id) ?? null;
+              const verification = recorded ? { ...recorded, verifiedStatus: unitStatusAsOf(recorded.verifiedStatus, byDate) } : null;
               const view = presentArticle({ baseText: sanitizeDisplayText(a.content), versions: versionsById.get(a.id) ?? [], verification, asOf });
               const flag = citationFlagsFromVerification(verification);
               const unverified = flag.statusLabel === UNVERIFIED_NOTICE;
               const retired = flag.repealed || flag.statusLabel === "مستبدل";
               const faded = view.faded || workFlags.repealed;
-              const href = `/legal/${encodeURIComponent(slug)}/${a.articleNumber}${asOfRaw ? `?asOf=${asOfRaw}` : ""}`;
+              const href = `/legal/${encodeURIComponent(slug)}/${articleKey(a.articleNumber, a.articleBis)}${asOfRaw ? `?asOf=${asOfRaw}` : ""}`;
               return (
-                <li key={a.id} id={`m${a.articleNumber}`} className="scroll-mt-24">
+                <li key={a.id} id={`m${articleKey(a.articleNumber, a.articleBis)}`} className="scroll-mt-24">
                   <div className="flex flex-wrap items-center gap-3">
                     <Link href={href} className="text-lg font-extrabold text-[var(--navy)] hover:underline">
-                      {a.title && a.title.trim() && a.title.trim() !== String(a.articleNumber) ? a.title : `المادة ${a.articleNumber.toLocaleString("ar-SA")}`}
+                      {a.title && a.title.trim() && a.title.trim() !== String(a.articleNumber) ? a.title : `المادة ${articleLabel(a.articleNumber, a.articleBis, true)}`}
                     </Link>
                     {workFlags.repealed && !retired ? (
                       <span className="rounded px-2 py-0.5 text-xs font-bold" style={{ background: "#fee2e2", color: "#b91c1c" }}>نظام ملغى</span>

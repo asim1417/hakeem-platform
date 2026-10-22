@@ -20,6 +20,7 @@ const SUPER_LINKS = [
   { href: "/admin/mcp-connections", label: "روابط الموصل" },
   { href: "/admin/settings", label: "الإعدادات" },
   { href: "/dashboard/legal-core/admin", label: "المحتوى القانوني" },
+  { href: "/admin/legal", label: "مكتب التحرير" },
 ] as const;
 
 /** روابط مدير النظام — بدون أقسام السوبر الحصرية (فوترة/مهام/إعدادات/ذكاء/بلاغات). */

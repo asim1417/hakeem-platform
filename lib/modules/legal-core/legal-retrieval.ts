@@ -308,6 +308,23 @@ async function openSearchArticleScores(query: string, take: number): Promise<Map
   return out;
 }
 
+/** مؤقّت مراحل خفيف: mark(name) يسجّل زمن المرحلة منذ السابقة؛ summary() نصّ السجل. */
+export function stageTimer(now: () => number = Date.now) {
+  const t0 = now();
+  let last = t0;
+  const parts: string[] = [];
+  return {
+    mark(name: string) {
+      const t = now();
+      parts.push(`${name}=${t - last}`);
+      last = t;
+    },
+    summary() {
+      return `ms=${now() - t0} ${parts.join(" ")}`;
+    },
+  };
+}
+
 /** يبني كلمات استعلام tsquery مفردة مُطبَّعة (نفس تطبيع search_norm) من متغيّرات البحث. */
 function buildTsQueryWords(variants: string[]): string[] {
   const words = new Set<string>();
@@ -319,9 +336,25 @@ function buildTsQueryWords(variants: string[]): string[] {
   return [...words].slice(0, 40);
 }
 
+/** استعلام الاستدعاء المفهرس ($1 = tsquery). */
+export function inDbRecallSql(cap: number): string {
+  // ملاحظة: التعبير هنا **يطابق حرفيًّا** تعبير فهرس GIN
+  // (idx_legal_articles_search_norm_tsv على to_tsvector('simple', coalesce(search_norm,'')))
+  // وإلا فمطابقة Postgres البنيوية تفشل ويقع مسح تسلسليّ كامل (~13× أبطأ — مُثبَت بـ EXPLAIN).
+  // بلا ts_rank_cd: الترتيب في القاعدة يعيد تحليل نصّ كل مادة مطابقة (to_tsvector لكل صف)،
+  // وسؤال من ثلاث كلمات يتوسّع إلى ~32 كلمة فيطابق ~16 ألف مادة → 1.5–4.5 ث. والتطبيق يعيد
+  // تهديف كل الصفوف وترتيبها على أي حال (السقف أكبر من الكوربوس)؛ ORDER BY id للثبات فقط (20 مللي ث).
+  return `SELECT id, "lawName", "legalSystemId", "articleNumber", title, classification, chapter, keywords, status
+       FROM legal_articles
+       WHERE search_norm IS NOT NULL
+         AND to_tsvector('simple', coalesce(search_norm, '')) @@ to_tsquery('simple', $1)
+       ORDER BY id
+       LIMIT ${cap}`;
+}
+
 /**
  * استدعاء مفهرس داخل القاعدة: يطابق النصّ العربي المُطبَّع (search_norm) عبر فهرس GIN
- * (tsvector('simple')) ويرتّب بـ ts_rank_cd — بدل عشرات ILIKE على أعمدة خام. يعالج
+ * (tsvector('simple')) دون ترتيب في القاعدة (التطبيق يرتّب) — بدل عشرات ILIKE على أعمدة خام. يعالج
  * «التطبيع وقت الاستعلام» (صور الهمزة/التاء المربوطة تُطابَق) ويسرّع الاسترجاع.
  * يعيد صفوفاً خفيفة (بلا نصّ، بلا ضمّ legalSystem → systemName يسقط إلى lawName).
  * سقوط آمن إلى null عند غياب العمود/الفهرس أو أي خطأ (فيعود المسار المعجمي).
@@ -330,30 +363,27 @@ async function inDbLightCandidates(words: string[], cap: number): Promise<LightA
   if (!words.length) return null;
   const tsq = words.join(" | ");
   try {
-    const rows = await prisma.$queryRawUnsafe<
-      Array<{
-        id: string;
-        lawName: string;
-        legalSystemId: string | null;
-        articleNumber: number;
-        title: string;
-        classification: string | null;
-        chapter: string | null;
-        keywords: string[];
-        status: string;
-      }>
-    >(
-      // ملاحظة: التعبير هنا **يطابق حرفيًّا** تعبير فهرس GIN
-      // (idx_legal_articles_search_norm_tsv على to_tsvector('simple', coalesce(search_norm,'')))
-      // وإلا فمطابقة Postgres البنيوية تفشل ويقع مسح تسلسليّ كامل (~13× أبطأ — مُثبَت بـ EXPLAIN).
-      `SELECT id, "lawName", "legalSystemId", "articleNumber", title, classification, chapter, keywords, status
-       FROM legal_articles
-       WHERE search_norm IS NOT NULL
-         AND to_tsvector('simple', coalesce(search_norm, '')) @@ to_tsquery('simple', $1)
-       ORDER BY ts_rank_cd(to_tsvector('simple', coalesce(search_norm, '')), to_tsquery('simple', $1)) DESC
-       LIMIT ${cap}`,
-      tsq
-    );
+    // المخطِّط يختار المسح التسلسلي حين يقدّر مطابقة أغلب المواد، فيعيد تحليل نصّ كل مادة
+    // (2.6 ث مقابل 0.27 ث عبر الفهرس — مُثبَت بـ EXPLAIN). SET LOCAL محصور في هذه المعاملة.
+    const [, rows] = await prisma.$transaction([
+      prisma.$executeRawUnsafe("SET LOCAL enable_seqscan = off"),
+      prisma.$queryRawUnsafe<
+        Array<{
+          id: string;
+          lawName: string;
+          legalSystemId: string | null;
+          articleNumber: number;
+          title: string;
+          classification: string | null;
+          chapter: string | null;
+          keywords: string[];
+          status: string;
+        }>
+      >(
+        inDbRecallSql(cap),
+        tsq
+      ),
+    ]);
     return rows.map((r) => ({ ...r, legalSystem: null })) as unknown as LightArticle[];
   } catch {
     return null; // العمود/الفهرس غير موجود، أو خطأ tsquery → سقوط آمن للمسار المعجمي
@@ -381,6 +411,8 @@ function computeCoreFacets(rows: LegalCoreResult[]): CoreFacetCounts {
 
 export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}): Promise<AdvancedLegalSearchResponse> {
   const query = (options.query ?? "").trim();
+  // أزمنة المراحل في السجل: لتحديد المرحلة البطيئة في الإنتاج (قراءة فقط، لا أثر على النتائج).
+  const timing = stageTimer();
   // وجه البحث: المواد من معرّفات الوجه فقط. النظام المذكور المخفي يُحوَّل إلى وجه عمله
   // (المخلوط «نظام التنفيذ» → م/53 اليوم → م/237 من 2026-10-28)، والمخفي بلا خلف يسقط.
   const { surface, hiddenNames } =
@@ -412,11 +444,14 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   // ونرجّح الأنظمة المعنيّة — يحلّ حالة المفهوم الذي لا يحوي اسمُ نظامه مصطلحَ الاستعلام.
   const concept = matchConcepts(query);
   // مكنز حكيم (2,967 مفهوماً): توسيع معجمي مُسنَد لمعرّفات حقيقية — يكمّل الخريطة المنسّقة.
+  timing.mark("surface");
   const thesaurus = await matchThesaurusConcepts(query);
+  timing.mark("thesaurus");
   // توسيع رسومي: مفاهيم مرتبطة (للمصطلحات) + ترجيح المواد عبر المواضع (معتمدة، موزونة).
   const graph = thesaurus.conceptIds.length
     ? await thesaurusGraphExpansion(thesaurus.conceptIds)
     : { relatedLabels: [] as string[], articleBoosts: new Map<string, number>() };
+  timing.mark("graph");
   const preferSystems = concept.preferSystems;
   // توسيع صرفيّ من المعجم الرسميّ (hoqoqi): صيغ شقيقة بنفس الجذر. خلف علمٍ افتراضيّه OFF
   // حتى يُقاس أثره بـ eval:search قبل الاعتماد (انضباط القياس-قبل-الاعتماد).
@@ -464,7 +499,9 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   //      فلا يُنقل نصّ أيّ مادة غير معروضة (كان سابقاً يجلب نصّ 2000 مادة لكل استعلام).
   // يزيل اقتطاع المجموعة (2000/80) ويُبلّغ الإجماليّ الحقيقي بصدق.
   // ════════════════════════════════════════════════════════════════════════
-  const COMPLETE_CAP = 20000; // ≥ الكوربوس: ترتيب كامل لأي استعلام واقعي (الإسقاط خفيف فالكلفة محدودة)
+  // ≥ الكوربوس: ترتيب كامل لأي استعلام واقعي (الإسقاط خفيف فالكلفة محدودة). كان 20000 والكوربوس
+  // بلغ 28,606 مادة (16/10/2026)، فالسؤال الواسع كان يُقتطع.
+  const COMPLETE_CAP = 40000;
 
   // مسار الاستدعاء المفهرس داخل القاعدة (tsvector): للاستعلام النصّي البسيط بلا فلاتر بنيوية
   // (النظام/المجال/التصنيف/المصدر/تقييد الحقول) — إذ يجمع search_norm كل الحقول. مع أي فلتر
@@ -481,7 +518,8 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
 
   let total = 0;
   let lightRows: LightArticle[] = [];
-  const inDbRowsRaw = useInDb ? await inDbLightCandidates(buildTsQueryWords(dbFilterVariants), COMPLETE_CAP) : null;
+  const tsWords = useInDb ? buildTsQueryWords(dbFilterVariants) : [];
+  const inDbRowsRaw = useInDb ? await inDbLightCandidates(tsWords, COMPLETE_CAP) : null;
   const inDbRows = inDbRowsRaw && surface.hidden.size ? inDbRowsRaw.filter((r) => inSurface(r, surface, hiddenNames)) : inDbRowsRaw;
   if (inDbRows) {
     // كل المطابقات (< السقف) رُجِّعت مفهرسةً — الإجماليّ الحقيقي = طولها؛ التطبيق يعيد ترتيبها.
@@ -498,6 +536,7 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     total = t;
     lightRows = rows;
   }
+  timing.mark(inDbRows ? "recall_tsv" : "recall_ilike");
   // exhaustive=false فقط إن تجاوزت المطابقات السقف (مستحيل بالكوربوس الحالي) — ترقيم غير مكتمل عندئذٍ.
   const exhaustive = total <= COMPLETE_CAP;
 
@@ -517,6 +556,7 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
 
   // استرجاع دلالي عبر **كل الأنظمة** (HNSW على جدول embeddings): معرّفات + تشابه (بلا نصّ)،
   // فيجلب مواد قريبة بالمعنى حتى بلا تطابق لفظي. سقوط آمن إلى Map فارغة إن غاب الجدول.
+  timing.mark("occurrences");
   let semMap = new Map<string, number>();
   if (query && options.semantic && semanticSearchEnabled()) {
     semMap = await semanticArticleScores(query, 200).catch(() => new Map<string, number>());
@@ -532,6 +572,7 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   // إشارة OpenSearch (الخامسة): BM25 بمحلّل عربي + ترجيح التغطية الكاملة (إصلاح «فسخ»).
   // مُفعّلة افتراضياً حين يُضبَط العنقود (كِلّ-سويتش CORE_OPENSEARCH=0 أو options.openSearch=false).
   // تجلب أيضاً مواداً قوية لم يجدها المسار المعجمي داخل القاعدة (استرجاع مُسنَد). سقوط آمن تام.
+  timing.mark("semantic");
   let osMap = new Map<string, number>();
   const osEnabled = query && options.openSearch !== false && process.env.CORE_OPENSEARCH !== "0";
   if (osEnabled) {
@@ -547,6 +588,7 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     }
   }
 
+  timing.mark("opensearch");
   // وجه البحث: ما جلبته المسارات الإضافية (مكنز/دلالي/OpenSearch) يخضع للوجه نفسه.
   if (surface.hidden.size) {
     for (const [id, row] of lightById) if (!inSurface(row, surface, hiddenNames)) lightById.delete(id);
@@ -620,7 +662,9 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
   const pageSlice = relevant.slice(start, start + limit);
   // ② تجسيد الصفحة: نجلب النصّ الكامل لمواد الصفحة فقط (≤ limit) لبناء المقتطف/الفقرات،
   //    مع الحفاظ على ترتيب ودرجات المرحلة ① (لا إعادة ترتيب عبر الصفحات).
+  timing.mark("score");
   const results = await materializePage(pageSlice, query, searchType, normalizedVariants, options, conceptWords, conceptBigrams, preferSystems);
+  timing.mark("page");
 
   // شفافية السلطة (عرض فقط، لا ترتيب): نُرفق عدد الأحكام المستشهِدة بكل مادة في الصفحة —
   // «مُستشهَد بها في N حكماً». عدّ حقيقي من روابط المادة↔الحكم؛ يحكم المحامي على المرجعية.
@@ -629,6 +673,10 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     results.length && process.env.CITING_REFERENCES !== "0"
       ? await getArticleAuthorityMap().catch(() => new Map<string, number>())
       : null;
+  timing.mark("authority");
+  console.info(
+    `[search] core ${timing.summary()} rows=${lightById.size} words=${tsWords.length} variants=${dbFilterVariants.length}`
+  );
   const displayResults = citationMap
     ? results.map((r) => {
         const count = citationMap.get(r.articleId);

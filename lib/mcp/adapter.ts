@@ -15,12 +15,26 @@
  */
 import { prisma } from "@/lib/prisma";
 import { resolveLaw, isNumberingShifted } from "@/lib/modules/legal-core/resolve-law";
-import { redactPII, searchRulingsDirect } from "@/lib/modules/legal-core/rulings-search";
+import { redactPII, searchRulingsDirect, splitRulingQuery } from "@/lib/modules/legal-core/rulings-search";
 import { citationFlagsFromVerification } from "@/lib/modules/legal-core/verified-status";
 import { latestVerification } from "@/lib/modules/legal-core/verification-read";
 import { effectiveArticleTexts } from "@/lib/modules/legal-core/effective-text";
 import { hybridSearch } from "@/lib/modules/legal-search/hybrid-search";
 import { matchThesaurusConcepts } from "@/lib/modules/legal-thesaurus/concept-index";
+import { prismaSqlClient } from "@/lib/modules/legal-core/sql-port";
+import { getSiteUrl } from "@/lib/modules/config/site-url";
+import { getLawTool } from "@/lib/mcp/tools/get-law";
+import { queryTokens } from "@/lib/modules/legal-core/ruling-excerpts";
+import {
+  checkedLexicalGroups,
+  enumeratePhrase,
+  lexicalVisible,
+  maskedMatchWords,
+  maskedRulingExcerpts,
+  rawMatchWords,
+  semanticNameHit,
+} from "@/lib/mcp/ruling-privacy";
+import { lexicalQueryTainted } from "@/lib/mcp/name-taint";
 
 /** مقتطف نصّي بطول ثابت (عقد المخرجات). */
 const SNIPPET = 400;
@@ -110,32 +124,10 @@ export async function getArticle(articleId: string) {
   };
 }
 
-// ٣) بطاقة النظام وفهرسه
+// ٣) بطاقة النظام وفهرسه (HKM-023-B ع-١٣): المطابقة تامة ← يبدأ بـ ← احتواء، والبطاقة والمقدمة وحالة كل مادة
+// من getLawPageData. العقد إضافي: الحقول القديمة باقية بأسمائها (lib/mcp/tools/get-law.ts).
 export async function getLaw(lawId?: string, name?: string) {
-  const include = {
-    articles: {
-      select: { id: true, articleNumber: true, title: true },
-      orderBy: { articleNumber: "asc" as const },
-    },
-  };
-  const law = lawId
-    ? await prisma.legalSystem.findUnique({ where: { id: lawId }, include })
-    : await prisma.legalSystem.findFirst({
-        where: { name: { contains: name ?? "", mode: "insensitive" } },
-        include,
-        orderBy: { articleCount: "desc" },
-      });
-  if (!law) return { error: "النظام غير موجود" };
-  return {
-    law_id: law.id,
-    name: law.name,
-    classification: law.classification ?? law.domainTitle ?? law.domain ?? null,
-    issue_instrument: null, // غير منظّم على مستوى النظام في المخطط الحالي
-    issue_date_h: null,
-    status: null, // حالة النفاذ مُخزّنة على مستوى المادة لا النظام
-    articles_count: law.articleCount || law.articles.length,
-    toc: law.articles.map((x) => ({ article_id: x.id, number: x.articleNumber, title: x.title })),
-  };
+  return getLawTool(prismaSqlClient(prisma), { lawId, name }, { siteUrl: getSiteUrl() });
 }
 
 // ٤) روابط النظام واللوائح (IMPLEMENTS) — LegalRelation متعدّد الأشكال (type+id).
@@ -209,25 +201,117 @@ export async function expandTerms(term: string) {
   };
 }
 
+/** دفعة مرشحي بحث الأحكام (وتُجلب دفعتان على الأكثر لإكمال الصفحة). */
+const SEARCH_BATCH = 50;
+/** طُعم البحث للفظ الاسم: كلمة لا ترد في نص (وصنو لاتيني للفظ الحساس فيبقى في مساره). */
+const DECOY_PLAIN = "ققققققققققققق";
+const DECOY_SENSITIVE = "qqqqqqqqqqqqqq";
+const SHORT_PAGE_NOTE =
+  "النتائج من أول 100 مرشح بالترتيب، وما لا يطابقه الاستعلام إلا داخل اسم فرد لا يُعاد؛ فإن قلّت النتائج فضيّق الاستعلام (محكمة أو سنة أو لفظ أخص) أو استعمل hakeem_enumerate_rulings.";
+
 // ٦) البحث في الأحكام — مسار مستقلّ في judicial_cases (searchRulingsDirect)، لا الهجين المشترك.
 // كان الهجين يضع الأحكام في منافسة مع المواد والمبادئ على ٣٠ خانة، والحكم غير المُراجَع يأخذ
 // درجة أدنى من أي مادة، فتخرج الأحكام كليًّا لألفاظ شائعة مثل «فسخ» و«عقد».
 // والمقتطف صار من موضع المطابقة في الأسباب أو المنطوق، لا أول ٤٠٠ حرف (الديباجة).
 export async function searchRulings(query: string, court?: string, yearH?: number, limit = 10) {
-  const r = await searchRulingsDirect({ query, court, yearH, limit }).catch(() => null);
-  const results = (r?.hits ?? []).map((h) => ({
-    ruling_id: h.id,
-    case_number: h.decisionNo ?? h.caseNo ?? null,
-    court: h.court ?? null,
-    year_h: h.hijriYear ?? null,
-    snippet: h.snippet,
-    matched_in: h.matchedIn, // reasons | disposition | defense | claims | header …
-    matched_by: h.matchedBy ?? "lexical", // lexical | semantic (متجه الأسباب/المنطوق) | both
-    disposition: h.disposition, // بداية المنطوق
-    parts: h.parts.map((p) => ({ type: p.type, start: p.start, end: p.end })), // لجلب جزء بعينه عبر hakeem_get_ruling
-  }));
-  // total مسقوف بـ٥٠٠٠ للألفاظ الشائعة؛ total_is_lower_bound يعني «أكثر من ذلك».
-  return { query, count: results.length, total: r?.total ?? 0, total_is_lower_bound: r?.totalCapped ?? false, results };
+  type Hit = {
+    ruling_id: string;
+    case_number: string | null;
+    court: string | null;
+    year_h: number | null;
+    snippet: string;
+    matched_in: string | null;
+    matched_by: string;
+    disposition: string | null;
+    parts: Array<{ type: string; start: number; end: number }>;
+  };
+  // NFKC: الأشكال المعروضة و«ﷲ» في الاستعلام حروف عادية، فتُفحص كما تُفحص النسخة المحجوبة (maskPersonalData يطبّعها).
+  const q = (query ?? "").normalize("NFKC");
+  const pageCap = Math.min(Math.max(limit, 1), 50);
+  // HKM-012: لا يُعثر على حكم باسم فرد. الاستعلام الذي تطابق ألفاظه (بـ AND) داخل الأسماء غالبًا، ولا تظهر عبارته
+  // المتجاورة خارجها، لا يطابق شيئًا (كلفظ غائب عن القاعدة). تعذّر الفحص يُعدّ اسمًا (السقوط مغلقًا). ويبقى زمن
+  // النداء تابعًا لعدد المطابقات الظاهرة وطولها (كأي لفظ)، لا لكون اللفظ اسمًا.
+  const parts = splitRulingQuery(q);
+  const text = parts.text;
+  const groups = checkedLexicalGroups(text);
+  // نافذة مرشحين ثابتة (دفعتان من SEARCH_BATCH) لا تتبع limit، فلا يكشف الفرق بين limit=1 وlimit=20 عدد ما أُسقط.
+  const batch = SEARCH_BATCH;
+  // الفحص أولًا: لفظ الاسم يُبحث عنه بطُعم لا يطابق شيئًا (بعدد ألفاظه وصنفها وأرقامه ومرشحاته)، فلا يعالج البحث
+  // نصوص أحكام الاسم ثم يرميها (كان زمنها يكشف وجوده)؛ فمخرج لفظ الاسم وزمنه كلفظ غائب.
+  // وبلا المسار الدلالي في الموصل: متجهات الأحكام مبنية من النص الخام وفيه الأسماء، فلفظ الاسم يجلب أحكامه إلى مجمع
+  // المرشحين ثم تُسقط، فينقص المخرج عن مخرج اللفظ الغائب بعددها. يعود بعد بناء المتجهات من النص المحجوب.
+  const tainted = await lexicalQueryTainted(groups, enumeratePhrase(text)).catch(() => true);
+  const sensitive = new Set(parts.sensitiveTokens);
+  const decoy = [...queryTokens(text).map((t) => (sensitive.has(t) ? DECOY_SENSITIVE : DECOY_PLAIN)), ...parts.numbers].join(" ");
+  const lexQuery = tainted ? decoy : q;
+  const first = await searchRulingsDirect({ query: lexQuery, semantic: false, court, yearH, limit: batch }).catch(() => null);
+
+  // HKM-012 (الأمر ٠٨، المسار ٣): المقتطف والمنطوق من النص المحجوب كاملًا (أسماء الأفراد والأرقام)،
+  // لا من مقتطف خام محجوب بعد قصّه. الإزاحات في parts في النص المحجوب كما في hakeem_get_ruling.
+  // وكل نتيجة تُعاد حساب مطابقتها على النسخة المحجوبة بباني الإنتاج (ومعها المتن المحجوب كاملًا لمسار الأجزاء):
+  // اللفظية تُعاد إن طابقت كل ألفاظها خارج الأسماء، والدلالية تُسقط إن ورد لفظ منها في الحكم داخل اسم.
+  // وما تعذّر جلب نصه لا يُعاد.
+  const results: Hit[] = [];
+  let withheld = 0;
+  let r = first;
+  for (let round = 0; r && round < 2 && results.length < pageCap; round++) {
+    const hits = r.hits;
+    const rows = hits.length
+      ? await prisma.judicialCase
+          .findMany({
+            where: { id: { in: hits.map((h) => h.id) } },
+            select: { id: true, court: true, judgmentTitle: true, judgmentText: true, appealText: true, caseNo: true, decisionNo: true, cityName: true },
+          })
+          .catch(() => null)
+      : [];
+    const byId = new Map((rows ?? []).map((x) => [x.id, x] as const));
+    for (const h of hits) {
+      if (results.length >= pageCap) break;
+      if (results.some((x) => x.ruling_id === h.id)) continue;
+      const raw = byId.get(h.id);
+      if (raw === undefined) {
+        withheld++;
+        continue;
+      }
+      // استعلام بلا ألفاظ (أرقام فقط): اللفظي مطابقة رقم لا يمسّها الحجب، والدلالي لا يُفحص فلا يُعاد.
+      if (!groups.length && h.matchedBy === "semantic") {
+        withheld++;
+        continue;
+      }
+      if (groups.length) {
+        const masked = maskedMatchWords(raw);
+        const nameOnly = h.matchedBy === "semantic" ? semanticNameHit(rawMatchWords(raw), masked, groups) : !lexicalVisible(masked, groups);
+        if (nameOnly) {
+          withheld++;
+          continue;
+        }
+      }
+      const ex = maskedRulingExcerpts(raw.judgmentText ?? "", q, h.matchedBy === "semantic" ? { part: h.matchedIn, originalSnippet: h.snippet } : null);
+      results.push({
+        ruling_id: h.id,
+        case_number: h.decisionNo ?? h.caseNo ?? null,
+        court: h.court ?? null,
+        year_h: h.hijriYear ?? null,
+        snippet: ex.snippet,
+        matched_in: h.matchedIn, // reasons | disposition | defense | claims | header …
+        matched_by: h.matchedBy ?? "lexical", // lexical | semantic (متجه الأسباب/المنطوق) | both
+        disposition: ex.disposition, // بداية المنطوق
+        parts: ex.parts, // لجلب جزء بعينه عبر hakeem_get_ruling (الإزاحات في النص المحجوب)
+      });
+    }
+    // الصفحة لم تمتلئ والدفعة كانت كاملة: دفعة ثانية (لفظية) بعدها.
+    if (results.length >= pageCap || hits.length < batch) break;
+    r = await searchRulingsDirect({ query: lexQuery, semantic: false, court, yearH, limit: batch, offset: batch }).catch(() => null);
+  }
+  // عدد القاعدة يشمل أحكامًا لا تطابق إلا داخل اسم، فلا يُعاد لاستعلام فيه لفظ: الإجمالي عدد ما أُعيد،
+  // وtotal_is_lower_bound امتلاء الصفحة وحده (لا امتلاء نافذة المرشحين: كان يميّز الخلية التي تكثر فيها المطابقات
+  // داخل الأسماء). ولاستعلام الأرقام وحدها (رقم القضية أو القرار) عدد القاعدة كما كان (مسقوف بـ٥٠٠٠).
+  if (groups.length || withheld > 0) {
+    const out = { query, count: results.length, total: results.length, total_is_lower_bound: results.length >= pageCap, results };
+    // تنبيه ثابت متى نقصت الصفحة (لا يتبع ما أُسقط).
+    return results.length < pageCap ? { ...out, note: SHORT_PAGE_NOTE } : out;
+  }
+  return { query, count: results.length, total: first?.total ?? 0, total_is_lower_bound: first?.totalCapped ?? false, results };
 }
 
 // ٧) حارس الإحالات — التحقق قبل العزو (يمنع اختلاق المواد).
@@ -248,8 +332,8 @@ export async function verifyCitation(lawName: string, articleNumber: string, cla
   // نبحث المادة عبر معرّف النظام إن وُجد، وإلا عبر اسم النظام على المادة مباشرة.
   const article = await prisma.legalArticle.findFirst({
     where: system
-      ? { OR: [{ legalSystemId: system.id }, { lawName: system.name }], articleNumber: n }
-      : { lawName: { contains: lawName, mode: "insensitive" }, articleNumber: n },
+      ? { OR: [{ legalSystemId: system.id }, { lawName: system.name }], articleNumber: n, articleBis: 0 }
+      : { lawName: { contains: lawName, mode: "insensitive" }, articleNumber: n, articleBis: 0 },
     select: { id: true, articleNumber: true, content: true, lawName: true, legalSystem: { select: { name: true } } },
   });
 

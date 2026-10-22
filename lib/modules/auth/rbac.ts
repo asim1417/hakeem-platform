@@ -1,6 +1,6 @@
 import type { UserRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { ROLE_PERMISSIONS, type Permission } from "@/lib/modules/auth/role-permissions";
+import { ROLE_PERMISSIONS, editorialPermissionViaCanUser, isEditorialPermission, type Permission } from "@/lib/modules/auth/role-permissions";
 
 export type { Permission };
 
@@ -25,6 +25,8 @@ export async function canUser(userId: string | undefined, permission: Permission
 
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
   if (!user) return false;
+  // صلاحيات مكتب التحرير قبل سطر التجاوز: للمالك وحده هنا؛ المكتب يحكم بالتكليف لا بـ canUser (ق-٢).
+  if (isEditorialPermission(permission)) return editorialPermissionViaCanUser(user.role);
   // مدير النظام ومالك المنصة يتجاوزان مصفوفة المنح الإضافية.
   if (user.role === "SUPER_ADMIN" || user.role === "SYSTEM_ADMIN") return true;
 

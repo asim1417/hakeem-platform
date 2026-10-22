@@ -44,9 +44,9 @@ export async function readArticleInContext(scope: string[], articleNumber: numbe
   try {
     const { prisma } = await import("@/lib/prisma");
     const rows = await prisma.legalArticle.findMany({
-      where: { OR, articleNumber: { in: [articleNumber - 1, articleNumber, articleNumber + 1] } },
+      where: { OR, articleNumber: { in: [articleNumber - 1, articleNumber, articleNumber + 1] }, articleBis: { lt: 100 } },
       select: { id: true, lawName: true, articleNumber: true, title: true, content: true, status: true, royalDecree: true },
-      orderBy: [{ lawName: "asc" }, { articleNumber: "asc" }],
+      orderBy: [{ lawName: "asc" }, { articleNumber: "asc" }, { articleBis: "asc" }],
       take: 12,
     }).then((r) => applyEffectiveText(r));
     return {
@@ -114,12 +114,18 @@ export async function buildCitation(scope: string[], articleNumber: number): Pro
 }
 
 export interface PrincipleRow { title: string; principle: string; court: string | null; topic: string | null; }
-/** تخريج حكم — مبادئ قضائية مطابقة للاستعلام (للقراءة، غير مقيّد بنظام). */
+/**
+ * تخريج حكم — مبادئ قضائية مطابقة للاستعلام (للقراءة، غير مقيّد بنظام).
+ * HKM-012 (الأمر ٠٨): يخرج عبر طبقة MCP، فالعنوان ونص المبدأ محجوبان (أسماء الأفراد والأرقام الشخصية)،
+ * والحجب قبل القص؛ والمبدأ الذي لا تطابق ألفاظُه نسختَه المحجوبة لا يُعاد (لا يُعثر على مبدأ باسم فرد).
+ */
 export async function takhrijHukm(query: string, limit = 20): Promise<{ principles: PrincipleRow[]; note?: string }> {
   const qs = tokens(query);
   if (!qs.length) return { principles: [], note: "استعلامٌ فارغ." };
   try {
     const { prisma } = await import("@/lib/prisma");
+    const { containsVisible, maskRulingText, sliceMasked } = await import("@/lib/mcp/ruling-privacy");
+    const want = Math.min(Math.max(limit, 1), 50);
     const rows = await prisma.judicialPrinciple.findMany({
       where: { OR: qs.flatMap((t) => [
         { title: { contains: t, mode: "insensitive" as const } },
@@ -127,9 +133,20 @@ export async function takhrijHukm(query: string, limit = 20): Promise<{ principl
         { topic: { contains: t, mode: "insensitive" as const } },
       ]) },
       select: { title: true, principleText: true, court: true, topic: true },
-      take: Math.min(Math.max(limit, 1), 50),
+      // نافذة ثابتة بترتيب ثابت (لا تتبع limit): بعض المطابقات قد تُسقط لأنها داخل اسم محجوب.
+      orderBy: { id: "asc" },
+      take: 100,
     });
-    return { principles: rows.map((r) => ({ title: r.title, principle: r.principleText.slice(0, 600), court: r.court, topic: r.topic })) };
+    const principles: PrincipleRow[] = [];
+    for (const r of rows) {
+      const title = maskRulingText(r.title);
+      const full = maskRulingText(r.principleText);
+      // يُعاد إن طابق لفظٌ النسخةَ المحجوبة (contains كما في الاستعلام)؛ وإلا فقد طابق داخل اسم.
+      if (!containsVisible(qs, [title, full, r.topic])) continue;
+      principles.push({ title, principle: sliceMasked(full, 0, 600).text, court: r.court, topic: r.topic });
+      if (principles.length >= want) break;
+    }
+    return { principles };
   } catch {
     return { principles: [], note: "تعذّر التخريج." };
   }

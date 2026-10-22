@@ -4,6 +4,7 @@
 import type { UserRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { hasPermission, type Permission } from "./rbac";
+import { EDITORIAL_PERMISSION_LABELS, isEditorialPermission } from "./role-permissions";
 
 export const ROLE_LABELS: Record<UserRole, string> = {
   SUPER_ADMIN: "سوبر أدمن (مالك المنصة)",
@@ -41,7 +42,19 @@ export const PERMISSION_CATALOG: { key: Permission; label: string }[] = [
   { key: "GOVERNANCE_AUDIT_VIEW", label: "سجل التدقيق والحوكمة" },
   { key: "JUDICIAL_ASSISTANT_USE", label: "المعاون القضائي" },
   { key: "SUPER_ADMIN_ACCESS", label: "لوحة السوبر أدمن (حصرية)" },
+  // صلاحيات المكتب للتسمية فقط: لا تظهر في مصفوفة الأدوار ولا تُمنح منها (تُدار من /admin/legal/settings).
+  { key: "LEGAL_EDITOR_LAWS", label: EDITORIAL_PERMISSION_LABELS.LEGAL_EDITOR_LAWS },
+  { key: "LEGAL_EDITOR_RULINGS", label: EDITORIAL_PERMISSION_LABELS.LEGAL_EDITOR_RULINGS },
+  { key: "LEGAL_REVIEWER", label: EDITORIAL_PERMISSION_LABELS.LEGAL_REVIEWER },
+  { key: "LEGAL_PUBLISHER", label: EDITORIAL_PERMISSION_LABELS.LEGAL_PUBLISHER },
+  { key: "LEGAL_QA_VIEW", label: EDITORIAL_PERMISSION_LABELS.LEGAL_QA_VIEW },
+  { key: "LEGAL_AGENT_PROPOSE", label: EDITORIAL_PERMISSION_LABELS.LEGAL_AGENT_PROPOSE },
 ];
+
+/** ما يظهر في مصفوفة الأدوار: الكتالوج بلا صلاحيات المكتب. */
+const MATRIX_CATALOG = PERMISSION_CATALOG.filter((p) => !isEditorialPermission(p.key));
+
+export const EDITORIAL_GRANT_REFUSED = "صلاحيات مكتب التحرير لا تُمنح من مصفوفة الأدوار؛ يكلّف بها المالك كل مستخدم من /admin/legal/settings.";
 
 function labelFor(permission: Permission): string {
   return PERMISSION_CATALOG.find((p) => p.key === permission)?.label ?? permission;
@@ -66,7 +79,7 @@ export function buildBaselineMatrix(): RoleMatrix[] {
   return ROLE_ORDER.map((role) => ({
     role,
     label: ROLE_LABELS[role],
-    cells: PERMISSION_CATALOG.map((p) => {
+    cells: MATRIX_CATALOG.map((p) => {
       const baseline = hasPermission(role, p.key);
       return { permission: p.key, label: p.label, baseline, granted: false, effective: baseline, locked: baseline };
     }),
@@ -84,7 +97,7 @@ export async function buildPermissionMatrix(): Promise<RoleMatrix[]> {
     return ROLE_ORDER.map((role) => ({
       role,
       label: ROLE_LABELS[role],
-      cells: PERMISSION_CATALOG.map((p) => {
+      cells: MATRIX_CATALOG.map((p) => {
         const baseline = hasPermission(role, p.key);
         const granted = grantedByRole.get(role)?.has(p.key) ?? false;
         return { permission: p.key, label: p.label, baseline, granted, effective: baseline || granted, locked: baseline };
@@ -101,6 +114,8 @@ export async function setRolePermission(
   permission: Permission,
   grant: boolean
 ): Promise<{ ok: boolean; message?: string }> {
+  // ق-٢: لا منح ولا سحب لصلاحيات المكتب من هنا، لأي دور (ومنه دور SYSTEM_ADMIN نفسه).
+  if (isEditorialPermission(permission)) return { ok: false, message: EDITORIAL_GRANT_REFUSED };
   if (permission === "SUPER_ADMIN_ACCESS" && role !== "SUPER_ADMIN") {
     return { ok: false, message: "صلاحية السوبر أدمن حصرية ولا تُمنح لأدوار أخرى." };
   }

@@ -1,0 +1,58 @@
+{
+  "task": "HKM-025",
+  "query": "reports/project-control/2026-10-17/hkm-025-phase1-readonly.sql",
+  "target": {
+    "neon_project": "misty-base-66693229",
+    "branch": "production (default)",
+    "database": "neondb"
+  },
+  "transaction_read_only": "on",
+  "read_at_riyadh": "2026-10-17T07:05:24",
+  "applied_at_utc": "2026-10-16T14:55:57Z",
+  "result": {
+    "uv_total": 309,
+    "uv_p1_exact": 94,
+    "ver_total": 1451,
+    "ver_p1": 69,
+    "ver_unit_repealed": 20,
+    "ver_work": 49,
+    "ver_work_by_status": {
+      "ساري": 46,
+      "ملغى": 3
+    },
+    "excluded_present": 0,
+    "uv_fingerprint": "57a1e1e4eec46a821ff46f405043cfaa",
+    "ver_work_repealed": [
+      {
+        "object_id": "cmpz5qfgb007mcwg2msul8acv",
+        "name": "تنظيم المؤسسة العامة للري",
+        "evidence_instrument": null
+      },
+      {
+        "object_id": "cmpz5rt6500d5cwg25ey9d89j",
+        "name": "تنظيم الهيئة العامة للطيران المدني",
+        "evidence_instrument": "قرار مجلس الوزراء رقم 33 وتاريخ 1426/2/11هـ"
+      },
+      {
+        "object_id": "b2b20e3951ad444289849b3b07d47afc",
+        "name": "تنظيم الهيئة العامة للطرق",
+        "evidence_instrument": "قرار مجلس الوزراء رقم 211 وتاريخ 1441/3/15هـ"
+      }
+    ]
+  },
+  "before_apply": {
+    "uv_total": 215,
+    "ver_total": 1382
+  },
+  "expected": {
+    "uv_added": 94,
+    "ver_added": 69,
+    "ver_excluded": 1
+  },
+  "excluded": {
+    "id": "boe26-0c04a47fbfbfe0dabeb165b6",
+    "object": "work cmpwi0c2p001znxffggwph0fg (نظام التنفيذ — سجل مخلوط)",
+    "reason": "قرار المالك السابق «سجل مخلوط — لا يُعرض» (owner-inject-2026-09-26)؛ الحارس رفضه في المحاولة الأولى فرُدّت كاملة"
+  },
+  "note": "سجل «ملغى» على العمل يُخفيه من البحث (repealedWorkIds في search-surface.ts) ويعرض شريط الإلغاء في صفحته؛ تنظيم المؤسسة العامة للري بلا أداة إلغاء في السجل."
+}

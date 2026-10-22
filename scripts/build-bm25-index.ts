@@ -10,34 +10,47 @@ import fs from "node:fs";
 import path from "node:path";
 import zlib from "node:zlib";
 import { tokenize } from "@/lib/modules/legal-core/bm25-tokenizer";
+import { NON_ARTICLE_BIS, articleLabel } from "@/lib/modules/legal-core/article-key";
 
-type RawArticle = { article_number: number | string; law_name: string; title?: string; content?: string; keywords?: string[] | null };
+type RawArticle = { article_number: number | string; article_bis?: number; law_name: string; title?: string; content?: string; keywords?: string[] | null };
 
 const K1 = 1.5;
 const B = 0.75;
 
-/** يقرأ كل المواد من قاعدة Runtime (Neon) عبر Prisma، بصفحات، ليُفهرَس كامل المحتوى. */
+/**
+ * يقرأ كل المواد من قاعدة Runtime (Neon) عبر Prisma، بصفحات، ليُفهرَس كامل المحتوى.
+ * HKM-030: المتن المفهرس هو النص الساري (آخر نسخة سارية في unit_version) لا legal_articles.content،
+ * بالمصدر الواحد نفسه المستعمل في العرض (effective-text)، فيطابق البحثُ النصَّ المعروض.
+ */
 async function loadArticlesFromDb(): Promise<RawArticle[]> {
   const { prisma } = await import("@/lib/prisma");
+  const { effectiveArticleTexts, searchableText } = await import("@/lib/modules/legal-core/effective-text");
+  let amended = 0;
   const out: RawArticle[] = [];
   const BATCH = 1000;
   let cursor: string | undefined;
   // eslint-disable-next-line no-constant-condition
   while (true) {
     const rows = await prisma.legalArticle.findMany({
-      select: { id: true, articleNumber: true, lawName: true, title: true, content: true, keywords: true },
+      // HKM-028: صفوف ليست مواد (عناوين وجداول ونسخ مكررة) علامتها درجة «مكرر» ≥ 100.
+      where: { articleNumber: { gt: 0 }, articleBis: { lt: NON_ARTICLE_BIS } },
+      select: { id: true, articleNumber: true, articleBis: true, lawName: true, title: true, content: true, keywords: true },
       orderBy: { id: "asc" },
       take: BATCH,
       ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
     });
     if (!rows.length) break;
     cursor = rows[rows.length - 1].id;
+    const effective = await effectiveArticleTexts(rows);
     for (const r of rows) {
-      out.push({ article_number: r.articleNumber, law_name: r.lawName, title: r.title, content: r.content, keywords: r.keywords });
+      const content = searchableText(r.content, effective.get(r.id));
+      if (content !== (r.content ?? "")) amended += 1;
+      out.push({ article_number: r.articleNumber, article_bis: r.articleBis, law_name: r.lawName, title: r.title, content, keywords: r.keywords });
     }
     if (rows.length < BATCH) break;
   }
   await prisma.$disconnect().catch(() => undefined);
+  console.log(`📝 مواد بنصها الساري من unit_version: ${amended.toLocaleString("ar-SA")}`);
   return out;
 }
 
@@ -73,7 +86,7 @@ async function main() {
     const num = Number(a.article_number);
     meta[code] = {
       code,
-      citation: `${a.law_name} — المادة (${a.article_number})`,
+      citation: `${a.law_name} — المادة (${articleLabel(Number(a.article_number), Number(a.article_bis ?? 0))})`,
       law_id: a.law_name,
       article_number: Number.isFinite(num) ? num : 0,
       law_name: a.law_name,

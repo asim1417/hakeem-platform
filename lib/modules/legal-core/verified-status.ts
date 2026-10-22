@@ -77,14 +77,13 @@ function amendmentLine(record: VerificationRecord): string | null {
   const instrument = record.evidenceInstrument?.trim();
   if (!instrument) return null;
   if (!/تعديل|معدّل|معدَّل/.test(instrument) && record.verifiedStatus !== "مضافة") return null;
-  const when = record.verifiedAt ? record.verifiedAt.slice(0, 10) : "";
-  return `معدّلة بالمرسوم ${instrument}${when ? `، سارية من ${when}` : ""}`;
+  return `معدّلة بموجب ${instrument}`;
 }
 
-/** سطر التعديل من النسخة نفسها: الأداة وتاريخ السريان. */
+/** سطر التعديل من النسخة نفسها: الأداة فقط (قرار المالك 18/10/2026، كما تعرض هيئة الخبراء). */
 export function versionLine(version: UnitVersionRecord): string {
   const instrument = version.evidenceInstrument?.trim() || "أداة تعديل";
-  return `معدّلة بموجب ${instrument} من تاريخ ${version.validFrom.slice(0, 10)}`;
+  return `معدّلة بموجب ${instrument}`;
 }
 
 /**
@@ -142,8 +141,7 @@ export function presentArticle(input: {
 
   let citationSuffix = "النص الأصلي المحفوظ (بلا نسخة مؤرخة بعد)";
   if (picked.version) {
-    citationSuffix = `النسخة السارية من ${picked.version.validFrom.slice(0, 10)}`;
-    if (picked.validTo) citationSuffix += ` حتى ${picked.validTo.slice(0, 10)}`;
+    citationSuffix = versionLine(picked.version);
   }
 
   // قرار المالك (16/10/2026): الملغاة نصها الرئيسي سطر الإلغاء وسنده، كبقية المسارات.
