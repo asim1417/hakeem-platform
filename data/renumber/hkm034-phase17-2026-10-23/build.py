@@ -5,7 +5,7 @@
   g2_unit_numbers توسيع قيد boe.unit_number_fix بطريقة neighbor_gap (الرقم السابق +1 = الرقم التالي −1، بلا وحدات بلا رقم بينهما)؛ 4 وحدات، ووحدة مرفق (المرور 101) «ليست مادة».
   g3_dup_base    5 مواد أساس (الخدمة المدنية 15 و25 و36 و37، خدمة الأفراد 14) متنها نسخة من «مكرر» التالية لها حرفيًّا؛ يُستبدل بمتن الأساس عند الهيئة مع provenance.
   g4_missing     مواد ساقطة من أنظمة سارية مطابقة (بعد g2): تُدرج من وحدة الهيئة إن لم يوجد صف بالرقم نفسه بأي درجة ومتنها غير مغلّف.
-  g5_regs        اللائحة المالية (74) واللائحة الإدارية (47) لهيئات تطوير المناطق والمدن: صفحة الهيئة تجمع ثلاث وثائق؛ تُدخلان نظامين مرتبطين بالتنظيم (IMPLEMENTS).
+  g5_regs        اللائحة المالية (74) واللائحة الإدارية (47) لهيئات تطوير المناطق والمدن مدخلتان منذ HKM-028 (hkm28-*)؛ يُضاف ربطهما بالتنظيم (IMPLEMENTS).
 """
 import hashlib, json
 from pathlib import Path
@@ -182,58 +182,21 @@ add("g4_missing", "guard_after", f"""SELECT CASE WHEN (SELECT count(*) FROM lega
 add("g4_missing", "report", f"""SELECT md5(string_agg(a.id||'|'||a.content, '|' ORDER BY a.id)) fp, count(*) n, json_agg(json_build_object('law', a."lawName", 'n', a."articleNumber", 'bis', a.{AB}, 'text', a.content) ORDER BY a."lawName", a."articleNumber") rows FROM legal_articles a WHERE a.id LIKE 'hkm34a-%'""")
 
 # ───────────── g5: لائحتا هيئات تطوير المناطق والمدن ─────────────
-PARENT, PLAW, PGUID = "cmpz5q6wh006fcwg26khgt4yb", "boe26-04d6ad221b2a7ef079b67a64", "2ae2b616-e5c9-4b81-b55e-ae3d00acbf1a"
-REGS = [
-    dict(id="boe26-" + h(PLAW, "reg", "fin")[:24], name="اللائحة المالية لهيئات تطوير المناطق والمدن", slug="اللائحه-الماليه-لهيئات-تطوير-المناطق-والمدن", lo=19, hi=92, n=74, eff_art=74, must="تسري اللائحة اعتباراً من اليوم التالي لتاريخ اعتمادها", item="الموافقة على اللائحة المالية لهيئات تطوير المناطق والمدن"),
-    dict(id="boe26-" + h(PLAW, "reg", "adm")[:24], name="اللائحة الإدارية لهيئات تطوير المناطق والمدن", slug="اللائحه-الاداريه-لهيئات-تطوير-المناطق-والمدن", lo=93, hi=139, n=47, eff_art=47, must="تسري أحكام اللائحة اعتباراً من تاريخ اليوم التالي لاعتمادها", item="واللائحة الإدارية لهيئات تطوير المناطق والمدن، بالصيغتين المرافقتين"),
-]
-PINSTR = "(l.instruments->0->>'text')"
+# البروفة كشفت أنهما مدخلتان منذ HKM-028 (17/10) بمعرّفين hkm28-*؛ فالمطلوب فقط ربطهما بالتنظيم (IMPLEMENTS) — لا إدخال.
+PARENT = "cmpz5q6wh006fcwg26khgt4yb"
+REGS = [dict(id="hkm28-27c1c4b75bd421a0f26b8b4f", name="اللائحة المالية لهيئات تطوير المناطق والمدن", n=74), dict(id="hkm28-1e4ef6eae384dd0f8d45fb43", name="اللائحة الإدارية لهيئات تطوير المناطق والمدن", n=47)]
 add("g5_regs", "guard_before", f"""
-SELECT CASE WHEN (SELECT count(*) FROM boe.law l WHERE l.id={lit(PLAW)} AND l.guid={lit(PGUID)} AND l.status_at_source='ساري' AND l.article_count=139 AND l.issued_gregorian IS NOT NULL)=1
-  AND (SELECT count(*) FROM boe.unit WHERE law_id={lit(PLAW)})=139
-  AND (SELECT count(*) FROM boe.current_match WHERE guid={lit(PGUID)} AND hakeem_system_id={lit(PARENT)})=1
-  AND (SELECT count(*) FROM legal_systems WHERE id={lit(PARENT)} AND classification='أنظمة الخدمات البلدية والتخطيط والتطوير الحضري' AND instrument_kind='تنظيم')=1
-  AND (SELECT count(*) FROM legal_articles WHERE {LS}={lit(PARENT)})=18
-  {" ".join(f"AND (SELECT count(*) FROM legal_systems WHERE id={lit(R['id'])} OR name={lit(R['name'])} OR eli_slug={lit(R['slug'])})=0 AND (SELECT count(*) FROM boe.unit u LEFT JOIN boe.unit_number_fix f ON f.law_id=u.law_id AND f.seq=u.seq WHERE u.law_id={lit(PLAW)} AND u.seq BETWEEN {R['lo']} AND {R['hi']} AND coalesce(f.article_number,u.article_number)=u.seq-{R['lo']-1} AND NOT coalesce(f.is_bis,u.is_bis) AND length(u.body)>0)={R['n']} AND (SELECT count(*) FROM boe.unit u WHERE u.law_id={lit(PLAW)} AND u.seq={R['lo']-1+R['eff_art']} AND position({lit(R['must'])} in u.body)>0)=1 AND (SELECT count(*) FROM boe.text_block b WHERE b.law_id={lit(PLAW)} AND b.kind='cabinet_decision' AND position({lit(R['item'])} in regexp_replace(b.body,{WS},' ','g'))>0)=1" for R in REGS)}
+SELECT CASE WHEN {" AND ".join(f"(SELECT count(*) FROM legal_systems WHERE id={lit(R['id'])} AND name={lit(R['name'])})=1 AND (SELECT count(*) FROM legal_articles WHERE {LS}={lit(R['id'])} AND {AB}<100)={R['n']} AND (SELECT count(*) FROM legal_relations WHERE source_id={lit(R['id'])} AND relation::text='IMPLEMENTS')=0" for R in REGS)}
+  AND (SELECT count(*) FROM legal_systems WHERE id={lit(PARENT)} AND instrument_kind='تنظيم')=1
 THEN 'ok' ELSE {GUARD_FAIL} END AS guard""")
 for R in REGS:
-    rid, name, slug, n, lo = R["id"], R["name"], R["slug"], R["n"], R["lo"]
-    numexpr = f"(u.seq-{lo-1})"
-    quote = f"""'قرار مجلس الوزراء (البند أولًا): «'||(SELECT substring(regexp_replace(b.body,'\\s+',' ','g') from '2- الموافقة على اللائحة المالية[^.]*\\.') FROM boe.text_block b WHERE b.law_id=l.id AND b.kind='cabinet_decision')||'»؛ المادة ('||{R['eff_art']}||') من اللائحة: «'||btrim((SELECT u.body FROM boe.unit u WHERE u.law_id=l.id AND u.seq={lo-1+R['eff_art']}))||'»؛ تاريخ الاعتماد '||l.issued_hijri||'هـ ('||l.issued_gregorian::date||') فيُعمل بها من '||(l.issued_gregorian::date + 1)"""
-    add("g5_regs", f"system:{name}", f"""
-INSERT INTO legal_systems (id, name, classification, "articleCount", "createdAt", "updatedAt", domain, domain_title, sort_order, eli_slug, preamble, preamble_royal_decree, preamble_effective_from, preamble_updated_at, instrument_kind)
-SELECT {lit(rid)}, {lit(name)}, p.classification, {n}, now(), now(), p.domain, p.domain_title, 0, {lit(slug)},
-  'أداة الإصدار:'||chr(10)||{PINSTR}||chr(10)||'تاريخ الإصدار (هجريّ): '||replace(l.issued_hijri,'/','-')||chr(10)||'تاريخ الإصدار (ميلاديّ): '||l.issued_gregorian::date||chr(10)||'تاريخ النشر: '||l.published_hijri||'هـ ('||l.published_gregorian::date||')'||chr(10)||'صادرة مع تنظيم هيئات تطوير المناطق والمدن في وثيقة واحدة عند هيئة الخبراء.',
-  {PINSTR}, (l.issued_gregorian::date + 1)::timestamp, now(), 'لائحة'
-FROM boe.law l, legal_systems p WHERE l.id={lit(PLAW)} AND p.id={lit(PARENT)}""")
-    add("g5_regs", f"articles:{name}", f"""
-INSERT INTO legal_articles (id, {LS}, "lawName", classification, {AN}, {AB}, title, content, "royalDecree", "effectiveFrom", status, "createdAt", "updatedAt", search_norm)
-SELECT 'boe26-'||left(encode(sha256(convert_to({lit(rid)}||'|article|'||{numexpr},'UTF8')),'hex'),24), {lit(rid)}, {lit(name)}, s.classification, {numexpr}, 0, coalesce(nullif(u.heading,''), 'المادة '||{numexpr}), u.body, {PINSTR}, NULL, 'سارية', now(), now(),
-  uqn_fix.hkm30_search_norm({lit(name)}, coalesce(nullif(u.heading,''), 'المادة '||{numexpr}), u.body, ARRAY[]::text[], s.classification, NULL)
-FROM boe.law l JOIN legal_systems s ON s.id={lit(rid)} JOIN boe.unit u ON u.law_id=l.id WHERE l.id={lit(PLAW)} AND u.seq BETWEEN {lo} AND {R['hi']} ORDER BY u.seq""")
-    add("g5_regs", f"verification_work:{name}", f"""
-INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, evidence_quote, method, verified_by, supersedes_verification_id)
-SELECT {lit('vf34-' + h(SRC, 'work', rid, 'ساري')[:24])}, 'work', {lit(rid)}, 'ساري', {PINSTR}, l.url, {quote}, 'rule', {lit(BY)}, NULL FROM boe.law l WHERE l.id={lit(PLAW)}""")
-    add("g5_regs", f"verification_units:{name}", f"""
-INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, evidence_quote, method, verified_by, supersedes_verification_id)
-SELECT 'vf34-'||left(encode(sha256(convert_to('unit|'||a.id||'|ساري','UTF8')),'hex'),24), 'unit', a.id, 'ساري', {PINSTR}, l.url, 'نص المادة كما في بوابة هيئة الخبراء (لقطة 28/9/2026)؛ يعمل باللائحة من '||s.preamble_effective_from::date, 'rule', {lit(BY)}, NULL
-FROM legal_articles a JOIN legal_systems s ON s.id=a.{LS} JOIN boe.law l ON l.id={lit(PLAW)} WHERE a.{LS}={lit(rid)}""")
-    add("g5_regs", f"law_card:{name}", f"""
-INSERT INTO law_card (id, system_id, official_name, summary, issued_hijri, issued_gregorian, published_hijri, published_gregorian, status_at_source, category_path, instruments, text_blocks, source_name, source_url, retrieved_on, created_by)
-SELECT {lit('lc34-' + h(SRC, rid)[:24])}, {lit(rid)}, {lit(name)}, l.summary, l.issued_hijri, l.issued_gregorian, l.published_hijri, l.published_gregorian, l.status_at_source, l.category_path, l.instruments,
-  coalesce((SELECT jsonb_agg(jsonb_build_object('kind', b.kind, 'text', b.body, 'heading', b.heading) ORDER BY b.seq) FROM boe.text_block b WHERE b.law_id=l.id), '[]'::jsonb), 'هيئة الخبراء بمجلس الوزراء', l.url, '2026-09-28', {lit(BY)}
-FROM boe.law l WHERE l.id={lit(PLAW)}""")
-    add("g5_regs", f"relation:{name}", f"""
+    add("g5_regs", f"relation:{R['name']}", f"""
 INSERT INTO legal_relations (id, source_type, source_id, target_type, target_id, relation, strength, description, created_at, status)
-VALUES ({lit('hkm34r-' + h(SRC, 'rel', rid)[:24])}, 'system', {lit(rid)}, 'system', {lit(PARENT)}, 'IMPLEMENTS', 1, 'HKM-034 2026-10-23: اللائحة صادرة بقرار مجلس الوزراء رقم (475) وتاريخ 1439/9/7هـ مع التنظيم في وثيقة واحدة عند هيئة الخبراء (البند أولًا/2)', now(), 'PROPOSED')""")
-add("g5_regs", "guard_after", f"""
-SELECT CASE WHEN {" AND ".join(f"(SELECT count(*) FROM legal_articles WHERE {LS}={lit(R['id'])} AND {AB}=0 AND search_norm<>'')={R['n']} AND (SELECT count(DISTINCT {AN}) FROM legal_articles WHERE {LS}={lit(R['id'])})={R['n']} AND (SELECT min({AN})||'-'||max({AN}) FROM legal_articles WHERE {LS}={lit(R['id'])})='1-{R['n']}' AND (SELECT count(*) FROM legal_systems WHERE id={lit(R['id'])} AND preamble_effective_from IS NOT NULL)=1 AND (SELECT count(*) FROM verification WHERE verified_by={lit(BY)} AND (object_id={lit(R['id'])} OR object_id IN (SELECT id FROM legal_articles WHERE {LS}={lit(R['id'])})))={R['n'] + 1} AND (SELECT count(*) FROM law_card WHERE system_id={lit(R['id'])})=1 AND (SELECT count(*) FROM legal_relations WHERE source_id={lit(R['id'])} AND target_id={lit(PARENT)})=1" for R in REGS)}
-  AND (SELECT string_agg(encode(sha256(convert_to(a.content,'UTF8')),'hex'), ',' ORDER BY a.{LS}, a.{AN}) FROM legal_articles a WHERE a.{LS} IN ({", ".join(lit(R['id']) for R in REGS)}))
-    = (SELECT string_agg(encode(sha256(convert_to(u.body,'UTF8')),'hex'), ',' ORDER BY CASE WHEN u.seq<{REGS[1]['lo']} THEN {lit(REGS[0]['id'])} ELSE {lit(REGS[1]['id'])} END, u.seq) FROM boe.unit u WHERE u.law_id={lit(PLAW)} AND u.seq>={REGS[0]['lo']})
-THEN 'ok' ELSE {GUARD_FAIL} END AS guard""")
-add("g5_regs", "report", f"""SELECT md5(string_agg(a.id||'|'||a.content, '|' ORDER BY a.id)) fp, count(*) n, count(DISTINCT a.{LS}) systems FROM legal_articles a WHERE a.{LS} IN ({", ".join(lit(R['id']) for R in REGS)})""")
+VALUES ({lit('hkm34r-' + h(SRC, 'rel', R['id'])[:24])}, 'system', {lit(R['id'])}, 'system', {lit(PARENT)}, 'IMPLEMENTS', 1, 'HKM-034 2026-10-23: اللائحة صادرة بقرار مجلس الوزراء رقم (475) وتاريخ 1439/9/7هـ مع التنظيم في وثيقة واحدة عند هيئة الخبراء (البند أولًا/2: الموافقة على اللائحة المالية واللائحة الإدارية لهيئات تطوير المناطق والمدن)', now(), 'PROPOSED')""")
+add("g5_regs", "guard_after", f"""SELECT CASE WHEN (SELECT count(*) FROM legal_relations WHERE id LIKE 'hkm34r-%' AND target_id={lit(PARENT)} AND relation::text='IMPLEMENTS')=2 THEN 'ok' ELSE {GUARD_FAIL} END AS guard""")
+add("g5_regs", "report", f"""SELECT md5(string_agg(r.source_id, '|' ORDER BY r.source_id)) fp, count(*) n FROM legal_relations r WHERE r.id LIKE 'hkm34r-%'""")
 
-doc = {"batch": SRC, "by": BY, "groups": groups, "expected": {}, "regs": [{"id": R["id"], "name": R["name"], "n": R["n"]} for R in REGS],
-       "notes": "g1 تحقق إلحاقي (verification append-only) بسند نص الإحلال عند الهيئة؛ g2 DDL توسيع قيد CHECK على جدول أُنشئ 23/10 (boe.unit_number_fix) لا حذف بيانات؛ g3 وg4 تُطبَّقان بعد g2؛ g5 نظامان جديدان بلا صف boe.match (الصفحة واحدة والمطابقة للتنظيم)."}
+doc = {"batch": SRC, "by": BY, "groups": groups, "expected": {}, "regs": REGS,
+       "notes": "g1 تحقق إلحاقي (verification append-only) بسند نص الإحلال عند الهيئة؛ g2 DDL توسيع قيد CHECK على جدول أُنشئ 23/10 (boe.unit_number_fix) لا حذف بيانات؛ g3 وg4 تُطبَّقان بعد g2؛ g5 اللائحتان مدخلتان منذ HKM-028؛ يُضاف ربط IMPLEMENTS فقط."}
 (OUT / "statements.json").write_text(json.dumps(doc, ensure_ascii=False, indent=1), encoding="utf-8")
 print({g: len(v) for g, v in groups.items()})
