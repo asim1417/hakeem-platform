@@ -1,0 +1,17 @@
+{
+ "task": "HKM-037",
+ "source_runs": [
+  "39959428936",
+  "39960554917",
+  "39969465419",
+  "39979621806"
+ ],
+ "engine": "tesseract-5 ara psm6 (OMP_THREAD_LIMIT=1)",
+ "attachments": 794,
+ "pages": 1312,
+ "md5": {
+  "attachments.jsonl": "c1c3ee8e6f8fca680ca6f84a89067f5b",
+  "pages.jsonl": "0846f80747c518ed2d64950a96797202"
+ },
+ "note": "النص الآلي تقريبي؛ لا يُعتمد نصًّا قانونيًّا إلا بعد مطابقته بالصورة"
+}

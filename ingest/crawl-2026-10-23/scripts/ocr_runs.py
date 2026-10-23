@@ -13,7 +13,16 @@ from concurrent.futures import ThreadPoolExecutor
 # tesseract يفتح خيوط OpenMP لكل عملية؛ مع عدة عمال يتزاحم على الأنوية ويبطؤ أضعافًا، فنقيّده بخيط واحد لكل عملية
 ENV = {**os.environ, "OMP_THREAD_LIMIT": "1"}
 
-KIND = {"issuance_instrument": "amending_instrument", "amending_instrument": "amending_instrument", "original_document": "original_document", "article_attachment": "article_attachment"}
+# قيم boe.attachment.kind المسموحة: original_document | amending_instrument | issuance_instrument | article_attachment
+KIND = {"issuance_instrument": "issuance_instrument", "amending_instrument": "amending_instrument", "original_document": "original_document", "article_attachment": "article_attachment"}
+
+
+def guess_kind(label: str) -> str:
+    if "اصل الوثيقة" in label or "أصل الوثيقة" in label:
+        return "original_document"
+    if "رقم" in label and "تاريخ" in label:
+        return "issuance_instrument"
+    return "article_attachment"
 
 
 def aid(href: str) -> str:
@@ -73,7 +82,7 @@ def main() -> int:
     with open(out / "attachments.jsonl", "w", encoding="utf-8") as fa, open(out / "pages.jsonl", "w", encoding="utf-8") as fp:
         for run, r, d in recs:
             href = r["href"]; t = meta.get(href, {})
-            a_ = {"id": aid(href), "href": href, "kind": KIND.get(t.get("akind") or "", "attachment"), "law_guid": r.get("law_guid") or t.get("law_guid"),
+            a_ = {"id": aid(href), "href": href, "kind": KIND.get(t.get("akind") or "", guess_kind(r.get("label") or t.get("label") or "")), "law_guid": r.get("law_guid") or t.get("law_guid"),
                   "unit_seq": t.get("unit_seq"), "label": r.get("label") or t.get("label"), "page_count": len(r["pages"]), "retrieved_at": r["retrieved_at"], "run": run}
             fa.write(json.dumps(a_, ensure_ascii=False) + "\n"); n_att += 1
             for i, p in enumerate(r["pages"], start=1):
