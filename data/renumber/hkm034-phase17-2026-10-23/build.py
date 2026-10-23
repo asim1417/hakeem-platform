@@ -197,7 +197,53 @@ VALUES ({lit('hkm34r-' + h(SRC, 'rel', R['id'])[:24])}, 'system', {lit(R['id'])}
 add("g5_regs", "guard_after", f"""SELECT CASE WHEN (SELECT count(*) FROM legal_relations WHERE id LIKE 'hkm34r-%' AND target_id={lit(PARENT)} AND relation::text='IMPLEMENTS')=2 THEN 'ok' ELSE {GUARD_FAIL} END AS guard""")
 add("g5_regs", "report", f"""SELECT md5(string_agg(r.source_id, '|' ORDER BY r.source_id)) fp, count(*) n FROM legal_relations r WHERE r.id LIKE 'hkm34r-%'""")
 
-doc = {"batch": SRC, "by": BY, "groups": groups, "expected": {"g1_fp": "fff3e99d2771d7055b4bb8468f65ed5e", "g1_n": 12, "g2_fp": FP_GAP, "g2_n": 5, "g3_fp": "cee561e40ce12c0df596118210b146dc", "g3_n": 5, "g4_candidates_fp": FP_MISS, "g4_fp": "620fe636be415ee74f6a9761b2569145", "g4_n": N_MISS, "g5_fp": "acb0495f134b959d0b7fd9d1b1f451ea", "g5_n": 2, "order": ["g1_supersede", "g2_unit_numbers", "g3_dup_base", "g4_missing", "g5_regs"]}, "regs": REGS,
+# ───────────── g6: الخدمة المدنية 28/30/31 ─────────────
+# الدليل: صفحة الهيئة مرتّبة ترقيمًا (2…27، [seq30]، 29، [seq32]، [seq33]، 32…40)، وملاحظة التعديل على الوحدة seq32 تقول «عُدلت الفقرة (و) من المادة (30)»؛
+# فالوحدة seq30 (الإجازات) هي 28، وseq32 (إنهاء الخدمة) هي 30، وseq33 (التفويض) هي 31. متننا المرقّم 30 هو نص seq30 حرفيًّا → يُعاد ترقيمه 28، وتُدرج 30 و31.
+CIV_LAW, CIV_SID, CIV_30 = "boe26-37885ef7537d4c2e2379cbdc", None, "cmpz9eka00celybvvo633dkhu"
+add("g6_civil", "guard_before", f"""
+SELECT CASE WHEN (SELECT count(*) FROM legal_articles a WHERE a.id={lit(CIV_30)} AND a."lawName"='نظام الخدمة المدنية' AND a.{AN}=30 AND a.{AB}=0)=1
+  AND (SELECT count(*) FROM legal_articles a WHERE a."lawName"='نظام الخدمة المدنية' AND a.{AN} IN (28,31))=0
+  AND (SELECT count(*) FROM legal_articles a WHERE a."lawName"='نظام الخدمة المدنية' AND a.{AN}=30)=1
+  AND (SELECT count(*) FROM boe.unit u WHERE u.law_id={lit(CIV_LAW)} AND u.seq=30 AND u.article_number IS NULL AND uqn_fix.hkm30_norm(u.body)=(SELECT uqn_fix.hkm30_norm(content) FROM legal_articles WHERE id={lit(CIV_30)}))=1
+  AND (SELECT count(*) FROM boe.unit u WHERE u.law_id={lit(CIV_LAW)} AND u.seq IN (32,33) AND u.article_number IS NULL AND length(u.body)>=20)=2
+  AND (SELECT count(*) FROM boe.unit_number_fix f WHERE f.law_id={lit(CIV_LAW)} AND f.seq IN (32,33))=0
+  AND (SELECT count(*) FROM boe.amendment_note n WHERE n.law_id={lit(CIV_LAW)} AND n.unit_seq=32 AND position('من المادة (30)' in n.note_text)>0)>=1
+  AND (SELECT count(*) FROM boe.unit u WHERE u.law_id={lit(CIV_LAW)} AND u.seq=31 AND u.article_number=29)=1 AND (SELECT count(*) FROM boe.unit u WHERE u.law_id={lit(CIV_LAW)} AND u.seq=34 AND u.article_number=32)=1
+  AND (SELECT count(*) FROM unit_version v WHERE v.unit_id={lit(CIV_30)})=0
+  AND (SELECT count(*) FROM legal_text_provenance WHERE source_id={lit(SRC + '-civil')})=0
+THEN 'ok' ELSE {GUARD_FAIL} END AS guard""")
+add("g6_civil", "fix_units", f"""
+INSERT INTO boe.unit_number_fix (law_id, seq, article_number, is_bis, method, evidence, decided_by) VALUES
+({lit(CIV_LAW)}, 32, 30, false, 'neighbor_gap', jsonb_build_object('prev_numbered', 29, 'next_numbered', 32, 'basis', 'ملاحظة التعديل على الوحدة نفسها: «عُدلت الفقرة (و) من المادة (30)»؛ والوحدة seq30 (المرقّمة 30 بمطابقة المتن) هي 28 بترتيب الصفحة ولا يمكن سحب صفها (إضافة فقط)'), {lit(BY)}),
+({lit(CIV_LAW)}, 33, 31, false, 'neighbor_gap', jsonb_build_object('prev_numbered', 30, 'next_numbered', 32, 'basis', 'ترتيب الصفحة: بعد المادة 30 (seq32) وقبل المادة 32 (seq34)'), {lit(BY)})""")
+add("g6_civil", "provenance_renumber", f"""
+INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text, created_at)
+SELECT 'hkm34p-'||left(encode(sha256(convert_to('renumber|'||a.id,'UTF8')),'hex'),24), 'article', a.id, a."lawName", 28, 'boe', {lit(SRC + '-civil')}, l.url, encode(sha256(convert_to(a.content,'UTF8')),'hex'), '2026-09-28'::date, 'renumber_30_to_28', 'articleNumber=30; title='||coalesce(a.title,''), now()
+FROM legal_articles a, boe.law l WHERE a.id={lit(CIV_30)} AND l.id={lit(CIV_LAW)}""")
+add("g6_civil", "renumber", f"""UPDATE legal_articles SET {AN}=28, title=CASE WHEN title ~ '30' THEN replace(title,'30','28') ELSE title END, "updatedAt"=now() WHERE id={lit(CIV_30)}""")
+add("g6_civil", "search_norm_28", f"""UPDATE legal_articles a SET search_norm = uqn_fix.hkm30_search_norm(a."lawName", a.title, a.content, a.keywords, a.classification, a.chapter) WHERE a.id={lit(CIV_30)}""")
+add("g6_civil", "insert_30_31", f"""
+INSERT INTO legal_articles (id, {LS}, "lawName", classification, {AN}, {AB}, title, content, "royalDecree", "effectiveFrom", status, "createdAt", "updatedAt", search_norm)
+SELECT 'hkm34a-'||left(encode(sha256(convert_to('civil|'||s.id||'|'||(u.seq-2),'UTF8')),'hex'),24), s.id, s.name, s.classification, u.seq-2, 0, 'المادة '||(u.seq-2), u.body, s.preamble_royal_decree, NULL, 'سارية', now(), now(),
+  uqn_fix.hkm30_search_norm(s.name, 'المادة '||(u.seq-2), u.body, ARRAY[]::text[], s.classification, NULL)
+FROM boe.unit u JOIN boe.current_match cm ON cm.guid=(SELECT guid FROM boe.law WHERE id={lit(CIV_LAW)}) JOIN legal_systems s ON s.id=cm.hakeem_system_id WHERE u.law_id={lit(CIV_LAW)} AND u.seq IN (32,33) ORDER BY u.seq""")
+add("g6_civil", "provenance_insert", f"""
+INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text, created_at)
+SELECT 'hkm34p-'||left(encode(sha256(convert_to('civil|'||a.id,'UTF8')),'hex'),24), 'article', a.id, a."lawName", a.{AN}, 'boe', {lit(SRC + '-civil')}, l.url, encode(sha256(convert_to(a.content,'UTF8')),'hex'), '2026-09-28'::date, 'insert_from_boe', NULL, now()
+FROM legal_articles a, boe.law l WHERE a."lawName"='نظام الخدمة المدنية' AND a.{AN} IN (30,31) AND a.id LIKE 'hkm34a-%' AND l.id={lit(CIV_LAW)}""")
+add("g6_civil", "verification", f"""
+INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, evidence_quote, method, verified_by, supersedes_verification_id)
+SELECT 'vf34-'||left(encode(sha256(convert_to('unit|'||a.id||'|ساري','UTF8')),'hex'),24), 'unit', a.id, 'ساري', a."royalDecree", l.url, 'نص المادة كما في بوابة هيئة الخبراء (لقطة 28/9/2026)؛ الرقم من ترتيب الصفحة ومن ملاحظة التعديل «عُدلت الفقرة (و) من المادة (30)»', 'rule', {lit(BY)}, NULL
+FROM legal_articles a, boe.law l WHERE a."lawName"='نظام الخدمة المدنية' AND a.{AN} IN (30,31) AND a.id LIKE 'hkm34a-%' AND l.id={lit(CIV_LAW)}""")
+add("g6_civil", "guard_after", f"""
+SELECT CASE WHEN (SELECT string_agg({AN}::text, ',' ORDER BY {AN}) FROM legal_articles WHERE "lawName"='نظام الخدمة المدنية' AND {AB}=0 AND {AN} BETWEEN 26 AND 33)='26,27,28,29,30,31,32,33'
+  AND (SELECT count(*) FROM legal_text_provenance WHERE source_id={lit(SRC + '-civil')})=3
+  AND (SELECT count(*) FROM legal_articles a JOIN boe.unit u ON u.law_id={lit(CIV_LAW)} AND u.seq=a.{AN}+2 WHERE a."lawName"='نظام الخدمة المدنية' AND a.{AN} IN (30,31) AND a.content=u.body)=2
+THEN 'ok' ELSE {GUARD_FAIL} END AS guard""")
+add("g6_civil", "report", f"""SELECT md5(string_agg(a.id||'|'||a.{AN}||'|'||a.content, '|' ORDER BY a.id)) fp, count(*) n, json_agg(json_build_object('n', a.{AN}, 'title', a.title, 'text', left(a.content,120)) ORDER BY a.{AN}) rows FROM legal_articles a WHERE a."lawName"='نظام الخدمة المدنية' AND a.{AN} IN (28,30,31) AND a.{AB}=0""")
+
+doc = {"batch": SRC, "by": BY, "groups": groups, "expected": {"g1_fp": "fff3e99d2771d7055b4bb8468f65ed5e", "g1_n": 12, "g2_fp": FP_GAP, "g2_n": 5, "g3_fp": "cee561e40ce12c0df596118210b146dc", "g3_n": 5, "g4_candidates_fp": FP_MISS, "g4_fp": "620fe636be415ee74f6a9761b2569145", "g4_n": N_MISS, "g5_fp": "acb0495f134b959d0b7fd9d1b1f451ea", "g5_n": 2, "g6_fp": "b7b44650d0f5e75b2e0e8a9ce55579b1", "g6_n": 3, "order": ["g1_supersede", "g2_unit_numbers", "g3_dup_base", "g4_missing", "g5_regs", "g6_civil"]}, "regs": REGS,
        "notes": "g1 تحقق إلحاقي (verification append-only) بسند نص الإحلال عند الهيئة؛ g2 DDL توسيع قيد CHECK على جدول أُنشئ 23/10 (boe.unit_number_fix) لا حذف بيانات؛ g3 وg4 تُطبَّقان بعد g2؛ g5 اللائحتان مدخلتان منذ HKM-028؛ يُضاف ربط IMPLEMENTS فقط."}
 (OUT / "statements.json").write_text(json.dumps(doc, ensure_ascii=False, indent=1), encoding="utf-8")
 print({g: len(v) for g, v in groups.items()})

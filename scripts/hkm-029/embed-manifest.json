@@ -2,13 +2,13 @@
   "task": "HKM-030",
   "kind": "embeddings",
   "model": "text-embedding-3-small",
-  "frozen_at": "2026-10-23T09:02:59Z",
+  "frozen_at": "2026-10-23T09:37:17Z",
   "source": "قراءة الإنتاج (Neon، للقراءة فقط) بـ SUMMARY_SQL في embed-lib.mjs: النص الساري (unit_version ثم content)، كل القديمة والمفقودة",
-  "approval": "المالك 23/10/2026 «نفذها كلها» (HKM-034: الخدمة المدنية 15/16/22/25/36/37 وخدمة الأفراد 14)",
-  "selected": 7,
-  "stale": 5,
+  "approval": "المالك 23/10/2026 «نفذها» (HKM-034 g6: الخدمة المدنية 28 و30 و31)",
+  "selected": 3,
+  "stale": 1,
   "missing": 2,
-  "ids_md5": "4ac6086553f48cddb525dccf55f2104b",
-  "state_md5": "d2d4198cea839699c8d7222900d53b74",
-  "chars": 914
+  "ids_md5": "3efd07c3bfc3a7ef6caac33967449328",
+  "state_md5": "1afbc33ab14322dd90492a94200ab1ea",
+  "chars": 641
 }
