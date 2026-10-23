@@ -23,6 +23,11 @@ on:
         type: string
         required: true
         default: "20"
+      offset:
+        description: "تخطّي أول N هدف من الملف (دفعات متتابعة)"
+        type: string
+        required: true
+        default: "0"
       pace_ms:
         description: "الوتيرة بين الطلبات بالملّي ثانية"
         type: string
@@ -79,7 +84,7 @@ jobs:
           out="ingest/crawl-2026-10-23/runs/${GITHUB_RUN_ID}"
           mkdir -p "$out"
           echo "OUT=$out" >> "$GITHUB_ENV"
-          python3 ingest/crawl-2026-10-23/scripts/boe_fetch.py --targets "${{ inputs.targets }}" --out "$out" --kind "${{ inputs.kind }}" --limit "${{ inputs.limit }}" --pace-ms "${{ inputs.pace_ms }}" --max-pages "${{ inputs.max_pages }}" --deadline-min "${{ inputs.deadline_min }}" | tee "$out/log.txt"
+          python3 ingest/crawl-2026-10-23/scripts/boe_fetch.py --targets "${{ inputs.targets }}" --out "$out" --kind "${{ inputs.kind }}" --limit "${{ inputs.limit }}" --offset "${{ inputs.offset }}" --pace-ms "${{ inputs.pace_ms }}" --max-pages "${{ inputs.max_pages }}" --deadline-min "${{ inputs.deadline_min }}" | tee "$out/log.txt"
           tail -1 "$out/log.txt" >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         if: always() && env.OUT != ''
