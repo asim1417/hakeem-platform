@@ -10,7 +10,7 @@
  *               • MAX_EMBED_CALLS إلزامي: سقف نداءات المزوّد، يتوقف عنده.
  *               • يستأنف: ما طابقت بصمته (content_hash) لا يُعاد توليده.
  *
- * النص المرسَل إلى المزوّد محجوب (redactPII). لا يُطبع رابط ولا مفتاح ولا نص حكم.
+ * النص المرسَل إلى المزوّد محجوب (maskPersonalData: الأرقام وأسماء الأفراد). لا يُطبع رابط ولا مفتاح ولا نص حكم.
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -18,7 +18,7 @@ import { PrismaClient } from "@prisma/client";
 import { assertReadOnly, openReadOnlyDb } from "../../lib/rulings/audit/readonly-db";
 import { buildSegmentChunks, segmentContentHash, SEGMENT_EMBED_VERSION, type SegmentChunk } from "../../lib/rulings/research/segment-embeddings";
 import { SEGMENT_EXTRACTOR_VERSION } from "../../lib/rulings/research/segment";
-import { redactPII } from "../../lib/modules/legal-core/rulings-search";
+import { maskPersonalData } from "../../lib/rulings/research/mask";
 import { EMBEDDING_DIMS, EMBEDDING_MODEL, embedBatch } from "../../lib/modules/ai/embeddings";
 import { resolveWriteTarget } from "../../lib/rulings/research/write-target";
 
@@ -100,7 +100,7 @@ async function dryRun() {
       const rows = await db.q<{ id: string; text: string | null }>(
         `SELECT id, "judgmentText" AS text FROM judicial_cases WHERE id > $1 ORDER BY id LIMIT ${READ_BATCH}`, last);
       if (!rows.length) break;
-      for (const r of rows) count(t, buildSegmentChunks(r.text ?? "", redactPII));
+      for (const r of rows) count(t, buildSegmentChunks(r.text ?? "", maskPersonalData));
       last = rows[rows.length - 1].id;
       process.stdout.write(`\r… ${t.rulings}`);
     }
@@ -192,7 +192,7 @@ async function apply() {
         `SELECT ruling_id, part, chunk, content_hash FROM ruling_segment_embeddings WHERE ruling_id = ANY($1::text[])`, ids);
       const have = new Map(existing.map((e) => [`${e.ruling_id}|${e.part}|${e.chunk}`, e.content_hash]));
       for (const r of rows) {
-        const cs = buildSegmentChunks(r.text ?? "", redactPII);
+        const cs = buildSegmentChunks(r.text ?? "", maskPersonalData);
         count(t, cs);
         const keep = new Set(cs.map((c) => `${c.part}|${c.chunk}`));
         // أجزاء لم تعد موجودة بعد تغيّر التقطيع: تُحذف من هذا الجدول وحده.

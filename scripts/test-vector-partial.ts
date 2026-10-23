@@ -52,15 +52,16 @@ async function main() {
   const art = partialTypeSql("article", 20);
   ok(art.includes("e.owner_type = 'article'") && art.includes("$1::vector") && art.includes("LIMIT 20"), "استعلام المادة يطابق شرط الفهرس الجزئي");
   ok(!art.includes("UNION") && !art.includes("row_number"), "استعلام المادة بلا UNION ولا نافذة (فيستعمل الفهرس)");
-  ok(rulingsSql(true, 20).includes("+ 0") && rulingsSql(true, 20).includes("orphans"), "الأحكام بلا أجزاء: معرّفات أولًا ثم بُعد بلا فهرس عام");
   ok(!rulingsSql(false, 20).includes("orphans"), "بلا متجهات أجزاء: الأحكام من الفهرس العام");
-  ok(versionsSql(true, 5).includes("ruling_segment_embeddings") && !versionsSql(false, 5).includes("ruling_segment_embeddings"), "استبعاد أحكام الأجزاء من النسخ فقط حين تتوفّر");
+  ok(versionsSql(true, 5).includes("owner_type <> 'ruling'") && !versionsSql(false, 5).includes("owner_type <> 'ruling'"), "مع متجهات الأجزاء: لا نسخ متجهات قديمة للأحكام");
 
   // ② المسار المفهرس.
   const res = await vectorProvider.search({ q: "فسخ عقد العمل", limit: 10 });
   const ids = res.map((r) => r.id);
   ok(!sqlLog.some((s) => s.includes("UNION ALL")), "المسار المفهرس لا يستدعي المسح القديم");
-  ok(["a1", "p1", "r-orphan", "r-seg"].every((id) => ids.includes(id)), "يدمج المواد والمبادئ والأحكام بلا أجزاء ومتجهات الأجزاء");
+  ok(["a1", "p1", "r-seg"].every((id) => ids.includes(id)), "يدمج المواد والمبادئ ومتجهات أجزاء الأحكام");
+  // HKM-043: متجه الحكم القديم من النص الخام (وفيه الأسماء) لا يُقرأ مع متجهات الأجزاء، ولو لحكم بلا أجزاء.
+  ok(!ids.includes("r-orphan") && !sqlLog.some((s) => s.includes("orphans")), "مع متجهات الأجزاء: لا متجه حكم قديمًا (خامًا)");
   ok(!ids.includes("a-low"), "عتبة التشابه الدنيا محفوظة");
   ok(ids[0] === "a1" && res.every((r, i) => i === 0 || r.score <= res[i - 1].score), "الترتيب تنازلي بالتشابه");
 

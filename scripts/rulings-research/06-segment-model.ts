@@ -22,7 +22,8 @@ import { PrismaClient } from "@prisma/client";
 import { segmentRuling, SEGMENT_EXTRACTOR_VERSION } from "../../lib/rulings/research/segment";
 import { contentHash } from "../../lib/rulings/research/meta";
 import { applyMigration, META_SEGMENTS_MIGRATION, resolveWriteTarget } from "../../lib/rulings/research/write-target";
-import { buildRulingSearchNorm, redactPII } from "../../lib/modules/legal-core/rulings-search";
+import { buildRulingSearchNorm } from "../../lib/modules/legal-core/rulings-search";
+import { maskPersonalData } from "../../lib/rulings/research/mask";
 import { buildSegmentChunks, segmentContentHash, SEGMENT_EMBED_VERSION } from "../../lib/rulings/research/segment-embeddings";
 import { EMBEDDING_DIMS, EMBEDDING_MODEL, embedBatch } from "../../lib/modules/ai/embeddings";
 
@@ -293,7 +294,7 @@ async function apply() {
           `INSERT INTO ruling_segments (${SEG_COLS.map((c) => `"${c}"`).join(",")}) VALUES ${tuples.join(",")}`, ...params);
         t.segmentRows += segs.length;
         // متجهات الأسباب والمنطوق من الأجزاء الجديدة (البصمة تمنع إعادة غير المتغير).
-        const chunks = buildSegmentChunks(text, redactPII, segs);
+        const chunks = buildSegmentChunks(text, maskPersonalData, segs);
         const have = new Map((await db.$queryRawUnsafe<Array<{ part: string; chunk: number; content_hash: string }>>(
           `SELECT part, chunk, content_hash FROM ruling_segment_embeddings WHERE ruling_id = $1`, r.id)).map((e) => [`${e.part}|${e.chunk}`, e.content_hash]));
         const todo = chunks.filter((c) => have.get(`${c.part}|${c.chunk}`) !== segmentContentHash(c.input, EMBEDDING_MODEL));

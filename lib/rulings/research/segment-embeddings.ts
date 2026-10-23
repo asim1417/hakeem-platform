@@ -7,13 +7,14 @@
  *   • الأسباب الطويلة تُقسم نوافذ ≤ REASONS_CHUNK حرفًا على حدود الكلمات؛ وإن زادت على
  *     MAX_REASONS_CHUNKS أُخذ أولها وآخرها (آخر الأسباب أقربها إلى المنطوق وأدلّها على العلّة).
  *   • المنطوق نافذة واحدة ≤ DISPOSITION_CHUNK حرفًا من بدايته.
- *   • النص المرسَل إلى مزوّد المتجهات يُحجب (redactPII) ويُوحَّد فراغه؛ والإزاحات على النص الأصلي.
+ *   • النص المرسَل إلى مزوّد المتجهات يُحجب (maskPersonalData: الأرقام الشخصية وأسماء الأفراد، HKM-043) ويُوحَّد
+ *     فراغه؛ والإزاحات على النص الأصلي. فلا يجلب البحث بالمعنى حكمًا باسم فرد.
  *   • البصمة (content_hash) من النص المرسَل واسم النموذج والإصدار، فإعادة التشغيل لا تُعيد ما لم يتغير.
  */
 import { createHash } from "node:crypto";
 import { segmentRuling } from "./segment";
 
-export const SEGMENT_EMBED_VERSION = "seg-embed-v1";
+export const SEGMENT_EMBED_VERSION = "seg-embed-v2-masked";
 export const REASONS_CHUNK = 6000;
 export const MAX_REASONS_CHUNKS = 4;
 export const DISPOSITION_CHUNK = 3000;
@@ -32,15 +33,27 @@ export interface SegmentChunk {
   input: string;
 }
 
-/** نوافذ متتالية على [start,end) لا يتجاوز طولها size، مقصوصة عند آخر فراغ. */
+/**
+ * نوافذ متتالية على [start,end) لا يتجاوز طولها size، مقصوصة عند آخر نهاية جملة أو سطر في نصفها الثاني،
+ * وإلا عند آخر فراغ — فلا يقع اسم (وصفته قبله) على حدّ نافذتين فيفوت الحجب.
+ */
 export function windows(text: string, start: number, end: number, size: number): Array<[number, number]> {
   const out: Array<[number, number]> = [];
   let s = start;
   while (s < end) {
     let e = Math.min(end, s + size);
     if (e < end) {
+      const floor = s + size / 2;
+      let sentence = -1;
+      for (let i = e - 1; i > floor; i--) {
+        if (/[.\n؛؟!]/.test(text[i])) {
+          sentence = i + 1;
+          break;
+        }
+      }
       const cut = text.lastIndexOf(" ", e);
-      if (cut > s + size / 2) e = cut;
+      if (sentence > floor) e = sentence;
+      else if (cut > floor) e = cut;
     }
     out.push([s, e]);
     s = e;

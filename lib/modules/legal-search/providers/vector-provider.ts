@@ -103,7 +103,7 @@ export function versionsSql(segReady: boolean, take: number): string {
        FROM embedding_version
        WHERE embedding IS NOT NULL
      ) v
-     WHERE rn = 1${segReady ? ` AND NOT (owner_type = 'ruling' AND owner_id IN (SELECT ruling_id FROM ruling_segment_embeddings))` : ""}
+     WHERE rn = 1${segReady ? ` AND owner_type <> 'ruling'` : ""}
      ORDER BY embedding <=> $1::vector
      LIMIT ${take}`;
 }
@@ -115,7 +115,8 @@ async function nearestViaPartialIndexes(literal: string, take: number, segReady:
   const batches = await Promise.all([
     want("article") ? q(partialTypeSql("article", take)) : none,
     want("principle") ? q(partialTypeSql("principle", take)) : none,
-    want("ruling") ? q(rulingsSql(segReady, take)) : none,
+    // HKM-043: متجه الحكم القديم مبني من النص الخام (وفيه الأسماء)؛ مع متجهات الأجزاء المحجوبة لا يُقرأ أبدًا.
+    want("ruling") && !segReady ? q(rulingsSql(false, take)) : none,
     q(versionsSql(segReady, take)),
   ]);
   return batches.flat();
@@ -142,15 +143,13 @@ async function searchViaEmbeddingsTable(vec: number[], limit: number, types?: Le
     const literal = `[${vec.map((x) => Number(x)).join(",")}]`;
     const take = Math.min(limit, 20);
     const t0 = Date.now();
-    // الأحكام: متجهات الأسباب والمنطوق (ruling_segment_embeddings) متى وُجدت، بدل متجه الحكم القديم
-    // المبني من أول ٨٬٠٠٠ حرف (الديباجة غالبًا) — فيُستبعد ذاك من هذا الاستعلام.
+    // الأحكام: متجهات الأسباب والمنطوق (ruling_segment_embeddings، من نص محجوبة أسماؤه) متى وُجدت، بدل متجه
+    // الحكم القديم المبني من أول ٨٬٠٠٠ حرف خام (الديباجة والأسماء) — فيُستبعد ذاك كله، ولو لحكم بلا أجزاء.
     const segReady = await rulingSegmentVectorsReady().catch(() => false);
     const sqlFor = (from: string) =>
       `SELECT owner_type, owner_id, (1 - (embedding <=> '${literal}'::vector)) AS score
        FROM ${from}
-       WHERE embedding IS NOT NULL${types ? ` AND owner_type IN (${types.map((t) => `'${t}'`).join(",")})` : ""}${segReady
-         ? ` AND NOT (owner_type = 'ruling' AND owner_id IN (SELECT ruling_id FROM ruling_segment_embeddings))`
-         : ""}
+       WHERE embedding IS NOT NULL${types ? ` AND owner_type IN (${types.map((t) => `'${t}'`).join(",")})` : ""}${segReady ? ` AND owner_type <> 'ruling'` : ""}
        ORDER BY embedding <=> '${literal}'::vector
        LIMIT ${take}`;
     const partial = await partialIndexesReady();
