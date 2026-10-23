@@ -11,7 +11,7 @@ import argparse, hashlib, json, os, pathlib, sys
 
 import psycopg2
 
-GUARD_TABLES = ["public.articles", "public.unit_version", "public.verification", "boe.amendment_note"]
+GUARD_TABLES = ["public.legal_articles", "public.legal_systems", "public.unit_version", "public.verification", "boe.amendment_note"]
 
 
 def md5(p: pathlib.Path) -> str:
