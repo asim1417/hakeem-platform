@@ -28,6 +28,10 @@ ok(b("ملغى مع بقاء أحكام محددة مؤقتًا").kind === "repe
 ok(b("إلغاء جزئي معلّق على شرط").kind === "conditional_partial" && b("إلغاء جزئي معلق على شرط").inForce, "إلغاء جزئي معلّق على شرط: نافذة (كقائمة الهيئة)");
 ok(b("معدّلة").label === "معدّلة" && b("AMENDED").kind === "amended" && b("معدلة").inForce, "معدّلة");
 ok(b("موقوفة").kind === "suspended" && b("SUSPENDED").label === "موقوفة", "موقوفة");
+// HKM-033: الصفوف الموسومة لا المحذوفة (articleBis ≥ 100): مكررة ومرفق ليستا نصًّا قائمًا.
+ok(b("مكررة").kind === "duplicate" && b("مكررة").label === "مكررة" && !b("مكررة").inForce && b("مكرّرة").kind === "duplicate", "مكررة: غير نافذة");
+ok(b("مرفق").kind === "attachment" && b("جدول").kind === "attachment" && !b("مرفق").inForce, "مرفق/جدول: غير نافذ");
+ok(!isInForce("مكررة") && !isInForce("مرفق"), "النفاذ: المكررة والمرفق لا يُبنى عليهما");
 ok(isRepealedKind("repealed") && isRepealedKind("replaced") && isRepealedKind("repealed_partial") && !isRepealedKind("amended") && !isRepealedKind(undefined), "isRepealedKind");
 
 // النفاذ عبر kind: القيم القديمة كما كانت، وتسميات التحقق تُفهم.

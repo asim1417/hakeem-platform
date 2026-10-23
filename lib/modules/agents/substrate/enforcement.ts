@@ -40,6 +40,10 @@ export function resolveEnforcement(
       return { state: "لاغٍ", inForce: false, effectiveDate };
     case "suspended":
       return { state: "موقوف", inForce: false, effectiveDate };
+    // HKM-033: المكررة والمرفق ليسا نصًّا قائمًا؛ لا يُبنى عليهما ولا يُعدّان لاغيين.
+    case "duplicate":
+    case "attachment":
+      return { state: "غير_معروف", inForce: false, effectiveDate };
     // صادر لم يسرِ بعد: ليس لاغيًا ولا موقوفًا، ولا يُبنى عليه بعد.
     case "not_yet":
       return { state: "غير_معروف", inForce: false, effectiveDate };

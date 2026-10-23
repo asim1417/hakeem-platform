@@ -18,6 +18,7 @@ import { resolveLaw, isNumberingShifted } from "@/lib/modules/legal-core/resolve
 import { redactPII, searchRulingsDirect, splitRulingQuery } from "@/lib/modules/legal-core/rulings-search";
 import { citationFlagsFromVerification } from "@/lib/modules/legal-core/verified-status";
 import { latestVerification } from "@/lib/modules/legal-core/verification-read";
+import { NON_ARTICLE_BIS } from "@/lib/modules/legal-core/article-key";
 import { effectiveArticleTexts } from "@/lib/modules/legal-core/effective-text";
 import { hybridSearch } from "@/lib/modules/legal-search/hybrid-search";
 import { matchThesaurusConcepts } from "@/lib/modules/legal-thesaurus/concept-index";
@@ -333,6 +334,25 @@ export async function searchRulings(query: string, court?: string, yearH?: numbe
 }
 
 // ٧) حارس الإحالات — التحقق قبل العزو (يمنع اختلاق المواد).
+/**
+ * HKM-033: صف تاريخي لمادة ملغاة أو منقولة بأداة لاحقة: الرقم بلا صف قائم (articleBis < 100)، ونصه القديم
+ * محفوظ بدرجة ≥ 100 وعليه آخر تحقق «ملغاة»/«ملغى» بسنده. يُعيد الأداة والنص للتمييز عن «غير موجودة».
+ */
+async function repealedHistoryRow(systemId: string | null, lawName: string, n: number): Promise<{ instrument: string | null; content: string } | null> {
+  const rows = await prisma.legalArticle
+    .findMany({
+      where: { ...(systemId ? { OR: [{ legalSystemId: systemId }, { lawName }] } : { lawName }), articleNumber: n, articleBis: { gte: NON_ARTICLE_BIS } },
+      select: { id: true, content: true },
+      take: 5,
+    })
+    .catch(() => []);
+  for (const row of rows) {
+    const v = await latestVerification("unit", row.id).catch(() => null);
+    if (v && citationFlagsFromVerification(v).repealed) return { instrument: v.evidenceInstrument ?? null, content: row.content };
+  }
+  return null;
+}
+
 export async function verifyCitation(lawName: string, articleNumber: string, claimedText?: string, articleBis?: number) {
   // HKM-030: «12 مكرر» يُحلَّل من النص (أو تصل درجة «مكرر» صراحةً) فتُطابَق الصف المكرر لا الأصل.
   const parsed = parseArticleCitation(articleNumber);
@@ -361,7 +381,24 @@ export async function verifyCitation(lawName: string, articleNumber: string, cla
   const resolvedLaw = system?.name ?? article?.legalSystem?.name ?? article?.lawName ?? lawName;
 
   if (!system && !article) return { verdict: "النظام غير موجود بهذا الاسم", law_name: lawName };
-  if (!article) return { verdict: "المادة غير موجودة في هذا النظام", law: resolvedLaw, article_number: articleNumber, article_bis: bis };
+  if (!article) {
+    // HKM-033: الرقم قد يكون لمادة أُلغيت أو نُقلت بأداة لاحقة (مثل باب عقوبات نظام العمل بعد م/46)،
+    // ونصها القديم محفوظ صفًّا تاريخيًّا (articleBis ≥ 100) بتحقق «ملغاة» وسنده. يُميَّز عن «غير موجودة».
+    const historical = await repealedHistoryRow(system?.id ?? null, system?.name ?? lawName, n);
+    if (historical) {
+      return {
+        verdict: historical.instrument ? `المادة ملغاة بموجب ${historical.instrument} — لا يُحتجّ بها نصًّا قائمًا` : "المادة ملغاة — لا يُحتجّ بها نصًّا قائمًا",
+        law: resolvedLaw,
+        article_number: articleNumber,
+        article_bis: bis,
+        repealed: true,
+        status: "ملغاة",
+        evidence_instrument: historical.instrument,
+        historical_text: historical.content,
+      };
+    }
+    return { verdict: "المادة غير موجودة في هذا النظام", law: resolvedLaw, article_number: articleNumber, article_bis: bis };
+  }
 
   const [verification, effective] = await Promise.all([
     latestVerification("unit", article.id),

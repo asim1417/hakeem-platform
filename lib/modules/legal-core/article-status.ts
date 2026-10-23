@@ -17,7 +17,9 @@ export type ArticleStatusKind =
   | "not_yet"
   | "repealed_partial"
   | "conditional_partial"
-  | "suspended";
+  | "suspended"
+  | "duplicate"
+  | "attachment";
 
 export interface ArticleStatusBadge {
   label: string;
@@ -37,6 +39,9 @@ const BADGES: Record<ArticleStatusKind, Omit<ArticleStatusBadge, "kind">> = {
   repealed_partial: { label: "ملغى مع بقاء أحكام محددة مؤقتًا", tone: "ruby", inForce: false },
   conditional_partial: { label: "إلغاء جزئي معلّق على شرط", tone: "amber", inForce: true },
   suspended: { label: "موقوفة", tone: "amber", inForce: false },
+  // HKM-033: صفوف ليست مواد (articleBis ≥ 100) موسومة لا محذوفة: نسخة مكررة لمادة قائمة، أو جدول/مرفق.
+  duplicate: { label: "مكررة", tone: "ruby", inForce: false },
+  attachment: { label: "مرفق", tone: "amber", inForce: false },
 };
 
 /** يطبّع القيمة للمطابقة: بلا تشكيل ولا تطويل، والإنجليزية بحروف كبيرة. */
@@ -54,6 +59,8 @@ register("not_yet", "NOT_YET_IN_FORCE", "صادر لم يسرِ بعد");
 register("repealed_partial", "ملغى مع بقاء أحكام محددة مؤقتًا");
 register("conditional_partial", "إلغاء جزئي معلّق على شرط");
 register("suspended", "SUSPENDED", "موقوفة", "معلقة");
+register("duplicate", "DUPLICATE", "مكررة", "مكرّرة");
+register("attachment", "ATTACHMENT", "TABLE", "مرفق", "جدول");
 
 export function articleStatusBadge(status: string | null | undefined): ArticleStatusBadge | null {
   if (!status) return null;
