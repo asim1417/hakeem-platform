@@ -109,6 +109,20 @@ def fetch_attachment(t: dict, out: pathlib.Path, pace: float) -> dict:
     return rec
 
 
+def fetch_image(t: dict, out: pathlib.Path, pace: float) -> dict:
+    """صورة مفردة باسمها من GetViewerImage (لصفحات مرفقات معروفة سلفًا في boe.attachment_page)."""
+    name = t["name"]
+    d = out / "images"
+    d.mkdir(parents=True, exist_ok=True)
+    st, img, ct = get(f"{BASE}/BoeLaws/Laws/GetViewerImage/?imageFileName={urllib.parse.quote(name)}")
+    rec = {"kind": "image", "name": name, "expected_sha256": t.get("sha256"), "status": st, "content_type": ct, "pages": []}
+    if st == 200 and len(img) > 500 and is_image(ct, img):
+        (d / name).write_bytes(img)
+        rec["pages"].append({"name": name, "sha256": sha(img), "bytes": len(img)})
+        rec["sha_match"] = sha(img) == t.get("sha256") if t.get("sha256") else None
+    return rec
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--targets", required=True)
@@ -116,7 +130,7 @@ def main() -> int:
     ap.add_argument("--pace-ms", type=int, default=1500)
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--offset", type=int, default=0, help="تخطّي أول N هدف (للدفعات المتتابعة على الملف نفسه)")
-    ap.add_argument("--kind", choices=["law", "attachment", "all"], default="all")
+    ap.add_argument("--kind", choices=["law", "attachment", "image", "all"], default="all")
     ap.add_argument("--max-pages", type=int, default=400, help="أقصى عدد صور لكل مرفق")
     ap.add_argument("--deadline-min", type=int, default=0, help="توقف هادئ بعد هذه الدقائق (0 = بلا حد)؛ ما جُلب يبقى محفوظًا")
     a = ap.parse_args()
@@ -142,7 +156,7 @@ def main() -> int:
             if out_of_time():
                 print(f"DEADLINE بعد {done} من {len(targets)} هدفًا", flush=True)
                 break
-            rec = fetch_law(t, out, pace) if t["kind"] == "law" else fetch_attachment(t, out, pace)
+            rec = fetch_law(t, out, pace) if t["kind"] == "law" else fetch_image(t, out, pace) if t["kind"] == "image" else fetch_attachment(t, out, pace)
             rec["retrieved_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
             good = rec["status"] == 200 and (rec.get("pages") or rec.get("pdf"))
             ok += 1 if good else 0
@@ -151,7 +165,7 @@ def main() -> int:
             mf.flush()
             done += 1
             write_run(False)
-            print(("OK " if good else "FAIL ") + (t.get("guid") or t.get("href") or "?") + f" status={rec['status']} pages={len(rec.get('pages', []))}" + (" pdf" if rec.get("pdf") else ""), flush=True)
+            print(("OK " if good else "FAIL ") + (t.get("guid") or t.get("href") or t.get("name") or "?") + f" status={rec['status']} pages={len(rec.get('pages', []))}" + (" pdf" if rec.get("pdf") else ""), flush=True)
             time.sleep(pace)
     write_run(True)
     print(f"targets={len(targets)} done={done} ok={ok} failed={failed}")
