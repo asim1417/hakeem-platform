@@ -1,6 +1,6 @@
 {
-  "measuredAt": "2026-10-16T06:44:26.539Z",
-  "mode": "dry-run",
+  "measuredAt": "2026-10-16T06:54:16.901Z",
+  "mode": "apply",
   "segmentVersion": "segment-rules-v3",
   "rulings": 51105,
   "rows": 239206,
@@ -14,6 +14,7 @@
     "appeal": 1926
   },
   "indexedChars": 141969929,
-  "written": 0,
-  "skipped": 0
+  "written": 239206,
+  "skipped": 0,
+  "target": "production"
 }
