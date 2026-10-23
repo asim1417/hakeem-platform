@@ -570,8 +570,10 @@ export async function searchLegalCore(options: AdvancedLegalSearchOptions = {}):
     semMap = await semanticArticleScores(query, 200).catch(() => new Map<string, number>());
     const extraIds = [...semMap.keys()].filter((id) => !lightById.has(id));
     if (extraIds.length) {
+      // HKM-033: المتجهات تشمل صفوفًا ليست مواد (articleBis ≥ 100: مكررة/ملغاة قديمة/مرفقات)،
+      // فتُستبعد عند التحميل كما في بقية المسارات، وإلا ظهر المكرر في النتائج الدلالية.
       const extra = await prisma.legalArticle
-        .findMany({ where: { id: { in: extraIds } }, select: LIGHT_ARTICLE_SELECT })
+        .findMany({ where: { id: { in: extraIds }, ...ARTICLE_ROWS }, select: LIGHT_ARTICLE_SELECT })
         .catch(() => [] as LightArticle[]);
       for (const r of extra) if (!lightById.has(r.id)) lightById.set(r.id, r);
     }
