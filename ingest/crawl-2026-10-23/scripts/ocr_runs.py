@@ -34,7 +34,9 @@ def main() -> int:
     for tf in a.targets:
         for l in open(tf, encoding="utf-8"):
             if l.strip():
-                t = json.loads(l); meta[t["href"]] = t
+                t = json.loads(l)
+                if t.get("href"):
+                    meta[t["href"]] = t
     recs = []  # (run, rec, dir)
     for rd in a.runs:
         rd = pathlib.Path(rd)
