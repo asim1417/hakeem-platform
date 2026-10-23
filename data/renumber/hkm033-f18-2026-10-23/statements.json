@@ -1,0 +1,66 @@
+{
+ "batch": "hkm033-f18-2026-10-23",
+ "groups": {
+  "g1_unwrap_labor": [
+   {
+    "name": "stage",
+    "sql": "CREATE TEMP TABLE hkm33_unwrap ON COMMIT DROP AS\nSELECT a.id, a.\"lawName\", a.\"articleNumber\" n, a.\"articleBis\" bis, a.content previous_text,\n  btrim(substring(a.content from '[\"«]\\s*(.*?)\\s*[\"»]')) new_text,\n  btrim(regexp_replace(regexp_replace(a.content, '[\"«]\\s*.*?\\s*[\"»]', '[النص]'), '\\s+', ' ', 'g')) note_text,\n  coalesce(substring(a.content from '(المرسوم الملكي رقم\\s*\\([^)]*\\)\\s*وتاريخ\\s*[0-9/]+هـ)'), substring(a.content from '(قرار مجلس الوزراء رقم\\s*\\([^)]*\\)\\s*وتاريخ\\s*[0-9/]+هـ)'), substring(a.content from '(الأمر الملكي رقم\\s*\\([^)]*\\)\\s*وتاريخ\\s*[0-9/]+هـ)')) instrument,\n  substring(a.content from 'وتاريخ\\s*([0-9]{4}/[0-9]{1,2}/[0-9]{1,2})هـ') hijri\nFROM legal_articles a WHERE a.\"lawName\"='نظام العمل' AND ((a.\"articleNumber\" IN (233,234,235) AND a.\"articleBis\"=0) OR (a.\"articleNumber\"=229 AND a.\"articleBis\"=1))"
+   },
+   {
+    "name": "guard_before",
+    "sql": "SELECT CASE WHEN (SELECT count(*) FROM hkm33_unwrap)=4 AND (SELECT count(*) FROM hkm33_unwrap WHERE new_text IS NULL OR length(new_text)<30 OR instrument IS NULL OR hijri IS NULL)=0 AND (SELECT count(*) FROM hkm33_unwrap u WHERE position(u.new_text in u.previous_text)=0)=0 AND (SELECT count(*) FROM legal_text_provenance WHERE source_id='hkm033-unwrap-2026-10-23')=0 THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END guard"
+   },
+   {
+    "name": "provenance",
+    "sql": "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text, created_at)\nSELECT 'hkm33p-'||left(encode(sha256(convert_to('unwrap|'||id,'UTF8')),'hex'),24), 'article', id, \"lawName\", n, 'boe', 'hkm033-unwrap-2026-10-23', 'internal:hakeem/legal_articles/'||id, encode(sha256(convert_to(previous_text,'UTF8')),'hex'), '2026-10-23'::date, 'unwrap_amendment_note', previous_text, now() FROM hkm33_unwrap"
+   },
+   {
+    "name": "article_amendments",
+    "sql": "INSERT INTO article_amendments (id, \"articleId\", version, \"changeType\", \"decreeRef\", \"effectiveFrom\", \"hijriDate\", summary, \"previousText\", \"newText\", source, \"reviewStatus\", \"createdAt\", \"updatedAt\")\nSELECT 'hkm33a-'||left(encode(sha256(convert_to('added|'||id,'UTF8')),'hex'),24), id, 1, 'added', instrument, NULL, hijri, 'HKM-033: '||note_text, previous_text, new_text, 'boe', 'pending', now(), now() FROM hkm33_unwrap"
+   },
+   {
+    "name": "content",
+    "sql": "UPDATE legal_articles a SET content = u.new_text, \"updatedAt\" = now() FROM hkm33_unwrap u WHERE a.id=u.id"
+   },
+   {
+    "name": "search_norm",
+    "sql": "UPDATE legal_articles a SET search_norm = uqn_fix.hkm30_search_norm(a.\"lawName\", a.title, a.content, a.keywords, a.classification, a.chapter) FROM hkm33_unwrap u WHERE a.id=u.id AND NOT EXISTS (SELECT 1 FROM unit_version v WHERE v.unit_id=a.id AND v.valid_from <= now())"
+   },
+   {
+    "name": "guard_after",
+    "sql": "SELECT CASE WHEN (SELECT count(*) FROM legal_articles a JOIN hkm33_unwrap u ON u.id=a.id WHERE a.content=u.new_text)=4 AND (SELECT count(*) FROM article_amendments WHERE id LIKE 'hkm33a-%')=4 AND (SELECT count(*) FROM legal_text_provenance WHERE source_id='hkm033-unwrap-2026-10-23')=4 THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END guard"
+   },
+   {
+    "name": "report",
+    "sql": "SELECT md5(string_agg(a.id||'|'||a.content, '|' ORDER BY a.id)) fp, json_agg(json_build_object('n',u.n,'bis',u.bis,'instrument',u.instrument,'hijri',u.hijri,'new',a.content) ORDER BY u.n,u.bis) rows FROM hkm33_unwrap u JOIN legal_articles a ON a.id=u.id"
+   }
+  ],
+  "g2_tag": [
+   {
+    "name": "guard_before",
+    "sql": "SELECT CASE WHEN (SELECT count(*) FROM legal_articles WHERE id IN ('cmpz5wlud01lvcwg2a6nl4pqv', 'cmpz5wm5y01lzcwg20rdyzoq6', 'cmpz5wmho01m3cwg2tdx2iggq', 'cms68t1i20b6xh17ty4s10lp9', 'cms68t1i20b6zh17t6imw0d76', 'cmpwi9lnb01lvnxff60wyns5v', 'cmpwi9lz501lxnxff9pfn1op1', 'cmpz5tqif00n5cwg2lyvbl7by', 'cmpwi9p9w01mhnxff8gwnm0a4', 'cmpwi9plr01mjnxffbksuhf53', 'cmpwi9pxm01mlnxff0uhiqup9', 'cmpwi9q9s01mnnxffuwuv3doa', 'cmpwi9qlo01mpnxffbriwmt8z', 'cmpwi9qxi01mrnxffp8omgpsu') AND \"articleBis\">=100 AND status='سارية')=14 AND (SELECT count(*) FROM legal_articles WHERE id IN ('cmr4rvo2v00bh1j0uuysgwvyj', 'cmr4rvo2v00bi1j0uz42h4akg', 'cmr4rvo2v00bj1j0uqofxdo40', 'cmpz626hg03ghcwg2ts0cisj9', 'cmpz626ne03gjcwg2gh8j1cqn', 'cmpz626tc03glcwg2bthl2rng', 'cmpzcv6wn0aa3vtrkxa0bmnmr') AND \"articleBis\">=100 AND status='سارية')=7 AND (SELECT count(*) FROM legal_articles WHERE \"articleBis\">=100)=31 AND (SELECT count(*) FROM legal_text_provenance WHERE source_id='hkm033-tag-2026-10-23')=0 THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END guard"
+   },
+   {
+    "name": "provenance",
+    "sql": "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text, created_at)\nSELECT 'hkm33p-'||left(encode(sha256(convert_to('tag|'||id,'UTF8')),'hex'),24), 'article', id, \"lawName\", \"articleNumber\", 'hakeem', 'hkm033-tag-2026-10-23', 'internal:hakeem/legal_articles/'||id, encode(sha256(convert_to(status,'UTF8')),'hex'), '2026-10-23'::date, CASE WHEN id IN ('cmpz5wlud01lvcwg2a6nl4pqv', 'cmpz5wm5y01lzcwg20rdyzoq6', 'cmpz5wmho01m3cwg2tdx2iggq', 'cms68t1i20b6xh17ty4s10lp9', 'cms68t1i20b6zh17t6imw0d76', 'cmpwi9lnb01lvnxff60wyns5v', 'cmpwi9lz501lxnxff9pfn1op1', 'cmpz5tqif00n5cwg2lyvbl7by', 'cmpwi9p9w01mhnxff8gwnm0a4', 'cmpwi9plr01mjnxffbksuhf53', 'cmpwi9pxm01mlnxff0uhiqup9', 'cmpwi9q9s01mnnxffuwuv3doa', 'cmpwi9qlo01mpnxffbriwmt8z', 'cmpwi9qxi01mrnxffp8omgpsu') THEN 'tag_duplicate' ELSE 'tag_attachment' END, 'status='||status, now()\nFROM legal_articles WHERE id IN ('cmpz5wlud01lvcwg2a6nl4pqv', 'cmpz5wm5y01lzcwg20rdyzoq6', 'cmpz5wmho01m3cwg2tdx2iggq', 'cms68t1i20b6xh17ty4s10lp9', 'cms68t1i20b6zh17t6imw0d76', 'cmpwi9lnb01lvnxff60wyns5v', 'cmpwi9lz501lxnxff9pfn1op1', 'cmpz5tqif00n5cwg2lyvbl7by', 'cmpwi9p9w01mhnxff8gwnm0a4', 'cmpwi9plr01mjnxffbksuhf53', 'cmpwi9pxm01mlnxff0uhiqup9', 'cmpwi9q9s01mnnxffuwuv3doa', 'cmpwi9qlo01mpnxffbriwmt8z', 'cmpwi9qxi01mrnxffp8omgpsu', 'cmr4rvo2v00bh1j0uuysgwvyj', 'cmr4rvo2v00bi1j0uz42h4akg', 'cmr4rvo2v00bj1j0uqofxdo40', 'cmpz626hg03ghcwg2ts0cisj9', 'cmpz626ne03gjcwg2gh8j1cqn', 'cmpz626tc03glcwg2bthl2rng', 'cmpzcv6wn0aa3vtrkxa0bmnmr')"
+   },
+   {
+    "name": "tag_duplicates",
+    "sql": "UPDATE legal_articles SET status='مكررة', \"updatedAt\"=now() WHERE id IN ('cmpz5wlud01lvcwg2a6nl4pqv', 'cmpz5wm5y01lzcwg20rdyzoq6', 'cmpz5wmho01m3cwg2tdx2iggq', 'cms68t1i20b6xh17ty4s10lp9', 'cms68t1i20b6zh17t6imw0d76', 'cmpwi9lnb01lvnxff60wyns5v', 'cmpwi9lz501lxnxff9pfn1op1', 'cmpz5tqif00n5cwg2lyvbl7by', 'cmpwi9p9w01mhnxff8gwnm0a4', 'cmpwi9plr01mjnxffbksuhf53', 'cmpwi9pxm01mlnxff0uhiqup9', 'cmpwi9q9s01mnnxffuwuv3doa', 'cmpwi9qlo01mpnxffbriwmt8z', 'cmpwi9qxi01mrnxffp8omgpsu') AND \"articleBis\">=100"
+   },
+   {
+    "name": "tag_attachments",
+    "sql": "UPDATE legal_articles SET status='مرفق', \"updatedAt\"=now() WHERE id IN ('cmr4rvo2v00bh1j0uuysgwvyj', 'cmr4rvo2v00bi1j0uz42h4akg', 'cmr4rvo2v00bj1j0uqofxdo40', 'cmpz626hg03ghcwg2ts0cisj9', 'cmpz626ne03gjcwg2gh8j1cqn', 'cmpz626tc03glcwg2bthl2rng', 'cmpzcv6wn0aa3vtrkxa0bmnmr') AND \"articleBis\">=100"
+   },
+   {
+    "name": "guard_after",
+    "sql": "SELECT CASE WHEN (SELECT count(*) FROM legal_articles WHERE status='مكررة' AND \"articleBis\">=100)=14 AND (SELECT count(*) FROM legal_articles WHERE status='مرفق' AND \"articleBis\">=100)=7 AND (SELECT count(*) FROM legal_articles WHERE \"articleBis\">=100)=31 AND (SELECT count(*) FROM legal_articles WHERE \"articleBis\"<100 AND status IN ('مكررة','مرفق'))=0 THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END guard"
+   },
+   {
+    "name": "report",
+    "sql": "SELECT status, count(*) n, string_agg(\"lawName\"||' '||\"articleNumber\", '، ' ORDER BY \"lawName\",\"articleNumber\") rows FROM legal_articles WHERE \"articleBis\">=100 GROUP BY status ORDER BY 1"
+   }
+  ]
+ },
+ "notes": "g1 يُطبَّق على الإنتاج بعد اعتماد المالك للعينة (ف11 ع). g2 وسم فقط (قرار المالك: الوسم لا الحذف). الباقون العشرة في نظام العمل 231–239 و241 (/100) نصوص ملغاة بتحقق قائم منذ 17/10 ولا يُمسّون."
+}
