@@ -14,6 +14,7 @@ import { normalizeArabic } from "./bm25-tokenizer";
 import { buildRulingExcerpts, buildRulingTsQuery, excerptFrom, findMatches, queryTokens, type RulingPart } from "./ruling-excerpts";
 import { REDACTION_MARK, digitVariants, rulingNumbersSql, rulingRedactedTextSql, toLatinDigits } from "./ruling-redacted-sql";
 import type { SegmentType } from "@/lib/rulings/research/segment";
+import { loadStoredSegments } from "@/lib/rulings/research/stored-segments";
 import type { MergedResult } from "@/lib/modules/legal-search/hybrid-search";
 
 export interface RulingHit {
@@ -353,10 +354,11 @@ async function mergeSemantic(hits: RulingHit[], sem: SemanticCandidate[], opts: 
       `SELECT "id","decisionNo","caseNo","court","cityName","decisionDateText","caseDateText","judgmentTitle","judgmentText"
        FROM "judicial_cases" WHERE ${conds.join(" AND ")}`, ...params,
     ).catch(() => []);
+    const segs = await storedSegmentsOf(rows);
     for (const r of rows) {
       const c = extra.find((x) => x.id === r.id)!;
       const raw = r.judgmentText ?? "";
-      const ex = buildRulingExcerpts(raw, "");
+      const ex = buildRulingExcerpts(raw, "", 320, segs.get(r.id));
       hits.push({
         id: r.id,
         decisionNo: r.decisionNo,
@@ -464,18 +466,23 @@ export async function buildRulingSearchSql(opts: RulingSearchOptions): Promise<R
   return { countSql, rowsSql, params, indexPlan: indexed };
 }
 
+/** الأجزاء المخزّنة الصالحة (ومنها حدود النموذج) لصفوف الأحكام؛ ما لا يصلح يُقطَّع بالقواعد. */
+function storedSegmentsOf(rows: Array<{ id: string; judgmentText: string | null }>) {
+  return loadStoredSegments(new Map(rows.map((r) => [r.id, r.judgmentText ?? ""] as const)));
+}
+
 type RulingRow = {
   id: string; decisionNo: string | null; caseNo: string | null; court: string | null;
   cityName: string | null; decisionDateText: string | null; caseDateText: string | null;
   judgmentTitle: string | null; judgmentText: string | null;
 };
 
-function rowToHit(r: RulingRow, query: string, rawTokens: string[]): RulingHit {
+function rowToHit(r: RulingRow, query: string, rawTokens: string[], segments?: readonly RulingPart[] | null): RulingHit {
   const raw = r.judgmentText ?? "";
   // كم لفظًا من الاستعلام ورد كلمةً كاملة (مع السوابق) في النص أو العنوان.
   const present = rawTokens.filter((t) => findMatches(`${r.judgmentTitle ?? ""} ${raw}`, t).length > 0).length;
   // ما يقرؤه حكيم: مقتطف من الأسباب أو المنطوق، والمنطوق مرفق، وخريطة الأجزاء — منقّاة من PDPL.
-  const ex = buildRulingExcerpts(raw, query);
+  const ex = buildRulingExcerpts(raw, query, 320, segments);
   const placeBoost = ex.matchedIn === "reasons" || ex.matchedIn === "disposition" ? 0.1 : 0;
   return {
     id: r.id,
@@ -513,7 +520,8 @@ async function searchRulingsRedacted(parts: RulingQueryParts, opts: RulingSearch
   const order = new Map(ids.map((id, i) => [id, i]));
   rows.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
   const tokens = queryTokens(parts.text);
-  return { hits: rows.map((r) => rowToHit(r, parts.text, tokens)), total: Math.min(counted.length, COUNT_CAP), totalCapped: counted.length > COUNT_CAP };
+  const segs = await storedSegmentsOf(rows);
+  return { hits: rows.map((r) => rowToHit(r, parts.text, tokens, segs.get(r.id))), total: Math.min(counted.length, COUNT_CAP), totalCapped: counted.length > COUNT_CAP };
 }
 
 export async function searchRulingsDirect(input: RulingSearchOptions): Promise<{ hits: RulingHit[]; total: number; totalCapped: boolean; ms: number }> {
@@ -550,7 +558,8 @@ export async function searchRulingsDirect(input: RulingSearchOptions): Promise<{
   const visible = parts.sensitiveTokens.length
     ? rows.filter((r) => tokensInRedacted(`${r.judgmentTitle ?? ""} ${r.judgmentText ?? ""}`, parts.sensitiveTokens, "all"))
     : rows;
-  const hits = visible.map((r) => rowToHit(r, opts.query, rawTokens));
+  const segs = await storedSegmentsOf(visible);
+  const hits = visible.map((r) => rowToHit(r, opts.query, rawTokens, segs.get(r.id)));
   const merged = await mergeSemantic(hits, await semanticQ, opts, limit);
 
   return { hits: merged, total: Math.max(total, merged.length), totalCapped, ms: Date.now() - started };

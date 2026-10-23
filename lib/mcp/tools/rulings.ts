@@ -23,6 +23,7 @@ import {
 } from "@/lib/mcp/ruling-privacy";
 import { enumerateTermTainted } from "@/lib/mcp/name-taint";
 import type { SegmentType } from "@/lib/rulings/research/segment";
+import { loadStoredSegments } from "@/lib/rulings/research/stored-segments";
 
 /** السنة الهجرية من نصّ التاريخ (أرقام هندية أو لاتينية) — كان التعبير السابق يلتقط اللاتينية فقط. */
 const hijriYear = (text?: string | null): number | null => extractHijriYear(text);
@@ -42,7 +43,9 @@ export async function getRuling(rulingId: string, offset = 0, maxChars = 30000, 
   const full = r.judgmentText ?? "";
   // HKM-012 (الأمر ٠٨): الحجب قبل القص — يُحجب الحكم جزءًا جزءًا بحدود أجزائه في الخام (فلا يمحو الحجب
   // مراسي الأجزاء)، ثم تُقتطع الشريحة من المحجوب، فلا يفلت نصف اسم أو رقم على حد شريحة. كل الإزاحات في المحجوب.
-  const { masked: maskedFull, parts: maskedParts } = maskBySegments(full);
+  // الأجزاء المخزّنة (ومنها حدود النموذج) متى طابقت بصمة النص، وإلا التقطيع بالقواعد.
+  const stored = (await loadStoredSegments(new Map([[r.id, full]]))).get(r.id) ?? null;
+  const { masked: maskedFull, parts: maskedParts } = maskBySegments(full, stored);
   const parts = maskedParts.map((p) => ({ type: p.type as SegmentType, start: p.start, end: p.end }));
   // نطاق القراءة: الجزء المطلوب إن وُجد، وإلا النص كله.
   const target = part ? parts.find((p) => p.type === part) : undefined;

@@ -20,7 +20,7 @@ import { redactPII } from "@/lib/modules/legal-core/rulings-search";
 import { buildRulingExcerpts, excerptFrom, queryTokens, tokenVariants } from "@/lib/modules/legal-core/ruling-excerpts";
 import { digitVariants } from "@/lib/modules/legal-core/ruling-redacted-sql";
 import { normalizeArabicText } from "@/lib/modules/legal-core/arabic-morphology";
-import { segmentRuling } from "@/lib/rulings/research/segment";
+import { segmentRuling, type SegmentType } from "@/lib/rulings/research/segment";
 
 export type MaskedPart = { type: string; start: number; end: number };
 
@@ -29,9 +29,13 @@ export type MaskedPart = { type: string; start: number; end: number };
  * هكذا تبقى الأجزاء كما يكشفها المقطِّع في الخام (الحجب لا يمحو مراسيها)، ولا تكشف الإزاحات طول ما حُجب،
  * ويُحجب كل جزء مرة واحدة. حدود الأجزاء عناوين («الأسباب:»، «منطوق الحكم:»)، فلا يمتد اسم عبرها عادةً.
  */
-export function maskBySegments(raw: string | null | undefined): { masked: string; parts: MaskedPart[] } {
+export function maskBySegments(
+  raw: string | null | undefined,
+  segments?: ReadonlyArray<{ type: string; start: number; end: number }> | null,
+): { masked: string; parts: MaskedPart[] } {
   const text = raw ?? "";
-  const segs = [...segmentRuling(text).segments].sort((a, b) => a.start - b.start);
+  // segments: الأجزاء المخزّنة (lib/rulings/research/stored-segments) متى صلحت للنص، وإلا التقطيع بالقواعد.
+  const segs = [...(segments ?? segmentRuling(text).segments)].sort((a, b) => a.start - b.start);
   const pieces: string[] = [];
   const parts: MaskedPart[] = [];
   let pos = 0;
@@ -93,10 +97,12 @@ export function maskedRulingExcerpts(
   raw: string | null | undefined,
   query: string,
   semantic?: { part?: string | null; originalSnippet?: string | null } | null,
+  segments?: ReadonlyArray<{ type: SegmentType; start: number; end: number }> | null,
 ): { snippet: string; disposition: string | null; parts: Array<{ type: string; start: number; end: number }>; masked: string } {
   const text = raw ?? "";
-  const { masked, parts } = maskBySegments(text);
-  const ex = buildRulingExcerpts(masked, semantic ? "" : query);
+  const { masked, parts } = maskBySegments(text, segments);
+  // بأجزاء مخزّنة: المقتطف بحدودها نفسها بعد الحجب (لا بمقطِّع يعمل على المحجوب).
+  const ex = buildRulingExcerpts(masked, semantic ? "" : query, 320, segments ? (parts as Array<{ type: SegmentType; start: number; end: number }>) : null);
   let snippet = ex.snippet;
   if (semantic) {
     const pos = maskedPositionOf(text, semantic.originalSnippet);
