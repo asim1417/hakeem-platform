@@ -60,7 +60,57 @@
     "name": "report",
     "sql": "SELECT status, count(*) n, string_agg(\"lawName\"||' '||\"articleNumber\", '، ' ORDER BY \"lawName\",\"articleNumber\") rows FROM legal_articles WHERE \"articleBis\">=100 GROUP BY status ORDER BY 1"
    }
+  ],
+  "g3_unwrap_others": [
+   {
+    "name": "stage",
+    "sql": "CREATE TEMP TABLE hkm33_unwrap2 ON COMMIT DROP AS\nSELECT * FROM (SELECT a.id, a.\"lawName\", a.\"articleNumber\" n, a.\"articleBis\" bis, a.content previous_text,\n  btrim(substring(a.content from '[\"«]\\s*(.*?)\\s*[\"»]')) new_text,\n  btrim(regexp_replace(regexp_replace(a.content, '[\"«]\\s*.*?\\s*[\"»]', '[النص]'), '\\s+', ' ', 'g')) note_text,\n  coalesce(substring(a.content from '(المرسوم الملكي رقم\\s*\\([^)]*\\)\\s*(?:و|ب)تاريخ\\s*[0-9/]+هـ)'), substring(a.content from '(قرار مجلس الوزراء رقم\\s*\\([^)]*\\)\\s*(?:و|ب)تاريخ\\s*[0-9/]+هـ)'), substring(a.content from '(الأمر الملكي رقم\\s*\\([^)]*\\)\\s*(?:و|ب)تاريخ\\s*[0-9/]+هـ)')) instrument,\n  substring(a.content from '(?:و|ب)تاريخ\\s*([0-9]{4}/[0-9]{1,2}/[0-9]{1,2})هـ') hijri,\n  (a.content ~ '[\"«][^\"«»]+[\"»]\\s*\\.?\\s*$') quoted_to_end, (length(a.content) - length(replace(a.content,'\"',''))) quote_marks\n FROM legal_articles a WHERE a.\"articleBis\"<100 AND a.content ~ '^\\s*-?\\s*(أُ?ضيفت هذه المادة|أضيفت هذه المادة|إضافة مادة تحمل الرقم|تم تعديل هذه المادة|عُدلت هذه المادة|استُبدلت)' AND a.\"lawName\"<>'نظام العمل') c\nWHERE new_text IS NOT NULL AND length(new_text)>=30 AND instrument IS NOT NULL AND hijri IS NOT NULL AND quoted_to_end AND quote_marks=2"
+   },
+   {
+    "name": "guard_before",
+    "sql": "SELECT CASE WHEN (SELECT count(*) FROM hkm33_unwrap2)=9 AND (SELECT count(DISTINCT \"lawName\") FROM hkm33_unwrap2)=8 AND (SELECT count(*) FROM hkm33_unwrap2 u WHERE position(u.new_text in u.previous_text)=0)=0 AND (SELECT count(*) FROM legal_text_provenance WHERE source_id='hkm033-unwrap2-2026-10-23')=0 AND (SELECT count(*) FROM hkm33_unwrap2 u WHERE EXISTS (SELECT 1 FROM unit_version v WHERE v.unit_id=u.id))=0 THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END guard"
+   },
+   {
+    "name": "provenance",
+    "sql": "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text, created_at)\nSELECT 'hkm33p-'||left(encode(sha256(convert_to('unwrap2|'||id,'UTF8')),'hex'),24), 'article', id, \"lawName\", n, 'boe', 'hkm033-unwrap2-2026-10-23', 'internal:hakeem/legal_articles/'||id, encode(sha256(convert_to(previous_text,'UTF8')),'hex'), '2026-10-23'::date, 'unwrap_amendment_note', previous_text, now() FROM hkm33_unwrap2"
+   },
+   {
+    "name": "article_amendments",
+    "sql": "INSERT INTO article_amendments (id, \"articleId\", version, \"changeType\", \"decreeRef\", \"effectiveFrom\", \"hijriDate\", summary, \"previousText\", \"newText\", source, \"reviewStatus\", \"createdAt\", \"updatedAt\")\nSELECT 'hkm33a-'||left(encode(sha256(convert_to('added2|'||id,'UTF8')),'hex'),24), id, 1, 'added', instrument, NULL, hijri, 'HKM-033: '||note_text, previous_text, new_text, 'boe', 'pending', now(), now() FROM hkm33_unwrap2"
+   },
+   {
+    "name": "content",
+    "sql": "UPDATE legal_articles a SET content = u.new_text, \"updatedAt\" = now() FROM hkm33_unwrap2 u WHERE a.id=u.id"
+   },
+   {
+    "name": "search_norm",
+    "sql": "UPDATE legal_articles a SET search_norm = uqn_fix.hkm30_search_norm(a.\"lawName\", a.title, a.content, a.keywords, a.classification, a.chapter) FROM hkm33_unwrap2 u WHERE a.id=u.id"
+   },
+   {
+    "name": "guard_after",
+    "sql": "SELECT CASE WHEN (SELECT count(*) FROM legal_articles a JOIN hkm33_unwrap2 u ON u.id=a.id WHERE a.content=u.new_text)=9 AND (SELECT count(*) FROM legal_text_provenance WHERE source_id='hkm033-unwrap2-2026-10-23')=9 THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END guard"
+   },
+   {
+    "name": "report",
+    "sql": "SELECT md5(string_agg(a.id||'|'||a.content, '|' ORDER BY a.id)) fp, count(*) n, json_agg(json_build_object('law',u.\"lawName\",'n',u.n,'bis',u.bis,'instrument',u.instrument,'hijri',u.hijri,'new',a.content) ORDER BY u.\"lawName\",u.n) rows FROM hkm33_unwrap2 u JOIN legal_articles a ON a.id=u.id"
+   }
   ]
  },
- "notes": "g1 يُطبَّق على الإنتاج بعد اعتماد المالك للعينة (ف11 ع). g2 وسم فقط (قرار المالك: الوسم لا الحذف). الباقون العشرة في نظام العمل 231–239 و241 (/100) نصوص ملغاة بتحقق قائم منذ 17/10 ولا يُمسّون."
+ "notes": "g1 يُطبَّق على الإنتاج بعد اعتماد المالك للعينة (ف11 ع). g2 وسم فقط (قرار المالك: الوسم لا الحذف). الباقون العشرة في نظام العمل 231–239 و241 (/100) نصوص ملغاة بتحقق قائم منذ 17/10 ولا يُمسّون.",
+ "expected": {
+  "g1_fp": "14b77385e1899a7fe8746de2651186cb",
+  "g1_n": 4,
+  "g2": {
+   "مكررة": 14,
+   "مرفق": 7,
+   "سارية": 10
+  }
+ },
+ "review_pending": [
+  "نظام إيرادات الدولة 28 مكرر",
+  "نظام الحراسة الأمنية المدنية الخاصة 4 مكرر",
+  "نظام الخدمة المدنية 15",
+  "نظام الخدمة المدنية 36",
+  "نظام حماية الطفل 23 مكرر — الاقتباس غير مغلق أو بلا علامات؛ تحتاج قراءة بشرية"
+ ]
 }
