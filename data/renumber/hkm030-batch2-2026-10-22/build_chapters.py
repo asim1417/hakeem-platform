@@ -5,14 +5,14 @@
   1. وحدة عنوان في صفحة هيئة الخبراء (وحدة بلا رقم مادة وعنوانها ليس «المادة …») ومتنها = نص مادتنا (تطابق بعد التطبيع أو تشابه ≥ 0.9) ← العنوان لتلك المادة.
   2. عنوان سابق لـ«المادة …:» في وحدة مرقمة في صفحة الهيئة ← العنوان لمادتنا بالرقم نفسه.
   3. ذيل حُذف في دفعة 22/10 (ب) من آخر المادة N يبدأ بـ(الباب|الفصل|القسم|الجزء) ← عنوان المادة التالية N+1، فقط إذا كانت صفحة الهيئة بلا عناوين أصلًا (وإلا وجب أن يثبته الدليل 1 أو 2).
-قيود: لا كتابة على مادة لها عنوان؛ عنوان واحد لكل مادة؛ تُستبعد التذييلات ونصوص المواد وعناوين الجداول والمرفقات؛ صف legal_text_provenance لكل كتابة.
+قيود: يُستبعد ما هو تسمية مادة لا عنوان قسم («المادة …»، «البند …») وما بُتر عنده قوس مفتوح؛ لا كتابة على مادة لها عنوان؛ عنوان واحد لكل مادة؛ تُستبعد التذييلات ونصوص المواد وعناوين الجداول والمرفقات؛ صف legal_text_provenance لكل كتابة.
 """
 import hashlib, json
 from pathlib import Path
 
 OUT = Path(__file__).parent
 SRC_ID = "hkm030-chapter-2026-10-23"
-EXPECTED_N, EXPECTED_FP = 135, "0f087568ae2b8a672f70459f8658d503"
+EXPECTED_N, EXPECTED_FP = 107, "fa8e506dc754aa0e87be747bb2d427f2"
 GUARD_FAIL = "(1/(SELECT count(*) FROM legal_systems WHERE false))::text"
 
 STAGE = r"""
@@ -31,7 +31,7 @@ b_rows AS (SELECT 1 pri, 'unit' src, hu.url||'#unit-'||hu.seq srcurl, t.id tid, 
   FROM hu LEFT JOIN LATERAL (SELECT a.* FROM legal_articles a WHERE a."legalSystemId"=hu.sid AND a."articleBis"<100 AND (uqn_fix.hkm30_norm(a.content)=uqn_fix.hkm30_norm(hu.body) OR similarity(uqn_fix.hkm30_norm(a.content), uqn_fix.hkm30_norm(hu.body))>=0.9) ORDER BY similarity(uqn_fix.hkm30_norm(a.content), uqn_fix.hkm30_norm(hu.body)) DESC LIMIT 1) t ON true),
 ph AS (SELECT 2 pri, 'prefix' src, m.url||'#unit-'||u.seq srcurl, a.id tid, m.sid, btrim(regexp_replace(u.heading, '\s*المادة\s.*$', '')) heading, 'boe_prefix' k, coalesce(a.chapter,'') tchap FROM m JOIN boe.unit u ON u.law_id=m.law_id LEFT JOIN legal_articles a ON a."legalSystemId"=m.sid AND a."articleNumber"=u.article_number AND a."articleBis"=0 WHERE u.article_number IS NOT NULL AND u.heading ~ '\S\s+المادة\s'),
 allr AS (SELECT * FROM a_rows UNION ALL SELECT * FROM b_rows UNION ALL SELECT * FROM ph)
-SELECT DISTINCT ON (tid) tid, sid, src, k, srcurl, heading FROM allr WHERE tid IS NOT NULL AND k IN ('boe_unit_body','boe_prefix','keyword_no_boe_headings') AND tchap='' AND length(heading) BETWEEN 3 AND 160 ORDER BY tid, pri
+SELECT DISTINCT ON (tid) tid, sid, src, k, srcurl, heading FROM allr WHERE tid IS NOT NULL AND k IN ('boe_unit_body','boe_prefix','keyword_no_boe_headings') AND tchap='' AND length(heading) BETWEEN 3 AND 160 AND heading !~ '^\(?\s*(المادة|الماة|البند)\s' AND heading !~ '\(\s*$' AND length(regexp_replace(heading,'[^(]','','g'))=length(regexp_replace(heading,'[^)]','','g')) ORDER BY tid, pri
 """
 
 stmts = [
