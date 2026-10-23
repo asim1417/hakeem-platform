@@ -1,0 +1,7 @@
+surface,sha_or_id,time_utc,source,proves,does_not_prove
+git main,d4ee69a33d5a55015933feca5b65481161743fda,2026-10-18T07:56:58Z,git fetch origin main equal HEAD,code reviewed in this audit,that Vercel production is this SHA
+Actions Deploy Readiness Check,d4ee69a,2026-10-18T07:57:01Z,gh run list conclusion success,the readiness workflow passed on that commit,a Vercel production deployment
+Actions Index OpenSearch,09ceb8b,2026-10-18T06:07:02Z,gh run list success on main,a workflow named Index OpenSearch finished,current index counts or equality with the database
+Actions Rebuild BM25 from Neon,827e623,2026-10-18T06:21:15Z,gh run list success on main,a read-only-DB BM25 rebuild workflow finished,the gzip index matches main after later merges
+ledger deployment,dpl_BzUWr3Zu626s2mv79bdts5ib9G6o at a173367,2026-10-18 recorded under HKM-028,docs/PROJECT_STATUS.md,a prior production deployment was recorded,that it is still the live deployment after later merges
+live site,UNVERIFIED sha,2026-10-18T11:44:40Z,GET /api/health ok database up clerk aligned,some deployment serves hakeemai.net and can read the database,which git SHA is running

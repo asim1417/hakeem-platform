@@ -1,0 +1,21 @@
+integration,plane,evidence,live_check,status
+Clerk,auth,/api/health kinds aligned; redirects,health 200,CONFIRMED configured
+Cloudflare,edge,server header and HSTS,HTTP,CONFIRMED in front
+Vercel,host,x-vercel-id iad1,HTTP,CONFIRMED serving; SHA UNVERIFIED
+Neon,database,project and branch GUCs,SELECT,CONFIRMED primary
+OpenSearch,search,workflow and client code,not connected,UNVERIFIED freshness
+BM25 file,search,workflow success,file hash not taken,PARTIAL
+OpenAI-compatible embeddings,vectors,model name in rows,SQL counts,CONFIRMED stored model name; provider account not opened
+Anthropic Claude,generation,code comments and lib/modules/hakeem-agent,no model call,code present; live call not made
+Moyasar,payments,health string,health,CONFIRMED unset
+Azure Blob,storage,code env names,values unread,UNVERIFIED
+SharePoint,storage,code env names,values unread,UNVERIFIED
+DOC_SERVICE_URL,documents,page link only,value unread,UNVERIFIED
+Google Drive doc-platform,documents,app/api/doc-platform/drive,not called,code present
+BOE corpus tables,data,boe schema,SQL aggregates,CONFIRMED stored snapshot
+UQN schemas,data,uqn_fix uqn_stage,relation counts only,PARTIAL
+MCP OAuth,api,/mcp 401 and well-known routes in catalog,401,CONFIRMED gate; token flow not completed
+GitHub Actions,ci,94 workflows; last runs,gh run list,PARTIAL
+Rasd Neon project,data,historical id only,no connection,UNVERIFIED
+Hostinger,data,historical report,no connection,HISTORICAL
+Supabase,data,historical report,no connection,HISTORICAL

@@ -1,0 +1,13 @@
+claim_id,claim,prior_status,rechecked_utc,result,confidence
+C1,article and system and case counts,"1155 / 28731 / 51105",2026-10-18T13:05Z,same counts,CONFIRMED
+C2,single prisma migration row,20260604120000 only,2026-10-18T13:05Z,same row,CONFIRMED
+C3,editorial switch on and index_sync empty,writeEnabled true at 00:28Z,2026-10-18T13:05Z,still true and count 0,CONFIRMED
+C4,live deployment SHA unknown,UNVERIFIED in draft,2026-10-18T13:00Z,HTML fingerprint is not d4ee69a; GitHub Production success is a1733679; domain alias not read from Vercel API,LIKELY
+C5,27 columns outside Prisma,listed,2026-10-18T13:02Z,migrate diff drops those 27; application code uses them,CONFIRMED
+C6,keywords required in Prisma and nullable in PG,0 null rows,2026-10-18T13:03Z,attnotnull false; diff tool silent,CONFIRMED
+C7,no index_sync worker,code read,2026-10-18T13:06Z,no UPDATE of sync timestamps in ts or yml,CONFIRMED
+C8,lexical eval P@1 94 percent,run at 12:50Z,not rerun,historical lexical only,HISTORICAL
+C9,MCP 300s root cause,UNPROVEN,code trace only,still UNPROVEN,UNPROVEN
+C10,RLS off and session is owner,morning catalog,this round,current_user neondb_owner bypassrls; 0 policies; 0 of 139 tables with RLS,CONFIRMED
+C11,usage credits v2 migration applied because file exists,not previously separated,2026-10-18T13:05Z,six named tables absent,NOT_APPLIED
+C12,PITR 21600s and protected false,historical reference,not reread,UNVERIFIED do not repeat as live,UNVERIFIED

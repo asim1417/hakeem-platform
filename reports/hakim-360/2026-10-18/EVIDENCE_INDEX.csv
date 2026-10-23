@@ -1,0 +1,24 @@
+evidence_id,path,kind,measured_utc,contains_secrets,note
+E01,reports/hakim-360/2026-10-18/DATABASE_CATALOG.csv,column catalog,2026-10-18T11:41:39Z,no,every column in non-system schemas
+E02,reports/hakim-360/2026-10-18/SCHEMA_DIFF_MATRIX.csv,drift,2026-10-18T11:41:39Z,no,name and nullability
+E03,reports/hakim-360/2026-10-18/evidence/ENUM_DIFF.csv,enum drift,2026-10-18T11:41:39Z,no,BILLING and billing enums
+E04,reports/hakim-360/2026-10-18/evidence/constraints.csv,constraints,2026-10-18T11:41:39Z,no,validated
+E05,reports/hakim-360/2026-10-18/evidence/indexes.csv,indexes,2026-10-18T11:41:39Z,no,includes idx_scan
+E06,reports/hakim-360/2026-10-18/evidence/relations.csv,relations,2026-10-18T11:41:39Z,no,sizes and estimates
+E07,reports/hakim-360/2026-10-18/evidence/roles.csv,roles,2026-10-18T11:41:39Z,no,no passwords
+E08,reports/hakim-360/2026-10-18/evidence/grants.csv,grants,2026-10-18T11:41:39Z,no,role names only
+E09,reports/hakim-360/2026-10-18/evidence/key_counts.csv,counts,2026-10-18T11:41:39Z,no,exact counts
+E10,reports/hakim-360/2026-10-18/evidence/quality_checks.csv,checks,2026-10-18T11:41:39Z,no,aggregates
+E11,reports/hakim-360/2026-10-18/evidence/prisma_migrations_applied.csv,migrations,2026-10-18T11:41:39Z,no,checksum truncated
+E12,reports/hakim-360/2026-10-18/evidence/prisma_migration_dirs.txt,repo listing,2026-10-18T11:46:00Z,no,39 directories
+E13,reports/hakim-360/2026-10-18/sql/catalog-readonly.cjs,script,2026-10-18,no,read-only guard
+E14,reports/hakim-360/2026-10-18/API_CATALOG.csv,routes,2026-10-18T11:46:00Z,no,auth scan inconclusive where marked
+E15,reports/hakim-360/2026-10-18/MCP_TOOLS_CATALOG.csv,mcp tools,2026-10-18,no,names from source
+E16,live SQL phase3 and phase4,aggregates,2026-10-18T11:43:00Z,no,figures copied into markdown; raw json not committed to avoid accidental payload growth
+E17,HTTP bodies in the audit workspace,headers and robots,2026-10-18T11:41:00Z,no,not committed; results quoted
+E18,reports/hakim-360/2026-10-18/evidence/gap-closure-aggregates.json,aggregates,2026-10-18T12:47:46Z,no,counts only; no article text
+E19,reports/hakim-360/2026-10-18/SEARCH_EVALUATION.md,eval,2026-10-18T12:50:00Z,no,lexical path; raw log not committed
+E20,reports/hakim-360/2026-10-18/CI_CD_LINEAGE.md,actions aggregate,2026-10-18T12:46:00Z,no,2658 runs summarized; logs not stored
+E21,reports/hakim-360/2026-10-18/SCHEMA_SEMANTIC_DIFF.csv,prisma migrate diff classification,2026-10-18T13:02:00Z,no,diff SQL not committed
+E22,reports/hakim-360/2026-10-18/DEPLOYMENT_SOURCE_RECONCILIATION.md,deployment,2026-10-18T13:00:00Z,no,no secrets; deployment URL is a vercel.app host
+E23,reports/hakim-360/2026-10-18/evidence/unification-2026-10-18T1326Z.json,narrow re-read,2026-10-18T13:26:00Z,no,unit_version buckets and editorial controls and deploy ids; no article text and no connection strings

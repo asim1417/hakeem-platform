@@ -1,0 +1,18 @@
+flowchart LR
+  user[Browser or MCP client] --> cf[Cloudflare]
+  cf --> vercel[Vercel hakeem-platform iad1]
+  vercel --> clerk[Clerk]
+  vercel --> neon[Neon misty-base production neondb]
+  vercel --> os[OpenSearch UNVERIFIED live]
+  vercel --> blob[Azure or SharePoint or metadata-only UNVERIFIED]
+  actions[GitHub Actions] --> neon
+  actions --> os
+  neon --> publicSchema[public]
+  neon --> boe[boe]
+  neon --> uqn[uqn_fix and uqn_stage]
+  neon --> inject[boe_inject]
+  desk[Editorial desk] --> neon
+  desk -. no worker .-> indexSync[index_sync]
+  search[FTS plus BM25 file plus vector] --> neon
+  search --> os
+  rasd[Neon Rasd] -. no proven sync .-> neon

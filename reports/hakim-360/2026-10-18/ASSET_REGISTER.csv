@@ -1,0 +1,19 @@
+asset_id,name,role,environment,owner,source_of_truth,status,evidence,gap
+A01,GitHub asim1417/hakeem-platform,source and Actions,production repo,asim1417,git main@d4ee69a,CONFIRMED,created 2026-06-02T08:37:33Z; 1627 commits; first d02d786 2026-06-02,branch protection 403; secret name list 403
+A02,Vercel hakeem-platform,Next.js hosting,production behind Cloudflare,asim1417s-projects,live HTTP,PARTIAL,hakeemai.net 200; x-vercel-id iad1; health database up,deployment SHA UNVERIFIED this session
+A03,hakeemai.net,public domain,production,DNS not queried via registrar,HTTP,CONFIRMED,apex 200; www does not resolve,canonical host is vercel.app
+A04,Neon misty-base-66693229,primary PostgreSQL,production branch br-rapid-salad-aq782ea2,project owner,pg GUC neon.project_id and neon.branch_id,CONFIRMED,PG 17.11 primary endpoint ep-icy-rice-aqi3n69r database neondb,PITR retention and protected flag UNVERIFIED
+A05,Neon Rasd dark-mud-02624363,separate monitoring DB,historical register,unknown,prior infra note only,UNVERIFIED,no credential in this session,data exchange with Hakeem not proven
+A06,Supabase,old Actions target,historical,unknown,reports/hakeem-db-environment-audit.md,HISTORICAL,workflows now name NEON_DATABASE_URL and DATABASE_URL,current secret targets not readable
+A07,Hostinger MySQL,historical rulings source,historical,unknown,reports/judgments_import_status.md,HISTORICAL,judicial_cases.source column exists; values not dumped,whether it is still a live source UNVERIFIED
+A08,OpenSearch,external text index,referenced by workflows and code,unknown,OPENSEARCH_* secret names in workflows,PARTIAL,Index OpenSearch run success 2026-10-18T06:07:02Z main@09ceb8b,cluster health and doc counts UNVERIFIED
+A09,Clerk,auth,production,Clerk instance,health JSON clerkKeysAligned true sk_live/pk_live kinds only,CONFIRMED,sign-in redirect for /admin/legal,JWKS incident not re-tested
+A10,DOC_SERVICE_URL,document processor link,optional,unknown,app/documents/page.tsx,UNVERIFIED,code only; value not read,whether production sets it UNVERIFIED
+A11,Azure Blob or SharePoint,attachment bytes,optional,unknown,lib/modules/attachments/blob-storage.ts,UNVERIFIED,fallback metadata-only if env unset,which mode production uses UNVERIFIED
+A12,GitHub Actions,CI and data jobs,94 workflow files,repo,run list,PARTIAL,recent Deploy Readiness Check successes,full historical run archive not exported
+A13,pgvector,embeddings,inside Neon,same as A04,extensions vector 0.8.0,CONFIRMED,4 HNSW indexes; model text-embedding-3-small,11406 articles without article embedding
+A14,Editorial desk /admin/legal,review and publish,production code and tables,owner via editorial_config,live redirect plus SQL,CONFIRMED,writeEnabled true; queue tables empty,env kill switch UNVERIFIED
+A15,Legal core /dashboard/legal-core,library UI,production,app routes,live redirect to sign-in,CONFIRMED,lib/modules/legal-core,post-login behavior not exercised
+A16,Moyasar,payments,not configured per health,unknown,/api/health,CONFIRMED,moyasar غير مهيأة,billing enums exist in Postgres outside Prisma
+A17,BM25 file index,in-repo gzip index,build artifact,repo,lib/modules/legal-core/bm25.ts,PARTIAL,Rebuild BM25 from Neon success 2026-10-18T06:21:15Z main@827e623,file freshness versus later main commits not hashed here
+A18,Cloudflare,edge in front of Vercel,production,DNS/CDN owner,response header server cloudflare and HSTS,CONFIRMED,strict-transport-security preload,CDN config panel not opened

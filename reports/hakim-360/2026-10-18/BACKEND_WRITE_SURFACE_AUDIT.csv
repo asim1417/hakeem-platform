@@ -1,0 +1,23 @@
+path,kind,targets,gate,desk,effect,verified
+app/api/admin/legal/change-sets/route.ts,route POST,change_set editorial_change,requireEditorialApi propose,through desk,creates a draft change set,file exists
+app/api/admin/legal/change-sets/[id]/[action]/route.ts,route POST,verification review_decision index_sync,requireEditorialApi by action,through desk,submit decide publish revert withdraw,file exists
+app/api/admin/legal/intake/principles/[id]/decide/route.ts,route POST,desk tables and principles via intake,requireEditorialApi review,through desk,principle decision enters the desk,file exists
+app/api/admin/legal/intake/amendments/[opId]/decide/route.ts,route POST,uqn_fix and desk tables,requireEditorialApi review,through desk,amendment op decision,file exists
+app/api/admin/legal/settings/route.ts,route PUT,editorial_config,requireEditorialApi settings,through desk,new config version,file exists
+app/api/admin/legal/settings/switch/route.ts,route POST,editorial_config.controls,requireEditorialApi settings,through desk,toggles writeEnabled and requireMfa,file exists
+app/api/admin/legal/systems/[id]/route.ts,route GET,read,requireEditorialApi propose,not a write,read only in the handler export found,GET only
+app/api/admin/legal-core/preambles/route.ts,route POST,legal_systems preamble fields,LEGAL_CORE_ADMIN,bypass,direct preamble update,read this session
+app/api/admin/legal-core/reindex/route.ts,route POST,legal_articles.search_norm plus ALTER and CREATE INDEX,LEGAL_CORE_ADMIN,bypass,reindexSearchNorm,read this session
+app/api/legal-relations/route.ts,route POST,legal_relations,LEGAL_CORE_EDIT,bypass,createRelation,read this session
+app/api/legal-core/principles/[id]/route.ts,route PATCH,judicial_principles.reviewStatus,LEGAL_CORE_EDIT and 409 when deskIsLive,legacy bypass when desk off,blocked when desk live,prior read plus deskIsLive in code
+app/api/admin/users/[id]/route.ts,route PATCH,users role and status,USERS_MANAGE,bypass,permission change not corpus text,requireApiPermission confirmed earlier
+app/api/admin/roles/route.ts,route POST,role_permission,USERS_MANAGE,bypass,can grant LEGAL_CORE permissions,listed by file read of write-surface inventory
+lib/modules/editorial/service.ts enqueueIndexSync,internal,index_sync insert,desk publish transaction,through desk,queue row only,read this session
+.github/workflows/build-search-vector.yml,workflow_dispatch,search_norm and GIN,CONFIRM gate pattern on write workflows,bypass,can add column and fill it,workflow file
+.github/workflows/apply-rulings-search-norm.yml,workflow_dispatch,judicial_cases.search_norm,CONFIRM gate,bypass,applies migration sql then fills column,workflow file
+.github/workflows/import-hoqoqi.yml,workflow_dispatch,legal article corpus when apply,CONFIRM gate,bypass,bulk corpus write,workflow name and prior classification
+.github/workflows/seed-legal-library.yml,workflow_dispatch,prisma db push,CONFIRM gate,bypass,schema push,workflow file contains db push
+.github/workflows/migrate-judgments.yml,workflow_dispatch,prisma db push toward Supabase,separate from Neon confirm text,bypass,Supabase target current state unverified,workflow file
+app/mcp/route.ts tools,MCP,read search and rulings,withMcpAuth,no corpus write found,grant and audit rows only,code trace
+app/aman/mcp/route.ts,MCP,no database write,no auth by design,not desk,classification card only,prior read
+scripts and ingest SQL,manual,article text amendments embeddings,only when a human or workflow runs them,bypass,no app route updates legal_articles.content,grep of routes

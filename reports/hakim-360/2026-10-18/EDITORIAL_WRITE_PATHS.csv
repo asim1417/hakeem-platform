@@ -1,0 +1,7 @@
+path,method,table_or_effect,auth_gate,desk_queue,evidence,invoked_in_this_audit
+/api/admin/legal-core/preambles,POST,legal_systems preamble fields,LEGAL_CORE_ADMIN,no,app/api/admin/legal-core/preambles/route.ts,no
+/api/admin/legal-core/reindex,POST,UPDATE search_norm plus ALTER/CREATE INDEX if missing,LEGAL_CORE_ADMIN,no,lib/modules/legal-core/reindex.ts,no
+/api/legal-core/principles/[id],PATCH,returns 409 USE_EDITORIAL_DESK when desk is live,requireApiPermission,redirects when live,app/api/legal-core/principles/[id]/route.ts prior read,no
+/api/legal-relations,POST,createRelation into legal relation store,LEGAL_CORE_EDIT,no,app/api/legal-relations/route.ts,no
+editorial publishChangeSet,internal,writes desk tables then INSERT index_sync,desk actor and approvals,yes enqueue only,lib/modules/editorial/service.ts,no
+scripts and ingest SQL,manual,can write when executed,CONFIRM gate on many workflows,no,CI_CD_LINEAGE.md,no

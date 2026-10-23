@@ -1,0 +1,13 @@
+enum_name,finding,label,notes
+AuditSubject,pg_value_not_in_prisma,BILLING,
+BillingPeriod,pg_enum_not_in_prisma,,MONTHLY|YEARLY
+InvoiceStatus,pg_enum_not_in_prisma,,ISSUED|CANCELED
+InvoiceType,pg_enum_not_in_prisma,,TAX_INVOICE|SIMPLIFIED_TAX_INVOICE|CREDIT_NOTE
+OrderStatus,pg_enum_not_in_prisma,,PENDING|AWAITING_PAYMENT|PAID|FAILED|CANCELED|REFUNDED
+OrderType,pg_enum_not_in_prisma,,SUBSCRIPTION_NEW|SUBSCRIPTION_RENEWAL|SUBSCRIPTION_UPGRADE|SUBSCRIPTION_DOWNGRADE|POINTS_PACKAGE
+PaymentMethodStatus,pg_enum_not_in_prisma,,ACTIVE|EXPIRED|REMOVED
+PaymentStatus,pg_enum_not_in_prisma,,INITIATED|PENDING|PAID|FAILED|REFUNDED|PARTIALLY_REFUNDED
+RefundStatus,pg_enum_not_in_prisma,,PENDING|SUCCEEDED|FAILED
+SubscriptionStatus,pg_enum_not_in_prisma,,TRIALING|ACTIVE|PAST_DUE|PAYMENT_RETRY|CANCELED|EXPIRED|PAUSED
+WebhookStatus,pg_enum_not_in_prisma,,RECEIVED|PROCESSED|FAILED|DUPLICATE|DEAD_LETTER
+ZatcaStatus,pg_enum_not_in_prisma,,NOT_APPLICABLE|PENDING|REPORTED|CLEARED|FAILED

@@ -1,0 +1,17 @@
+tool,file,purpose,live_probe
+hakeem_search,app/mcp/route.ts,hybrid article search,unauthenticated GET /mcp returned 401 at 2026-10-18T11:44Z
+hakeem_get_article,app/mcp/route.ts,full article text,unauthenticated GET /mcp returned 401 at 2026-10-18T11:44Z
+hakeem_get_law,app/mcp/route.ts,law card,unauthenticated GET /mcp returned 401 at 2026-10-18T11:44Z
+hakeem_bylaw_links,app/mcp/route.ts,IMPLEMENTS links,unauthenticated GET /mcp returned 401 at 2026-10-18T11:44Z
+hakeem_expand_terms,app/mcp/route.ts,term expansion,unauthenticated GET /mcp returned 401 at 2026-10-18T11:44Z
+hakeem_search_rulings,app/mcp/route.ts,ruling search,unauthenticated GET /mcp returned 401 at 2026-10-18T11:44Z
+hakeem_verify_citation,app/mcp/route.ts,citation check,unauthenticated GET /mcp returned 401 at 2026-10-18T11:44Z
+hakeem_research,app/mcp/route.ts,research bundle,unauthenticated GET /mcp returned 401 at 2026-10-18T11:44Z
+hakeem_enumerate,app/mcp/route.ts,paged enumeration,unauthenticated GET /mcp returned 401 at 2026-10-18T11:44Z
+hakeem_get_articles_range,app/mcp/route.ts,article range,unauthenticated GET /mcp returned 401 at 2026-10-18T11:44Z
+hakeem_guide,app/mcp/route.ts,tool guide,unauthenticated GET /mcp returned 401 at 2026-10-18T11:44Z
+hakeem_get_ruling,app/mcp/route.ts,ruling fetch,unauthenticated GET /mcp returned 401 at 2026-10-18T11:44Z
+hakeem_enumerate_rulings,app/mcp/route.ts,ruling enumeration,unauthenticated GET /mcp returned 401 at 2026-10-18T11:44Z
+aman_triage_case,lib/mcp/aman-server.ts,public triage,unauthenticated GET /mcp returned 401 at 2026-10-18T11:44Z
+aman_render_service_card,lib/mcp/aman-server.ts,service card,unauthenticated GET /mcp returned 401 at 2026-10-18T11:44Z
+aman_get_consultation_link,lib/mcp/aman-server.ts,consultation link,unauthenticated GET /mcp returned 401 at 2026-10-18T11:44Z

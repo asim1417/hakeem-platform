@@ -1,0 +1,2 @@
+id,migration_name,checksum,finished_at,rolled_back_at,started_at,applied_steps_count,logs
+cf87861e-bed0-465f-8644-8bba7a514f82,20260604120000_add_judicial_cases,b2fd85874fb62dab…,Thu Jun 04 2026 12:58:11 GMT+0000 (Coordinated Universal Time),,Thu Jun 04 2026 12:58:11 GMT+0000 (Coordinated Universal Time),0,
