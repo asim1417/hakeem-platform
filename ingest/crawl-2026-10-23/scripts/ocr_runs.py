@@ -7,8 +7,11 @@
 (المعرّف boe26-<sha256("att|"+href)[:24]> كما في ingest_attachments.py حتى لا يتكرر ما زُحف قبلًا).
 النص الآلي تقريبي: الأرقام والتواريخ تُقرأ خطأً أحيانًا؛ لا يُعتمد نصًّا قانونيًّا إلا بعد مطابقته بالصورة.
 """
-import argparse, hashlib, json, pathlib, subprocess, time
+import argparse, hashlib, json, os, pathlib, subprocess, time
 from concurrent.futures import ThreadPoolExecutor
+
+# tesseract يفتح خيوط OpenMP لكل عملية؛ مع عدة عمال يتزاحم على الأنوية ويبطؤ أضعافًا، فنقيّده بخيط واحد لكل عملية
+ENV = {**os.environ, "OMP_THREAD_LIMIT": "1"}
 
 KIND = {"issuance_instrument": "amending_instrument", "amending_instrument": "amending_instrument", "original_document": "original_document", "article_attachment": "article_attachment"}
 
@@ -18,8 +21,11 @@ def aid(href: str) -> str:
 
 
 def ocr(path: pathlib.Path) -> str:
-    r = subprocess.run(["tesseract", str(path), "-", "-l", "ara", "--psm", "6"], capture_output=True, text=True, timeout=180)
-    return r.stdout.strip()
+    try:
+        r = subprocess.run(["tesseract", str(path), "-", "-l", "ara", "--psm", "6"], capture_output=True, text=True, timeout=600, env=ENV)
+        return r.stdout.strip()
+    except subprocess.TimeoutExpired:
+        return ""  # تُترك فارغة وتُعدّ في empty_ocr؛ لا تُسقط الدفعة
 
 
 def main() -> int:
