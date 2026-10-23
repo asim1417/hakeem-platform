@@ -1,6 +1,6 @@
 {
-  "measuredAt": "2026-10-16T02:16:31.389Z",
-  "mode": "dry-run",
+  "measuredAt": "2026-10-16T03:26:47.128Z",
+  "mode": "apply",
   "segmentVersion": "segment-rules-v3",
   "embedVersion": "seg-embed-v1",
   "rulings": 51105,
@@ -43,6 +43,10 @@
       "low": 0.93
     }
   },
-  "tableExists": false,
-  "storedChunks": 0
+  "target": "production",
+  "calls": 10,
+  "written": 539,
+  "skipped": 92901,
+  "failed": 0,
+  "stoppedAtCap": false
 }
