@@ -8,6 +8,7 @@ ev AS (SELECT DISTINCT ON (unit_id) unit_id, body FROM unit_version WHERE valid_
 -- مقارنة النص الساري بنص هيئة الخبراء (نفس التطبيع الذي يبني search_norm).
 -- منذ 22/10: بالترقيم الحالي لا بجدول boe.diff (لقطة 16/10 سبقت إعادة الترقيم)، وصفحة الهيئة السارية لكل نظام
 -- عبر boe.current_match، وأقرب وحدة إذا تكرر رقم المادة في الصفحة (صفحات تجمع أكثر من وثيقة)، ويُستثنى ما حالته عندنا مستبدل/ملغى.
+-- الوحدات التي أسقط الزاحف رقمها تأخذ رقمها من boe.unit_number_fix (مطابقة المتن، 23/10).
 mt AS (SELECT DISTINCT ON (m.hakeem_system_id) m.hakeem_system_id sid, l.id law_id
        FROM boe.current_match m JOIN boe.law l ON l.guid = m.guid
        WHERE m.hakeem_system_id IS NOT NULL ORDER BY m.hakeem_system_id, (l.status_at_source = 'ساري') DESC, l.issued_gregorian DESC NULLS LAST),
@@ -18,7 +19,9 @@ cmp AS (
          EXISTS (SELECT 1 FROM boe.amendment_note n WHERE n.law_id = u.law_id AND n.unit_seq = u.seq) AS has_note
   FROM mt
   JOIN legal_articles x ON x."legalSystemId" = mt.sid AND x."articleBis" < 100
-  JOIN boe.unit u ON u.law_id = mt.law_id AND u.article_number = x."articleNumber" AND u.is_bis = (x."articleBis" > 0)
+  JOIN boe.unit u ON u.law_id = mt.law_id
+  LEFT JOIN boe.unit_number_fix f ON f.law_id = u.law_id AND f.seq = u.seq
+  JOIN LATERAL (SELECT coalesce(u.article_number, f.article_number) n, CASE WHEN u.article_number IS NULL THEN coalesce(f.is_bis, false) ELSE u.is_bis END b) en ON en.n = x."articleNumber" AND en.b = (x."articleBis" > 0)
   LEFT JOIN ev ON ev.unit_id = x.id
   LEFT JOIN lw ON lw.object_id = mt.sid
   WHERE coalesce(lw.verified_status, '') NOT IN ('مستبدل', 'ملغى', 'ملغاة', 'سجل مخلوط — لا يُعرض')

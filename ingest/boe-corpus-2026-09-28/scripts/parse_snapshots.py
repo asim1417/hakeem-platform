@@ -94,9 +94,36 @@ ORDINAL_TEENS = {"حادي": 1, "ثاني": 2, "ثالث": 3, "رابع": 4, "خ
 HUNDREDS.update({"المئتان": 200, "المائتان": 200})
 
 
+def infer_unit_numbers(units: list[dict], flags: list[str]) -> None:
+    """وحدات بلا رقم بين وحدتين مرقمتين: إن ساوى عددها فجوة الترقيم فهي مواد متتابعة فقدت أرقامها لأن عنوان الباب
+    أخذ مكان «المادة …» (أول مادة في كل باب). تُرقَّم بالتتابع وتُعلَّم number_inferred، ولا يُستنتج رقم لوحدة عنوانها
+    جدول/مرفق/ملحق/نموذج أو متنها أقصر من 20 حرفًا، ولا عند فجوة لا تطابق العدد. (HKM-030، 23/10/2026)"""
+    skip = re.compile(r"جدول|مرفق|ملحق|نموذج|إشارات|الاشارات")
+    i, n = 0, len(units)
+    while i < n:
+        if units[i]["article_number"] is not None or units[i]["is_bis"]:
+            i += 1
+            continue
+        j = i
+        while j < n and units[j]["article_number"] is None and not units[j]["is_bis"]:
+            j += 1
+        run = units[i:j]
+        prev_n = next((u["article_number"] for u in reversed(units[:i]) if u["article_number"] is not None and not u["is_bis"]), 0)
+        next_n = next((u["article_number"] for u in units[j:] if u["article_number"] is not None and not u["is_bis"]), None)
+        expected = (next_n - prev_n - 1) if next_n is not None else len(run)
+        if expected == len(run) and all(not skip.search(u["heading"] or "") and len(u["body"]) >= 20 for u in run):
+            for k, u in enumerate(run, start=1):
+                u["article_number"] = prev_n + k
+                u["number_inferred"] = True
+                flags.append(f"inferred:{u['seq']}={prev_n + k}")
+        i = j
+
+
 def article_number(heading: str) -> tuple[int | None, bool]:
     """رقم المادة الأساسي من عنوانها. يقف عند أول كلمة ليست عددًا (ما بعدها عنوان فرعي)."""
     h = norm(heading.translate(AR_DIGITS))
+    if re.fullmatch(r"\s*[\(\[]\s*(?:ال)?ماد[هة][^\)\]]*[\)\]]\s*[:：.]?\s*", h):
+        h = re.sub(r"[\(\)\[\]]", " ", h)  # «(المادة الأولى)»: الأقواس زينة لا بنية
     bis = bool(re.search(r"مكرر", h))
     m = re.search(r"(?:ال)?ماد[هة]\s*(?:رقم\s*)?[\(\[]?\s*(\d+)", h)
     if m:
@@ -341,7 +368,7 @@ def parse_page(rec: dict, cat: dict | None) -> dict:
                 flags.append(f"unnumbered:{seq}")
             cls = " ".join(c for c in (a.get("class") or "").split() if c not in ("article_item", "no_alternate"))
             units.append({"seq": seq, "heading": heading, "article_number": num, "is_bis": bis, "body": body,
-                          "body_html": body_html, "body_sha256": hashlib.sha256(body.encode()).hexdigest(), "css_class": cls})
+                          "body_html": body_html, "body_sha256": hashlib.sha256(body.encode()).hexdigest(), "css_class": cls, "number_inferred": False})
             seen_notes: set[str] = set()
             k = 0
             for pop in a.cssselect(".article_item_popup .HTMLContainer"):
@@ -352,6 +379,7 @@ def parse_page(rec: dict, cat: dict | None) -> dict:
                 k += 1
                 for c in classify_note(nt):
                     notes.append({"unit_seq": seq, "note_seq": k, "note_text": nt, **c})
+        infer_unit_numbers(units, flags)
     else:
         # صفحة نصها كتلة واحدة بلا div.article_item: يُحفظ النص كاملًا كتلًا، وتُوسم للمراجعة ولا تُخمَّن المواد
         conts = [c for c in doc.cssselect("div.HTMLContainer") if not any("article_item_popup" in (p.get("class") or "") for p in c.iterancestors())]
