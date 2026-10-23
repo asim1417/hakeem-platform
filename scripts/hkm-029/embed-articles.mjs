@@ -109,12 +109,13 @@ export async function runEmbed(client, manifest, deps, opts) {
   // ٢) معاملة واحدة: قفل، وإعادة البصمة، وشرط عدم التكرار، وإدراج، وتحقق.
   const ids = items.map((x) => x.id);
   const hashes = items.map((x) => x.hash);
+  const allIds = allItems.map((x) => x.id); // القفل وبصمة الحالة على القائمة المجمّدة كلها (state_md5 حُسب عليها)
   await client.query("BEGIN");
   try {
-    const locked = await client.query(`SELECT id FROM legal_articles WHERE id = ANY($1::text[]) FOR SHARE`, [ids]);
-    if (locked.rowCount !== ids.length) throw new Error("توقف: مادة غائبة عند القفل");
-    const st = (await client.query(STATE_FOR_IDS_SQL, [ids])).rows[0];
-    if (st.n !== ids.length || st.state_md5 !== manifest.state_md5) throw new Error("توقف: نص مادة تغيّر بين القراءة والكتابة");
+    const locked = await client.query(`SELECT id FROM legal_articles WHERE id = ANY($1::text[]) FOR SHARE`, [allIds]);
+    if (locked.rowCount !== allIds.length) throw new Error("توقف: مادة غائبة عند القفل");
+    const st = (await client.query(STATE_FOR_IDS_SQL, [allIds])).rows[0];
+    if (st.n !== allIds.length || st.state_md5 !== manifest.state_md5) throw new Error("توقف: نص مادة تغيّر بين القراءة والكتابة");
     // شرط عدم التكرار على أحدث نسخة (نسخة أقدم بالبصمة نفسها تحت نسخة أحدث مختلفة تُكتب فوقها إضافةً).
     const latest = await latestHashes(client, ids);
     if (items.some((x) => latest.get(x.id) === x.hash)) throw new Error("توقف: أحدث نسخة بالبصمة نفسها موجودة (تشغيل ثانٍ؟)");
