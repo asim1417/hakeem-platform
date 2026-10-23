@@ -1,0 +1,15 @@
+{
+ "started_at": "2026-10-23T15:35:57Z",
+ "ended_at": "2026-10-23T15:37:50Z",
+ "ended": true,
+ "targets": 16,
+ "done": 16,
+ "ok": 1,
+ "failed": 15,
+ "pace_ms": 3000,
+ "offset": 0,
+ "limit": 0,
+ "max_pages": 400,
+ "deadline_min": 60,
+ "origin": "github-actions"
+}
