@@ -104,13 +104,23 @@ async function main() {
   const c = new Client({ connectionString: URL_ });
   await c.connect();
   try {
-    // نسخة قديمة بالبصمة الصحيحة تحت نسخة أحدث قديمة: الاختيار يضم المادة، وشرط عدم التكرار يرفض.
+    // (أ) نسخة قديمة بالبصمة الصحيحة تحت نسخة أحدث قديمة: الاختيار يضم المادة وتُكتب فوقها إضافةً (الأحدث هي المعتبرة).
+    // (ب) مادة بهاتف: بصمة الكود (بعد الحجب) ≠ بصمة SQL، وأحدث نسختها تحمل بصمة الكود → «قديمة» عند SQL، مضمَّنة فعلًا عند الكود → تُتخطّى.
     await setup(c);
     const fp5 = sha("نظام تجريبي\nالمادة 5\nنص الخامسة له نسخة قديمة\ntext-embedding-3-small");
     await c.query(`INSERT INTO embedding_version (id, owner_type, owner_id, embedding, model, content_hash, created_at) VALUES ('v5old', 'article', 'a5', $1::vector, 'text-embedding-3-small', $2, now() - interval '1 day')`, [`[${vec("a5").join(",")}]`, fp5]);
+    const phoneContent = "للتواصل على الرقم 0501234567 بشأن الطلب";
+    await c.query(`INSERT INTO legal_articles VALUES ('a10', 'نظام تجريبي', 10, 0, 'المادة 10', $1, 's1')`, [phoneContent]);
+    const fp10 = real.fingerprint(real.buildText({ systemName: "نظام تجريبي", title: "المادة 10", content: phoneContent }));
+    ok(fp10 !== sha(`نظام تجريبي\nالمادة 10\n${phoneContent}\ntext-embedding-3-small`), "بصمة الكود بعد حجب الهاتف تختلف عن بصمة SQL");
+    await c.query(`INSERT INTO embedding_version (id, owner_type, owner_id, embedding, model, content_hash) VALUES ('v10', 'article', 'a10', $1::vector, 'text-embedding-3-small', $2)`, [`[${vec("a10").join(",")}]`, fp10]);
     const m0 = await freeze(c);
-    await rejects(() => runEmbed(c, m0, { ...real, embed: async (texts) => texts.map(vec) }, { apply: true, approvedRows: m0.selected, url: URL_ }), /بالبصمة نفسها/, "نسخة بالبصمة نفسها موجودة = لا كتابة");
-    ok((await versions(c)) === 3, "لا صف جديد بعد رفض التكرار");
+    ok(m0.selected === 10 && m0.stale === 6, `الاختيار يعدّ a5 وa10 قديمتين (${m0.selected}/${m0.stale})`);
+    const res0 = await runEmbed(c, m0, { ...real, embed: async (texts) => texts.map(vec) }, { apply: true, approvedRows: m0.selected, url: URL_ });
+    ok(res0.already_current === 1 && res0.written === 9 && (await versions(c)) === 4 + 9, "المضمَّنة فعلًا ببصمة الكود تُتخطّى، والباقي يُكتب (النسخة القديمة تحت الأحدث لا تمنع)");
+    const l5 = (await c.query(`SELECT content_hash FROM embedding_version WHERE owner_id = 'a5' ORDER BY created_at DESC LIMIT 1`)).rows[0].content_hash;
+    ok(l5 === fp5 && (await c.query(`SELECT count(*)::int AS n FROM embedding_version WHERE owner_id = 'a10'`)).rows[0].n === 1, "a5: أحدث نسخة بالبصمة الصحيحة؛ a10: بلا صف جديد");
+    await rejects(() => runEmbed(c, m0, { ...real, embed: async (texts) => texts.map(vec) }, { apply: true, approvedRows: m0.selected, url: URL_ }), /تغيّر منذ التجميد/, "التشغيل الثاني بالقائمة نفسها مرفوض");
 
     await setup(c);
     const m = await freeze(c);

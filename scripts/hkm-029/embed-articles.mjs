@@ -75,10 +75,10 @@ export async function runEmbed(client, manifest, deps, opts) {
   const live = await client.query("SELECT current_database() AS db");
   if (live.rows[0].db !== gate.database) throw new Error("مرفوض: القاعدة المتصلة لا تطابق رابط الاتصال");
 
-  const { items } = await readSelection(client, manifest, deps);
-  const sqlMismatch = items.filter((x) => x.hash !== x.sqlHash).length;
-  const chars = items.reduce((n, x) => n + x.text.length, 0);
-  const summary = { target: gate.target, selected: items.length, stale: manifest.stale, missing: manifest.missing, sql_hash_mismatch: sqlMismatch, chars, approx_tokens: Math.ceil(chars / 2.5), model: EMBED_MODEL };
+  const { items: allItems } = await readSelection(client, manifest, deps);
+  const sqlMismatch = allItems.filter((x) => x.hash !== x.sqlHash).length;
+  const chars = allItems.reduce((n, x) => n + x.text.length, 0);
+  const summary = { target: gate.target, selected: allItems.length, stale: manifest.stale, missing: manifest.missing, sql_hash_mismatch: sqlMismatch, chars, approx_tokens: Math.ceil(chars / 2.5), model: EMBED_MODEL };
 
   if (!opts.apply) {
     // تجربة المسار كاملًا بلا كتابة: نداء واحد قصير يثبت المفتاح والنموذج والطول.
@@ -86,6 +86,14 @@ export async function runEmbed(client, manifest, deps, opts) {
     assertVectors(probe, 1);
     return { ...summary, mode: "dry-run", probe: "ok", written: 0 };
   }
+
+  // ٠) المضمَّن فعلًا: أحدث نسخة للمادة تحمل بصمة الكود نفسها (نص التضمين بعد حجب الشخصي يختلف عن بصمة SQL
+  //    التقريبية، فيعدّه الاختيار «قديمًا» وهو حديث). يُتخطّى بلا كتابة بدل إيقاف الدفعة كلها.
+  const current = await latestHashes(client, allItems.map((x) => x.id));
+  const items = allItems.filter((x) => current.get(x.id) !== x.hash);
+  const alreadyCurrent = allItems.length - items.length;
+  if (alreadyCurrent) console.error(`[HKM-030] مضمَّنة فعلًا ببصمة الكود (تُتخطّى): ${alreadyCurrent}`);
+  if (!items.length) return { ...summary, mode: "apply", already_current: alreadyCurrent, written: 0 };
 
   // ١) كل المتجهات قبل أي كتابة: دفعات بسقف العدد والحروف، وإعادة محاولة للدفعة الفاشلة، وتقدّم بلا نصوص.
   const vectors = [];
@@ -107,11 +115,9 @@ export async function runEmbed(client, manifest, deps, opts) {
     if (locked.rowCount !== ids.length) throw new Error("توقف: مادة غائبة عند القفل");
     const st = (await client.query(STATE_FOR_IDS_SQL, [ids])).rows[0];
     if (st.n !== ids.length || st.state_md5 !== manifest.state_md5) throw new Error("توقف: نص مادة تغيّر بين القراءة والكتابة");
-    const dup = await client.query(
-      `SELECT count(*)::int AS n FROM embedding_version WHERE owner_type = 'article' AND owner_id = ANY($1::text[]) AND content_hash = ANY($2::text[])`,
-      [ids, hashes],
-    );
-    if (dup.rows[0].n !== 0) throw new Error("توقف: نسخة بالبصمة نفسها موجودة (تشغيل ثانٍ؟)");
+    // شرط عدم التكرار على أحدث نسخة (نسخة أقدم بالبصمة نفسها تحت نسخة أحدث مختلفة تُكتب فوقها إضافةً).
+    const latest = await latestHashes(client, ids);
+    if (items.some((x) => latest.get(x.id) === x.hash)) throw new Error("توقف: أحدث نسخة بالبصمة نفسها موجودة (تشغيل ثانٍ؟)");
     for (const part of chunk(items.map((x, i) => ({ ...x, v: vectors[i] })), 200)) {
       await client.query(
         `INSERT INTO embedding_version (id, owner_type, owner_id, embedding, model, content_hash, created_at)
@@ -136,7 +142,17 @@ export async function runEmbed(client, manifest, deps, opts) {
     await client.query("ROLLBACK").catch(() => {});
     throw error;
   }
-  return { ...summary, mode: "apply", written: items.length };
+  return { ...summary, mode: "apply", already_current: alreadyCurrent, written: items.length };
+}
+
+/** أحدث بصمة لكل مادة من embedding_version (متجه غير فارغ). */
+async function latestHashes(client, ids) {
+  const r = await client.query(
+    `SELECT DISTINCT ON (owner_id) owner_id, content_hash FROM embedding_version
+     WHERE owner_type = 'article' AND embedding IS NOT NULL AND owner_id = ANY($1::text[]) ORDER BY owner_id, created_at DESC`,
+    [ids],
+  );
+  return new Map(r.rows.map((x) => [x.owner_id, x.content_hash]));
 }
 
 /** الأدوات الحقيقية: buildEmbeddingText وembeddingFingerprint وembedBatch من كود المنصة. */
