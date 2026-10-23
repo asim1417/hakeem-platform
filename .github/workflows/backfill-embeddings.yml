@@ -80,6 +80,9 @@ jobs:
       - name: "🛡️ حارس هدف Neon (يمنع الكتابة على قاعدة خاطئة)"
         run: npx tsx scripts/verify-neon-target.ts
       - name: Backfill embeddings
+        env:
+          # HKM-030: ~12 ألف متجه (1536 بعدًا) تُولَّد كلها في الذاكرة قبل معاملة الكتابة الواحدة.
+          NODE_OPTIONS: --max-old-space-size=4096
         run: |
           ARGS="--target ${{ inputs.target }}"
           if [ "${{ inputs.scope }}" = "all" ]; then ARGS="$ARGS --all"; fi
