@@ -4,7 +4,8 @@
  * الاختيار (SELECTION_CTE) هو نفسه الذي تُجمَّد عليه القائمة بقراءة الإنتاج، حرفًا:
  *   - النص المضمَّن = النص الساري (HKM-030): أحدث unit_version.body بـ valid_from <= now() للمادة،
  *     وإلا legal_articles.content — توأم searchableText في lib/modules/legal-core/effective-text.ts.
- *   - stale: للمادة متجه فعّال (أحدث embedding_version، وإلا embeddings) بُني من نص غير نصها الساري.
+ *   - stale: للمادة متجه فعّال (أحدث embedding_version، وإلا embeddings) بُني من نص غير نصها الساري؛ وتُعدّ نسخة
+ *     embedding_version حديثة أيضًا إن كان تاريخها بعد آخر تغيير للمادة (updatedAt أو أحدث نسخة سارية)، لأن بصمة SQL لا تحجب الشخصي (HKM-033).
  *   - missing: مادة (articleBis < 100) بلا أي متجه.
  *   قرار المالك 22/10/2026: «نفذها كلها» — كل القديمة والمفقودة.
  * نص التضمين في SQL مكافئ لـ buildEmbeddingText (حذف التطويل)؛ والبصمة المكتوبة تُحسب بالكود نفسه.
@@ -34,7 +35,8 @@ const EMBED_TEXT = `concat_ws(E'\\n', nullif(coalesce(s.name, a."lawName"), ''),
 export const SELECTION_CTE = `WITH a AS (
   SELECT a.id, a."lawName" AS law, a."articleNumber" AS n, a."articleBis" AS b,
          ${IN_FORCE_BODY} AS body,
-         ${EMBED_TEXT} AS t
+         ${EMBED_TEXT} AS t,
+         greatest(a."updatedAt", coalesce((SELECT max(x.created_at) FROM unit_version x WHERE x.unit_id = a.id AND x.valid_from <= now()), a."updatedAt")) AS changed_at
   FROM legal_articles a LEFT JOIN legal_systems s ON s.id = a."legalSystemId"
   ${IN_FORCE_JOIN}
   WHERE a."articleBis" < 100
@@ -46,12 +48,13 @@ h AS (
   FROM a
 ),
 v AS (
-  SELECT DISTINCT ON (owner_id) owner_id, content_hash FROM embedding_version
+  SELECT DISTINCT ON (owner_id) owner_id, content_hash, created_at FROM embedding_version
   WHERE owner_type = 'article' AND embedding IS NOT NULL ORDER BY owner_id, created_at DESC
 ),
 st AS (
   SELECT h.id, h.law, h.n, h.b, h.body, h.t, h.vfp,
-    CASE WHEN v.owner_id IS NOT NULL THEN (CASE WHEN v.content_hash = h.vfp THEN 'fresh' ELSE 'stale' END)
+    -- HKM-033: بصمة SQL تقريبية (بلا حجب الشخصي)؛ فإن اختلفت والنسخة أحدث من آخر تغيير للمادة (updatedAt أو نسخة سارية) فهي حديثة.
+    CASE WHEN v.owner_id IS NOT NULL THEN (CASE WHEN v.content_hash = h.vfp OR v.created_at >= h.changed_at THEN 'fresh' ELSE 'stale' END)
          WHEN e.owner_id IS NOT NULL THEN (CASE WHEN e.content_hash IN (h.cur, h.leg) THEN 'fresh' ELSE 'stale' END)
          ELSE 'missing' END AS status
   FROM h LEFT JOIN v ON v.owner_id = h.id
