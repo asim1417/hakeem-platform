@@ -223,11 +223,11 @@
   "g4_missing": [
    {
     "name": "guard_before",
-    "sql": "WITH m AS (SELECT cm.hakeem_system_id sid, l.id law_id, l.url, l.name boe_name FROM boe.current_match cm JOIN boe.law l ON l.guid=cm.guid WHERE cm.hakeem_system_id IS NOT NULL AND l.status_at_source='ساري' AND l.id<>'boe26-04d6ad221b2a7ef079b67a64'),\nu AS (SELECT m.sid, m.url, m.boe_name, u.law_id, u.seq, u.heading, u.body, coalesce(f.article_number, u.article_number) n, coalesce(f.is_bis, u.is_bis) bis\n      FROM m JOIN boe.unit u ON u.law_id=m.law_id LEFT JOIN boe.unit_number_fix f ON f.law_id=u.law_id AND f.seq=u.seq\n      WHERE coalesce(f.article_number, u.article_number) IS NOT NULL AND coalesce(f.article_number, u.article_number)>0 AND coalesce(f.method,'') <> 'not_article' AND length(u.body)>=20\n        AND u.body !~ '^\\s*-?\\s*(أُ?ضيفت هذه المادة|أضيفت هذه المادة|إضافة مادة تحمل الرقم|تم تعديل هذه المادة|عُدلت هذه المادة|استُبدلت|ألغيت هذه المادة|أُلغيت هذه المادة)'),\nmiss AS (SELECT u.*, s.name law, s.classification, s.preamble_royal_decree instr FROM u JOIN legal_systems s ON s.id=u.sid\n   WHERE NOT EXISTS (SELECT 1 FROM legal_articles a WHERE a.\"legalSystemId\"=u.sid AND a.\"articleNumber\"=u.n)\n     AND (SELECT count(*) FROM u u2 WHERE u2.law_id=u.law_id AND u2.n=u.n AND u2.bis=u.bis)=1)\nSELECT CASE WHEN (SELECT count(*) FROM miss)={N_MISS} AND (SELECT count(*) FROM miss WHERE bis)=0\n  AND (SELECT count(*) FROM legal_text_provenance WHERE source_id=$hk$hkm034-2026-10-23-missing$hk$)=0\nTHEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard"
+    "sql": "WITH m AS (SELECT cm.hakeem_system_id sid, l.id law_id, l.url, l.name boe_name FROM boe.current_match cm JOIN boe.law l ON l.guid=cm.guid WHERE cm.hakeem_system_id IS NOT NULL AND l.status_at_source='ساري' AND l.id<>'boe26-04d6ad221b2a7ef079b67a64'),\nu0 AS (SELECT m.sid, m.url, m.boe_name, u.law_id, u.seq, u.heading, u.body, coalesce(f.article_number, u.article_number) n, coalesce(f.is_bis, u.is_bis) bis\n      FROM m JOIN boe.unit u ON u.law_id=m.law_id LEFT JOIN boe.unit_number_fix f ON f.law_id=u.law_id AND f.seq=u.seq\n      WHERE coalesce(f.article_number, u.article_number) IS NOT NULL AND coalesce(f.article_number, u.article_number)>0 AND coalesce(f.method,'') <> 'not_article'),\nu AS (SELECT u0.*, count(*) OVER (PARTITION BY law_id, n, bis) dup FROM u0),\nmiss AS (SELECT u.*, s.name law, s.classification, s.preamble_royal_decree instr FROM u JOIN legal_systems s ON s.id=u.sid\n   WHERE u.dup=1 AND length(u.body)>=20\n     AND u.body !~ '^\\s*-?\\s*(أُ?ضيفت هذه المادة|أضيفت هذه المادة|إضافة مادة تحمل الرقم|تم تعديل هذه المادة|عُدلت هذه المادة|استُبدلت|ألغيت هذه المادة|أُلغيت هذه المادة)'\n     AND NOT EXISTS (SELECT 1 FROM legal_articles a WHERE a.\"legalSystemId\"=u.sid AND a.\"articleNumber\"=u.n))\nSELECT CASE WHEN (SELECT count(*) FROM miss)=2 AND (SELECT count(*) FROM miss WHERE bis)=0\n  AND (SELECT count(*) FROM legal_text_provenance WHERE source_id=$hk$hkm034-2026-10-23-missing$hk$)=0\nTHEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard"
    },
    {
     "name": "insert",
-    "sql": "WITH m AS (SELECT cm.hakeem_system_id sid, l.id law_id, l.url, l.name boe_name FROM boe.current_match cm JOIN boe.law l ON l.guid=cm.guid WHERE cm.hakeem_system_id IS NOT NULL AND l.status_at_source='ساري' AND l.id<>'boe26-04d6ad221b2a7ef079b67a64'),\nu AS (SELECT m.sid, m.url, m.boe_name, u.law_id, u.seq, u.heading, u.body, coalesce(f.article_number, u.article_number) n, coalesce(f.is_bis, u.is_bis) bis\n      FROM m JOIN boe.unit u ON u.law_id=m.law_id LEFT JOIN boe.unit_number_fix f ON f.law_id=u.law_id AND f.seq=u.seq\n      WHERE coalesce(f.article_number, u.article_number) IS NOT NULL AND coalesce(f.article_number, u.article_number)>0 AND coalesce(f.method,'') <> 'not_article' AND length(u.body)>=20\n        AND u.body !~ '^\\s*-?\\s*(أُ?ضيفت هذه المادة|أضيفت هذه المادة|إضافة مادة تحمل الرقم|تم تعديل هذه المادة|عُدلت هذه المادة|استُبدلت|ألغيت هذه المادة|أُلغيت هذه المادة)'),\nmiss AS (SELECT u.*, s.name law, s.classification, s.preamble_royal_decree instr FROM u JOIN legal_systems s ON s.id=u.sid\n   WHERE NOT EXISTS (SELECT 1 FROM legal_articles a WHERE a.\"legalSystemId\"=u.sid AND a.\"articleNumber\"=u.n)\n     AND (SELECT count(*) FROM u u2 WHERE u2.law_id=u.law_id AND u2.n=u.n AND u2.bis=u.bis)=1)\nINSERT INTO legal_articles (id, \"legalSystemId\", \"lawName\", classification, \"articleNumber\", \"articleBis\", title, content, \"royalDecree\", \"effectiveFrom\", status, \"createdAt\", \"updatedAt\", search_norm)\nSELECT 'hkm34a-'||left(encode(sha256(convert_to('missing|'||sid||'|'||n||'|'||bis::int,'UTF8')),'hex'),24), sid, law, classification, n, CASE WHEN bis THEN 1 ELSE 0 END, 'المادة '||n, body, instr, NULL, 'سارية', now(), now(),\n  uqn_fix.hkm30_search_norm(law, 'المادة '||n, body, ARRAY[]::text[], classification, NULL)\nFROM miss ORDER BY law, n"
+    "sql": "WITH m AS (SELECT cm.hakeem_system_id sid, l.id law_id, l.url, l.name boe_name FROM boe.current_match cm JOIN boe.law l ON l.guid=cm.guid WHERE cm.hakeem_system_id IS NOT NULL AND l.status_at_source='ساري' AND l.id<>'boe26-04d6ad221b2a7ef079b67a64'),\nu0 AS (SELECT m.sid, m.url, m.boe_name, u.law_id, u.seq, u.heading, u.body, coalesce(f.article_number, u.article_number) n, coalesce(f.is_bis, u.is_bis) bis\n      FROM m JOIN boe.unit u ON u.law_id=m.law_id LEFT JOIN boe.unit_number_fix f ON f.law_id=u.law_id AND f.seq=u.seq\n      WHERE coalesce(f.article_number, u.article_number) IS NOT NULL AND coalesce(f.article_number, u.article_number)>0 AND coalesce(f.method,'') <> 'not_article'),\nu AS (SELECT u0.*, count(*) OVER (PARTITION BY law_id, n, bis) dup FROM u0),\nmiss AS (SELECT u.*, s.name law, s.classification, s.preamble_royal_decree instr FROM u JOIN legal_systems s ON s.id=u.sid\n   WHERE u.dup=1 AND length(u.body)>=20\n     AND u.body !~ '^\\s*-?\\s*(أُ?ضيفت هذه المادة|أضيفت هذه المادة|إضافة مادة تحمل الرقم|تم تعديل هذه المادة|عُدلت هذه المادة|استُبدلت|ألغيت هذه المادة|أُلغيت هذه المادة)'\n     AND NOT EXISTS (SELECT 1 FROM legal_articles a WHERE a.\"legalSystemId\"=u.sid AND a.\"articleNumber\"=u.n))\nINSERT INTO legal_articles (id, \"legalSystemId\", \"lawName\", classification, \"articleNumber\", \"articleBis\", title, content, \"royalDecree\", \"effectiveFrom\", status, \"createdAt\", \"updatedAt\", search_norm)\nSELECT 'hkm34a-'||left(encode(sha256(convert_to('missing|'||sid||'|'||n||'|'||bis::int,'UTF8')),'hex'),24), sid, law, classification, n, CASE WHEN bis THEN 1 ELSE 0 END, 'المادة '||n, body, instr, NULL, 'سارية', now(), now(),\n  uqn_fix.hkm30_search_norm(law, 'المادة '||n, body, ARRAY[]::text[], classification, NULL)\nFROM miss ORDER BY law, n"
    },
    {
     "name": "provenance",
@@ -239,7 +239,7 @@
    },
    {
     "name": "guard_after",
-    "sql": "SELECT CASE WHEN (SELECT count(*) FROM legal_text_provenance WHERE source_id=$hk$hkm034-2026-10-23-missing$hk$)={N_MISS} AND (SELECT count(*) FROM legal_articles WHERE id LIKE 'hkm34a-%' AND search_norm<>'')={N_MISS} AND (SELECT count(*) FROM verification WHERE verified_by=$hk$owner-inject-hkm034-2026-10-23$hk$ AND object_type='unit')={N_MISS} THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard"
+    "sql": "SELECT CASE WHEN (SELECT count(*) FROM legal_text_provenance WHERE source_id=$hk$hkm034-2026-10-23-missing$hk$)=2 AND (SELECT count(*) FROM legal_articles WHERE id LIKE 'hkm34a-%' AND search_norm<>'')=2 AND (SELECT count(*) FROM verification WHERE verified_by=$hk$owner-inject-hkm034-2026-10-23$hk$ AND object_type='unit')=2 THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard"
    },
    {
     "name": "report",
@@ -269,7 +269,25 @@
    }
   ]
  },
- "expected": {},
+ "expected": {
+  "g1_fp": "fff3e99d2771d7055b4bb8468f65ed5e",
+  "g1_n": 12,
+  "g2_fp": "802f94f9bcffcad700da53adf12e64d0",
+  "g2_n": 5,
+  "g3_fp": "cee561e40ce12c0df596118210b146dc",
+  "g3_n": 5,
+  "g4_candidates_fp": "f4f0330abb74d303307eb9f784d6b981",
+  "g4_n": 2,
+  "g5_fp": "acb0495f134b959d0b7fd9d1b1f451ea",
+  "g5_n": 2,
+  "order": [
+   "g1_supersede",
+   "g2_unit_numbers",
+   "g3_dup_base",
+   "g4_missing",
+   "g5_regs"
+  ]
+ },
  "regs": [
   {
    "id": "hkm28-27c1c4b75bd421a0f26b8b4f",

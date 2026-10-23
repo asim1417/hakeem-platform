@@ -101,7 +101,7 @@ nb AS (SELECT un.*,
   (SELECT count(*) FROM boe.unit u3 WHERE u3.law_id=un.law_id AND u3.seq>un.seq AND u3.article_number IS NULL AND NOT EXISTS (SELECT 1 FROM boe.unit_number_fix f WHERE f.law_id=u3.law_id AND f.seq=u3.seq) AND u3.seq < (SELECT min(u4.seq) FROM boe.unit u4 LEFT JOIN boe.unit_number_fix f4 ON f4.law_id=u4.law_id AND f4.seq=u4.seq WHERE u4.law_id=un.law_id AND u4.seq>un.seq AND coalesce(f4.article_number,u4.article_number) IS NOT NULL)) unnumbered_between
  FROM un),
 gap AS (SELECT nb.*, CASE WHEN next_n = prev_n + 2 AND unnumbered_between=0 AND len>=20 THEN prev_n+1 WHEN prev_n IS NULL AND next_n=2 AND unnumbered_between=0 AND len>=20 THEN 1 END gap_n FROM nb)"""
-N_GAP, FP_GAP = 4, None  # تُثبَّت بعد البروفة
+N_GAP, FP_GAP = 4, "802f94f9bcffcad700da53adf12e64d0"
 add("g2_unit_numbers", "guard_before", f"""{GAP_CTE}
 SELECT CASE WHEN (SELECT count(*) FROM gap WHERE gap_n IS NOT NULL)={N_GAP}
   AND (SELECT count(*) FROM gap g WHERE g.gap_n IS NOT NULL AND EXISTS (SELECT 1 FROM boe.unit u LEFT JOIN boe.unit_number_fix f ON f.law_id=u.law_id AND f.seq=u.seq WHERE u.law_id=g.law_id AND coalesce(f.article_number,u.article_number)=g.gap_n AND NOT coalesce(f.is_bis,u.is_bis) AND coalesce(f.method,'')<>'not_article'))=0
@@ -153,16 +153,17 @@ add("g3_dup_base", "report", f"""SELECT md5(string_agg(a.id||'|'||a.content, '|'
 
 # ───────────── g4: المواد الساقطة ─────────────
 MISS_CTE = """WITH m AS (SELECT cm.hakeem_system_id sid, l.id law_id, l.url, l.name boe_name FROM boe.current_match cm JOIN boe.law l ON l.guid=cm.guid WHERE cm.hakeem_system_id IS NOT NULL AND l.status_at_source='ساري' AND l.id<>'boe26-04d6ad221b2a7ef079b67a64'),
-u AS (SELECT m.sid, m.url, m.boe_name, u.law_id, u.seq, u.heading, u.body, coalesce(f.article_number, u.article_number) n, coalesce(f.is_bis, u.is_bis) bis
+u0 AS (SELECT m.sid, m.url, m.boe_name, u.law_id, u.seq, u.heading, u.body, coalesce(f.article_number, u.article_number) n, coalesce(f.is_bis, u.is_bis) bis
       FROM m JOIN boe.unit u ON u.law_id=m.law_id LEFT JOIN boe.unit_number_fix f ON f.law_id=u.law_id AND f.seq=u.seq
-      WHERE coalesce(f.article_number, u.article_number) IS NOT NULL AND coalesce(f.article_number, u.article_number)>0 AND coalesce(f.method,'') <> 'not_article' AND length(u.body)>=20
-        AND u.body !~ '^\\s*-?\\s*(أُ?ضيفت هذه المادة|أضيفت هذه المادة|إضافة مادة تحمل الرقم|تم تعديل هذه المادة|عُدلت هذه المادة|استُبدلت|ألغيت هذه المادة|أُلغيت هذه المادة)'),
+      WHERE coalesce(f.article_number, u.article_number) IS NOT NULL AND coalesce(f.article_number, u.article_number)>0 AND coalesce(f.method,'') <> 'not_article'),
+u AS (SELECT u0.*, count(*) OVER (PARTITION BY law_id, n, bis) dup FROM u0),
 miss AS (SELECT u.*, s.name law, s.classification, s.preamble_royal_decree instr FROM u JOIN legal_systems s ON s.id=u.sid
-   WHERE NOT EXISTS (SELECT 1 FROM legal_articles a WHERE a."legalSystemId"=u.sid AND a."articleNumber"=u.n)
-     AND (SELECT count(*) FROM u u2 WHERE u2.law_id=u.law_id AND u2.n=u.n AND u2.bis=u.bis)=1)"""
-N_MISS, FP_MISS = None, None  # تُثبَّت بعد البروفة
+   WHERE u.dup=1 AND length(u.body)>=20
+     AND u.body !~ '^\\s*-?\\s*(أُ?ضيفت هذه المادة|أضيفت هذه المادة|إضافة مادة تحمل الرقم|تم تعديل هذه المادة|عُدلت هذه المادة|استُبدلت|ألغيت هذه المادة|أُلغيت هذه المادة)'
+     AND NOT EXISTS (SELECT 1 FROM legal_articles a WHERE a."legalSystemId"=u.sid AND a."articleNumber"=u.n))"""
+N_MISS, FP_MISS = 2, "f4f0330abb74d303307eb9f784d6b981"  # الخدمة المدنية 16 و22 (بعد neighbor_gap)
 add("g4_missing", "guard_before", f"""{MISS_CTE}
-SELECT CASE WHEN (SELECT count(*) FROM miss)={{N_MISS}} AND (SELECT count(*) FROM miss WHERE bis)=0
+SELECT CASE WHEN (SELECT count(*) FROM miss)={N_MISS} AND (SELECT count(*) FROM miss WHERE bis)=0
   AND (SELECT count(*) FROM legal_text_provenance WHERE source_id={lit(SRC + '-missing')})=0
 THEN 'ok' ELSE {GUARD_FAIL} END AS guard""")
 add("g4_missing", "insert", f"""{MISS_CTE}
@@ -178,7 +179,7 @@ add("g4_missing", "verification", f"""
 INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, evidence_quote, method, verified_by, supersedes_verification_id)
 SELECT 'vf34-'||left(encode(sha256(convert_to('unit|'||a.id||'|ساري','UTF8')),'hex'),24), 'unit', a.id, 'ساري', a."royalDecree", l.url, 'نص المادة كما في بوابة هيئة الخبراء (لقطة 28/9/2026)، رقمها من الجوار (neighbor_gap) أو من الصفحة', 'rule', {lit(BY)}, NULL
 FROM legal_articles a JOIN boe.current_match cm ON cm.hakeem_system_id=a.{LS} JOIN boe.law l ON l.guid=cm.guid WHERE a.id LIKE 'hkm34a-%' AND a."createdAt" >= now() - interval '1 hour'""")
-add("g4_missing", "guard_after", f"""SELECT CASE WHEN (SELECT count(*) FROM legal_text_provenance WHERE source_id={lit(SRC + '-missing')})={{N_MISS}} AND (SELECT count(*) FROM legal_articles WHERE id LIKE 'hkm34a-%' AND search_norm<>'')={{N_MISS}} AND (SELECT count(*) FROM verification WHERE verified_by={lit(BY)} AND object_type='unit')={{N_MISS}} THEN 'ok' ELSE {GUARD_FAIL} END AS guard""")
+add("g4_missing", "guard_after", f"""SELECT CASE WHEN (SELECT count(*) FROM legal_text_provenance WHERE source_id={lit(SRC + '-missing')})={N_MISS} AND (SELECT count(*) FROM legal_articles WHERE id LIKE 'hkm34a-%' AND search_norm<>'')={N_MISS} AND (SELECT count(*) FROM verification WHERE verified_by={lit(BY)} AND object_type='unit')={N_MISS} THEN 'ok' ELSE {GUARD_FAIL} END AS guard""")
 add("g4_missing", "report", f"""SELECT md5(string_agg(a.id||'|'||a.content, '|' ORDER BY a.id)) fp, count(*) n, json_agg(json_build_object('law', a."lawName", 'n', a."articleNumber", 'bis', a.{AB}, 'text', a.content) ORDER BY a."lawName", a."articleNumber") rows FROM legal_articles a WHERE a.id LIKE 'hkm34a-%'""")
 
 # ───────────── g5: لائحتا هيئات تطوير المناطق والمدن ─────────────
@@ -196,7 +197,7 @@ VALUES ({lit('hkm34r-' + h(SRC, 'rel', R['id'])[:24])}, 'system', {lit(R['id'])}
 add("g5_regs", "guard_after", f"""SELECT CASE WHEN (SELECT count(*) FROM legal_relations WHERE id LIKE 'hkm34r-%' AND target_id={lit(PARENT)} AND relation::text='IMPLEMENTS')=2 THEN 'ok' ELSE {GUARD_FAIL} END AS guard""")
 add("g5_regs", "report", f"""SELECT md5(string_agg(r.source_id, '|' ORDER BY r.source_id)) fp, count(*) n FROM legal_relations r WHERE r.id LIKE 'hkm34r-%'""")
 
-doc = {"batch": SRC, "by": BY, "groups": groups, "expected": {}, "regs": REGS,
+doc = {"batch": SRC, "by": BY, "groups": groups, "expected": {"g1_fp": "fff3e99d2771d7055b4bb8468f65ed5e", "g1_n": 12, "g2_fp": FP_GAP, "g2_n": 5, "g3_fp": "cee561e40ce12c0df596118210b146dc", "g3_n": 5, "g4_candidates_fp": FP_MISS, "g4_n": N_MISS, "g5_fp": "acb0495f134b959d0b7fd9d1b1f451ea", "g5_n": 2, "order": ["g1_supersede", "g2_unit_numbers", "g3_dup_base", "g4_missing", "g5_regs"]}, "regs": REGS,
        "notes": "g1 تحقق إلحاقي (verification append-only) بسند نص الإحلال عند الهيئة؛ g2 DDL توسيع قيد CHECK على جدول أُنشئ 23/10 (boe.unit_number_fix) لا حذف بيانات؛ g3 وg4 تُطبَّقان بعد g2؛ g5 اللائحتان مدخلتان منذ HKM-028؛ يُضاف ربط IMPLEMENTS فقط."}
 (OUT / "statements.json").write_text(json.dumps(doc, ensure_ascii=False, indent=1), encoding="utf-8")
 print({g: len(v) for g, v in groups.items()})
