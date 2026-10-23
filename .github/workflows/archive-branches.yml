@@ -58,12 +58,13 @@ jobs:
             echo "== $b $sha"
             if [ "$DRY" = "true" ]; then continue; fi
             if ! git ls-remote --tags origin "archive/$b" | grep -q .; then
-              git push -q origin "$sha:refs/tags/archive/$b"; tagged=$((tagged+1))
+              # عبر واجهة GitHub (لا يلزم جلب الكائن محليًّا؛ المستودع مُستخرج بعمق 1)
+              gh api -X POST "repos/${GITHUB_REPOSITORY}/git/refs" -f ref="refs/tags/archive/$b" -f sha="$sha" >/dev/null; tagged=$((tagged+1))
             fi
             prs=$(gh api "repos/${GITHUB_REPOSITORY}/pulls?state=open&head=${GITHUB_REPOSITORY_OWNER}:$b" --jq '.[].number' || true)
             for pr in $prs; do
               gh api -X POST "repos/${GITHUB_REPOSITORY}/issues/$pr/comments" -f body="${NOTE//<branch>/$b}" >/dev/null && commented=$((commented+1))
             done
-            git push -q origin --delete "$b"; deleted=$((deleted+1))
+            gh api -X DELETE "repos/${GITHUB_REPOSITORY}/git/refs/heads/$b"; deleted=$((deleted+1))
           done < "$LIST"
           echo "tagged=$tagged deleted=$deleted commented=$commented skipped=$skipped" | tee -a "$GITHUB_STEP_SUMMARY"
