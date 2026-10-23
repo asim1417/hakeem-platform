@@ -20,7 +20,9 @@ cm AS (SELECT DISTINCT ON (x.id) x.id aid, x."legalSystemId" sid, u.law_id, u.se
    EXISTS (SELECT 1 FROM boe.amendment_note n WHERE n.law_id = u.law_id AND n.unit_seq = u.seq) has_note,
    uqn_fix.hkm30_norm(u.body) = uqn_fix.hkm30_norm(coalesce(ev.body, x.content)) same
   FROM mt JOIN legal_articles x ON x."legalSystemId" = mt.sid AND x."articleBis" < 100
-  JOIN boe.unit u ON u.law_id = mt.law_id AND u.article_number = x."articleNumber" AND u.is_bis = (x."articleBis" > 0)
+  JOIN boe.unit u ON u.law_id = mt.law_id
+  LEFT JOIN boe.unit_number_fix f ON f.law_id = u.law_id AND f.seq = u.seq
+  JOIN LATERAL (SELECT coalesce(u.article_number, f.article_number) n, CASE WHEN u.article_number IS NULL THEN coalesce(f.is_bis, false) ELSE u.is_bis END b) en ON en.n = x."articleNumber" AND en.b = (x."articleBis" > 0)
   LEFT JOIN ev ON ev.unit_id = x.id LEFT JOIN lw ON lw.object_id = mt.sid
   WHERE coalesce(lw.verified_status, '') NOT IN ('مستبدل', 'ملغى', 'ملغاة', 'سجل مخلوط — لا يُعرض')
   ORDER BY x.id, similarity(uqn_fix.hkm30_norm(u.body), uqn_fix.hkm30_norm(coalesce(ev.body, x.content))) DESC),
@@ -73,7 +75,9 @@ cm AS (SELECT DISTINCT ON (x.id) x.id aid, x."legalSystemId" sid, u.law_id, u.se
    EXISTS (SELECT 1 FROM boe.amendment_note n WHERE n.law_id = u.law_id AND n.unit_seq = u.seq) has_note,
    uqn_fix.hkm30_norm(u.body) = uqn_fix.hkm30_norm(coalesce(ev.body, x.content)) same
   FROM mt JOIN legal_articles x ON x."legalSystemId" = mt.sid AND x."articleBis" < 100
-  JOIN boe.unit u ON u.law_id = mt.law_id AND u.article_number = x."articleNumber" AND u.is_bis = (x."articleBis" > 0)
+  JOIN boe.unit u ON u.law_id = mt.law_id
+  LEFT JOIN boe.unit_number_fix f ON f.law_id = u.law_id AND f.seq = u.seq
+  JOIN LATERAL (SELECT coalesce(u.article_number, f.article_number) n, CASE WHEN u.article_number IS NULL THEN coalesce(f.is_bis, false) ELSE u.is_bis END b) en ON en.n = x."articleNumber" AND en.b = (x."articleBis" > 0)
   LEFT JOIN ev ON ev.unit_id = x.id LEFT JOIN lw ON lw.object_id = mt.sid
   WHERE coalesce(lw.verified_status, '') NOT IN ('مستبدل', 'ملغى', 'ملغاة', 'سجل مخلوط — لا يُعرض')
   ORDER BY x.id, similarity(uqn_fix.hkm30_norm(u.body), uqn_fix.hkm30_norm(coalesce(ev.body, x.content))) DESC),
@@ -102,7 +106,9 @@ cm AS (SELECT DISTINCT ON (x.id) x.id aid, x."legalSystemId" sid, u.law_id, u.se
    EXISTS (SELECT 1 FROM boe.amendment_note n WHERE n.law_id = u.law_id AND n.unit_seq = u.seq) has_note,
    uqn_fix.hkm30_norm(u.body) = uqn_fix.hkm30_norm(coalesce(ev.body, x.content)) same
   FROM mt JOIN legal_articles x ON x."legalSystemId" = mt.sid AND x."articleBis" < 100
-  JOIN boe.unit u ON u.law_id = mt.law_id AND u.article_number = x."articleNumber" AND u.is_bis = (x."articleBis" > 0)
+  JOIN boe.unit u ON u.law_id = mt.law_id
+  LEFT JOIN boe.unit_number_fix f ON f.law_id = u.law_id AND f.seq = u.seq
+  JOIN LATERAL (SELECT coalesce(u.article_number, f.article_number) n, CASE WHEN u.article_number IS NULL THEN coalesce(f.is_bis, false) ELSE u.is_bis END b) en ON en.n = x."articleNumber" AND en.b = (x."articleBis" > 0)
   LEFT JOIN ev ON ev.unit_id = x.id LEFT JOIN lw ON lw.object_id = mt.sid
   WHERE coalesce(lw.verified_status, '') NOT IN ('مستبدل', 'ملغى', 'ملغاة', 'سجل مخلوط — لا يُعرض')
   ORDER BY x.id, similarity(uqn_fix.hkm30_norm(u.body), uqn_fix.hkm30_norm(coalesce(ev.body, x.content))) DESC)
@@ -122,7 +128,9 @@ cm AS (SELECT DISTINCT ON (x.id) x.id aid, x."legalSystemId" sid, u.law_id, u.se
    EXISTS (SELECT 1 FROM boe.amendment_note n WHERE n.law_id = u.law_id AND n.unit_seq = u.seq) has_note,
    uqn_fix.hkm30_norm(u.body) = uqn_fix.hkm30_norm(coalesce(ev.body, x.content)) same
   FROM mt JOIN legal_articles x ON x."legalSystemId" = mt.sid AND x."articleBis" < 100
-  JOIN boe.unit u ON u.law_id = mt.law_id AND u.article_number = x."articleNumber" AND u.is_bis = (x."articleBis" > 0)
+  JOIN boe.unit u ON u.law_id = mt.law_id
+  LEFT JOIN boe.unit_number_fix f ON f.law_id = u.law_id AND f.seq = u.seq
+  JOIN LATERAL (SELECT coalesce(u.article_number, f.article_number) n, CASE WHEN u.article_number IS NULL THEN coalesce(f.is_bis, false) ELSE u.is_bis END b) en ON en.n = x."articleNumber" AND en.b = (x."articleBis" > 0)
   LEFT JOIN ev ON ev.unit_id = x.id LEFT JOIN lw ON lw.object_id = mt.sid
   WHERE coalesce(lw.verified_status, '') NOT IN ('مستبدل', 'ملغى', 'ملغاة', 'سجل مخلوط — لا يُعرض')
   ORDER BY x.id, similarity(uqn_fix.hkm30_norm(u.body), uqn_fix.hkm30_norm(coalesce(ev.body, x.content))) DESC)
