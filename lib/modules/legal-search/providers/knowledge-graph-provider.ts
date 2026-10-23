@@ -4,7 +4,7 @@ import {
   resolveEntity,
   type EntityType,
 } from "@/lib/modules/knowledge-graph/relations";
-import type { LegalEntityType, RawResult, SearchProvider, SearchQuery } from "./search-provider";
+import { wantsType, type LegalEntityType, type RawResult, type SearchProvider, type SearchQuery } from "./search-provider";
 
 // مزوّد اجتياز الرسم المعرفي: يجد مواد مطابقة للسؤال ثم يتوسّع عبر العلاقات
 // ليُرجع الأحكام/المبادئ المرتبطة بها. غير كاسر إن كان الرسم فارغاً.
@@ -20,8 +20,9 @@ export const knowledgeGraphProvider: SearchProvider = {
     }
   },
 
-  async search({ q, limit = 10 }: SearchQuery): Promise<RawResult[]> {
+  async search({ q, limit = 10, types }: SearchQuery): Promise<RawResult[]> {
     const term = q.trim();
+    const want = (t: LegalEntityType) => wantsType({ types }, t);
     if (term.length < 2) return [];
     try {
       // ١. بذور: مواد مطابقة نصياً
@@ -57,7 +58,7 @@ export const knowledgeGraphProvider: SearchProvider = {
           // الطرف الآخر من العلاقة
           const otherType = (rel.sourceId === seed.id ? rel.targetType : rel.sourceType) as EntityType;
           const otherId = rel.sourceId === seed.id ? rel.targetId : rel.sourceId;
-          if (otherType !== "article" && otherType !== "ruling" && otherType !== "principle") continue;
+          if ((otherType !== "article" && otherType !== "ruling" && otherType !== "principle") || !want(otherType)) continue;
           const key = `${otherType}:${otherId}`;
           if (seen.has(key)) continue;
           seen.add(key);
