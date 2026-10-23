@@ -1,0 +1,941 @@
+
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=0.7, maximum-scale=1.0, user-scalable=no">    
+    <link rel="shortcut icon" type="image/x-icon" href="/Content/images/favicon.ico">
+    <link rel="icon" type="image/ico" href="/Content/images/favicon.ico" />
+
+    <link href='/Content/css/bootstrap-rtl.min.css' rel="stylesheet" type="text/css" />
+    <link href='/Content/new/css/bootstrap-grid.rtl.min.css' rel="stylesheet" type="text/css" />
+    <link href='/Content/new/css/bootstrap-utilities.rtl.min.css' rel="stylesheet" type="text/css" />
+
+    <link href="/Content/css/font-awesome.min.css" rel="stylesheet" />
+    <link href="/Content/css/colorbox.css" rel="stylesheet" />
+    <link id="sitecss" href='/Content/css/main-rtl.css?d=03082026' rel="stylesheet" type="text/css" />
+    <link id="sitecss" href='/Content/new/css/forntend-rtl.css?d=07012025' rel="stylesheet" type="text/css" />
+    <!--<link href='~/Content/css/fonts-rtl.css' rel="stylesheet" type="text/css" />-->
+
+
+    <link href="/Content/new/css/styles.css" rel="stylesheet" />
+    <link href="/Content/new/css/app-styles.css?v=1" rel="stylesheet" />
+
+    <script type="text/javascript">
+//<![CDATA[
+window["_csrf_"] = "082a37ce2584e000444dd58db16e9ec1a101111c0cfc092f30f9bac5a24701125f8dbab724bd4c12aaff1576b8423b7e94e23f6900b54a16c0bc12773168579da20690c33592cb41e2dff567d0d296cc89581aeb7a30b24c4766d6950efc0eeeb5e12c214181e2b1458f27ad52b8e24eb23b993e805d1b08bc8b32c9315e7e5f8952ecbcf80de4c0bf38ff75e99601e649e23d9c9144239a11c8b7b5c2e24ba6c458ee24ed6beb8079cbeb0e1f362f000536ecf8cf3e0a2de9101644e85c85f7500136e037aaefd2e870a3a0c8e1c2103b8dfde8f489712f4f7ea6c770025204f70bf0ca2abc5c64";
+//]]>
+</script><script type="text/javascript" src="/TSbd/081f4722beab2000f72ee666ad277e1f1b03a410672df04ed7e45de2d19b77d6f6b26b996eaad65f?type=2"></script><script src="/Scripts/jquery-3.4.1.min.js"></script>
+    <script>var ROOT_URL = '' || '';</script>
+    <title>
+        معاينة أصل النظام
+    </title>
+    <script src="/Scripts/fontawesome-all.js"></script>
+</head>
+
+<body>
+    <main class="inner-page">
+        <header class="page-header">
+            <div class="container">
+                <div class="row">
+                    <div class="col-6 col-md-3 d-flex align-items-center">
+                        <a href="http://www.boe.gov.sa" class="page-header__logo" title="الصفحة الرئيسية">
+                            <img alt="header-logo" src='/Content/new/images/logo.svg' />
+                        </a>
+                    </div>
+                    <div class="col-6 col-md-9 d-flex flex-column justify-content-center">
+                        <div class="row">
+                            <div class="col-12 d-flex justify-content-end align-items-center gap-2 gap-lg-3 mb-3">
+                                <a href="/BoeLaws/Laws/Search" target="_blank" class="header-search-btn">
+                                    <img src="/Content/new/images/search-systems-icon.svg" alt="search-systems-icon" />
+                                    <span>البحث في الوثائق النظامية</span>
+                                </a>
+                                    <a href="https://laws.boe.gov.sa/Identity/Account/Login/" class="header-login-btn">
+                                        <img src="/Content/new/images/user-login-icon.svg" alt="user-login-icon" />
+                                        <span>تسجيل الدخول</span>
+                                    </a>
+                                <a class="language-switcher switch-lang" href="JavaScript:void(0);" id="lang-switcher" title="English">EN</a>
+
+                                <div class="page-settings-dropdown">
+                                    <a class="page-settings-dropdown__btn" href="#" title="اعدادات الصفحة"></a>
+                                    <div class="page-settings-dropdown__menu">
+                                        <div class="page-settings-dropdown__menu__item">
+                                            <h5 class="page-settings-dropdown__menu__title">حجم الخط</h5>
+                                            <div class="font-resize-btns">
+                                                <button type="button" class="font-resize-btns__item font-resize-btns--increaser" title="زيادة حجم الخط">+</button>
+                                                <button type="button" class="font-resize-btns__item font-resize-btns--decreaser" title="تقليل حجم الخط">-</button>
+                                            </div>
+                                        </div>
+                                        <div class="page-settings-dropdown__menu__item">
+                                            <h5 class="page-settings-dropdown__menu__title">اللون الرمادي</h5>
+                                            <a class="grayscale-switcher" href="#" title="التبديل إلى اللون الرمادي"></a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12 d-flex justify-content-end">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <section class="title-section">
+            <div class="container">
+                <div class="row">
+                    <div class="col-12 col-md-6 d-flex flex-column mb-5 mb-md-0">
+                            <div class="row">
+                                <div class="col-12">
+                                    <h1 class="page-title">معاينة أصل النظام</h1>
+                                </div>
+                            </div>
+                    </div>
+                    <div class="col-12 col-md-6 d-flex justify-content-center justify-content-md-end">
+                        <div class="page-actions">
+                            <div class="share-page-dropdown">
+                                <a class="page-actions__btn page-actions__btn--share" href="#" title="نشر الصفحة"></a>
+                                <div class="share-page-dropdown__menu">
+                                    <a href="#!" class="share-page-dropdown__menu__item" target="_blank" id="x_share" title="نشر الصفحة على منصة إكس">
+                                        <img src="/Content/new/images/social-media-icons/x.svg" alt="x" />
+                                    </a>
+                                    <a href="#!" class="share-page-dropdown__menu__item" target="_blank" id="linkedin_share" title="نشر الصفحة على لينكدان">
+                                        <img src="/Content/new/images/social-media-icons/linkedin.svg" alt="linkedin" />
+                                    </a>
+                                    <a href="#!" class="share-page-dropdown__menu__item" target="_blank" id="facebook_share" title="نشر الصفحة على فيسبوك">
+                                        <img src="/Content/new/images/social-media-icons/facebook.svg" alt="facebook" />
+                                    </a>
+                                    <a href="#!" class="share-page-dropdown__menu__item" target="_blank" id="whatsApp_share" title="نشر الصفحة على واتس اب">
+                                        <img src="/Content/new/images/social-media-icons/whatsapp.svg" alt="">
+                                    </a>
+                                </div>
+                            </div>
+                            <a class="page-actions__btn page-actions__btn--email" href="#!" title="إرسال لصديق" id="mail_share"></a>
+                            <a class="page-actions__btn page-actions__btn--print" href="javascript:void(0);" title="طباعة الصفحة" onclick="window.print();" id="page_print"></a>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb">
+                                
+	<li><a href="/BoeLaws/Laws/">الوثائق النظامية</a></li>
+	<li><a href="/BoeLaws/Laws/Folders/ee88ea93-e592-47e4-ac2d-8f678a6d58a6/">أنظمة عادية</a></li>
+	<li><a href="/BoeLaws/Laws/Folders/ee88ea93-e592-47e4-ac2d-8f678a6d58a6/">التجارة والاقتصاد والاستثمار</a></li>
+	<li><a href="/BoeLaws/Laws/Viewer/358d6e64-56b2-4ac7-a695-aed900b555d9?lawId=a8376aea-1bc3-49d4-9027-aed900b555af">نظام الشركات</a></li>
+
+                            </ol>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section class="inner-page-content" id="wrapper">
+            <div class="container">
+                <div class="row">
+                    <div id="page-content-wrapper" class="col-12">
+                        
+
+
+<div id="CustomValidationSummary"></div>
+
+
+<div class="app_inner_pages_bg">
+    <div class="container">
+        <div class="app_inner_pages_container">
+            <div class="system_details_box">
+                <div class="col system_info system_info_viewer">
+                    <div>
+                        <label for="">الاسم</label> <span>نظام الشركات</span>
+                    </div>
+                    <span class="clr"></span>
+
+                    <div>
+                        <label for="">تاريخ الإصدار</label>
+                        <span> 1443/12/01 هـ  الموافق : 30/06/2022 مـ</span>
+
+                    </div>
+                    <span class="clr"></span>
+
+                    <div>
+                        <label for="">تاريخ النشر</label>
+                        <span>
+                            1443/12/23  هـ الموافق : 22/07/2022 مـ
+                        </span>
+                    </div>
+                    <span class="clr"></span>
+
+                    <div>
+                        <label for="">الحالة</label> <span>ساري</span>
+                    </div>
+                    <span class="clr"></span>
+
+                    <div>
+                        <label for="">نوع الملف</label> <span>مرفق النظام أو اللائحة</span>
+                    </div>
+                    <span class="clr"></span>
+
+
+                    <div>
+                        <a href="#" id="ancPrintPdfImages">
+                            <i class="fas fa-print"></i><span>طباعة</span>
+                        </a>
+                    </div>
+                </div>
+
+                <h1 class="system_title system_terms_title viewer_title">محتوى الملف</h1>
+                
+                     <!-- The Gallery as inline carousel, can be positioned anywhere on the page -->
+                     <div id="blueimp-gallery-carousel" class="blueimp-gallery blueimp-gallery-carousel" style="height: 1024px;">
+                         <div class="slides"></div>
+                         <h3 class="title"></h3>
+                         <a class="prev">‹</a>
+                         <a class="next">›</a>
+                         <a class="play-pause"></a>
+                         <ol class="indicator"></ol>
+                     </div>
+                     <div class="panel-footer clearfix">
+                         <div id="links" class="app_pagination">
+                             <ul class="pagination_Slider">
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_001.jpg" title="صفحة 1">
+                                             1
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_002.jpg" title="صفحة 2">
+                                             2
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_003.jpg" title="صفحة 3">
+                                             3
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_004.jpg" title="صفحة 4">
+                                             4
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_005.jpg" title="صفحة 5">
+                                             5
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_006.jpg" title="صفحة 6">
+                                             6
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_007.jpg" title="صفحة 7">
+                                             7
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_008.jpg" title="صفحة 8">
+                                             8
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_009.jpg" title="صفحة 9">
+                                             9
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_010.jpg" title="صفحة 10">
+                                             10
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_011.jpg" title="صفحة 11">
+                                             11
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_012.jpg" title="صفحة 12">
+                                             12
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_013.jpg" title="صفحة 13">
+                                             13
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_014.jpg" title="صفحة 14">
+                                             14
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_015.jpg" title="صفحة 15">
+                                             15
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_016.jpg" title="صفحة 16">
+                                             16
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_017.jpg" title="صفحة 17">
+                                             17
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_018.jpg" title="صفحة 18">
+                                             18
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_019.jpg" title="صفحة 19">
+                                             19
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_020.jpg" title="صفحة 20">
+                                             20
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_021.jpg" title="صفحة 21">
+                                             21
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_022.jpg" title="صفحة 22">
+                                             22
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_023.jpg" title="صفحة 23">
+                                             23
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_024.jpg" title="صفحة 24">
+                                             24
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_025.jpg" title="صفحة 25">
+                                             25
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_026.jpg" title="صفحة 26">
+                                             26
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_027.jpg" title="صفحة 27">
+                                             27
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_028.jpg" title="صفحة 28">
+                                             28
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_029.jpg" title="صفحة 29">
+                                             29
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_030.jpg" title="صفحة 30">
+                                             30
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_031.jpg" title="صفحة 31">
+                                             31
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_032.jpg" title="صفحة 32">
+                                             32
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_033.jpg" title="صفحة 33">
+                                             33
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_034.jpg" title="صفحة 34">
+                                             34
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_035.jpg" title="صفحة 35">
+                                             35
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_036.jpg" title="صفحة 36">
+                                             36
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_037.jpg" title="صفحة 37">
+                                             37
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_038.jpg" title="صفحة 38">
+                                             38
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_039.jpg" title="صفحة 39">
+                                             39
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_040.jpg" title="صفحة 40">
+                                             40
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_041.jpg" title="صفحة 41">
+                                             41
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_042.jpg" title="صفحة 42">
+                                             42
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_043.jpg" title="صفحة 43">
+                                             43
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_044.jpg" title="صفحة 44">
+                                             44
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_045.jpg" title="صفحة 45">
+                                             45
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_046.jpg" title="صفحة 46">
+                                             46
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_047.jpg" title="صفحة 47">
+                                             47
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_048.jpg" title="صفحة 48">
+                                             48
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_049.jpg" title="صفحة 49">
+                                             49
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_050.jpg" title="صفحة 50">
+                                             50
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_051.jpg" title="صفحة 51">
+                                             51
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_052.jpg" title="صفحة 52">
+                                             52
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_053.jpg" title="صفحة 53">
+                                             53
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_054.jpg" title="صفحة 54">
+                                             54
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_055.jpg" title="صفحة 55">
+                                             55
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_056.jpg" title="صفحة 56">
+                                             56
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_057.jpg" title="صفحة 57">
+                                             57
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_058.jpg" title="صفحة 58">
+                                             58
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_059.jpg" title="صفحة 59">
+                                             59
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_060.jpg" title="صفحة 60">
+                                             60
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_061.jpg" title="صفحة 61">
+                                             61
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_062.jpg" title="صفحة 62">
+                                             62
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_063.jpg" title="صفحة 63">
+                                             63
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_064.jpg" title="صفحة 64">
+                                             64
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_065.jpg" title="صفحة 65">
+                                             65
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_066.jpg" title="صفحة 66">
+                                             66
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_067.jpg" title="صفحة 67">
+                                             67
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_068.jpg" title="صفحة 68">
+                                             68
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_069.jpg" title="صفحة 69">
+                                             69
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_070.jpg" title="صفحة 70">
+                                             70
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_071.jpg" title="صفحة 71">
+                                             71
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_072.jpg" title="صفحة 72">
+                                             72
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_073.jpg" title="صفحة 73">
+                                             73
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_074.jpg" title="صفحة 74">
+                                             74
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_075.jpg" title="صفحة 75">
+                                             75
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_076.jpg" title="صفحة 76">
+                                             76
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_077.jpg" title="صفحة 77">
+                                             77
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_078.jpg" title="صفحة 78">
+                                             78
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_079.jpg" title="صفحة 79">
+                                             79
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_080.jpg" title="صفحة 80">
+                                             80
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_081.jpg" title="صفحة 81">
+                                             81
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_082.jpg" title="صفحة 82">
+                                             82
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_083.jpg" title="صفحة 83">
+                                             83
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_084.jpg" title="صفحة 84">
+                                             84
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_085.jpg" title="صفحة 85">
+                                             85
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_086.jpg" title="صفحة 86">
+                                             86
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_087.jpg" title="صفحة 87">
+                                             87
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_088.jpg" title="صفحة 88">
+                                             88
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_089.jpg" title="صفحة 89">
+                                             89
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_090.jpg" title="صفحة 90">
+                                             90
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_091.jpg" title="صفحة 91">
+                                             91
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_092.jpg" title="صفحة 92">
+                                             92
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_093.jpg" title="صفحة 93">
+                                             93
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_094.jpg" title="صفحة 94">
+                                             94
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_095.jpg" title="صفحة 95">
+                                             95
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_096.jpg" title="صفحة 96">
+                                             96
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_097.jpg" title="صفحة 97">
+                                             97
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_098.jpg" title="صفحة 98">
+                                             98
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_099.jpg" title="صفحة 99">
+                                             99
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_100.jpg" title="صفحة 100">
+                                             100
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_101.jpg" title="صفحة 101">
+                                             101
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_102.jpg" title="صفحة 102">
+                                             102
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_103.jpg" title="صفحة 103">
+                                             103
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_104.jpg" title="صفحة 104">
+                                             104
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_105.jpg" title="صفحة 105">
+                                             105
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_106.jpg" title="صفحة 106">
+                                             106
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_107.jpg" title="صفحة 107">
+                                             107
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_108.jpg" title="صفحة 108">
+                                             108
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_109.jpg" title="صفحة 109">
+                                             109
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_110.jpg" title="صفحة 110">
+                                             110
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_111.jpg" title="صفحة 111">
+                                             111
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_112.jpg" title="صفحة 112">
+                                             112
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_113.jpg" title="صفحة 113">
+                                             113
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_114.jpg" title="صفحة 114">
+                                             114
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_115.jpg" title="صفحة 115">
+                                             115
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_116.jpg" title="صفحة 116">
+                                             116
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_117.jpg" title="صفحة 117">
+                                             117
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_118.jpg" title="صفحة 118">
+                                             118
+                                         </a>
+                                     </li>
+                                     <li>
+                                         <a href="/BoeLaws/Laws/GetViewerImage/?imageFileName=358d6e64-56b2-4ac7-a695-aed900b555d9_Page_119.jpg" title="صفحة 119">
+                                             119
+                                         </a>
+                                     </li>
+                             </ul>
+                         </div>
+                     </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-12 text-right mt-4">
+                <a id="btnBack" href="#" class="app_btn">رجوع</a>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+
+
+
+                    </div>
+                </div>
+            </div>
+        </section>
+        <div id="divOverlay" class="loader-overlay">
+            <div class="loader-overlay-shape"></div>
+            <div class="loader-overlay-text" id="dvOverLayText"></div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="page-footer">
+            <div class="container">
+                <div class="page-footer__top">
+                    <div class="row justify-content-center">
+                        <a class="page-footer__logo" href="/" title="الرئيسية">
+                            <img src="/Content/new/images/logo-white.svg" alt="logo-white" />
+                        </a>
+                    </div>
+                </div>
+                <div class="page-footer__bottom">
+                    <div class="row">
+                        <div class="col-12 col-lg-6 d-flex align-items-center justify-content-center justify-content-lg-start mb-3 mb-lg-0">
+                            <span class="copyrights">جميع الحقوق محفوظة © <span class="copyrights__year">2026 - 1448</span></span>
+                        </div>
+                        <div class="col-12 col-lg-6 d-flex align-items-center justify-content-center justify-content-lg-end">
+                            <ul class="page-footer__bottom__links" id="footer-bottom-links">
+                                <li><a href='http://www.boe.gov.saar/Pages/Privacy.aspx' title="سياسة الخصوصية">سياسة الخصوصية</a></li>
+                                <li><a href='http://www.boe.gov.saar/Pages/TermsOfUse.aspx' title="شروط الاستخدام">شروط الاستخدام</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <a href="#" class="scroll-to-top-btn" title="الصعود لأعلى الصفحة">
+                <img src="/Content/new/images/arrow-top-icon.svg" alt="go to top" />
+            </a>
+        </footer>
+
+    </main>
+    <script src="/Scripts/bootstrap.min.js"></script>
+    <script src="/Scripts/fontawesome-all.js"></script>
+    <script src="/Scripts/jquery.hoverIntent.minified.js"></script>
+    <script src="/Scripts/jquery.slicknav.js"></script>
+    <script src="/Scripts/slick.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.colorbox-min.js"></script>
+    <script type="text/javascript" src="/Scripts/tabso.js"></script>
+
+    <script type="text/javascript" src="/EmbeddedResources/v1.0/Scripts/common.js"></script>
+
+    <script src="/Scripts/App/frontend-custom.js"></script>
+    <script src="/Scripts/App/frontend.js"></script>
+    <script src="/Scripts/jQuery.print.js"></script>
+    
+    <link href="/Content/css/blueimp-gallery.min.css" rel="stylesheet" />
+    <script src="/Scripts/blueimp-gallery.min.js"></script>
+
+    
+    <script>
+        $('#links').find('a').click(function (event) {
+            event = event || window.event;
+            var target = event.target || event.srcElement,
+                link = target.src ? target.parentNode : target,
+                options =
+                {
+                    container: '#blueimp-gallery-carousel',
+                    index: link,
+                    event: event,
+                    carousel: true,
+                    startSlideshow: false
+                },
+                links = $(this).parents('ul').find('a');
+
+            blueimp.Gallery(links, options);
+        });
+
+        blueimp.Gallery(
+            document.getElementById('links').getElementsByTagName('a'),
+            {
+                container: '#blueimp-gallery-carousel',
+                carousel: true,
+                startSlideshow: false
+            }
+        );
+
+        $('#links').find('a').click(function () {
+
+            $('#links').find('li').removeClass('selected');
+            $(this).parent().addClass('selected');
+
+        });
+
+
+    </script>
+
+    <script src="/Content/new/js/scripts.js"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-132578258-1"></script>
+
+    <script type="text/javascript">
+        $(function () {
+            $('#LawsNotifications').click(function (e) {
+                e.preventDefault();
+                $("#divNotificationContainer").modal({
+                    escapeClose: false,
+                    clickClose: false,
+                    showClose: true,
+                    closeText: ''
+                });
+            });
+        });
+		$('header img, footer img').removeAttr('style')
+		localStorage.setItem('portalUrl', 'http://www.boe.gov.sa');
+		window.dataLayer = window.dataLayer || [];
+		function gtag(){dataLayer.push(arguments);}
+		gtag('js', new Date());
+		gtag('config', 'UA-132578258-1');
+    </script>
+
+</body>
+
+</html>
