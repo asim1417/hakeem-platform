@@ -1,0 +1,175 @@
+category,name,prisma,production,verdict,evidence,usage
+column,judicial_cases.search_norm,absent from Prisma model,column exists,PG_AHEAD_OF_PRISMA_DO_NOT_DROP,prisma migrate diff --to-schema-datamodel would DROP it,search path and ingest SQL
+column,legal_articles.norm_addressee,absent from Prisma model,column exists,PG_AHEAD_OF_PRISMA_DO_NOT_DROP,prisma migrate diff --to-schema-datamodel would DROP it,migration 20260716120000 and schema comment says index is outside the model
+column,legal_articles.norm_condition,absent from Prisma model,column exists,PG_AHEAD_OF_PRISMA_DO_NOT_DROP,prisma migrate diff --to-schema-datamodel would DROP it,migration 20260716120000 and schema comment says index is outside the model
+column,legal_articles.norm_effect,absent from Prisma model,column exists,PG_AHEAD_OF_PRISMA_DO_NOT_DROP,prisma migrate diff --to-schema-datamodel would DROP it,migration 20260716120000 and schema comment says index is outside the model
+column,legal_articles.norm_modality,absent from Prisma model,column exists,PG_AHEAD_OF_PRISMA_DO_NOT_DROP,prisma migrate diff --to-schema-datamodel would DROP it,migration 20260716120000 and schema comment says index is outside the model
+column,legal_articles.norm_source,absent from Prisma model,column exists,PG_AHEAD_OF_PRISMA_DO_NOT_DROP,prisma migrate diff --to-schema-datamodel would DROP it,migration 20260716120000 and schema comment says index is outside the model
+column,legal_articles.search_norm,absent from Prisma model,column exists,PG_AHEAD_OF_PRISMA_DO_NOT_DROP,prisma migrate diff --to-schema-datamodel would DROP it,search path and ingest SQL
+column,legal_systems.instrument_kind,absent from Prisma model,column exists,PG_AHEAD_OF_PRISMA_DO_NOT_DROP,prisma migrate diff --to-schema-datamodel would DROP it,split ingest SQL copies the column; values were all null on 1155 systems at 11:41Z
+column,users.alertsEnabled,absent from Prisma model,column exists,PG_AHEAD_OF_PRISMA_DO_NOT_DROP,prisma migrate diff --to-schema-datamodel would DROP it,"app code outside Prisma model (onboarding, phone-otp, credits ledger)"
+column,users.avatarUrl,absent from Prisma model,column exists,PG_AHEAD_OF_PRISMA_DO_NOT_DROP,prisma migrate diff --to-schema-datamodel would DROP it,"app code outside Prisma model (onboarding, phone-otp, credits ledger)"
+column,users.certificates,absent from Prisma model,column exists,PG_AHEAD_OF_PRISMA_DO_NOT_DROP,prisma migrate diff --to-schema-datamodel would DROP it,"app code outside Prisma model (onboarding, phone-otp, credits ledger)"
+column,users.city,absent from Prisma model,column exists,PG_AHEAD_OF_PRISMA_DO_NOT_DROP,prisma migrate diff --to-schema-datamodel would DROP it,"app code outside Prisma model (onboarding, phone-otp, credits ledger)"
+column,users.creditsBalance,absent from Prisma model,column exists,PG_AHEAD_OF_PRISMA_DO_NOT_DROP,prisma migrate diff --to-schema-datamodel would DROP it,"app code outside Prisma model (onboarding, phone-otp, credits ledger)"
+column,users.entityType,absent from Prisma model,column exists,PG_AHEAD_OF_PRISMA_DO_NOT_DROP,prisma migrate diff --to-schema-datamodel would DROP it,"app code outside Prisma model (onboarding, phone-otp, credits ledger)"
+column,users.interests,absent from Prisma model,column exists,PG_AHEAD_OF_PRISMA_DO_NOT_DROP,prisma migrate diff --to-schema-datamodel would DROP it,"app code outside Prisma model (onboarding, phone-otp, credits ledger)"
+column,users.lastDailyVisit,absent from Prisma model,column exists,PG_AHEAD_OF_PRISMA_DO_NOT_DROP,prisma migrate diff --to-schema-datamodel would DROP it,"app code outside Prisma model (onboarding, phone-otp, credits ledger)"
+column,users.onboardingCompleted,absent from Prisma model,column exists,PG_AHEAD_OF_PRISMA_DO_NOT_DROP,prisma migrate diff --to-schema-datamodel would DROP it,"app code outside Prisma model (onboarding, phone-otp, credits ledger)"
+column,users.onboardingStep,absent from Prisma model,column exists,PG_AHEAD_OF_PRISMA_DO_NOT_DROP,prisma migrate diff --to-schema-datamodel would DROP it,"app code outside Prisma model (onboarding, phone-otp, credits ledger)"
+column,users.phone,absent from Prisma model,column exists,PG_AHEAD_OF_PRISMA_DO_NOT_DROP,prisma migrate diff --to-schema-datamodel would DROP it,"app code outside Prisma model (onboarding, phone-otp, credits ledger)"
+column,users.phoneOtpExpires,absent from Prisma model,column exists,PG_AHEAD_OF_PRISMA_DO_NOT_DROP,prisma migrate diff --to-schema-datamodel would DROP it,"app code outside Prisma model (onboarding, phone-otp, credits ledger)"
+column,users.phoneOtpHash,absent from Prisma model,column exists,PG_AHEAD_OF_PRISMA_DO_NOT_DROP,prisma migrate diff --to-schema-datamodel would DROP it,"app code outside Prisma model (onboarding, phone-otp, credits ledger)"
+column,users.phoneVerified,absent from Prisma model,column exists,PG_AHEAD_OF_PRISMA_DO_NOT_DROP,prisma migrate diff --to-schema-datamodel would DROP it,"app code outside Prisma model (onboarding, phone-otp, credits ledger)"
+column,users.referralCode,absent from Prisma model,column exists,PG_AHEAD_OF_PRISMA_DO_NOT_DROP,prisma migrate diff --to-schema-datamodel would DROP it,"app code outside Prisma model (onboarding, phone-otp, credits ledger)"
+column,users.referredBy,absent from Prisma model,column exists,PG_AHEAD_OF_PRISMA_DO_NOT_DROP,prisma migrate diff --to-schema-datamodel would DROP it,"app code outside Prisma model (onboarding, phone-otp, credits ledger)"
+column,users.specialties,absent from Prisma model,column exists,PG_AHEAD_OF_PRISMA_DO_NOT_DROP,prisma migrate diff --to-schema-datamodel would DROP it,"app code outside Prisma model (onboarding, phone-otp, credits ledger)"
+column,users.termsAccepted,absent from Prisma model,column exists,PG_AHEAD_OF_PRISMA_DO_NOT_DROP,prisma migrate diff --to-schema-datamodel would DROP it,"app code outside Prisma model (onboarding, phone-otp, credits ledger)"
+column,users.yearsExperience,absent from Prisma model,column exists,PG_AHEAD_OF_PRISMA_DO_NOT_DROP,prisma migrate diff --to-schema-datamodel would DROP it,"app code outside Prisma model (onboarding, phone-otp, credits ledger)"
+table,ai_usage_events,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,billing_audit_logs,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,billing_events,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,billing_invoice_counters,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,billing_invoices,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,billing_model_prices,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,billing_notifications,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,billing_orders,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,billing_payment_methods,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,billing_payments,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,billing_plan_prices,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,billing_plans,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,billing_refunds,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,billing_subscriptions,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,billing_trial_grants,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,billing_webhook_events,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,billing_workspace_members,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,billing_workspaces,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,credit_transactions,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,extraction_runs,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,generation_jobs,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,jds_agent_runs,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,jds_authority_snapshots,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,jds_document_recipes,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,jds_domain_packs,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,jds_procedure_edges,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,jds_procedure_graphs,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,jds_procedure_nodes,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,jds_quality_findings,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,jds_recipe_sections,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,jds_statement_traces,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,judgment_article_links,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,judgment_cards,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,judicial_doc_chunks,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,law_card,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,legal_article_bis,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,legal_article_label,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,legal_system_alias,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,legal_system_issuance,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,legal_text_provenance,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,legal_thesaurus_article_batches,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,legal_thesaurus_candidate_terms,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,legal_thesaurus_concept_domains,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,legal_thesaurus_concepts,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,legal_thesaurus_definitions,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,legal_thesaurus_domains,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,legal_thesaurus_extraction_runs,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,legal_thesaurus_occurrences,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,legal_thesaurus_relations,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,legal_thesaurus_review_queue,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,legal_thesaurus_terms,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,legal_thesaurus_text_snapshots,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,preamble_edition,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,preamble_unit,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,referral_redemptions,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,research_snapshot_meta,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,ruling_meta,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,ruling_segment_embeddings,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,ruling_segments,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,search_surface,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,search_surface_member,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,site_config,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,site_pages,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,support_messages,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,support_threads,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,usage_credit_buckets,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+table,work_edition,no Prisma model,table exists,OUTSIDE_PRISMA_NOT_A_DEFECT,diff would DROP TABLE,not auto-classified as unused
+enum,BillingPeriod,absent from Prisma enums,enum exists,PG_ENUM_OUTSIDE_PRISMA,diff would DROP TYPE,billing enums match empty billing tables
+enum,InvoiceStatus,absent from Prisma enums,enum exists,PG_ENUM_OUTSIDE_PRISMA,diff would DROP TYPE,billing enums match empty billing tables
+enum,InvoiceType,absent from Prisma enums,enum exists,PG_ENUM_OUTSIDE_PRISMA,diff would DROP TYPE,billing enums match empty billing tables
+enum,OrderStatus,absent from Prisma enums,enum exists,PG_ENUM_OUTSIDE_PRISMA,diff would DROP TYPE,billing enums match empty billing tables
+enum,OrderType,absent from Prisma enums,enum exists,PG_ENUM_OUTSIDE_PRISMA,diff would DROP TYPE,billing enums match empty billing tables
+enum,PaymentMethodStatus,absent from Prisma enums,enum exists,PG_ENUM_OUTSIDE_PRISMA,diff would DROP TYPE,billing enums match empty billing tables
+enum,PaymentStatus,absent from Prisma enums,enum exists,PG_ENUM_OUTSIDE_PRISMA,diff would DROP TYPE,billing enums match empty billing tables
+enum,RefundStatus,absent from Prisma enums,enum exists,PG_ENUM_OUTSIDE_PRISMA,diff would DROP TYPE,billing enums match empty billing tables
+enum,SubscriptionStatus,absent from Prisma enums,enum exists,PG_ENUM_OUTSIDE_PRISMA,diff would DROP TYPE,billing enums match empty billing tables
+enum,WebhookStatus,absent from Prisma enums,enum exists,PG_ENUM_OUTSIDE_PRISMA,diff would DROP TYPE,billing enums match empty billing tables
+enum,ZatcaStatus,absent from Prisma enums,enum exists,PG_ENUM_OUTSIDE_PRISMA,diff would DROP TYPE,billing enums match empty billing tables
+enum_value,AuditSubject.BILLING,enum without BILLING,"AUTH..ADMIN,BILLING",PG_VALUE_USED_BY_BILLING_SUBJECT,diff rebuilds enum without BILLING,do not rebuild enum while rows may use BILLING; row count of that label not rechecked
+default,api_keys.updated_at,@updatedAt or no db default,database default present,CLIENT_MANAGED_DEFAULT,migrate diff wants DROP DEFAULT,Prisma sets updatedAt in the client; raw SQL relies on the default
+default,chat_conversations.updated_at,@updatedAt or no db default,database default present,CLIENT_MANAGED_DEFAULT,migrate diff wants DROP DEFAULT,Prisma sets updatedAt in the client; raw SQL relies on the default
+default,doc_cases.updated_at,@updatedAt or no db default,database default present,CLIENT_MANAGED_DEFAULT,migrate diff wants DROP DEFAULT,Prisma sets updatedAt in the client; raw SQL relies on the default
+default,doc_workspaces.updated_at,@updatedAt or no db default,database default present,CLIENT_MANAGED_DEFAULT,migrate diff wants DROP DEFAULT,Prisma sets updatedAt in the client; raw SQL relies on the default
+column_type,embedding_version.created_at,DateTime default timestamp(3) without time zone,timestamp with time zone observed on sampled columns,TYPE_DRIFT_DO_NOT_NARROW,migrate diff,narrowing would change timezone semantics
+column_type,generic_rate_limit_windows.created_at,DateTime default timestamp(3) without time zone,timestamp with time zone observed on sampled columns,TYPE_DRIFT_DO_NOT_NARROW,migrate diff,narrowing would change timezone semantics
+column_type,judicial_analyses.created_at,DateTime default timestamp(3) without time zone,timestamp with time zone observed on sampled columns,TYPE_DRIFT_DO_NOT_NARROW,migrate diff,narrowing would change timezone semantics
+column_type,judicial_work_cases.created_at,DateTime default timestamp(3) without time zone,timestamp with time zone observed on sampled columns,TYPE_DRIFT_DO_NOT_NARROW,migrate diff,narrowing would change timezone semantics
+column_type,judicial_work_cases.updated_at,DateTime default timestamp(3) without time zone,timestamp with time zone observed on sampled columns,TYPE_DRIFT_DO_NOT_NARROW,migrate diff,narrowing would change timezone semantics
+default,judicial_work_cases.updated_at,@updatedAt or no db default,database default present,CLIENT_MANAGED_DEFAULT,migrate diff wants DROP DEFAULT,Prisma sets updatedAt in the client; raw SQL relies on the default
+default,review_sessions.updated_at,@updatedAt or no db default,database default present,CLIENT_MANAGED_DEFAULT,migrate diff wants DROP DEFAULT,Prisma sets updatedAt in the client; raw SQL relies on the default
+column_type,subscription_activation.created_at,DateTime default timestamp(3) without time zone,timestamp with time zone observed on sampled columns,TYPE_DRIFT_DO_NOT_NARROW,migrate diff,narrowing would change timezone semantics
+column_type,unit_version.valid_from,DateTime default timestamp(3) without time zone,timestamp with time zone observed on sampled columns,TYPE_DRIFT_DO_NOT_NARROW,migrate diff,narrowing would change timezone semantics
+column_type,unit_version.created_at,DateTime default timestamp(3) without time zone,timestamp with time zone observed on sampled columns,TYPE_DRIFT_DO_NOT_NARROW,migrate diff,narrowing would change timezone semantics
+column_type,verification.verified_at,DateTime default timestamp(3) without time zone,timestamp with time zone observed on sampled columns,TYPE_DRIFT_DO_NOT_NARROW,migrate diff,narrowing would change timezone semantics
+index,chat_conversations_user_id_service_key_updated_at_idx,declared in Prisma,index name absent,PRISMA_INDEX_NAME_ABSENT,migrate diff CREATE INDEX,confirm no equivalent index before creating
+index,chat_conversations_user_id_service_key_pinned_at_idx,declared in Prisma,index name absent,PRISMA_INDEX_NAME_ABSENT,migrate diff CREATE INDEX,confirm no equivalent index before creating
+index,chat_conversations_judicial_case_id_updated_at_idx,declared in Prisma,index name absent,PRISMA_INDEX_NAME_ABSENT,migrate diff CREATE INDEX,confirm no equivalent index before creating
+index,chat_conversations_parent_conversation_id_idx,declared in Prisma,index name absent,PRISMA_INDEX_NAME_ABSENT,migrate diff CREATE INDEX,confirm no equivalent index before creating
+index,chat_messages_job_id_idx,declared in Prisma,index name absent,PRISMA_INDEX_NAME_ABSENT,migrate diff CREATE INDEX,confirm no equivalent index before creating
+index,embedding_version_owner_type_owner_id_created_at_idx,declared in Prisma,index name absent,PRISMA_INDEX_NAME_ABSENT,migrate diff CREATE INDEX,confirm no equivalent index before creating
+index,embedding_version_owner_type_owner_id_content_hash_idx,declared in Prisma,index name absent,PRISMA_INDEX_NAME_ABSENT,migrate diff CREATE INDEX,confirm no equivalent index before creating
+index,embeddings_owner_type_owner_id_idx,declared in Prisma,index name absent,PRISMA_INDEX_NAME_ABSENT,migrate diff CREATE INDEX,confirm no equivalent index before creating
+index,verification_object_type_object_id_verified_at_idx,declared in Prisma,index name absent,PRISMA_INDEX_NAME_ABSENT,migrate diff CREATE INDEX,confirm no equivalent index before creating
+index,chat_conversations_user_service_updated_idx,not in Prisma schema,index exists,PG_INDEX_OUTSIDE_PRISMA,migrate diff DROP INDEX,search or uniqueness in use
+index,embedding_version_owner_idx,not in Prisma schema,index exists,PG_INDEX_OUTSIDE_PRISMA,migrate diff DROP INDEX,search or uniqueness in use
+index,idx_embeddings_hnsw_cosine,not in Prisma schema,index exists,OPERATIONAL_SEARCH_INDEX_DO_NOT_DROP,migrate diff DROP INDEX,search or uniqueness in use
+index,idx_judicial_cases_text_trgm,not in Prisma schema,index exists,OPERATIONAL_SEARCH_INDEX_DO_NOT_DROP,migrate diff DROP INDEX,search or uniqueness in use
+index,idx_judicial_cases_title_trgm,not in Prisma schema,index exists,OPERATIONAL_SEARCH_INDEX_DO_NOT_DROP,migrate diff DROP INDEX,search or uniqueness in use
+index,idx_judicial_principles_text_trgm,not in Prisma schema,index exists,OPERATIONAL_SEARCH_INDEX_DO_NOT_DROP,migrate diff DROP INDEX,search or uniqueness in use
+index,idx_legal_articles_content_trgm,not in Prisma schema,index exists,OPERATIONAL_SEARCH_INDEX_DO_NOT_DROP,migrate diff DROP INDEX,search or uniqueness in use
+index,idx_legal_articles_search_norm_trgm,not in Prisma schema,index exists,OPERATIONAL_SEARCH_INDEX_DO_NOT_DROP,migrate diff DROP INDEX,search or uniqueness in use
+index,idx_legal_articles_title_trgm,not in Prisma schema,index exists,OPERATIONAL_SEARCH_INDEX_DO_NOT_DROP,migrate diff DROP INDEX,search or uniqueness in use
+index,idx_trgm_la_classification,not in Prisma schema,index exists,OPERATIONAL_SEARCH_INDEX_DO_NOT_DROP,migrate diff DROP INDEX,search or uniqueness in use
+index,legal_articles_norm_modality_norm_addressee_idx,not in Prisma schema,index exists,PG_INDEX_OUTSIDE_PRISMA,migrate diff DROP INDEX,search or uniqueness in use
+index,users_referralCode_key,not in Prisma schema,index exists,PG_INDEX_OUTSIDE_PRISMA,migrate diff DROP INDEX,search or uniqueness in use
+index,verification_object_idx,not in Prisma schema,index exists,PG_INDEX_OUTSIDE_PRISMA,migrate diff DROP INDEX,search or uniqueness in use
+index_name,audit_event_actor_idx,audit_event_actor_id_at_idx,existing index under another name,NAME_ONLY,migrate diff rename,"same index, different name"
+index_name,audit_event_object_idx,audit_event_object_type_object_id_at_idx,existing index under another name,NAME_ONLY,migrate diff rename,"same index, different name"
+index_name,change_set_status_idx,change_set_status_created_at_idx,existing index under another name,NAME_ONLY,migrate diff rename,"same index, different name"
+index_name,chat_messages_conversation_sequence_uidx,chat_messages_conversation_id_sequence_key,existing index under another name,NAME_ONLY,migrate diff rename,"same index, different name"
+index_name,editorial_change_set_idx,editorial_change_change_set_id_idx,existing index under another name,NAME_ONLY,migrate diff rename,"same index, different name"
+index_name,editorial_change_target_idx,editorial_change_target_type_target_id_created_at_idx,existing index under another name,NAME_ONLY,migrate diff rename,"same index, different name"
+index_name,fiqh_issue_links_issue_law_article_key,fiqh_issue_links_issue_id_law_name_article_number_key,existing index under another name,NAME_ONLY,migrate diff rename,"same index, different name"
+index_name,idx_fiqh_issue_links_article,fiqh_issue_links_article_id_idx,existing index under another name,NAME_ONLY,migrate diff rename,"same index, different name"
+index_name,idx_fiqh_issue_links_law_article,fiqh_issue_links_law_name_article_number_idx,existing index under another name,NAME_ONLY,migrate diff rename,"same index, different name"
+index_name,idx_fiqh_issues_link_status,fiqh_issues_link_status_idx,existing index under another name,NAME_ONLY,migrate diff rename,"same index, different name"
+index_name,idx_fiqh_issues_suggested_nizam,fiqh_issues_suggested_nizam_idx,existing index under another name,NAME_ONLY,migrate diff rename,"same index, different name"
+index_name,generic_rate_limit_windows_bucket_window_uidx,generic_rate_limit_windows_bucket_key_window_start_key,existing index under another name,NAME_ONLY,migrate diff rename,"same index, different name"
+index_name,generic_rate_limit_windows_window_idx,generic_rate_limit_windows_window_start_idx,existing index under another name,NAME_ONLY,migrate diff rename,"same index, different name"
+index_name,review_decision_set_idx,review_decision_change_set_id_decided_at_idx,existing index under another name,NAME_ONLY,migrate diff rename,"same index, different name"
+index_name,unit_version_unit_idx,unit_version_unit_id_valid_from_idx,existing index under another name,NAME_ONLY,migrate diff rename,"same index, different name"
+foreign_key,fiqh_issue_links_issue_id_fkey,FK issue_id -> fiqh_issues(id) ON DELETE CASCADE,constraint absent,FK_MISSING_IN_PRODUCTION,migrate diff ADD CONSTRAINT,database will not enforce this delete behavior today
+foreign_key,chat_conversations_user_id_fkey,FK user_id -> users(id) ON DELETE RESTRICT,constraint absent,FK_MISSING_IN_PRODUCTION,migrate diff ADD CONSTRAINT,database will not enforce this delete behavior today
+foreign_key,chat_conversations_case_id_fkey,FK case_id -> simulation_cases(id) ON DELETE SET NULL,constraint absent,FK_MISSING_IN_PRODUCTION,migrate diff ADD CONSTRAINT,database will not enforce this delete behavior today
+foreign_key,chat_messages_conversation_id_fkey,FK conversation_id -> chat_conversations(id) ON DELETE CASCADE,constraint absent,FK_MISSING_IN_PRODUCTION,migrate diff ADD CONSTRAINT,database will not enforce this delete behavior today
+foreign_key,doc_cases_workspace_id_fkey,FK workspace_id -> doc_workspaces(id) ON DELETE CASCADE,constraint absent,FK_MISSING_IN_PRODUCTION,migrate diff ADD CONSTRAINT,database will not enforce this delete behavior today
+foreign_key,review_findings_session_id_fkey,FK session_id -> review_sessions(id) ON DELETE CASCADE,constraint absent,FK_MISSING_IN_PRODUCTION,migrate diff ADD CONSTRAINT,database will not enforce this delete behavior today
+foreign_key,review_suggestions_session_id_fkey,FK session_id -> review_sessions(id) ON DELETE CASCADE,constraint absent,FK_MISSING_IN_PRODUCTION,migrate diff ADD CONSTRAINT,database will not enforce this delete behavior today
+foreign_key,review_suggestions_finding_id_fkey,FK finding_id -> review_findings(id) ON DELETE SET NULL,constraint absent,FK_MISSING_IN_PRODUCTION,migrate diff ADD CONSTRAINT,database will not enforce this delete behavior today
+foreign_key,review_reports_session_id_fkey,FK session_id -> review_sessions(id) ON DELETE CASCADE,constraint absent,FK_MISSING_IN_PRODUCTION,migrate diff ADD CONSTRAINT,database will not enforce this delete behavior today
+foreign_key,change_set_reverts_change_set_id_fkey,FK reverts_change_set_id -> change_set(id) ON DELETE SET NULL,constraint absent,FK_MISSING_IN_PRODUCTION,migrate diff ADD CONSTRAINT,database will not enforce this delete behavior today
+foreign_key,editorial_change_change_set_id_fkey,FK change_set_id -> change_set(id) ON DELETE RESTRICT,constraint absent,FK_MISSING_IN_PRODUCTION,migrate diff ADD CONSTRAINT,database will not enforce this delete behavior today
+foreign_key,review_decision_change_set_id_fkey,FK change_set_id -> change_set(id) ON DELETE RESTRICT,constraint absent,FK_MISSING_IN_PRODUCTION,migrate diff ADD CONSTRAINT,database will not enforce this delete behavior today
+foreign_key,index_sync_change_set_id_fkey,FK change_set_id -> change_set(id) ON DELETE RESTRICT,constraint absent,FK_MISSING_IN_PRODUCTION,migrate diff ADD CONSTRAINT,database will not enforce this delete behavior today
+nullability,legal_articles.keywords,String[] required @default([]),"text[] nullable, default empty array, 0 nulls of 28731",LATENT_NULLABILITY,attnotnull=false; migrate diff did not emit SET NOT NULL,do not ALTER; no null rows
+nullability,training_progress.badges,String[] required @default([]),"text[] nullable, default empty array, table has 0 rows",LATENT_NULLABILITY,attnotnull=false; migrate diff silent,do not ALTER
+column_type,embeddings.embedding,Unsupported vector(1536),pgvector column present from prior catalog,MATCH_BY_PRIOR_CATALOG,not in the destructive diff as a type change,embedding storage

@@ -1,0 +1,10 @@
+check,result,status
+articles_empty_search_norm,0,ok
+articles_nonpositive_number,0,ok
+articles_blank_content,0,ok
+systems_missing_kind,1155,ok
+systems_missing_slug,15,ok
+article_count_mismatch_systems,10,ok
+systems_without_articles,83,ok
+duplicate_article_keys,0,ok
+users_total,35,ok

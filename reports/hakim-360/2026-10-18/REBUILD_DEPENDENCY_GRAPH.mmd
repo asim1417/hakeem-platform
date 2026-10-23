@@ -1,0 +1,14 @@
+flowchart TD
+  repoSql["175 SQL files"] --> migDir["39 prisma migrations on main"]
+  repoSql --> ingest["104 ingest scripts"]
+  migDir --> ledger["_prisma_migrations: 1 row only"]
+  migDir --> external["workflows psql -f and db push"]
+  external --> live["Neon neondb objects present"]
+  ingest --> live
+  ledger --> one["judicial_cases migration only"]
+  one --> live
+  prismaSchema["schema.prisma 71 models"] --> diff["migrate diff would DROP 67 tables and 27 columns"]
+  diff --> danger["do not apply"]
+  live --> danger
+  credits["20260729130000 usage credits v2"] --> absent["named tables absent"]
+  absent --> unknown["application time unknown"]

@@ -1,0 +1,166 @@
+schema,name,kind,definition
+boe,attachment_pending,view," SELECT href,
+    kind,
+    law_guid,
+    label,
+    priority,
+    listed_at
+   FROM boe.attachment_target t
+  WHERE NOT (EXISTS ( SELECT 1
+           FROM boe.attachment a
+          WHERE a.href = t.href));"
+boe,current_law,view," SELECT DISTINCT ON (guid) id,
+    guid,
+    snapshot_sha256,
+    url,
+    name,
+    name_en,
+    description_en,
+    summary,
+    category_path,
+    issued_raw,
+    issued_hijri,
+    issued_gregorian,
+    published_raw,
+    published_hijri,
+    published_gregorian,
+    status_at_source,
+    instruments,
+    article_count,
+    parse_flags,
+    parsed_at
+   FROM boe.law
+  ORDER BY guid, parsed_at DESC, id DESC;"
+boe,current_match,view," SELECT DISTINCT ON (guid) id,
+    guid,
+    hakeem_system_id,
+    method,
+    candidates,
+    decided_by,
+    decided_at
+   FROM boe.match
+  ORDER BY guid, decided_at DESC, id DESC;"
+boe,current_owner_decision,view," SELECT DISTINCT ON (proposal_id) id,
+    proposal_id,
+    decision,
+    corrected_text,
+    owner_note,
+    decided_by,
+    decided_at
+   FROM boe.owner_decision
+  ORDER BY proposal_id, decided_at DESC, id DESC;"
+boe,v_amendment,view," SELECT l.guid AS law_guid,
+    l.name AS law_name,
+    l.status_at_source,
+    u.seq AS unit_seq,
+    u.heading AS unit_heading,
+    u.css_class AS unit_class,
+    n.id AS note_id,
+    n.note_seq,
+    n.note_text,
+    n.effect AS parser_effect,
+    n.instrument_kind,
+    n.instrument_no,
+    n.instrument_date_hijri,
+    n.needs_review,
+    COALESCE(p.new_text, n.new_text) AS new_text,
+        CASE
+            WHEN NOT n.needs_review THEN 'محسوم من الملاحظة'::text
+            ELSE p.confidence
+        END AS confidence,
+    p.id AS proposal_id,
+    p.category,
+    p.effect AS proposed_effect,
+    p.reason,
+    p.image_url,
+    v.status AS vision_status,
+    v.instrument_seen,
+    v.instrument_match,
+    v.verify_verdict,
+    d.decision AS owner_decision,
+    d.corrected_text,
+    l.url AS source_url
+   FROM boe.amendment_note n
+     JOIN boe.law l ON l.id = n.law_id
+     JOIN boe.unit u ON u.law_id = n.law_id AND u.seq = n.unit_seq
+     LEFT JOIN boe.review_proposal p ON p.note_id = n.id
+     LEFT JOIN boe.vision_reading v ON v.note_id = n.id
+     LEFT JOIN boe.current_owner_decision d ON d.proposal_id = p.id;"
+boe,v_coverage,view," SELECT 'أنظمة محللة'::text AS item,
+    count(*) AS n
+   FROM boe.current_law
+UNION ALL
+ SELECT 'مواد'::text AS item,
+    count(*) AS n
+   FROM boe.unit
+UNION ALL
+ SELECT 'ملاحظات تعديل'::text AS item,
+    count(*) AS n
+   FROM boe.amendment_note
+UNION ALL
+ SELECT 'ملاحظات تحتاج مراجعة'::text AS item,
+    count(*) AS n
+   FROM boe.amendment_note
+  WHERE amendment_note.needs_review
+UNION ALL
+ SELECT 'اقتراحات مراجعة'::text AS item,
+    count(*) AS n
+   FROM boe.review_proposal
+UNION ALL
+ SELECT 'قراءات صور الأدوات'::text AS item,
+    count(*) AS n
+   FROM boe.vision_reading
+UNION ALL
+ SELECT 'قرارات المالك'::text AS item,
+    count(*) AS n
+   FROM boe.owner_decision
+UNION ALL
+ SELECT 'مرفقات مقروءة'::text AS item,
+    count(*) AS n
+   FROM boe.attachment
+UNION ALL
+ SELECT 'صفحات مرفقات'::text AS item,
+    count(*) AS n
+   FROM boe.attachment_page
+UNION ALL
+ SELECT 'مرفقات لم تُقرأ بعد'::text AS item,
+    count(*) AS n
+   FROM boe.attachment_pending;"
+public,article_judgments,view," SELECT legal_system_id,
+    article_number,
+    article_id,
+    count(DISTINCT judgment_id) AS judgment_count,
+    array_agg(DISTINCT judgment_id) AS judgment_ids
+   FROM judgment_article_links l
+  GROUP BY legal_system_id, article_number, article_id;"
+public,preamble_unit_current,view," SELECT u.id,
+    u.edition_id,
+    u.system_id,
+    u.parent_id,
+    u.unit_type,
+    u.ordinal,
+    u.instrument_index,
+    u.instrument_kind,
+    u.instrument_number,
+    u.instrument_date_hijri,
+    u.label_ar,
+    u.number,
+    u.text_raw,
+    u.text_normalized,
+    u.path,
+    u.anchor,
+    u.char_start,
+    u.char_end,
+    u.created_at
+   FROM preamble_unit u
+     JOIN ( SELECT DISTINCT ON (preamble_edition.system_id) preamble_edition.id
+           FROM preamble_edition
+          ORDER BY preamble_edition.system_id, preamble_edition.created_at DESC, preamble_edition.id DESC) cur ON cur.id = u.edition_id
+  WHERE u.unit_type <> 'issuing_instrument'::text;"
+uqn_fix,amendment_decision,view," SELECT DISTINCT ON (op_id) op_id,
+    decision,
+    corrected,
+    reviewer,
+    decided_at
+   FROM uqn_fix.amendment_review
+  ORDER BY op_id, decided_at DESC, id DESC;"

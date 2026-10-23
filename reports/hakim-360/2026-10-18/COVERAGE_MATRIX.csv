@@ -1,0 +1,38 @@
+area,identified,inspected,evidence_linked,tested,reviewed,blocked_reason
+git history and open PRs,yes,yes,EXECUTION_LOG.md,read-only gh and git,self,secret names and branch protection HTTP 403
+Neon primary catalog,yes,yes,DATABASE_CATALOG.csv,SELECT read only,self,none
+Prisma drift,yes,yes,SCHEMA_DIFF_MATRIX.csv; SCHEMA_SEMANTIC_DIFF.csv,parser at 11:41Z plus migrate diff inspect at 13:02Z,self,diff SQL not executed; keywords nullability was silent in the tool and confirmed by attnotnull
+migrations and SQL lineage,yes,yes,MIGRATION_CHRONOLOGY.md; SQL_DDL_LINEAGE.md,counts and applied row; reindex DDL read,self,which historical SQL file applied on which day is incomplete
+RLS roles grants,yes,yes,SECURITY_ACCESS_MATRIX.csv,catalog,self,which Vercel secret uses which role
+PITR and protected flag,yes,yes,AUDIT_DISAGREEMENTS.md,independent review read the console and stored values off-repo,independent-review,values are not published; SQL still has no history_retention GUC; restore drill not run
+restore drill,yes,no,SCHEMA_REBUILD_PLAN.md,not run,self,needs owner authorization
+legal systems and articles,yes,yes,LEGAL_DATA_QUALITY.md; LEGISLATIVE_VERSION_AUDIT.md; DATA_QUALITY_REPORT.md,aggregate SQL and md5 counts,self,official page text not re-fetched; duplicate hashes not adjudicated
+judicial corpus,yes,yes,JUDICIAL_CORPUS.md,aggregate SQL,self,no judgment text exported
+BOE provenance,yes,yes,LEGAL_DATA_QUALITY.md,stored diff not recomputed,self,33 unmatched docs not individually decided
+search indexes,yes,partial,SEARCH_INDEX_AUDIT.md,SQL counts; OpenSearch not connected,self,no cluster credential
+search benchmark,yes,yes,SEARCH_EVALUATION.md,eval:search lexical 54 queries exit 0,self,semantic and OpenSearch legs not executed; no paid embedder
+RAG citation guards,yes,yes,AI_GROUNDING_AUDIT.md; CITATION_RELATIONS_AUDIT.md,local tests plus citation-guard on primary,self,no live model call; two citation expectations diverged from current data
+MCP runtime,yes,partial,API_MCP_RUNTIME.md,unauthenticated 401 only,self,no traces for historical 300s timeouts
+editorial desk,yes,yes,EDITORIAL_DESK_AUDIT.md,SQL config plus off-repo read of EDITORIAL_DESK_WRITE,independent-review,env value not published; write cycle from request to index not run
+storage backend,yes,yes,STORAGE_AUDIT.md,attachment aggregate without bytes,self,Vercel Azure or SharePoint env unread
+public UI and SEO,yes,partial,PUBLIC_UI_AUDIT.md,curl robots sitemap legal health,self,no login and no browser session
+billing,yes,yes,COST_CAPACITY.md,17 billing tables count 0; Moyasar unset,self,no invoices and no payment call
+Rasd Hostinger Supabase,yes,docs only,HISTORICAL_TIMELINE.md,not connected,self,no credentials
+CI lineage,yes,yes,CI_CD_LINEAGE.md,2658 runs aggregated,self,job logs not downloaded; protection and secret names HTTP 403
+DR plan,yes,yes,DR_READINESS.md,plan only,self,execution gated
+independent QA,yes,yes,QUALITY_REVIEW.md,Claude Code review of ce416095 in PR #790 commit ccaf7d1,independent-review,ACCEPT WITH CONDITIONS; private security package stays with the owner; encyclopedia conditions closed in this correction
+legislative versions and provenance,yes,yes,LEGISLATIVE_VERSION_AUDIT.md; SOURCE_PROVENANCE_ATLAS.md,aggregate SQL 12:47Z,self,decree text not copied; BOE pages not refetched
+PDPL and observability and cost,yes,yes,SECURITY_PDPL_FLOW.md; OPERATIONS_OBSERVABILITY.md; COST_CAPACITY.md,local redaction tests; repo search; billing counts,self,no PDPL certification; hosted dashboards outside the repo unread
+schema rebuild and restore drill,yes,partial,SCHEMA_REBUILD_PLAN.md,isolated PostgreSQL 17.11 rebuild by the independent review,independent-review,rebuild failed to match production; restore drill still not run
+deployment SHA,yes,yes,DEPLOYMENT_SOURCE_RECONCILIATION.md,HTML at 13:00Z plus Vercel alias read by the independent review,independent-review,binding at review time was d8989fb2; not re-read after origin/main moved to 0f62b406; a1733679..d4ee69a touches citation text
+prisma semantic diff,yes,yes,SCHEMA_SEMANTIC_DIFF.csv; PRISMA_COMPATIBILITY_AUDIT.md,migrate diff inspect only,self,diff SQL not executed
+migration provenance,yes,yes,MIGRATION_APPLICATION_MATRIX.csv,39 files versus live tables,self,exact apply timestamp unknown except the one ledger row
+write surface,yes,yes,BACKEND_WRITE_SURFACE_AUDIT.csv,code read,self,EDITORIAL_DESK_WRITE value on Vercel unread
+MCP timeout cause,yes,partial,MCP_TIMEOUT_ROOT_CAUSE.md,independent review: ongoing POST timeouts on d8989fb2,independent-review,300s matches missing maxDuration; root cause still unproven
+search sync worker,yes,yes,INDEX_SYNC_WORKER_VERIFICATION.md,repo search and live count 0,self,OpenSearch document count unread
+unit_version growth,yes,yes,evidence/key_counts.csv; evidence/unification-2026-10-18T1326Z.json,created_at buckets plus HKM-030 inject commits on PR #788,independent-review,writer identified as authorized HKM-030 inject; 636 rows at 19:45Z not re-counted here
+hybrid semantic search,yes,no,SEARCH_EVALUATION.md,not run,self,lexical P@1 94 percent at 12:50Z is not this test
+editorial write cycle,yes,no,EDITORIAL_DESK_AUDIT.md,not run,self,needs owner authorization off production
+authenticated permission tests,yes,no,API_CATALOG.csv,not run,independent-review,one scanner sample was wrong; the scan is not voided; security detail stays off-repo; no login session
+non-public schemas,yes,yes,evidence/relations.csv,catalog count at 11:41Z,self,38 tables outside public; review said 40 and the two-table gap was not re-counted
+foreign key actions,yes,yes,evidence/constraints.csv,names checked against the 11:41 catalog,independent-review,3 chat FKs absent; 10 exist with different actions

@@ -1,0 +1,9 @@
+risk_id,asset,observation,severity,confidence,do_not,status
+LDR-1,article_versions,12829 articles have no row; 15902 derived rows have null effective_from; superseded_by null on all 16007,P1,CONFIRMED,do not invent dates or backfill from this audit,open
+LDR-2,verification,1591 rows; 30 works lack an instrument including 29 marked in force,P2,CONFIRMED,do not treat missing instrument as repealed or valid,open
+LDR-3,legal_articles content md5,530 identical-byte groups covering 1685 rows max multiplicity 32,P3,CONFIRMED,do not delete duplicates from the hash alone,open
+LDR-4,boe.amendment_note,676 needs_review of 1819; 180 have null kind and null number and null hijri date,P2,CONFIRMED,do not auto-classify the 180,open
+LDR-5,legal_systems.instrument_kind,null on all 1155 systems while kind lives on boe notes,P2,CONFIRMED,do not copy kinds across by name similarity,open
+LDR-6,articleCount,10 systems differ from row counts,P2,CONFIRMED,do not equalize counters,open
+LDR-7,judicial_cases.reviewStatus,all 51105 needs_review; parsed dates null and text dates filled,P2,CONFIRMED,do not treat the flag as corrupt text,open
+LDR-8,attachments,1 LOCAL_UPLOAD row with extracted text and null data_class and null sha256,P2,CONFIRMED,do not download or print the text,open

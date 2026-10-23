@@ -1,0 +1,4 @@
+extname,extversion,schema
+pg_trgm,1.6,public
+plpgsql,1.0,pg_catalog
+vector,0.8.0,public

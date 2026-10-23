@@ -1,0 +1,6 @@
+rolname,rolsuper,rolinherit,rolcreaterole,rolcreatedb,rolcanlogin,rolreplication,rolbypassrls,rolconnlimit
+cloud_admin,true,true,true,true,true,true,true,-1
+hakeem_readonly,false,true,false,false,true,false,false,-1
+neon_service,false,true,true,true,true,true,true,-1
+neon_superuser,false,true,true,true,false,true,true,-1
+neondb_owner,false,true,true,true,true,true,true,-1
