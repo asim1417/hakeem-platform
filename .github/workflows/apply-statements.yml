@@ -1,0 +1,57 @@
+name: Apply Statements (تنفيذ ملف عبارات معتمد حرفيًا — إضافة فقط)
+
+# ينفّذ statements.json من المستودع كما هو، بلا إعادة كتابة يدوية للنص القانوني.
+# يدوي فقط. البصمة المتوقعة إلزامية. preview يتراجع، apply يثبّت. يتطلّب NEON_DATABASE_URL.
+
+on:
+  workflow_dispatch:
+    inputs:
+      CONFIRM_RUNTIME_DB_ALIGNMENT:
+        description: "اكتب NEON_RUNTIME_CONFIRMED لتأكيد قاعدة Runtime قبل أي كتابة"
+        type: string
+        required: true
+        default: ""
+      file:
+        description: "مسار statements.json في المستودع"
+        type: string
+        required: true
+      expect_md5:
+        description: "بصمة md5 المتوقعة للعبارات"
+        type: string
+        required: true
+      mode:
+        description: "preview (تراجع) | apply (تثبيت)"
+        type: choice
+        required: true
+        default: preview
+        options: [preview, apply]
+
+concurrency:
+  group: apply-statements
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+    steps:
+      - name: "🔒 Runtime DB alignment gate"
+        run: |
+          if [ "${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}" != "NEON_RUNTIME_CONFIRMED" ]; then
+            echo "::error::DB writes LOCKED — اضبط CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED."; exit 1; fi
+          if [ -z "$DATABASE_URL" ]; then echo "::error::يلزم ضبط NEON_DATABASE_URL."; exit 1; fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q psycopg2-binary
+      - name: التنفيذ (${{ inputs.mode }})
+        run: |
+          set -o pipefail
+          python3 scripts/apply-statements.py --file "${{ inputs.file }}" --mode "${{ inputs.mode }}" --expect-md5 "${{ inputs.expect_md5 }}" | tee apply.log
+          { echo '```json'; cat apply.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
