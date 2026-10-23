@@ -55,10 +55,10 @@ async function hybridByType(query: string, type: "ruling" | "principle", limit: 
   }
 }
 // الأحكام من مسارها المستقل (لا الهجين): لا تزاحمها المواد، والمقتطف من الأسباب أو المنطوق.
-// HKM-012: بلا المسار الدلالي (الافتراض في searchRulingsDirect): متجهات الأحكام من النص الخام وفيه الأسماء.
+// المسار الدلالي مفعّل: متجهات الأجزاء من نص محجوبة أسماؤه (HKM-043؛ كان معطّلًا في HKM-012 لأنها من الخام).
 export async function search_rulings(query: string, limit = 6): Promise<ToolResult<MergedResult[]>> {
   try {
-    const r = await searchRulingsDirect({ query, limit, semantic: false });
+    const r = await searchRulingsDirect({ query, limit, semantic: true });
     const items = r.hits.map(rulingHitToMerged);
     return ok(items, "judicial_cases.search_norm", items.length ? 0.85 : 0.4, items.length ? undefined : "لا نتائج من هذا النوع");
   } catch (e) {

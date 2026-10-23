@@ -136,8 +136,8 @@ export async function searchLegalCoreComprehensive(q: string, limit = 30): Promi
       facetDepth: FACET_FETCH,
     }).catch(() => null),
     hybridSearch({ q: query, limit: Math.max(limit, FACET_FETCH) }).catch(() => null),
-    // HKM-012: بلا المسار الدلالي (متجهات الأحكام من النص الخام وفيه أسماء الأفراد).
-    searchRulingsDirect({ query, limit: 50, semantic: false }).catch(() => null),
+    // المسار الدلالي مفعّل: متجهات الأجزاء من نص محجوبة أسماؤه (HKM-043). الموصل يبقى لفظيًا (lib/mcp/adapter.ts).
+    searchRulingsDirect({ query, limit: 50, semantic: true }).catch(() => null),
   ]);
 
   // مواد النواة → موحّدة، بثقة مُطبَّعة، بسقف التمثيل.
