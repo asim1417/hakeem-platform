@@ -1,25 +1,25 @@
 {
-  "measuredAt": "2026-10-23T13:36:55.027Z",
+  "measuredAt": "2026-10-23T13:39:27.895Z",
   "mode": "dry-run",
   "segmentVersion": "segment-rules-v4",
   "embedVersion": "seg-embed-v2-masked",
   "rulings": 51105,
   "coveragePct": {
-    "reasons": 96.28,
-    "disposition": 99.6,
-    "neither": 0.02
+    "reasons": 98.95,
+    "disposition": 99.95,
+    "neither": 0
   },
   "chunks": {
-    "reasons": 51842,
-    "disposition": 50902
+    "reasons": 53207,
+    "disposition": 51080
   },
   "meanCharsPerChunk": {
-    "reasons": 1840,
-    "disposition": 231
+    "reasons": 1808,
+    "disposition": 230
   },
   "reasonsChunksPerRuling": {
-    "0": 1903,
-    "1": 47394,
+    "0": 538,
+    "1": 48759,
     "2": 1245,
     "3": 294,
     "4": 269
@@ -28,19 +28,19 @@
     "model": "text-embedding-3-small",
     "dims": 1536,
     "pricePerMTokUsd": 0.02,
-    "chunks": 102744,
-    "chars": 107115273,
-    "calls": 1606,
+    "chunks": 104287,
+    "chars": 107953523,
+    "calls": 1630,
     "inputsPerCall": 64,
     "tokens": {
-      "at2_0": 53557637,
-      "at2.5": 42846109,
-      "at3_0": 35705091
+      "at2_0": 53976762,
+      "at2.5": 43181409,
+      "at3_0": 35984508
     },
     "costUsd": {
-      "high": 1.07,
+      "high": 1.08,
       "mid": 0.86,
-      "low": 0.71
+      "low": 0.72
     }
   },
   "tableExists": true,
