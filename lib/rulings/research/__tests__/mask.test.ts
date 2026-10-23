@@ -41,3 +41,17 @@ test("الوكيل والمحامي", () => {
   assert.ok(out.includes("بموجب الوكالة"), out);
   assert.ok(out.includes("وكيله المحامي [اسم]"), out);
 });
+
+test("اسم عائلة بسابقة «بال» في توقيع الدائرة يُحجب، و«ب + ال» بعد الاسم تبقى", () => {
+  const sig = maskPersonalData("وصلى ﷲ على نبينا محمد وسلم.عضوسالم بن فهد بالخير عضوماجد بن صالح الحربي");
+  assert.ok(!sig.includes("بالخير"), sig);
+  assert.ok(!sig.includes("الحربي"), sig);
+  const end = maskPersonalData("القاضي سالم بن فهد بالخير");
+  assert.ok(!end.includes("بالخير"), end);
+  const line = maskPersonalData("عضو الدائرة سالم بن فهد بالخير\nأمين السر");
+  assert.ok(!line.includes("بالخير"), line);
+  const verb = maskPersonalData("حكمت الدائرة بإلزام سعد بن علي بالمبلغ المذكور");
+  assert.ok(verb.includes("بالمبلغ المذكور"), verb);
+  const pay = maskPersonalData("إلزام سعد بن علي بالسداد خلال شهر");
+  assert.ok(pay.includes("بالسداد خلال شهر"), pay);
+});
