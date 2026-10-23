@@ -197,7 +197,7 @@ VALUES ({lit('hkm34r-' + h(SRC, 'rel', R['id'])[:24])}, 'system', {lit(R['id'])}
 add("g5_regs", "guard_after", f"""SELECT CASE WHEN (SELECT count(*) FROM legal_relations WHERE id LIKE 'hkm34r-%' AND target_id={lit(PARENT)} AND relation::text='IMPLEMENTS')=2 THEN 'ok' ELSE {GUARD_FAIL} END AS guard""")
 add("g5_regs", "report", f"""SELECT md5(string_agg(r.source_id, '|' ORDER BY r.source_id)) fp, count(*) n FROM legal_relations r WHERE r.id LIKE 'hkm34r-%'""")
 
-doc = {"batch": SRC, "by": BY, "groups": groups, "expected": {"g1_fp": "fff3e99d2771d7055b4bb8468f65ed5e", "g1_n": 12, "g2_fp": FP_GAP, "g2_n": 5, "g3_fp": "cee561e40ce12c0df596118210b146dc", "g3_n": 5, "g4_candidates_fp": FP_MISS, "g4_n": N_MISS, "g5_fp": "acb0495f134b959d0b7fd9d1b1f451ea", "g5_n": 2, "order": ["g1_supersede", "g2_unit_numbers", "g3_dup_base", "g4_missing", "g5_regs"]}, "regs": REGS,
+doc = {"batch": SRC, "by": BY, "groups": groups, "expected": {"g1_fp": "fff3e99d2771d7055b4bb8468f65ed5e", "g1_n": 12, "g2_fp": FP_GAP, "g2_n": 5, "g3_fp": "cee561e40ce12c0df596118210b146dc", "g3_n": 5, "g4_candidates_fp": FP_MISS, "g4_fp": "620fe636be415ee74f6a9761b2569145", "g4_n": N_MISS, "g5_fp": "acb0495f134b959d0b7fd9d1b1f451ea", "g5_n": 2, "order": ["g1_supersede", "g2_unit_numbers", "g3_dup_base", "g4_missing", "g5_regs"]}, "regs": REGS,
        "notes": "g1 تحقق إلحاقي (verification append-only) بسند نص الإحلال عند الهيئة؛ g2 DDL توسيع قيد CHECK على جدول أُنشئ 23/10 (boe.unit_number_fix) لا حذف بيانات؛ g3 وg4 تُطبَّقان بعد g2؛ g5 اللائحتان مدخلتان منذ HKM-028؛ يُضاف ربط IMPLEMENTS فقط."}
 (OUT / "statements.json").write_text(json.dumps(doc, ensure_ascii=False, indent=1), encoding="utf-8")
 print({g: len(v) for g, v in groups.items()})
