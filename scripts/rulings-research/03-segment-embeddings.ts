@@ -19,6 +19,7 @@ import { assertReadOnly, openReadOnlyDb } from "../../lib/rulings/audit/readonly
 import { buildSegmentChunks, segmentContentHash, SEGMENT_EMBED_VERSION, type SegmentChunk } from "../../lib/rulings/research/segment-embeddings";
 import { SEGMENT_EXTRACTOR_VERSION } from "../../lib/rulings/research/segment";
 import { maskPersonalData } from "../../lib/rulings/research/mask";
+import { validStoredSegments, type StoredSegmentRow } from "../../lib/rulings/research/stored-segments";
 import { EMBEDDING_DIMS, EMBEDDING_MODEL, embedBatch } from "../../lib/modules/ai/embeddings";
 import { resolveWriteTarget } from "../../lib/rulings/research/write-target";
 
@@ -90,6 +91,28 @@ function report(t: Tally, extra: Record<string, unknown>) {
   console.log(JSON.stringify({ rulings: data.rulings, coveragePct: data.coveragePct, estimate: data.estimate, ...extra }));
 }
 
+/**
+ * الأجزاء المخزّنة الصالحة (ومنها حدود النموذج لـ06) لكل حكم في الدفعة؛ وإلا تقطيع القواعد.
+ * بدونها يُعيد هذا السكربت تقطيع أحكام النموذج بالقواعد فيحذف متجهات أسبابها ومنطوقها.
+ */
+async function storedSegmentsFor(
+  q: (sql: string, ids: string[]) => Promise<StoredSegmentRow[]>,
+  rows: Array<{ id: string; text: string | null }>,
+): Promise<Map<string, Array<{ type: string; start: number; end: number }>>> {
+  const got = await q(
+    `SELECT ruling_id, part, start_char, end_char, content_hash, segment_version FROM ruling_segments WHERE ruling_id = ANY($1::text[])`,
+    rows.map((r) => r.id),
+  ).catch(() => [] as StoredSegmentRow[]);
+  const byId = new Map<string, StoredSegmentRow[]>();
+  for (const g of got) byId.set(g.ruling_id, [...(byId.get(g.ruling_id) ?? []), g]);
+  const out = new Map<string, Array<{ type: string; start: number; end: number }>>();
+  for (const r of rows) {
+    const segs = validStoredSegments(byId.get(r.id) ?? [], r.text ?? "");
+    if (segs) out.set(r.id, segs);
+  }
+  return out;
+}
+
 async function dryRun() {
   const db = openReadOnlyDb();
   try {
@@ -100,7 +123,8 @@ async function dryRun() {
       const rows = await db.q<{ id: string; text: string | null }>(
         `SELECT id, "judgmentText" AS text FROM judicial_cases WHERE id > $1 ORDER BY id LIMIT ${READ_BATCH}`, last);
       if (!rows.length) break;
-      for (const r of rows) count(t, buildSegmentChunks(r.text ?? "", maskPersonalData));
+      const segsOf = await storedSegmentsFor((sql, ids) => db.q<StoredSegmentRow>(sql, ids), rows);
+      for (const r of rows) count(t, buildSegmentChunks(r.text ?? "", maskPersonalData, segsOf.get(r.id)));
       last = rows[rows.length - 1].id;
       process.stdout.write(`\r… ${t.rulings}`);
     }
@@ -191,8 +215,9 @@ async function apply() {
       const existing = await db.$queryRawUnsafe<Array<{ ruling_id: string; part: string; chunk: number; content_hash: string }>>(
         `SELECT ruling_id, part, chunk, content_hash FROM ruling_segment_embeddings WHERE ruling_id = ANY($1::text[])`, ids);
       const have = new Map(existing.map((e) => [`${e.ruling_id}|${e.part}|${e.chunk}`, e.content_hash]));
+      const segsOf = await storedSegmentsFor((sql, ids) => db.$queryRawUnsafe<StoredSegmentRow[]>(sql, ids), rows);
       for (const r of rows) {
-        const cs = buildSegmentChunks(r.text ?? "", maskPersonalData);
+        const cs = buildSegmentChunks(r.text ?? "", maskPersonalData, segsOf.get(r.id));
         count(t, cs);
         const keep = new Set(cs.map((c) => `${c.part}|${c.chunk}`));
         // أجزاء لم تعد موجودة بعد تغيّر التقطيع: تُحذف من هذا الجدول وحده.
