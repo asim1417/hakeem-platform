@@ -115,6 +115,7 @@ def main() -> int:
     ap.add_argument("--out", required=True)
     ap.add_argument("--pace-ms", type=int, default=1500)
     ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--offset", type=int, default=0, help="تخطّي أول N هدف (للدفعات المتتابعة على الملف نفسه)")
     ap.add_argument("--kind", choices=["law", "attachment", "all"], default="all")
     ap.add_argument("--max-pages", type=int, default=400, help="أقصى عدد صور لكل مرفق")
     ap.add_argument("--deadline-min", type=int, default=0, help="توقف هادئ بعد هذه الدقائق (0 = بلا حد)؛ ما جُلب يبقى محفوظًا")
@@ -128,12 +129,14 @@ def main() -> int:
     targets = [json.loads(l) for l in open(a.targets, encoding="utf-8") if l.strip()]
     if a.kind != "all":
         targets = [t for t in targets if t["kind"] == a.kind]
+    if a.offset:
+        targets = targets[a.offset :]
     if a.limit:
         targets = targets[: a.limit]
     started = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     ok = failed = done = 0
     def write_run(ended: bool) -> None:
-        (out / "run.json").write_text(json.dumps({"started_at": started, "ended_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "ended": ended, "targets": len(targets), "done": done, "ok": ok, "failed": failed, "pace_ms": a.pace_ms, "max_pages": a.max_pages, "deadline_min": a.deadline_min, "origin": "github-actions"}, ensure_ascii=False, indent=1))
+        (out / "run.json").write_text(json.dumps({"started_at": started, "ended_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "ended": ended, "targets": len(targets), "done": done, "ok": ok, "failed": failed, "pace_ms": a.pace_ms, "offset": a.offset, "limit": a.limit, "max_pages": a.max_pages, "deadline_min": a.deadline_min, "origin": "github-actions"}, ensure_ascii=False, indent=1))
     with open(out / "manifest.jsonl", "a", encoding="utf-8") as mf:
         for t in targets:
             if out_of_time():
