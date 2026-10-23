@@ -267,6 +267,48 @@
     "name": "report",
     "sql": "SELECT md5(string_agg(r.source_id, '|' ORDER BY r.source_id)) fp, count(*) n FROM legal_relations r WHERE r.id LIKE 'hkm34r-%'"
    }
+  ],
+  "g6_civil": [
+   {
+    "name": "guard_before",
+    "sql": "SELECT CASE WHEN (SELECT count(*) FROM legal_articles a WHERE a.id=$hk$cmpz9eka00celybvvo633dkhu$hk$ AND a.\"lawName\"='نظام الخدمة المدنية' AND a.\"articleNumber\"=30 AND a.\"articleBis\"=0)=1\n  AND (SELECT count(*) FROM legal_articles a WHERE a.\"lawName\"='نظام الخدمة المدنية' AND a.\"articleNumber\" IN (28,31))=0\n  AND (SELECT count(*) FROM legal_articles a WHERE a.\"lawName\"='نظام الخدمة المدنية' AND a.\"articleNumber\"=30)=1\n  AND (SELECT count(*) FROM boe.unit u WHERE u.law_id=$hk$boe26-37885ef7537d4c2e2379cbdc$hk$ AND u.seq=30 AND u.article_number IS NULL AND uqn_fix.hkm30_norm(u.body)=(SELECT uqn_fix.hkm30_norm(content) FROM legal_articles WHERE id=$hk$cmpz9eka00celybvvo633dkhu$hk$))=1\n  AND (SELECT count(*) FROM boe.unit u WHERE u.law_id=$hk$boe26-37885ef7537d4c2e2379cbdc$hk$ AND u.seq IN (32,33) AND u.article_number IS NULL AND length(u.body)>=20)=2\n  AND (SELECT count(*) FROM boe.unit_number_fix f WHERE f.law_id=$hk$boe26-37885ef7537d4c2e2379cbdc$hk$ AND f.seq IN (32,33))=0\n  AND (SELECT count(*) FROM boe.amendment_note n WHERE n.law_id=$hk$boe26-37885ef7537d4c2e2379cbdc$hk$ AND n.unit_seq=32 AND position('من المادة (30)' in n.note_text)>0)>=1\n  AND (SELECT count(*) FROM boe.unit u WHERE u.law_id=$hk$boe26-37885ef7537d4c2e2379cbdc$hk$ AND u.seq=31 AND u.article_number=29)=1 AND (SELECT count(*) FROM boe.unit u WHERE u.law_id=$hk$boe26-37885ef7537d4c2e2379cbdc$hk$ AND u.seq=34 AND u.article_number=32)=1\n  AND (SELECT count(*) FROM unit_version v WHERE v.unit_id=$hk$cmpz9eka00celybvvo633dkhu$hk$)=0\n  AND (SELECT count(*) FROM legal_text_provenance WHERE source_id=$hk$hkm034-2026-10-23-civil$hk$)=0\nTHEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard"
+   },
+   {
+    "name": "fix_units",
+    "sql": "INSERT INTO boe.unit_number_fix (law_id, seq, article_number, is_bis, method, evidence, decided_by) VALUES\n($hk$boe26-37885ef7537d4c2e2379cbdc$hk$, 32, 30, false, 'neighbor_gap', jsonb_build_object('prev_numbered', 29, 'next_numbered', 32, 'basis', 'ملاحظة التعديل على الوحدة نفسها: «عُدلت الفقرة (و) من المادة (30)»؛ والوحدة seq30 (المرقّمة 30 بمطابقة المتن) هي 28 بترتيب الصفحة ولا يمكن سحب صفها (إضافة فقط)'), $hk$owner-inject-hkm034-2026-10-23$hk$),\n($hk$boe26-37885ef7537d4c2e2379cbdc$hk$, 33, 31, false, 'neighbor_gap', jsonb_build_object('prev_numbered', 30, 'next_numbered', 32, 'basis', 'ترتيب الصفحة: بعد المادة 30 (seq32) وقبل المادة 32 (seq34)'), $hk$owner-inject-hkm034-2026-10-23$hk$)"
+   },
+   {
+    "name": "provenance_renumber",
+    "sql": "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text, created_at)\nSELECT 'hkm34p-'||left(encode(sha256(convert_to('renumber|'||a.id,'UTF8')),'hex'),24), 'article', a.id, a.\"lawName\", 28, 'boe', $hk$hkm034-2026-10-23-civil$hk$, l.url, encode(sha256(convert_to(a.content,'UTF8')),'hex'), '2026-09-28'::date, 'renumber_30_to_28', 'articleNumber=30; title='||coalesce(a.title,''), now()\nFROM legal_articles a, boe.law l WHERE a.id=$hk$cmpz9eka00celybvvo633dkhu$hk$ AND l.id=$hk$boe26-37885ef7537d4c2e2379cbdc$hk$"
+   },
+   {
+    "name": "renumber",
+    "sql": "UPDATE legal_articles SET \"articleNumber\"=28, title=CASE WHEN title ~ '30' THEN replace(title,'30','28') ELSE title END, \"updatedAt\"=now() WHERE id=$hk$cmpz9eka00celybvvo633dkhu$hk$"
+   },
+   {
+    "name": "search_norm_28",
+    "sql": "UPDATE legal_articles a SET search_norm = uqn_fix.hkm30_search_norm(a.\"lawName\", a.title, a.content, a.keywords, a.classification, a.chapter) WHERE a.id=$hk$cmpz9eka00celybvvo633dkhu$hk$"
+   },
+   {
+    "name": "insert_30_31",
+    "sql": "INSERT INTO legal_articles (id, \"legalSystemId\", \"lawName\", classification, \"articleNumber\", \"articleBis\", title, content, \"royalDecree\", \"effectiveFrom\", status, \"createdAt\", \"updatedAt\", search_norm)\nSELECT 'hkm34a-'||left(encode(sha256(convert_to('civil|'||s.id||'|'||(u.seq-2),'UTF8')),'hex'),24), s.id, s.name, s.classification, u.seq-2, 0, 'المادة '||(u.seq-2), u.body, s.preamble_royal_decree, NULL, 'سارية', now(), now(),\n  uqn_fix.hkm30_search_norm(s.name, 'المادة '||(u.seq-2), u.body, ARRAY[]::text[], s.classification, NULL)\nFROM boe.unit u JOIN boe.current_match cm ON cm.guid=(SELECT guid FROM boe.law WHERE id=$hk$boe26-37885ef7537d4c2e2379cbdc$hk$) JOIN legal_systems s ON s.id=cm.hakeem_system_id WHERE u.law_id=$hk$boe26-37885ef7537d4c2e2379cbdc$hk$ AND u.seq IN (32,33) ORDER BY u.seq"
+   },
+   {
+    "name": "provenance_insert",
+    "sql": "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text, created_at)\nSELECT 'hkm34p-'||left(encode(sha256(convert_to('civil|'||a.id,'UTF8')),'hex'),24), 'article', a.id, a.\"lawName\", a.\"articleNumber\", 'boe', $hk$hkm034-2026-10-23-civil$hk$, l.url, encode(sha256(convert_to(a.content,'UTF8')),'hex'), '2026-09-28'::date, 'insert_from_boe', NULL, now()\nFROM legal_articles a, boe.law l WHERE a.\"lawName\"='نظام الخدمة المدنية' AND a.\"articleNumber\" IN (30,31) AND a.id LIKE 'hkm34a-%' AND l.id=$hk$boe26-37885ef7537d4c2e2379cbdc$hk$"
+   },
+   {
+    "name": "verification",
+    "sql": "INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, evidence_quote, method, verified_by, supersedes_verification_id)\nSELECT 'vf34-'||left(encode(sha256(convert_to('unit|'||a.id||'|ساري','UTF8')),'hex'),24), 'unit', a.id, 'ساري', a.\"royalDecree\", l.url, 'نص المادة كما في بوابة هيئة الخبراء (لقطة 28/9/2026)؛ الرقم من ترتيب الصفحة ومن ملاحظة التعديل «عُدلت الفقرة (و) من المادة (30)»', 'rule', $hk$owner-inject-hkm034-2026-10-23$hk$, NULL\nFROM legal_articles a, boe.law l WHERE a.\"lawName\"='نظام الخدمة المدنية' AND a.\"articleNumber\" IN (30,31) AND a.id LIKE 'hkm34a-%' AND l.id=$hk$boe26-37885ef7537d4c2e2379cbdc$hk$"
+   },
+   {
+    "name": "guard_after",
+    "sql": "SELECT CASE WHEN (SELECT string_agg(\"articleNumber\"::text, ',' ORDER BY \"articleNumber\") FROM legal_articles WHERE \"lawName\"='نظام الخدمة المدنية' AND \"articleBis\"=0 AND \"articleNumber\" BETWEEN 26 AND 33)='26,27,28,29,30,31,32,33'\n  AND (SELECT count(*) FROM legal_text_provenance WHERE source_id=$hk$hkm034-2026-10-23-civil$hk$)=3\n  AND (SELECT count(*) FROM legal_articles a JOIN boe.unit u ON u.law_id=$hk$boe26-37885ef7537d4c2e2379cbdc$hk$ AND u.seq=a.\"articleNumber\"+2 WHERE a.\"lawName\"='نظام الخدمة المدنية' AND a.\"articleNumber\" IN (30,31) AND a.content=u.body)=2\nTHEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard"
+   },
+   {
+    "name": "report",
+    "sql": "SELECT md5(string_agg(a.id||'|'||a.\"articleNumber\"||'|'||a.content, '|' ORDER BY a.id)) fp, count(*) n, json_agg(json_build_object('n', a.\"articleNumber\", 'title', a.title, 'text', left(a.content,120)) ORDER BY a.\"articleNumber\") rows FROM legal_articles a WHERE a.\"lawName\"='نظام الخدمة المدنية' AND a.\"articleNumber\" IN (28,30,31) AND a.\"articleBis\"=0"
+   }
   ]
  },
  "expected": {
@@ -286,7 +328,8 @@
    "g2_unit_numbers",
    "g3_dup_base",
    "g4_missing",
-   "g5_regs"
+   "g5_regs",
+   "g6_civil"
   ]
  },
  "regs": [
