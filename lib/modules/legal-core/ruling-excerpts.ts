@@ -143,10 +143,10 @@ export interface RulingExcerpts {
   parts: RulingPart[];
 }
 
-export function buildRulingExcerpts(raw: string, query: string, size = 320): RulingExcerpts {
+export function buildRulingExcerpts(raw: string, query: string, size = 320, segments?: readonly RulingPart[] | null): RulingExcerpts {
   const text = raw ?? "";
-  const seg = segmentRuling(text);
-  const parts: RulingPart[] = seg.segments.map((s) => ({ type: s.type, start: s.start, end: s.end }));
+  // أجزاء محسوبة سلفًا (المخزّنة في ruling_segments، ومنها حدود النموذج) وإلا التقطيع بالقواعد الآن.
+  const parts: RulingPart[] = (segments ?? segmentRuling(text).segments).map((s) => ({ type: s.type, start: s.start, end: s.end }));
   const partAt = (pos: number) => parts.find((p) => pos >= p.start && pos < p.end)?.type ?? null;
   const disp = parts.find((p) => p.type === "disposition");
   const disposition = disp ? windowFrom(text, disp.start, Math.min(size, disp.end - disp.start)) : null;

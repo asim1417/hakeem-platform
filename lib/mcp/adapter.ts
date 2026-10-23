@@ -36,6 +36,7 @@ import {
   semanticNameHit,
 } from "@/lib/mcp/ruling-privacy";
 import { lexicalQueryTainted } from "@/lib/mcp/name-taint";
+import { loadStoredSegments } from "@/lib/rulings/research/stored-segments";
 
 /** مقتطف نصّي بطول ثابت (عقد المخرجات). */
 const SNIPPET = 400;
@@ -285,6 +286,8 @@ export async function searchRulings(query: string, court?: string, yearH?: numbe
           .catch(() => null)
       : [];
     const byId = new Map((rows ?? []).map((x) => [x.id, x] as const));
+    // الأجزاء المخزّنة (ومنها حدود النموذج) متى طابقت بصمة النص، وإلا يقطّع المقتطف بالقواعد.
+    const storedSegs = await loadStoredSegments(new Map((rows ?? []).map((x) => [x.id, x.judgmentText ?? ""] as const)));
     for (const h of hits) {
       if (results.length >= pageCap) break;
       if (results.some((x) => x.ruling_id === h.id)) continue;
@@ -306,7 +309,7 @@ export async function searchRulings(query: string, court?: string, yearH?: numbe
           continue;
         }
       }
-      const ex = maskedRulingExcerpts(raw.judgmentText ?? "", q, h.matchedBy === "semantic" ? { part: h.matchedIn, originalSnippet: h.snippet } : null);
+      const ex = maskedRulingExcerpts(raw.judgmentText ?? "", q, h.matchedBy === "semantic" ? { part: h.matchedIn, originalSnippet: h.snippet } : null, storedSegs.get(h.id));
       results.push({
         ruling_id: h.id,
         case_number: h.decisionNo ?? h.caseNo ?? null,
