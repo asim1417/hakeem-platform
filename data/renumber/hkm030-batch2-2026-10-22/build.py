@@ -4,7 +4,7 @@
 المجموعات:
   g1_match  تصحيح مطابقات هيئة الخبراء (boe.match صفوفًا جديدة، فالمخطط append-only وboe.current_match يأخذ الأحدث): الإصدار الجديد ← سجله الجديد، الإصدار الملغى ← بلا سجل، وربط 1421 والمستشفى.
   g2_ingest إدخال 8 أنظمة نصّها كامل في لقطة الهيئة (boe.unit/boe.text_block) على نمط HKM-028، مع الإحلال حيث نصّت الأداة.
-  g3_tail   حذف ذيل ملحق بمتن 94 مادة (عنوان باب/فصل أو تذييل موقع) حيث متن الهيئة = بداية متننا حرفيًّا بعد التطبيع، مع صف legal_text_provenance.
+  g3_tail   حذف ذيل ملحق بمتن 108 مواد (منها 14 في نظام التنفيذ 1433 بعد تصحيح مطابقته) (عنوان باب/فصل أو تذييل موقع) حيث متن الهيئة = بداية متننا حرفيًّا بعد التطبيع، مع صف legal_text_provenance.
   g4_class  تصنيف 52 نظامًا بقاعدة الألفاظ (دقة 94.7% في اختبار الاستبعاد الواحد عند هامش ≥ 1.5) و41 من اسم النظام الأم الوارد في الاسم.
 كل عبارة SQL تعمل على بيانات القاعدة نفسها؛ لا نص قانوني مكتوب هنا.
 """
@@ -210,9 +210,9 @@ CREATE TEMP TABLE hkm30_tail ON COMMIT DROP AS
 {TAIL_CTE}
 SELECT aid, law, an, oraw previous_text, rtrim(left(oraw, L), E' \\t\\n\\r.،؛:') new_text, substr(oraw, L+1) suffix FROM cut WHERE L IS NOT NULL""")
 add("g3_tail", "guard_before", f"""
-SELECT CASE WHEN (SELECT count(*) FROM hkm30_tail)=94
-  AND (SELECT count(*) FROM hkm30_tail WHERE uqn_fix.hkm30_norm(new_text) <> uqn_fix.hkm30_norm(previous_text) AND length(new_text) >= 20)=94
-  AND (SELECT count(*) FROM hkm30_tail h WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance pv WHERE pv.entity_id=h.aid AND pv.source_id={lit(TAIL_SRC)}))=94
+SELECT CASE WHEN (SELECT count(*) FROM hkm30_tail)=108
+  AND (SELECT count(*) FROM hkm30_tail WHERE uqn_fix.hkm30_norm(new_text) <> uqn_fix.hkm30_norm(previous_text) AND length(new_text) >= 20)=108
+  AND (SELECT count(*) FROM hkm30_tail h WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance pv WHERE pv.entity_id=h.aid AND pv.source_id={lit(TAIL_SRC)}))=108
 THEN 'ok' ELSE {GUARD_FAIL} END AS guard""")
 add("g3_tail", "provenance", f"""
 INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text, created_at)
@@ -222,8 +222,8 @@ UPDATE legal_articles a SET content = h.new_text, "updatedAt" = now() FROM hkm30
 add("g3_tail", "search_norm", """
 UPDATE legal_articles a SET search_norm = uqn_fix.hkm30_search_norm(a."lawName", a.title, a.content, a.keywords, a.classification, a.chapter) FROM hkm30_tail h WHERE a.id = h.aid""")
 add("g3_tail", "guard_after", f"""
-SELECT CASE WHEN (SELECT count(*) FROM legal_articles a JOIN hkm30_tail h ON h.aid=a.id WHERE a.content=h.new_text AND a.search_norm=uqn_fix.hkm30_search_norm(a."lawName", a.title, a.content, a.keywords, a.classification, a.chapter))=94
-  AND (SELECT count(*) FROM legal_text_provenance WHERE source_id={lit(TAIL_SRC)})=94
+SELECT CASE WHEN (SELECT count(*) FROM legal_articles a JOIN hkm30_tail h ON h.aid=a.id WHERE a.content=h.new_text AND a.search_norm=uqn_fix.hkm30_search_norm(a."lawName", a.title, a.content, a.keywords, a.classification, a.chapter))=108
+  AND (SELECT count(*) FROM legal_text_provenance WHERE source_id={lit(TAIL_SRC)})=108
 THEN 'ok' ELSE {GUARD_FAIL} END AS guard""")
 add("g3_tail", "report", """
 SELECT md5(string_agg(aid||'|'||new_text, '|' ORDER BY aid)) fp, count(*) n, json_agg(json_build_object('law', law, 'an', an, 'suffix', suffix) ORDER BY law, an) suffixes FROM hkm30_tail""")

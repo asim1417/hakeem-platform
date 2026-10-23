@@ -309,7 +309,7 @@
    },
    {
     "name": "guard_before",
-    "sql": "SELECT CASE WHEN (SELECT count(*) FROM hkm30_tail)=94\n  AND (SELECT count(*) FROM hkm30_tail WHERE uqn_fix.hkm30_norm(new_text) <> uqn_fix.hkm30_norm(previous_text) AND length(new_text) >= 20)=94\n  AND (SELECT count(*) FROM hkm30_tail h WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance pv WHERE pv.entity_id=h.aid AND pv.source_id=$hk$hkm030-tail-strip-2026-10-22$hk$))=94\nTHEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard"
+    "sql": "SELECT CASE WHEN (SELECT count(*) FROM hkm30_tail)=108\n  AND (SELECT count(*) FROM hkm30_tail WHERE uqn_fix.hkm30_norm(new_text) <> uqn_fix.hkm30_norm(previous_text) AND length(new_text) >= 20)=108\n  AND (SELECT count(*) FROM hkm30_tail h WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance pv WHERE pv.entity_id=h.aid AND pv.source_id=$hk$hkm030-tail-strip-2026-10-22$hk$))=108\nTHEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard"
    },
    {
     "name": "provenance",
@@ -325,7 +325,7 @@
    },
    {
     "name": "guard_after",
-    "sql": "SELECT CASE WHEN (SELECT count(*) FROM legal_articles a JOIN hkm30_tail h ON h.aid=a.id WHERE a.content=h.new_text AND a.search_norm=uqn_fix.hkm30_search_norm(a.\"lawName\", a.title, a.content, a.keywords, a.classification, a.chapter))=94\n  AND (SELECT count(*) FROM legal_text_provenance WHERE source_id=$hk$hkm030-tail-strip-2026-10-22$hk$)=94\nTHEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard"
+    "sql": "SELECT CASE WHEN (SELECT count(*) FROM legal_articles a JOIN hkm30_tail h ON h.aid=a.id WHERE a.content=h.new_text AND a.search_norm=uqn_fix.hkm30_search_norm(a.\"lawName\", a.title, a.content, a.keywords, a.classification, a.chapter))=108\n  AND (SELECT count(*) FROM legal_text_provenance WHERE source_id=$hk$hkm030-tail-strip-2026-10-22$hk$)=108\nTHEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard"
    },
    {
     "name": "report",
