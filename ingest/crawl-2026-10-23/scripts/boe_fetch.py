@@ -10,6 +10,16 @@
 import argparse, hashlib, json, pathlib, re, sys, time, urllib.parse, urllib.request
 
 BASE = "https://laws.boe.gov.sa"
+DEADLINE = [0.0]  # وقت مطلق (time.time) يتوقف بعده الزحف بهدوء؛ 0 = بلا حد
+MAX_PAGES = [400]
+
+
+def out_of_time() -> bool:
+    return DEADLINE[0] > 0 and time.time() >= DEADLINE[0]
+
+
+def is_image(ct: str, body: bytes) -> bool:
+    return body[:3] == b"\xff\xd8\xff" or body[:8] == b"\x89PNG\r\n\x1a\n" or "image/" in (ct or "").lower()
 UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36 hakeem-crawl/1.0 (+https://hakeemsa.com; respectful, paced)"
 IMG_RE = re.compile(r"GetViewerImage/?\?imageFileName=([A-Za-z0-9_\-]+_Page_\d{3}\.(?:jpg|jpeg|png))", re.I)
 PAGES_RE = re.compile(r"/BoeLaws/Laws/LawDetails/([0-9a-f\-]{36})/(\d+)", re.I)
@@ -78,10 +88,11 @@ def fetch_attachment(t: dict, out: pathlib.Path, pace: float) -> dict:
         names = [f"{vid}_Page_001.jpg"]
     seen_missing = 0
     i = 0
-    while i < len(names) and i < 400:
+    while i < len(names) and i < MAX_PAGES[0] and not out_of_time():
         name = names[i]
         st, img, ct = get(f"{BASE}/BoeLaws/Laws/GetViewerImage/?imageFileName={urllib.parse.quote(name)}")
-        if st == 200 and len(img) > 500:
+        # صفحة HTML برمز 200 (خطأ أو تحويل) ليست صورة: لا تُحفظ ولا تُعدّ ولا تُطيل الاستنتاج المتسلسل
+        if st == 200 and len(img) > 500 and is_image(ct, img):
             (d / name).write_bytes(img)
             rec["pages"].append({"name": name, "sha256": sha(img), "bytes": len(img)})
             seen_missing = 0
@@ -105,7 +116,12 @@ def main() -> int:
     ap.add_argument("--pace-ms", type=int, default=1500)
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--kind", choices=["law", "attachment", "all"], default="all")
+    ap.add_argument("--max-pages", type=int, default=400, help="أقصى عدد صور لكل مرفق")
+    ap.add_argument("--deadline-min", type=int, default=0, help="توقف هادئ بعد هذه الدقائق (0 = بلا حد)؛ ما جُلب يبقى محفوظًا")
     a = ap.parse_args()
+    MAX_PAGES[0] = a.max_pages
+    if a.deadline_min:
+        DEADLINE[0] = time.time() + a.deadline_min * 60
     out = pathlib.Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     pace = a.pace_ms / 1000
@@ -115,19 +131,27 @@ def main() -> int:
     if a.limit:
         targets = targets[: a.limit]
     started = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    ok = failed = 0
+    ok = failed = done = 0
+    def write_run(ended: bool) -> None:
+        (out / "run.json").write_text(json.dumps({"started_at": started, "ended_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "ended": ended, "targets": len(targets), "done": done, "ok": ok, "failed": failed, "pace_ms": a.pace_ms, "max_pages": a.max_pages, "deadline_min": a.deadline_min, "origin": "github-actions"}, ensure_ascii=False, indent=1))
     with open(out / "manifest.jsonl", "a", encoding="utf-8") as mf:
         for t in targets:
+            if out_of_time():
+                print(f"DEADLINE بعد {done} من {len(targets)} هدفًا", flush=True)
+                break
             rec = fetch_law(t, out, pace) if t["kind"] == "law" else fetch_attachment(t, out, pace)
             rec["retrieved_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
             good = rec["status"] == 200 and (rec.get("pages") or rec.get("pdf"))
             ok += 1 if good else 0
             failed += 0 if good else 1
             mf.write(json.dumps(rec, ensure_ascii=False) + "\n")
+            mf.flush()
+            done += 1
+            write_run(False)
             print(("OK " if good else "FAIL ") + (t.get("guid") or t.get("href") or "?") + f" status={rec['status']} pages={len(rec.get('pages', []))}" + (" pdf" if rec.get("pdf") else ""), flush=True)
             time.sleep(pace)
-    (out / "run.json").write_text(json.dumps({"started_at": started, "ended_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "targets": len(targets), "ok": ok, "failed": failed, "pace_ms": a.pace_ms, "origin": "github-actions"}, ensure_ascii=False, indent=1))
-    print(f"targets={len(targets)} ok={ok} failed={failed}")
+    write_run(True)
+    print(f"targets={len(targets)} done={done} ok={ok} failed={failed}")
     return 0
 
 

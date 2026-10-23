@@ -28,6 +28,16 @@ on:
         type: string
         required: true
         default: "1500"
+      max_pages:
+        description: "أقصى عدد صور لكل مرفق"
+        type: string
+        required: true
+        default: "400"
+      deadline_min:
+        description: "توقف هادئ بعد هذه الدقائق مع حفظ ما جُلب (أقل من سقف الوظيفة 300)"
+        type: string
+        required: true
+        default: "270"
 
 permissions:
   contents: write
@@ -68,21 +78,23 @@ jobs:
         run: |
           out="ingest/crawl-2026-10-23/runs/${GITHUB_RUN_ID}"
           mkdir -p "$out"
-          python3 ingest/crawl-2026-10-23/scripts/boe_fetch.py --targets "${{ inputs.targets }}" --out "$out" --kind "${{ inputs.kind }}" --limit "${{ inputs.limit }}" --pace-ms "${{ inputs.pace_ms }}" | tee "$out/log.txt"
-          tail -1 "$out/log.txt" >> "$GITHUB_STEP_SUMMARY"
           echo "OUT=$out" >> "$GITHUB_ENV"
+          python3 ingest/crawl-2026-10-23/scripts/boe_fetch.py --targets "${{ inputs.targets }}" --out "$out" --kind "${{ inputs.kind }}" --limit "${{ inputs.limit }}" --pace-ms "${{ inputs.pace_ms }}" --max-pages "${{ inputs.max_pages }}" --deadline-min "${{ inputs.deadline_min }}" | tee "$out/log.txt"
+          tail -1 "$out/log.txt" >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
+        if: always() && env.OUT != ''
         with:
           name: boe-crawl-${{ github.run_id }}
           path: ${{ env.OUT }}
           retention-days: 30
       - name: حفظ الخام في فرع crawl/boe-<run>
+        if: always() && env.OUT != ''
         run: |
           git config user.name "hakeem-crawl-bot"
           git config user.email "noreply@hakeemsa.com"
           b="crawl/boe-${GITHUB_RUN_ID}"
           git checkout -b "$b"
           git add "$OUT"
-          git commit -q -m "HKM-036: زحف هيئة الخبراء الخام (run ${GITHUB_RUN_ID}) — $(tail -1 "$OUT/log.txt")" || { echo "لا شيء للحفظ"; exit 0; }
+          git commit -q -m "HKM-036: زحف هيئة الخبراء الخام (run ${GITHUB_RUN_ID}) — $(tail -1 "$OUT/log.txt" 2>/dev/null || echo 'توقف قبل الختام')" || { echo "لا شيء للحفظ"; exit 0; }
           git push -q origin "$b"
           echo "branch=$b" >> "$GITHUB_STEP_SUMMARY"
