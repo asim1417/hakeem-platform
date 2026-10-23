@@ -5,6 +5,7 @@ import {
   type RawResult,
   type SearchProvider,
   type SearchQuery,
+  wantsType,
 } from "./search-provider";
 import { parseArticleQuery } from "../query-parse";
 
@@ -27,9 +28,13 @@ export const opensearchProvider: SearchProvider = {
     }
   },
 
-  async search({ q, limit = 10 }: SearchQuery): Promise<RawResult[]> {
+  async search({ q, limit = 10, types }: SearchQuery): Promise<RawResult[]> {
     const cfg = getOpenSearchConfig();
     if (!cfg) return [];
+    // فهرس الأحكام والمبادئ لا يُسأل إن لم تُطلب (فلا تأخذ أحكامه مقاعد المواد).
+    const want = (t: LegalEntityType) => wantsType({ types }, t);
+    const indices = [want("article") ? cfg.indexArticles : null, want("ruling") || want("principle") ? cfg.indexCases : null].filter(Boolean);
+    if (!indices.length) return [];
     try {
       // فصل «المادة {رقم} {نظام}» لجعلهما قيدَين قويَّين (يحلّ خلط الأنظمة والأرقام).
       const parsed = parseArticleQuery(q);
@@ -79,7 +84,7 @@ export const opensearchProvider: SearchProvider = {
         highlight: { fields: { content: {}, title: {}, judgmentText: {} }, pre_tags: ["<mark>"], post_tags: ["</mark>"] },
       };
 
-      const res = await fetch(`${cfg.url}/${cfg.indexArticles},${cfg.indexCases}/_search`, {
+      const res = await fetch(`${cfg.url}/${indices.join(",")}/_search`, {
         method: "POST",
         headers: openSearchHeaders(cfg),
         body: JSON.stringify(body),
@@ -96,7 +101,7 @@ export const opensearchProvider: SearchProvider = {
       for (const h of hits) {
         const src = h._source ?? {};
         const type = String(src.type ?? "") as LegalEntityType;
-        if (type !== "article" && type !== "ruling" && type !== "principle") continue;
+        if ((type !== "article" && type !== "ruling" && type !== "principle") || !want(type)) continue;
         const id = String(src.id ?? src.articleId ?? "");
         if (!id) continue;
         const score = Math.max(0, Math.min(1, (h._score ?? 0) / maxScore));

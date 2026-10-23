@@ -143,7 +143,9 @@ export async function hybridSearch(query: SearchQuery): Promise<HybridSearchResp
     })
   );
 
-  let results = mergeResultsRRF(rawBatches, limit);
+  // الأنواع غير المطلوبة لا تدخل الدمج (حارس فوق ما يفعله كل مزوّد).
+  const batches = query.types ? rawBatches.map((b) => b.filter((r) => query.types!.includes(r.type))) : rawBatches;
+  let results = mergeResultsRRF(batches, limit);
 
   // مطابقة «المادة {رقم} {نظام}» المباشرة تتصدّر النتائج (تصحيح تجاهل اسم النظام كقيد).
   const exact = await findExactArticleMatch(query.q, { asOf: query.asOf, surface: query.surface }).catch(() => null);

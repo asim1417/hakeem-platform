@@ -13,7 +13,15 @@ export interface SearchQuery {
   asOf?: string;
   /** «archive» يعطّل وجه البحث (الأرشيف الكامل). الافتراضي: الوجه الساري. */
   surface?: "current" | "archive";
+  /**
+   * الأنواع المطلوبة (افتراضيًا كلها). المزوّدات لا تبحث في غيرها، فلا تأخذ مقاعد في الدمج ثم تُحذف: أداتا المواد
+   * في الموصل تطلبان المواد وحدها، وكانت الأحكام (بنصها الخام وفيه الأسماء) تُنقص عدد المواد المعادة متى ورد الاسم.
+   */
+  types?: LegalEntityType[];
 }
+
+/** النوع مطلوب في الاستعلام (بلا types فكل الأنواع). */
+export const wantsType = (query: Pick<SearchQuery, "types">, type: LegalEntityType): boolean => !query.types || query.types.includes(type);
 
 // نتيجة خام من مزوّد واحد.
 export interface RawResult {
