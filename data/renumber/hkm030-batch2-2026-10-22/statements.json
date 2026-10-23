@@ -1,0 +1,668 @@
+{
+ "batch": "hkm030-batch2-2026-10-22",
+ "by": "owner-inject-hkm030-batch2-2026-10-22",
+ "groups": {
+  "g1_match": [
+   {
+    "name": "guard_before",
+    "sql": "SELECT CASE WHEN\n  (SELECT count(*) FROM boe.match WHERE guid=$hk$eaee8a20-3a54-4aaf-b0d9-b1ad00998962$hk$ AND hakeem_system_id=$hk$cmpz5r6zj00bbcwg225jusnib$hk$)=1 AND (SELECT count(*) FROM boe.match WHERE guid=$hk$ad9ed861-70e6-4d31-9268-b20400d68915$hk$ AND hakeem_system_id=$hk$cmpz5pfqt002lcwg2y1viv8vw$hk$)=1 AND (SELECT count(*) FROM boe.match WHERE guid=$hk$7b3d4c04-1816-4c89-bdc7-b32200e54fee$hk$ AND hakeem_system_id=$hk$cmpz5rt6500d5cwg25ey9d89j$hk$)=1 AND (SELECT count(*) FROM boe.match WHERE guid=$hk$831af69c-9bad-4f06-9843-b33100926b3c$hk$ AND hakeem_system_id=$hk$cmpz5qfgb007mcwg2msul8acv$hk$)=1 AND (SELECT count(*) FROM boe.match WHERE guid=$hk$c81ba2f1-1bf1-443b-9b1c-a9a700f27110$hk$ AND hakeem_system_id=$hk$cmpwi0c2p001znxffggwph0fg$hk$)=1\n  AND (SELECT count(*) FROM boe.match WHERE guid=$hk$7b6436fd-e7c0-4a51-afcc-a9a700f1ae15$hk$ AND hakeem_system_id=$hk$cmpz5peyx002hcwg2i0z53bv9$hk$)=1 AND (SELECT count(*) FROM boe.match WHERE guid=$hk$6b615a05-f637-41cf-8419-a9a700f1afd7$hk$ AND hakeem_system_id=$hk$cmpz5pf5v002icwg2mt8tagez$hk$)=1 AND (SELECT count(*) FROM boe.match WHERE guid=$hk$2541255e-9e5b-4393-a8b0-a9a700f1a596$hk$ AND hakeem_system_id=$hk$cmpz5pd150027cwg25aec1hlf$hk$)=1\n  AND (SELECT count(*) FROM boe.match WHERE guid=$hk$8ff3cd90-e466-4bf9-a071-a9a700f2a70d$hk$)=0 AND (SELECT count(*) FROM legal_systems WHERE id=$hk$cmpz5r6zj00bbcwg225jusnib$hk$)=1 AND (SELECT count(*) FROM boe.match WHERE guid=$hk$a187d565-1a52-45cc-a1de-b2dc00daae23$hk$)=0 AND (SELECT count(*) FROM legal_systems WHERE id=$hk$b34f149ba7e54f1ca92e299fb6306460$hk$)=1\n  AND (SELECT count(*) FROM legal_systems WHERE id=$hk$boe26-fc756d56e044a8c0d2272c52$hk$)=1 AND (SELECT count(*) FROM legal_systems WHERE id=$hk$boe26-6d0e7bc2e6cae54816b24981$hk$)=1 AND (SELECT count(*) FROM legal_systems WHERE id=$hk$boe26-46303ce06a82154ff9f839bf$hk$)=1 AND (SELECT count(*) FROM legal_systems WHERE id=$hk$boe26-d757638789cfefd3fe9c817f$hk$)=1 AND (SELECT count(*) FROM legal_systems WHERE id=$hk$ed25-d62948bc9ac1a3c3fb813076$hk$)=1\nTHEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard"
+   },
+   {
+    "name": "repoint:نظام التأمينات الاجتماعية م/273 1445هـ",
+    "sql": "INSERT INTO boe.match (id, guid, hakeem_system_id, method, candidates, decided_by, decided_at)\nVALUES ($hk$hkm30m-7626a673c39d01b33c61$hk$, $hk$eaee8a20-3a54-4aaf-b0d9-b1ad00998962$hk$, $hk$boe26-fc756d56e044a8c0d2272c52$hk$, 'owner',\n  jsonb_build_object('repointed_from', $hk$cmpz5r6zj00bbcwg225jusnib$hk$, 'basis', $hk$HKM-030 دفعة 22/10 ب: صفحة الهيئة لهذا الإصدار تخص السجل الذي يحمل نصه، لا السجل القديم/المخلوط — نظام التأمينات الاجتماعية م/273 1445هـ$hk$),\n  $hk$hkm030-batch2-2026-10-22$hk$, now())"
+   },
+   {
+    "name": "repoint:نظام القياس والمعايرة م/79 1446هـ",
+    "sql": "INSERT INTO boe.match (id, guid, hakeem_system_id, method, candidates, decided_by, decided_at)\nVALUES ($hk$hkm30m-c6777fd6ba92252c2b59$hk$, $hk$ad9ed861-70e6-4d31-9268-b20400d68915$hk$, $hk$boe26-6d0e7bc2e6cae54816b24981$hk$, 'owner',\n  jsonb_build_object('repointed_from', $hk$cmpz5pfqt002lcwg2y1viv8vw$hk$, 'basis', $hk$HKM-030 دفعة 22/10 ب: صفحة الهيئة لهذا الإصدار تخص السجل الذي يحمل نصه، لا السجل القديم/المخلوط — نظام القياس والمعايرة م/79 1446هـ$hk$),\n  $hk$hkm030-batch2-2026-10-22$hk$, now())"
+   },
+   {
+    "name": "repoint:تنظيم الهيئة العامة للطيران المدني (807) 1446هـ",
+    "sql": "INSERT INTO boe.match (id, guid, hakeem_system_id, method, candidates, decided_by, decided_at)\nVALUES ($hk$hkm30m-9c7e8b7488456a5ecc23$hk$, $hk$7b3d4c04-1816-4c89-bdc7-b32200e54fee$hk$, $hk$boe26-46303ce06a82154ff9f839bf$hk$, 'owner',\n  jsonb_build_object('repointed_from', $hk$cmpz5rt6500d5cwg25ey9d89j$hk$, 'basis', $hk$HKM-030 دفعة 22/10 ب: صفحة الهيئة لهذا الإصدار تخص السجل الذي يحمل نصه، لا السجل القديم/المخلوط — تنظيم الهيئة العامة للطيران المدني (807) 1446هـ$hk$),\n  $hk$hkm030-batch2-2026-10-22$hk$, now())"
+   },
+   {
+    "name": "repoint:تنظيم المؤسسة العامة للري (43) 1447هـ",
+    "sql": "INSERT INTO boe.match (id, guid, hakeem_system_id, method, candidates, decided_by, decided_at)\nVALUES ($hk$hkm30m-da52caf61c1f3ed947d9$hk$, $hk$831af69c-9bad-4f06-9843-b33100926b3c$hk$, $hk$boe26-d757638789cfefd3fe9c817f$hk$, 'owner',\n  jsonb_build_object('repointed_from', $hk$cmpz5qfgb007mcwg2msul8acv$hk$, 'basis', $hk$HKM-030 دفعة 22/10 ب: صفحة الهيئة لهذا الإصدار تخص السجل الذي يحمل نصه، لا السجل القديم/المخلوط — تنظيم المؤسسة العامة للري (43) 1447هـ$hk$),\n  $hk$hkm030-batch2-2026-10-22$hk$, now())"
+   },
+   {
+    "name": "repoint:نظام التنفيذ 1433هـ ← سجل الإصدار م/53 لا السجل المخلوط",
+    "sql": "INSERT INTO boe.match (id, guid, hakeem_system_id, method, candidates, decided_by, decided_at)\nVALUES ($hk$hkm30m-76946c43d49fc7510d36$hk$, $hk$c81ba2f1-1bf1-443b-9b1c-a9a700f27110$hk$, $hk$ed25-d62948bc9ac1a3c3fb813076$hk$, 'owner',\n  jsonb_build_object('repointed_from', $hk$cmpwi0c2p001znxffggwph0fg$hk$, 'basis', $hk$HKM-030 دفعة 22/10 ب: صفحة الهيئة لهذا الإصدار تخص السجل الذي يحمل نصه، لا السجل القديم/المخلوط — نظام التنفيذ 1433هـ ← سجل الإصدار م/53 لا السجل المخلوط$hk$),\n  $hk$hkm030-batch2-2026-10-22$hk$, now())"
+   },
+   {
+    "name": "unlink:نظام الرهن التجاري 1424هـ (لاغي)",
+    "sql": "INSERT INTO boe.match (id, guid, hakeem_system_id, method, candidates, decided_by, decided_at)\nVALUES ($hk$hkm30m-a1e6ed30feeb8dbdc8c3$hk$, $hk$7b6436fd-e7c0-4a51-afcc-a9a700f1ae15$hk$, NULL, 'owner',\n  jsonb_build_object('unlinked_from', $hk$cmpz5peyx002hcwg2i0z53bv9$hk$, 'basis', $hk$HKM-030 دفعة 22/10 ب: صفحة الهيئة لإصدار ملغى؛ سجلنا هو الإصدار الساري الأحدث وله صفحته — نظام الرهن التجاري 1424هـ (لاغي)$hk$),\n  $hk$hkm030-batch2-2026-10-22$hk$, now())"
+   },
+   {
+    "name": "unlink:نظام المنافسة 1425هـ (لاغي)",
+    "sql": "INSERT INTO boe.match (id, guid, hakeem_system_id, method, candidates, decided_by, decided_at)\nVALUES ($hk$hkm30m-ae5252661f0f06acb2f7$hk$, $hk$6b615a05-f637-41cf-8419-a9a700f1afd7$hk$, NULL, 'owner',\n  jsonb_build_object('unlinked_from', $hk$cmpz5pf5v002icwg2mt8tagez$hk$, 'basis', $hk$HKM-030 دفعة 22/10 ب: صفحة الهيئة لإصدار ملغى؛ سجلنا هو الإصدار الساري الأحدث وله صفحته — نظام المنافسة 1425هـ (لاغي)$hk$),\n  $hk$hkm030-batch2-2026-10-22$hk$, now())"
+   },
+   {
+    "name": "unlink:نظام صندوق الاستثمارات العامة 1391هـ (لاغي)",
+    "sql": "INSERT INTO boe.match (id, guid, hakeem_system_id, method, candidates, decided_by, decided_at)\nVALUES ($hk$hkm30m-279fcab9fbf3abb52810$hk$, $hk$2541255e-9e5b-4393-a8b0-a9a700f1a596$hk$, NULL, 'owner',\n  jsonb_build_object('unlinked_from', $hk$cmpz5pd150027cwg25aec1hlf$hk$, 'basis', $hk$HKM-030 دفعة 22/10 ب: صفحة الهيئة لإصدار ملغى؛ سجلنا هو الإصدار الساري الأحدث وله صفحته — نظام صندوق الاستثمارات العامة 1391هـ (لاغي)$hk$),\n  $hk$hkm030-batch2-2026-10-22$hk$, now())"
+   },
+   {
+    "name": "link:نظام التأمينات الاجتماعية 1421هـ",
+    "sql": "INSERT INTO boe.match (id, guid, hakeem_system_id, method, candidates, decided_by, decided_at)\nVALUES ($hk$hkm30m-9a1a1eb83a677936160f$hk$, $hk$8ff3cd90-e466-4bf9-a071-a9a700f2a70d$hk$, $hk$cmpz5r6zj00bbcwg225jusnib$hk$, 'owner',\n  jsonb_build_object('basis', $hk$HKM-030 دفعة 22/10 ب: مطابقة بالمحتوى مادةً مادة (تشابه ≥ 0.95 في كل المواد أو أغلبها) — نظام التأمينات الاجتماعية 1421هـ$hk$, 'boe_articles', 71, 'hakeem_articles', 71),\n  $hk$hkm030-batch2-2026-10-22$hk$, now())"
+   },
+   {
+    "name": "link:النظام الأساس لمستشفى الملك خالد التخصصي للعيون ومركز الأبحاث",
+    "sql": "INSERT INTO boe.match (id, guid, hakeem_system_id, method, candidates, decided_by, decided_at)\nVALUES ($hk$hkm30m-b4d5fc2cea00476d5dff$hk$, $hk$a187d565-1a52-45cc-a1de-b2dc00daae23$hk$, $hk$b34f149ba7e54f1ca92e299fb6306460$hk$, 'owner',\n  jsonb_build_object('basis', $hk$HKM-030 دفعة 22/10 ب: مطابقة بالمحتوى مادةً مادة (تشابه ≥ 0.95 في كل المواد أو أغلبها) — النظام الأساس لمستشفى الملك خالد التخصصي للعيون ومركز الأبحاث$hk$, 'boe_articles', 21, 'hakeem_articles', 21),\n  $hk$hkm030-batch2-2026-10-22$hk$, now())"
+   },
+   {
+    "name": "guard_after",
+    "sql": "SELECT CASE WHEN\n  (SELECT count(*) FROM boe.current_match WHERE guid=$hk$eaee8a20-3a54-4aaf-b0d9-b1ad00998962$hk$ AND hakeem_system_id=$hk$boe26-fc756d56e044a8c0d2272c52$hk$)=1 AND (SELECT count(*) FROM boe.current_match WHERE guid=$hk$ad9ed861-70e6-4d31-9268-b20400d68915$hk$ AND hakeem_system_id=$hk$boe26-6d0e7bc2e6cae54816b24981$hk$)=1 AND (SELECT count(*) FROM boe.current_match WHERE guid=$hk$7b3d4c04-1816-4c89-bdc7-b32200e54fee$hk$ AND hakeem_system_id=$hk$boe26-46303ce06a82154ff9f839bf$hk$)=1 AND (SELECT count(*) FROM boe.current_match WHERE guid=$hk$831af69c-9bad-4f06-9843-b33100926b3c$hk$ AND hakeem_system_id=$hk$boe26-d757638789cfefd3fe9c817f$hk$)=1 AND (SELECT count(*) FROM boe.current_match WHERE guid=$hk$c81ba2f1-1bf1-443b-9b1c-a9a700f27110$hk$ AND hakeem_system_id=$hk$ed25-d62948bc9ac1a3c3fb813076$hk$)=1\n  AND (SELECT count(*) FROM boe.current_match WHERE guid=$hk$7b6436fd-e7c0-4a51-afcc-a9a700f1ae15$hk$ AND hakeem_system_id IS NULL)=1 AND (SELECT count(*) FROM boe.current_match WHERE guid=$hk$6b615a05-f637-41cf-8419-a9a700f1afd7$hk$ AND hakeem_system_id IS NULL)=1 AND (SELECT count(*) FROM boe.current_match WHERE guid=$hk$2541255e-9e5b-4393-a8b0-a9a700f1a596$hk$ AND hakeem_system_id IS NULL)=1\n  AND (SELECT count(*) FROM boe.current_match WHERE guid=$hk$8ff3cd90-e466-4bf9-a071-a9a700f2a70d$hk$ AND hakeem_system_id=$hk$cmpz5r6zj00bbcwg225jusnib$hk$)=1 AND (SELECT count(*) FROM boe.current_match WHERE guid=$hk$a187d565-1a52-45cc-a1de-b2dc00daae23$hk$ AND hakeem_system_id=$hk$b34f149ba7e54f1ca92e299fb6306460$hk$)=1\nTHEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard"
+   }
+  ],
+  "g2_ingest": [
+   {
+    "name": "guard_before",
+    "sql": "SELECT CASE WHEN\n  (SELECT count(*) FROM boe.law l WHERE l.id=$hk$boe26-5bac2a8e68bd1f71d5819a32$hk$ AND l.guid=$hk$7ac1a448-b042-4c73-8164-b2eb00ceb54f$hk$ AND l.name=$hk$نظام الطوارئ$hk$ AND l.status_at_source='ساري' AND l.article_count=32 AND array_length(l.category_path,1)=3)=1 AND (SELECT count(*) FROM boe.unit u WHERE u.law_id=$hk$boe26-5bac2a8e68bd1f71d5819a32$hk$)=32 AND (SELECT count(*) FROM legal_systems WHERE id=$hk$boe26-5bac2a8e68bd1f71d5819a32$hk$ OR name=$hk$نظام الطوارئ$hk$ OR eli_slug=$hk$نظام-الطوارئ$hk$)=0 AND (SELECT count(*) FROM boe.current_match WHERE guid=$hk$7ac1a448-b042-4c73-8164-b2eb00ceb54f$hk$ AND hakeem_system_id IS NOT NULL)=0 AND (SELECT count(*) FROM boe.unit u WHERE u.law_id=$hk$boe26-5bac2a8e68bd1f71d5819a32$hk$ AND u.article_number=32 AND position($hk$من تاريخ نشره$hk$ in u.body)>0)=1 AND (SELECT count(*) FROM boe.law l WHERE l.id=$hk$boe26-c59a46aed569267373a74421$hk$ AND l.guid=$hk$a73b2b40-64c8-449e-aa8f-b3ca009257ce$hk$ AND l.name=$hk$نظام الرقابة المالية$hk$ AND l.status_at_source='ساري' AND l.article_count=29 AND array_length(l.category_path,1)=3)=1 AND (SELECT count(*) FROM boe.unit u WHERE u.law_id=$hk$boe26-c59a46aed569267373a74421$hk$)=29 AND (SELECT count(*) FROM legal_systems WHERE id=$hk$boe26-c59a46aed569267373a74421$hk$ OR name=$hk$نظام الرقابة المالية$hk$ OR eli_slug=$hk$نظام-الرقابه-الماليه$hk$)=0 AND (SELECT count(*) FROM boe.current_match WHERE guid=$hk$a73b2b40-64c8-449e-aa8f-b3ca009257ce$hk$ AND hakeem_system_id IS NOT NULL)=0 AND (SELECT count(*) FROM boe.unit u WHERE u.law_id=$hk$boe26-c59a46aed569267373a74421$hk$ AND u.article_number=29 AND position($hk$(مائة وعشرين) يومًا من تاريخ نشره$hk$ in u.body)>0)=1 AND (SELECT count(*) FROM boe.law l WHERE l.id=$hk$boe26-e857025ebc3b270d499b886b$hk$ AND l.guid=$hk$48da5c0f-b5a6-4e93-b76c-b33200be0330$hk$ AND l.name=$hk$نظام المواد البترولية والبتروكيماوية$hk$ AND l.status_at_source='ساري' AND l.article_count=22 AND array_length(l.category_path,1)=3)=1 AND (SELECT count(*) FROM boe.unit u WHERE u.law_id=$hk$boe26-e857025ebc3b270d499b886b$hk$)=22 AND (SELECT count(*) FROM legal_systems WHERE id=$hk$boe26-e857025ebc3b270d499b886b$hk$ OR name=$hk$نظام المواد البترولية والبتروكيماوية$hk$ OR eli_slug=$hk$نظام-المواد-البتروليه-والبتروكيماويه$hk$)=0 AND (SELECT count(*) FROM boe.current_match WHERE guid=$hk$48da5c0f-b5a6-4e93-b76c-b33200be0330$hk$ AND hakeem_system_id IS NOT NULL)=0 AND (SELECT count(*) FROM boe.unit u WHERE u.law_id=$hk$boe26-e857025ebc3b270d499b886b$hk$ AND u.article_number=22 AND position($hk$(تسعين) يومًا من تاريخ نشره$hk$ in u.body)>0)=1 AND (SELECT count(*) FROM boe.law l WHERE l.id=$hk$boe26-7208fdd00b0e59582be85367$hk$ AND l.guid=$hk$479e4f48-d35c-4dac-994b-b2eb00e44c48$hk$ AND l.name=$hk$تنظيم الهيئة الوطنية لإدارة الطوارئ$hk$ AND l.status_at_source='ساري' AND l.article_count=19 AND array_length(l.category_path,1)=3)=1 AND (SELECT count(*) FROM boe.unit u WHERE u.law_id=$hk$boe26-7208fdd00b0e59582be85367$hk$)=19 AND (SELECT count(*) FROM legal_systems WHERE id=$hk$boe26-7208fdd00b0e59582be85367$hk$ OR name=$hk$تنظيم الهيئة الوطنية لإدارة الطوارئ$hk$ OR eli_slug=$hk$تنظيم-الهيئه-الوطنيه-لاداره-الطوارئ$hk$)=0 AND (SELECT count(*) FROM boe.current_match WHERE guid=$hk$479e4f48-d35c-4dac-994b-b2eb00e44c48$hk$ AND hakeem_system_id IS NOT NULL)=0 AND (SELECT count(*) FROM boe.unit u WHERE u.law_id=$hk$boe26-7208fdd00b0e59582be85367$hk$ AND u.article_number=19 AND position($hk$من تاريخ نشره$hk$ in u.body)>0)=1 AND (SELECT count(*) FROM boe.law l WHERE l.id=$hk$boe26-85d11f9b554a191cd72c08cf$hk$ AND l.guid=$hk$46d3b1b2-6455-466d-8942-b13600c0414c$hk$ AND l.name=$hk$تنظيم المعهد الوطني للتطوير المهني التعليمي$hk$ AND l.status_at_source='ساري' AND l.article_count=17 AND array_length(l.category_path,1)=3)=1 AND (SELECT count(*) FROM boe.unit u WHERE u.law_id=$hk$boe26-85d11f9b554a191cd72c08cf$hk$)=17 AND (SELECT count(*) FROM legal_systems WHERE id=$hk$boe26-85d11f9b554a191cd72c08cf$hk$ OR name=$hk$تنظيم المعهد الوطني للتطوير المهني التعليمي$hk$ OR eli_slug=$hk$تنظيم-المعهد-الوطني-للتطوير-المهني-التعليمي$hk$)=0 AND (SELECT count(*) FROM boe.current_match WHERE guid=$hk$46d3b1b2-6455-466d-8942-b13600c0414c$hk$ AND hakeem_system_id IS NOT NULL)=0 AND (SELECT count(*) FROM boe.unit u WHERE u.law_id=$hk$boe26-85d11f9b554a191cd72c08cf$hk$ AND u.article_number=17 AND position($hk$من تاريخ نشره$hk$ in u.body)>0)=1 AND (SELECT count(*) FROM boe.law l WHERE l.id=$hk$boe26-e8055f9af1cbb7928c204fcd$hk$ AND l.guid=$hk$6d1d7df9-b061-4830-8356-b332009f07ad$hk$ AND l.name=$hk$تنظيم الهيئة العامة للأمن الغذائي$hk$ AND l.status_at_source='ساري' AND l.article_count=15 AND array_length(l.category_path,1)=3)=1 AND (SELECT count(*) FROM boe.unit u WHERE u.law_id=$hk$boe26-e8055f9af1cbb7928c204fcd$hk$)=15 AND (SELECT count(*) FROM legal_systems WHERE id=$hk$boe26-e8055f9af1cbb7928c204fcd$hk$ OR name=$hk$تنظيم الهيئة العامة للأمن الغذائي$hk$ OR eli_slug=$hk$تنظيم-الهيئه-العامه-للامن-الغذائي$hk$)=0 AND (SELECT count(*) FROM boe.current_match WHERE guid=$hk$6d1d7df9-b061-4830-8356-b332009f07ad$hk$ AND hakeem_system_id IS NOT NULL)=0 AND (SELECT count(*) FROM boe.unit u WHERE u.law_id=$hk$boe26-e8055f9af1cbb7928c204fcd$hk$ AND u.article_number=15 AND position($hk$من تاريخ نشره$hk$ in u.body)>0)=1 AND (SELECT count(*) FROM boe.law l WHERE l.id=$hk$boe26-970129b497157f8b28961b8d$hk$ AND l.guid=$hk$43151145-3b31-47d1-8a6c-b2db00a871d0$hk$ AND l.name=$hk$تنظيم الهيئة السعودية لتسويق الاستثمار$hk$ AND l.status_at_source='ساري' AND l.article_count=14 AND array_length(l.category_path,1)=3)=1 AND (SELECT count(*) FROM boe.unit u WHERE u.law_id=$hk$boe26-970129b497157f8b28961b8d$hk$)=14 AND (SELECT count(*) FROM legal_systems WHERE id=$hk$boe26-970129b497157f8b28961b8d$hk$ OR name=$hk$تنظيم الهيئة السعودية لتسويق الاستثمار$hk$ OR eli_slug=$hk$تنظيم-الهيئه-السعوديه-لتسويق-الاستثمار$hk$)=0 AND (SELECT count(*) FROM boe.current_match WHERE guid=$hk$43151145-3b31-47d1-8a6c-b2db00a871d0$hk$ AND hakeem_system_id IS NOT NULL)=0 AND (SELECT count(*) FROM boe.unit u WHERE u.law_id=$hk$boe26-970129b497157f8b28961b8d$hk$ AND u.article_number=14 AND position($hk$من تاريخ الموافقة عليه$hk$ in u.body)>0)=1 AND (SELECT count(*) FROM boe.law l WHERE l.id=$hk$boe26-af97940f45cf6622a5eb757d$hk$ AND l.guid=$hk$664d871f-7a44-4a52-b653-b2db00b55732$hk$ AND l.name=$hk$الترتيبات التنظيمية للمركز السعودي لكود البناء$hk$ AND l.status_at_source='ساري' AND l.article_count=14 AND array_length(l.category_path,1)=3)=1 AND (SELECT count(*) FROM boe.unit u WHERE u.law_id=$hk$boe26-af97940f45cf6622a5eb757d$hk$)=14 AND (SELECT count(*) FROM legal_systems WHERE id=$hk$boe26-af97940f45cf6622a5eb757d$hk$ OR name=$hk$الترتيبات التنظيمية للمركز السعودي لكود البناء$hk$ OR eli_slug=$hk$الترتيبات-التنظيميه-للمركز-السعودي-لكود-البناء$hk$)=0 AND (SELECT count(*) FROM boe.current_match WHERE guid=$hk$664d871f-7a44-4a52-b653-b2db00b55732$hk$ AND hakeem_system_id IS NOT NULL)=0 AND (SELECT count(*) FROM boe.unit u WHERE u.law_id=$hk$boe26-af97940f45cf6622a5eb757d$hk$ AND u.article_number=14 AND position($hk$من تاريخ نشرها$hk$ in u.body)>0)=1\n  AND (SELECT count(*) FROM boe.unit u WHERE u.law_id='boe26-c59a46aed569267373a74421' AND u.article_number IS NULL)=1\n  AND (SELECT count(*) FROM boe.unit u WHERE u.law_id='boe26-c59a46aed569267373a74421' AND u.article_number IS DISTINCT FROM u.seq AND u.seq<>15)=0\n  AND (SELECT count(*) FROM boe.unit u WHERE u.law_id=$hk$boe26-5bac2a8e68bd1f71d5819a32$hk$ AND (u.article_number IS DISTINCT FROM u.seq OR u.is_bis))=0 AND (SELECT count(*) FROM boe.unit u WHERE u.law_id=$hk$boe26-e857025ebc3b270d499b886b$hk$ AND (u.article_number IS DISTINCT FROM u.seq OR u.is_bis))=0 AND (SELECT count(*) FROM boe.unit u WHERE u.law_id=$hk$boe26-7208fdd00b0e59582be85367$hk$ AND (u.article_number IS DISTINCT FROM u.seq OR u.is_bis))=0 AND (SELECT count(*) FROM boe.unit u WHERE u.law_id=$hk$boe26-85d11f9b554a191cd72c08cf$hk$ AND (u.article_number IS DISTINCT FROM u.seq OR u.is_bis))=0 AND (SELECT count(*) FROM boe.unit u WHERE u.law_id=$hk$boe26-e8055f9af1cbb7928c204fcd$hk$ AND (u.article_number IS DISTINCT FROM u.seq OR u.is_bis))=0 AND (SELECT count(*) FROM boe.unit u WHERE u.law_id=$hk$boe26-970129b497157f8b28961b8d$hk$ AND (u.article_number IS DISTINCT FROM u.seq OR u.is_bis))=0 AND (SELECT count(*) FROM boe.unit u WHERE u.law_id=$hk$boe26-af97940f45cf6622a5eb757d$hk$ AND (u.article_number IS DISTINCT FROM u.seq OR u.is_bis))=0\n  AND (SELECT count(*) FROM legal_systems WHERE id=$hk$cmpz5r2yb00axcwg2bk2ll57o$hk$ AND name=$hk$نظام التجارة بالمنتجات البترولية$hk$ AND preamble_effective_from::date=$hk$2017-10-18$hk$::date)=1 AND (SELECT count(*) FROM legal_systems WHERE id=$hk$cmpz5pyy1005acwg2shpqkguy$hk$ AND name=$hk$تنظيم المعهد الوطني للتطوير المهني التعليمي 1441هـ$hk$ AND preamble_effective_from::date=$hk$2019-11-05$hk$::date)=1 AND (SELECT count(*) FROM legal_systems WHERE id=$hk$cmpz5qhz0007zcwg2u08fbiul$hk$ AND name=$hk$الترتيبات التنظيمية للهيئة العامة للأمن الغذائي$hk$ AND preamble_effective_from::date=$hk$2023-01-17$hk$::date)=1 AND (SELECT count(*) FROM legal_systems WHERE id=$hk$cmpz5ptwh004lcwg2mlkw3um6$hk$ AND name=$hk$الترتيبات التنظيمية للهيئة السعودية لتسويق الاستثمار$hk$ AND preamble_effective_from::date=$hk$2022-08-02$hk$::date)=1\n  AND (SELECT count(*) FROM verification WHERE id=$hk$hkm30v-353f34e166cdcda69d689bfc$hk$ AND object_id=$hk$cmpz5pyy1005acwg2shpqkguy$hk$)=1 AND (SELECT count(*) FROM verification WHERE id=$hk$boe26-8c06af0e0875821f07a21022$hk$ AND object_id=$hk$cmpz5qhz0007zcwg2u08fbiul$hk$)=1 AND (SELECT count(*) FROM verification WHERE id=$hk$boe26-0b26e5025035be762125ceb9$hk$ AND object_id=$hk$cmpz5ptwh004lcwg2mlkw3um6$hk$)=1\n  AND (SELECT count(*) FROM verification WHERE object_id='cmpz5r2yb00axcwg2bk2ll57o')=0\nTHEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard"
+   },
+   {
+    "name": "system:نظام الطوارئ",
+    "sql": "INSERT INTO legal_systems (id, name, classification, \"articleCount\", \"createdAt\", \"updatedAt\", domain, domain_title, sort_order, eli_slug, preamble, preamble_royal_decree, preamble_effective_from, preamble_updated_at, instrument_kind)\nSELECT l.id, $hk$نظام الطوارئ$hk$, 'أنظمة '||l.category_path[3], 32, now(), now(), 'regulatory', 'تنظيمي قطاعي', 0, $hk$نظام-الطوارئ$hk$,\n  'أداة الإصدار:'||chr(10)||(l.instruments->0->>'text')||chr(10)||'تاريخ الإصدار (هجريّ): '||replace(l.issued_hijri,'/','-')||chr(10)||'تاريخ الإصدار (ميلاديّ): '||l.issued_gregorian||chr(10)||'تاريخ النشر: '||l.published_hijri||'هـ ('||l.published_gregorian||')',\n  (l.instruments->0->>'text'), (l.published_gregorian)::timestamp, now(), $hk$نظام$hk$\nFROM boe.law l WHERE l.id=$hk$boe26-5bac2a8e68bd1f71d5819a32$hk$ AND 'أنظمة '||l.category_path[3] IN (SELECT DISTINCT classification FROM legal_systems WHERE classification LIKE 'أنظمة %')"
+   },
+   {
+    "name": "articles:نظام الطوارئ",
+    "sql": "INSERT INTO legal_articles (id, \"legalSystemId\", \"lawName\", classification, \"articleNumber\", \"articleBis\", title, content, \"royalDecree\", \"effectiveFrom\", status, \"createdAt\", \"updatedAt\", search_norm)\nSELECT 'boe26-'||left(encode(sha256(convert_to(l.id||'|article|'||coalesce(u.article_number, u.seq),'UTF8')),'hex'),24), l.id, $hk$نظام الطوارئ$hk$, s.classification, coalesce(u.article_number, u.seq), 0, coalesce(nullif(u.heading,''), 'المادة '||coalesce(u.article_number, u.seq)), u.body, (l.instruments->0->>'text'), NULL, 'سارية', now(), now(),\n  uqn_fix.hkm30_search_norm($hk$نظام الطوارئ$hk$, coalesce(nullif(u.heading,''), 'المادة '||coalesce(u.article_number, u.seq)), u.body, ARRAY[]::text[], s.classification, NULL)\nFROM boe.law l JOIN legal_systems s ON s.id=l.id JOIN boe.unit u ON u.law_id=l.id WHERE l.id=$hk$boe26-5bac2a8e68bd1f71d5819a32$hk$ ORDER BY u.seq"
+   },
+   {
+    "name": "verification_work:نظام الطوارئ",
+    "sql": "INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, evidence_quote, method, verified_by, supersedes_verification_id)\nSELECT $hk$vf26-efd404e46d759b249334cb33$hk$, 'work', l.id, 'ساري', (l.instruments->0->>'text'), l.url, 'حالة النظام في بوابة هيئة الخبراء بمجلس الوزراء: '||l.status_at_source||' (لقطة 28/9/2026). الصدور '||l.issued_hijri||'هـ ('||l.issued_gregorian||') والنشر '||l.published_hijri||'هـ ('||l.published_gregorian||')؛ المادة ('||32||'): «'||btrim((SELECT u.body FROM boe.unit u WHERE u.law_id=l.id AND coalesce(u.article_number, u.seq)=32))||'»؛ يُعمل به من '||(l.published_gregorian)::date, 'rule', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$, NULL FROM boe.law l WHERE l.id=$hk$boe26-5bac2a8e68bd1f71d5819a32$hk$"
+   },
+   {
+    "name": "verification_units:نظام الطوارئ",
+    "sql": "INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, evidence_quote, method, verified_by, supersedes_verification_id)\nSELECT 'vf26-'||left(encode(sha256(convert_to('batch2|unit|'||a.id||'|ساري','UTF8')),'hex'),24), 'unit', a.id, 'ساري', (l.instruments->0->>'text'), l.url, 'نص المادة كما في بوابة هيئة الخبراء (لقطة 28/9/2026)؛ يعمل بالنظام من '||s.preamble_effective_from::date, 'rule', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$, NULL\nFROM legal_articles a JOIN legal_systems s ON s.id=a.\"legalSystemId\" JOIN boe.law l ON l.id=s.id WHERE a.\"legalSystemId\"=$hk$boe26-5bac2a8e68bd1f71d5819a32$hk$"
+   },
+   {
+    "name": "law_card:نظام الطوارئ",
+    "sql": "INSERT INTO law_card (id, system_id, official_name, summary, issued_hijri, issued_gregorian, published_hijri, published_gregorian, status_at_source, category_path, instruments, text_blocks, source_name, source_url, retrieved_on, created_by)\nSELECT $hk$lc26-9b96097d6b6c0714707aa893$hk$, l.id, l.name, l.summary, l.issued_hijri, l.issued_gregorian, l.published_hijri, l.published_gregorian, l.status_at_source, l.category_path, l.instruments,\n  coalesce((SELECT jsonb_agg(jsonb_build_object('kind', b.kind, 'text', b.body, 'heading', b.heading) ORDER BY b.seq) FROM boe.text_block b WHERE b.law_id=l.id), '[]'::jsonb), 'هيئة الخبراء بمجلس الوزراء', l.url, '2026-09-28', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$\nFROM boe.law l WHERE l.id=$hk$boe26-5bac2a8e68bd1f71d5819a32$hk$"
+   },
+   {
+    "name": "match:نظام الطوارئ",
+    "sql": "INSERT INTO boe.match (id, guid, hakeem_system_id, method, candidates, decided_by, decided_at)\nVALUES ($hk$hkm30m-a43d02c407cf84b56ca4$hk$, $hk$7ac1a448-b042-4c73-8164-b2eb00ceb54f$hk$, $hk$boe26-5bac2a8e68bd1f71d5819a32$hk$, 'owner', jsonb_build_object('basis', 'HKM-030 دفعة 22/10 ب: النظام مُدخل من لقطة الهيئة نفسها (boe.unit)'), $hk$hkm030-batch2-2026-10-22$hk$, now())"
+   },
+   {
+    "name": "system:نظام الرقابة المالية",
+    "sql": "INSERT INTO legal_systems (id, name, classification, \"articleCount\", \"createdAt\", \"updatedAt\", domain, domain_title, sort_order, eli_slug, preamble, preamble_royal_decree, preamble_effective_from, preamble_updated_at, instrument_kind)\nSELECT l.id, $hk$نظام الرقابة المالية$hk$, 'أنظمة '||l.category_path[3], 29, now(), now(), 'regulatory', 'تنظيمي قطاعي', 0, $hk$نظام-الرقابه-الماليه$hk$,\n  'أداة الإصدار:'||chr(10)||(l.instruments->0->>'text')||chr(10)||'تاريخ الإصدار (هجريّ): '||replace(l.issued_hijri,'/','-')||chr(10)||'تاريخ الإصدار (ميلاديّ): '||l.issued_gregorian||chr(10)||'تاريخ النشر: '||l.published_hijri||'هـ ('||l.published_gregorian||')',\n  (l.instruments->0->>'text'), (l.published_gregorian + 120)::timestamp, now(), $hk$نظام$hk$\nFROM boe.law l WHERE l.id=$hk$boe26-c59a46aed569267373a74421$hk$ AND 'أنظمة '||l.category_path[3] IN (SELECT DISTINCT classification FROM legal_systems WHERE classification LIKE 'أنظمة %')"
+   },
+   {
+    "name": "articles:نظام الرقابة المالية",
+    "sql": "INSERT INTO legal_articles (id, \"legalSystemId\", \"lawName\", classification, \"articleNumber\", \"articleBis\", title, content, \"royalDecree\", \"effectiveFrom\", status, \"createdAt\", \"updatedAt\", search_norm)\nSELECT 'boe26-'||left(encode(sha256(convert_to(l.id||'|article|'||coalesce(u.article_number, u.seq),'UTF8')),'hex'),24), l.id, $hk$نظام الرقابة المالية$hk$, s.classification, coalesce(u.article_number, u.seq), 0, coalesce(nullif(u.heading,''), 'المادة '||coalesce(u.article_number, u.seq)), u.body, (l.instruments->0->>'text'), NULL, 'سارية', now(), now(),\n  uqn_fix.hkm30_search_norm($hk$نظام الرقابة المالية$hk$, coalesce(nullif(u.heading,''), 'المادة '||coalesce(u.article_number, u.seq)), u.body, ARRAY[]::text[], s.classification, NULL)\nFROM boe.law l JOIN legal_systems s ON s.id=l.id JOIN boe.unit u ON u.law_id=l.id WHERE l.id=$hk$boe26-c59a46aed569267373a74421$hk$ ORDER BY u.seq"
+   },
+   {
+    "name": "verification_work:نظام الرقابة المالية",
+    "sql": "INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, evidence_quote, method, verified_by, supersedes_verification_id)\nSELECT $hk$vf26-ccfa0a0ed2d569931a7adfd7$hk$, 'work', l.id, 'ساري', (l.instruments->0->>'text'), l.url, 'حالة النظام في بوابة هيئة الخبراء بمجلس الوزراء: '||l.status_at_source||' (لقطة 28/9/2026). الصدور '||l.issued_hijri||'هـ ('||l.issued_gregorian||') والنشر '||l.published_hijri||'هـ ('||l.published_gregorian||')؛ المادة ('||29||'): «'||btrim((SELECT u.body FROM boe.unit u WHERE u.law_id=l.id AND coalesce(u.article_number, u.seq)=29))||'»؛ يُعمل به من '||(l.published_gregorian + 120)::date, 'rule', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$, NULL FROM boe.law l WHERE l.id=$hk$boe26-c59a46aed569267373a74421$hk$"
+   },
+   {
+    "name": "verification_units:نظام الرقابة المالية",
+    "sql": "INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, evidence_quote, method, verified_by, supersedes_verification_id)\nSELECT 'vf26-'||left(encode(sha256(convert_to('batch2|unit|'||a.id||'|ساري','UTF8')),'hex'),24), 'unit', a.id, 'ساري', (l.instruments->0->>'text'), l.url, 'نص المادة كما في بوابة هيئة الخبراء (لقطة 28/9/2026)؛ يعمل بالنظام من '||s.preamble_effective_from::date, 'rule', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$, NULL\nFROM legal_articles a JOIN legal_systems s ON s.id=a.\"legalSystemId\" JOIN boe.law l ON l.id=s.id WHERE a.\"legalSystemId\"=$hk$boe26-c59a46aed569267373a74421$hk$"
+   },
+   {
+    "name": "law_card:نظام الرقابة المالية",
+    "sql": "INSERT INTO law_card (id, system_id, official_name, summary, issued_hijri, issued_gregorian, published_hijri, published_gregorian, status_at_source, category_path, instruments, text_blocks, source_name, source_url, retrieved_on, created_by)\nSELECT $hk$lc26-16ac84166716b995dfcaf810$hk$, l.id, l.name, l.summary, l.issued_hijri, l.issued_gregorian, l.published_hijri, l.published_gregorian, l.status_at_source, l.category_path, l.instruments,\n  coalesce((SELECT jsonb_agg(jsonb_build_object('kind', b.kind, 'text', b.body, 'heading', b.heading) ORDER BY b.seq) FROM boe.text_block b WHERE b.law_id=l.id), '[]'::jsonb), 'هيئة الخبراء بمجلس الوزراء', l.url, '2026-09-28', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$\nFROM boe.law l WHERE l.id=$hk$boe26-c59a46aed569267373a74421$hk$"
+   },
+   {
+    "name": "match:نظام الرقابة المالية",
+    "sql": "INSERT INTO boe.match (id, guid, hakeem_system_id, method, candidates, decided_by, decided_at)\nVALUES ($hk$hkm30m-de445d0ca9e9c9849562$hk$, $hk$a73b2b40-64c8-449e-aa8f-b3ca009257ce$hk$, $hk$boe26-c59a46aed569267373a74421$hk$, 'owner', jsonb_build_object('basis', 'HKM-030 دفعة 22/10 ب: النظام مُدخل من لقطة الهيئة نفسها (boe.unit)'), $hk$hkm030-batch2-2026-10-22$hk$, now())"
+   },
+   {
+    "name": "system:نظام المواد البترولية والبتروكيماوية",
+    "sql": "INSERT INTO legal_systems (id, name, classification, \"articleCount\", \"createdAt\", \"updatedAt\", domain, domain_title, sort_order, eli_slug, preamble, preamble_royal_decree, preamble_effective_from, preamble_updated_at, instrument_kind)\nSELECT l.id, $hk$نظام المواد البترولية والبتروكيماوية$hk$, 'أنظمة '||l.category_path[3], 22, now(), now(), 'regulatory', 'تنظيمي قطاعي', 0, $hk$نظام-المواد-البتروليه-والبتروكيماويه$hk$,\n  'أداة الإصدار:'||chr(10)||(l.instruments->0->>'text')||chr(10)||'تاريخ الإصدار (هجريّ): '||replace(l.issued_hijri,'/','-')||chr(10)||'تاريخ الإصدار (ميلاديّ): '||l.issued_gregorian||chr(10)||'تاريخ النشر: '||l.published_hijri||'هـ ('||l.published_gregorian||')',\n  (l.instruments->0->>'text'), (l.published_gregorian + 90)::timestamp, now(), $hk$نظام$hk$\nFROM boe.law l WHERE l.id=$hk$boe26-e857025ebc3b270d499b886b$hk$ AND 'أنظمة '||l.category_path[3] IN (SELECT DISTINCT classification FROM legal_systems WHERE classification LIKE 'أنظمة %')"
+   },
+   {
+    "name": "articles:نظام المواد البترولية والبتروكيماوية",
+    "sql": "INSERT INTO legal_articles (id, \"legalSystemId\", \"lawName\", classification, \"articleNumber\", \"articleBis\", title, content, \"royalDecree\", \"effectiveFrom\", status, \"createdAt\", \"updatedAt\", search_norm)\nSELECT 'boe26-'||left(encode(sha256(convert_to(l.id||'|article|'||coalesce(u.article_number, u.seq),'UTF8')),'hex'),24), l.id, $hk$نظام المواد البترولية والبتروكيماوية$hk$, s.classification, coalesce(u.article_number, u.seq), 0, coalesce(nullif(u.heading,''), 'المادة '||coalesce(u.article_number, u.seq)), u.body, (l.instruments->0->>'text'), NULL, 'سارية', now(), now(),\n  uqn_fix.hkm30_search_norm($hk$نظام المواد البترولية والبتروكيماوية$hk$, coalesce(nullif(u.heading,''), 'المادة '||coalesce(u.article_number, u.seq)), u.body, ARRAY[]::text[], s.classification, NULL)\nFROM boe.law l JOIN legal_systems s ON s.id=l.id JOIN boe.unit u ON u.law_id=l.id WHERE l.id=$hk$boe26-e857025ebc3b270d499b886b$hk$ ORDER BY u.seq"
+   },
+   {
+    "name": "verification_work:نظام المواد البترولية والبتروكيماوية",
+    "sql": "INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, evidence_quote, method, verified_by, supersedes_verification_id)\nSELECT $hk$vf26-68ff126c82db3b9a3cd1cad1$hk$, 'work', l.id, 'ساري', (l.instruments->0->>'text'), l.url, 'حالة النظام في بوابة هيئة الخبراء بمجلس الوزراء: '||l.status_at_source||' (لقطة 28/9/2026). الصدور '||l.issued_hijri||'هـ ('||l.issued_gregorian||') والنشر '||l.published_hijri||'هـ ('||l.published_gregorian||')؛ المادة ('||22||'): «'||btrim((SELECT u.body FROM boe.unit u WHERE u.law_id=l.id AND coalesce(u.article_number, u.seq)=22))||'»؛ يُعمل به من '||(l.published_gregorian + 90)::date, 'rule', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$, NULL FROM boe.law l WHERE l.id=$hk$boe26-e857025ebc3b270d499b886b$hk$"
+   },
+   {
+    "name": "verification_units:نظام المواد البترولية والبتروكيماوية",
+    "sql": "INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, evidence_quote, method, verified_by, supersedes_verification_id)\nSELECT 'vf26-'||left(encode(sha256(convert_to('batch2|unit|'||a.id||'|ساري','UTF8')),'hex'),24), 'unit', a.id, 'ساري', (l.instruments->0->>'text'), l.url, 'نص المادة كما في بوابة هيئة الخبراء (لقطة 28/9/2026)؛ يعمل بالنظام من '||s.preamble_effective_from::date, 'rule', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$, NULL\nFROM legal_articles a JOIN legal_systems s ON s.id=a.\"legalSystemId\" JOIN boe.law l ON l.id=s.id WHERE a.\"legalSystemId\"=$hk$boe26-e857025ebc3b270d499b886b$hk$"
+   },
+   {
+    "name": "law_card:نظام المواد البترولية والبتروكيماوية",
+    "sql": "INSERT INTO law_card (id, system_id, official_name, summary, issued_hijri, issued_gregorian, published_hijri, published_gregorian, status_at_source, category_path, instruments, text_blocks, source_name, source_url, retrieved_on, created_by)\nSELECT $hk$lc26-3e7c4f57961041f5fb82d004$hk$, l.id, l.name, l.summary, l.issued_hijri, l.issued_gregorian, l.published_hijri, l.published_gregorian, l.status_at_source, l.category_path, l.instruments,\n  coalesce((SELECT jsonb_agg(jsonb_build_object('kind', b.kind, 'text', b.body, 'heading', b.heading) ORDER BY b.seq) FROM boe.text_block b WHERE b.law_id=l.id), '[]'::jsonb), 'هيئة الخبراء بمجلس الوزراء', l.url, '2026-09-28', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$\nFROM boe.law l WHERE l.id=$hk$boe26-e857025ebc3b270d499b886b$hk$"
+   },
+   {
+    "name": "match:نظام المواد البترولية والبتروكيماوية",
+    "sql": "INSERT INTO boe.match (id, guid, hakeem_system_id, method, candidates, decided_by, decided_at)\nVALUES ($hk$hkm30m-65636eff134951b44f5e$hk$, $hk$48da5c0f-b5a6-4e93-b76c-b33200be0330$hk$, $hk$boe26-e857025ebc3b270d499b886b$hk$, 'owner', jsonb_build_object('basis', 'HKM-030 دفعة 22/10 ب: النظام مُدخل من لقطة الهيئة نفسها (boe.unit)'), $hk$hkm030-batch2-2026-10-22$hk$, now())"
+   },
+   {
+    "name": "supersede:نظام التجارة بالمنتجات البترولية",
+    "sql": "INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, evidence_quote, method, verified_by, supersedes_verification_id)\nSELECT $hk$vf26-819f7397f9118fc87fac4a48$hk$, 'work', $hk$cmpz5r2yb00axcwg2bk2ll57o$hk$, 'مستبدل', (l.instruments->0->>'text'), l.url, (SELECT 'المادة ('||21||') من '||$hk$نظام المواد البترولية والبتروكيماوية$hk$||': «'||btrim(u.body)||'»' FROM boe.unit u WHERE u.law_id=$hk$boe26-e857025ebc3b270d499b886b$hk$ AND coalesce(u.article_number,u.seq)=21 AND position($hk$يحل النظام محل نظام التجارة بالمنتجات البترولية$hk$ in u.body)>0), 'rule', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$, NULL\nFROM boe.law l WHERE l.id=$hk$boe26-e857025ebc3b270d499b886b$hk$ AND (SELECT 'المادة ('||21||') من '||$hk$نظام المواد البترولية والبتروكيماوية$hk$||': «'||btrim(u.body)||'»' FROM boe.unit u WHERE u.law_id=$hk$boe26-e857025ebc3b270d499b886b$hk$ AND coalesce(u.article_number,u.seq)=21 AND position($hk$يحل النظام محل نظام التجارة بالمنتجات البترولية$hk$ in u.body)>0) IS NOT NULL"
+   },
+   {
+    "name": "surface:نظام التجارة بالمنتجات البترولية",
+    "sql": "INSERT INTO search_surface (id, work_key, surface_system_id, valid_on, reason, supersedes_surface_id, created_by)\nSELECT $hk$ss26-ef8d4d10f9a703d9489bf9e2$hk$, $hk$we:cmpz5r2yb00axcwg2bk2ll57o$hk$, $hk$cmpz5r2yb00axcwg2bk2ll57o$hk$, $hk$2017-10-18$hk$::date, 'work_edition:old '||$hk$مرسوم ملكي رقم (م/18) وتاريخ 1439/1/28 هـ$hk$||' valid_from=2017-10-18 valid_to='||s.preamble_effective_from::date, NULL, $hk$owner-inject-hkm030-batch2-2026-10-22$hk$ FROM legal_systems s WHERE s.id=$hk$boe26-e857025ebc3b270d499b886b$hk$\nUNION ALL\nSELECT $hk$ss26-4968393c1f3a2fe8591a272a$hk$, $hk$we:cmpz5r2yb00axcwg2bk2ll57o$hk$, $hk$boe26-e857025ebc3b270d499b886b$hk$, s.preamble_effective_from::date, 'work_edition:new '||s.preamble_royal_decree||' valid_from='||s.preamble_effective_from::date, $hk$ss26-ef8d4d10f9a703d9489bf9e2$hk$, $hk$owner-inject-hkm030-batch2-2026-10-22$hk$ FROM legal_systems s WHERE s.id=$hk$boe26-e857025ebc3b270d499b886b$hk$"
+   },
+   {
+    "name": "members:نظام التجارة بالمنتجات البترولية",
+    "sql": "INSERT INTO search_surface_member (id, work_key, system_id, role, created_by) VALUES\n($hk$sm26-3a3de725a0f7db8973f2640f$hk$, $hk$we:cmpz5r2yb00axcwg2bk2ll57o$hk$, $hk$cmpz5r2yb00axcwg2bk2ll57o$hk$, 'edition_old', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$),\n($hk$sm26-ac330620bad3b635e1841458$hk$, $hk$we:cmpz5r2yb00axcwg2bk2ll57o$hk$, $hk$boe26-e857025ebc3b270d499b886b$hk$, 'edition_new', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$)"
+   },
+   {
+    "name": "system:تنظيم الهيئة الوطنية لإدارة الطوارئ",
+    "sql": "INSERT INTO legal_systems (id, name, classification, \"articleCount\", \"createdAt\", \"updatedAt\", domain, domain_title, sort_order, eli_slug, preamble, preamble_royal_decree, preamble_effective_from, preamble_updated_at, instrument_kind)\nSELECT l.id, $hk$تنظيم الهيئة الوطنية لإدارة الطوارئ$hk$, 'أنظمة '||l.category_path[3], 19, now(), now(), 'regulatory', 'تنظيمي قطاعي', 0, $hk$تنظيم-الهيئه-الوطنيه-لاداره-الطوارئ$hk$,\n  'أداة الإصدار:'||chr(10)||(l.instruments->0->>'text')||chr(10)||'تاريخ الإصدار (هجريّ): '||replace(l.issued_hijri,'/','-')||chr(10)||'تاريخ الإصدار (ميلاديّ): '||l.issued_gregorian||chr(10)||'تاريخ النشر: '||l.published_hijri||'هـ ('||l.published_gregorian||')',\n  (l.instruments->0->>'text'), (l.published_gregorian)::timestamp, now(), $hk$تنظيم$hk$\nFROM boe.law l WHERE l.id=$hk$boe26-7208fdd00b0e59582be85367$hk$ AND 'أنظمة '||l.category_path[3] IN (SELECT DISTINCT classification FROM legal_systems WHERE classification LIKE 'أنظمة %')"
+   },
+   {
+    "name": "articles:تنظيم الهيئة الوطنية لإدارة الطوارئ",
+    "sql": "INSERT INTO legal_articles (id, \"legalSystemId\", \"lawName\", classification, \"articleNumber\", \"articleBis\", title, content, \"royalDecree\", \"effectiveFrom\", status, \"createdAt\", \"updatedAt\", search_norm)\nSELECT 'boe26-'||left(encode(sha256(convert_to(l.id||'|article|'||coalesce(u.article_number, u.seq),'UTF8')),'hex'),24), l.id, $hk$تنظيم الهيئة الوطنية لإدارة الطوارئ$hk$, s.classification, coalesce(u.article_number, u.seq), 0, coalesce(nullif(u.heading,''), 'المادة '||coalesce(u.article_number, u.seq)), u.body, (l.instruments->0->>'text'), NULL, 'سارية', now(), now(),\n  uqn_fix.hkm30_search_norm($hk$تنظيم الهيئة الوطنية لإدارة الطوارئ$hk$, coalesce(nullif(u.heading,''), 'المادة '||coalesce(u.article_number, u.seq)), u.body, ARRAY[]::text[], s.classification, NULL)\nFROM boe.law l JOIN legal_systems s ON s.id=l.id JOIN boe.unit u ON u.law_id=l.id WHERE l.id=$hk$boe26-7208fdd00b0e59582be85367$hk$ ORDER BY u.seq"
+   },
+   {
+    "name": "verification_work:تنظيم الهيئة الوطنية لإدارة الطوارئ",
+    "sql": "INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, evidence_quote, method, verified_by, supersedes_verification_id)\nSELECT $hk$vf26-75c6863710e0646707a3dc0d$hk$, 'work', l.id, 'ساري', (l.instruments->0->>'text'), l.url, 'حالة النظام في بوابة هيئة الخبراء بمجلس الوزراء: '||l.status_at_source||' (لقطة 28/9/2026). الصدور '||l.issued_hijri||'هـ ('||l.issued_gregorian||') والنشر '||l.published_hijri||'هـ ('||l.published_gregorian||')؛ المادة ('||19||'): «'||btrim((SELECT u.body FROM boe.unit u WHERE u.law_id=l.id AND coalesce(u.article_number, u.seq)=19))||'»؛ يُعمل به من '||(l.published_gregorian)::date, 'rule', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$, NULL FROM boe.law l WHERE l.id=$hk$boe26-7208fdd00b0e59582be85367$hk$"
+   },
+   {
+    "name": "verification_units:تنظيم الهيئة الوطنية لإدارة الطوارئ",
+    "sql": "INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, evidence_quote, method, verified_by, supersedes_verification_id)\nSELECT 'vf26-'||left(encode(sha256(convert_to('batch2|unit|'||a.id||'|ساري','UTF8')),'hex'),24), 'unit', a.id, 'ساري', (l.instruments->0->>'text'), l.url, 'نص المادة كما في بوابة هيئة الخبراء (لقطة 28/9/2026)؛ يعمل بالنظام من '||s.preamble_effective_from::date, 'rule', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$, NULL\nFROM legal_articles a JOIN legal_systems s ON s.id=a.\"legalSystemId\" JOIN boe.law l ON l.id=s.id WHERE a.\"legalSystemId\"=$hk$boe26-7208fdd00b0e59582be85367$hk$"
+   },
+   {
+    "name": "law_card:تنظيم الهيئة الوطنية لإدارة الطوارئ",
+    "sql": "INSERT INTO law_card (id, system_id, official_name, summary, issued_hijri, issued_gregorian, published_hijri, published_gregorian, status_at_source, category_path, instruments, text_blocks, source_name, source_url, retrieved_on, created_by)\nSELECT $hk$lc26-4249e4c4f586678cd5fd5c68$hk$, l.id, l.name, l.summary, l.issued_hijri, l.issued_gregorian, l.published_hijri, l.published_gregorian, l.status_at_source, l.category_path, l.instruments,\n  coalesce((SELECT jsonb_agg(jsonb_build_object('kind', b.kind, 'text', b.body, 'heading', b.heading) ORDER BY b.seq) FROM boe.text_block b WHERE b.law_id=l.id), '[]'::jsonb), 'هيئة الخبراء بمجلس الوزراء', l.url, '2026-09-28', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$\nFROM boe.law l WHERE l.id=$hk$boe26-7208fdd00b0e59582be85367$hk$"
+   },
+   {
+    "name": "match:تنظيم الهيئة الوطنية لإدارة الطوارئ",
+    "sql": "INSERT INTO boe.match (id, guid, hakeem_system_id, method, candidates, decided_by, decided_at)\nVALUES ($hk$hkm30m-11f7f0cc4900fdb212f9$hk$, $hk$479e4f48-d35c-4dac-994b-b2eb00e44c48$hk$, $hk$boe26-7208fdd00b0e59582be85367$hk$, 'owner', jsonb_build_object('basis', 'HKM-030 دفعة 22/10 ب: النظام مُدخل من لقطة الهيئة نفسها (boe.unit)'), $hk$hkm030-batch2-2026-10-22$hk$, now())"
+   },
+   {
+    "name": "system:تنظيم المعهد الوطني للتطوير المهني التعليمي",
+    "sql": "INSERT INTO legal_systems (id, name, classification, \"articleCount\", \"createdAt\", \"updatedAt\", domain, domain_title, sort_order, eli_slug, preamble, preamble_royal_decree, preamble_effective_from, preamble_updated_at, instrument_kind)\nSELECT l.id, $hk$تنظيم المعهد الوطني للتطوير المهني التعليمي$hk$, 'أنظمة '||l.category_path[3], 17, now(), now(), 'regulatory', 'تنظيمي قطاعي', 0, $hk$تنظيم-المعهد-الوطني-للتطوير-المهني-التعليمي$hk$,\n  'أداة الإصدار:'||chr(10)||(l.instruments->0->>'text')||chr(10)||'تاريخ الإصدار (هجريّ): '||replace(l.issued_hijri,'/','-')||chr(10)||'تاريخ الإصدار (ميلاديّ): '||l.issued_gregorian||chr(10)||'تاريخ النشر: '||l.published_hijri||'هـ ('||l.published_gregorian||')',\n  (l.instruments->0->>'text'), (l.published_gregorian)::timestamp, now(), $hk$تنظيم$hk$\nFROM boe.law l WHERE l.id=$hk$boe26-85d11f9b554a191cd72c08cf$hk$ AND 'أنظمة '||l.category_path[3] IN (SELECT DISTINCT classification FROM legal_systems WHERE classification LIKE 'أنظمة %')"
+   },
+   {
+    "name": "articles:تنظيم المعهد الوطني للتطوير المهني التعليمي",
+    "sql": "INSERT INTO legal_articles (id, \"legalSystemId\", \"lawName\", classification, \"articleNumber\", \"articleBis\", title, content, \"royalDecree\", \"effectiveFrom\", status, \"createdAt\", \"updatedAt\", search_norm)\nSELECT 'boe26-'||left(encode(sha256(convert_to(l.id||'|article|'||coalesce(u.article_number, u.seq),'UTF8')),'hex'),24), l.id, $hk$تنظيم المعهد الوطني للتطوير المهني التعليمي$hk$, s.classification, coalesce(u.article_number, u.seq), 0, coalesce(nullif(u.heading,''), 'المادة '||coalesce(u.article_number, u.seq)), u.body, (l.instruments->0->>'text'), NULL, 'سارية', now(), now(),\n  uqn_fix.hkm30_search_norm($hk$تنظيم المعهد الوطني للتطوير المهني التعليمي$hk$, coalesce(nullif(u.heading,''), 'المادة '||coalesce(u.article_number, u.seq)), u.body, ARRAY[]::text[], s.classification, NULL)\nFROM boe.law l JOIN legal_systems s ON s.id=l.id JOIN boe.unit u ON u.law_id=l.id WHERE l.id=$hk$boe26-85d11f9b554a191cd72c08cf$hk$ ORDER BY u.seq"
+   },
+   {
+    "name": "verification_work:تنظيم المعهد الوطني للتطوير المهني التعليمي",
+    "sql": "INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, evidence_quote, method, verified_by, supersedes_verification_id)\nSELECT $hk$vf26-3e628707366483eccc6a5e99$hk$, 'work', l.id, 'ساري', (l.instruments->0->>'text'), l.url, 'حالة النظام في بوابة هيئة الخبراء بمجلس الوزراء: '||l.status_at_source||' (لقطة 28/9/2026). الصدور '||l.issued_hijri||'هـ ('||l.issued_gregorian||') والنشر '||l.published_hijri||'هـ ('||l.published_gregorian||')؛ المادة ('||17||'): «'||btrim((SELECT u.body FROM boe.unit u WHERE u.law_id=l.id AND coalesce(u.article_number, u.seq)=17))||'»؛ يُعمل به من '||(l.published_gregorian)::date, 'rule', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$, NULL FROM boe.law l WHERE l.id=$hk$boe26-85d11f9b554a191cd72c08cf$hk$"
+   },
+   {
+    "name": "verification_units:تنظيم المعهد الوطني للتطوير المهني التعليمي",
+    "sql": "INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, evidence_quote, method, verified_by, supersedes_verification_id)\nSELECT 'vf26-'||left(encode(sha256(convert_to('batch2|unit|'||a.id||'|ساري','UTF8')),'hex'),24), 'unit', a.id, 'ساري', (l.instruments->0->>'text'), l.url, 'نص المادة كما في بوابة هيئة الخبراء (لقطة 28/9/2026)؛ يعمل بالنظام من '||s.preamble_effective_from::date, 'rule', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$, NULL\nFROM legal_articles a JOIN legal_systems s ON s.id=a.\"legalSystemId\" JOIN boe.law l ON l.id=s.id WHERE a.\"legalSystemId\"=$hk$boe26-85d11f9b554a191cd72c08cf$hk$"
+   },
+   {
+    "name": "law_card:تنظيم المعهد الوطني للتطوير المهني التعليمي",
+    "sql": "INSERT INTO law_card (id, system_id, official_name, summary, issued_hijri, issued_gregorian, published_hijri, published_gregorian, status_at_source, category_path, instruments, text_blocks, source_name, source_url, retrieved_on, created_by)\nSELECT $hk$lc26-eaf22a5880f0c6f789501b7c$hk$, l.id, l.name, l.summary, l.issued_hijri, l.issued_gregorian, l.published_hijri, l.published_gregorian, l.status_at_source, l.category_path, l.instruments,\n  coalesce((SELECT jsonb_agg(jsonb_build_object('kind', b.kind, 'text', b.body, 'heading', b.heading) ORDER BY b.seq) FROM boe.text_block b WHERE b.law_id=l.id), '[]'::jsonb), 'هيئة الخبراء بمجلس الوزراء', l.url, '2026-09-28', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$\nFROM boe.law l WHERE l.id=$hk$boe26-85d11f9b554a191cd72c08cf$hk$"
+   },
+   {
+    "name": "match:تنظيم المعهد الوطني للتطوير المهني التعليمي",
+    "sql": "INSERT INTO boe.match (id, guid, hakeem_system_id, method, candidates, decided_by, decided_at)\nVALUES ($hk$hkm30m-7d64b2159e61d0190e8d$hk$, $hk$46d3b1b2-6455-466d-8942-b13600c0414c$hk$, $hk$boe26-85d11f9b554a191cd72c08cf$hk$, 'owner', jsonb_build_object('basis', 'HKM-030 دفعة 22/10 ب: النظام مُدخل من لقطة الهيئة نفسها (boe.unit)'), $hk$hkm030-batch2-2026-10-22$hk$, now())"
+   },
+   {
+    "name": "supersede:تنظيم المعهد الوطني للتطوير المهني التعليمي 1441هـ",
+    "sql": "INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, evidence_quote, method, verified_by, supersedes_verification_id)\nSELECT $hk$vf26-ae3f0418ebc0468d65b5fa12$hk$, 'work', $hk$cmpz5pyy1005acwg2shpqkguy$hk$, 'مستبدل', (l.instruments->0->>'text'), l.url, (SELECT 'المادة ('||16||') من '||$hk$تنظيم المعهد الوطني للتطوير المهني التعليمي$hk$||': «'||btrim(u.body)||'»' FROM boe.unit u WHERE u.law_id=$hk$boe26-85d11f9b554a191cd72c08cf$hk$ AND coalesce(u.article_number,u.seq)=16 AND position($hk$يحل هذا التنظيم محل تنظيم المعهد الوطني$hk$ in u.body)>0), 'rule', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$, $hk$hkm30v-353f34e166cdcda69d689bfc$hk$\nFROM boe.law l WHERE l.id=$hk$boe26-85d11f9b554a191cd72c08cf$hk$ AND (SELECT 'المادة ('||16||') من '||$hk$تنظيم المعهد الوطني للتطوير المهني التعليمي$hk$||': «'||btrim(u.body)||'»' FROM boe.unit u WHERE u.law_id=$hk$boe26-85d11f9b554a191cd72c08cf$hk$ AND coalesce(u.article_number,u.seq)=16 AND position($hk$يحل هذا التنظيم محل تنظيم المعهد الوطني$hk$ in u.body)>0) IS NOT NULL"
+   },
+   {
+    "name": "surface:تنظيم المعهد الوطني للتطوير المهني التعليمي 1441هـ",
+    "sql": "INSERT INTO search_surface (id, work_key, surface_system_id, valid_on, reason, supersedes_surface_id, created_by)\nSELECT $hk$ss26-e4fa695615aa6f24f75e682c$hk$, $hk$we:cmpz5pyy1005acwg2shpqkguy$hk$, $hk$cmpz5pyy1005acwg2shpqkguy$hk$, $hk$2019-11-05$hk$::date, 'work_edition:old '||$hk$قرار مجلس الوزراء رقم (197) وتاريخ 1441/3/8هـ$hk$||' valid_from=2019-11-05 valid_to='||s.preamble_effective_from::date, NULL, $hk$owner-inject-hkm030-batch2-2026-10-22$hk$ FROM legal_systems s WHERE s.id=$hk$boe26-85d11f9b554a191cd72c08cf$hk$\nUNION ALL\nSELECT $hk$ss26-18bd489f416faad12c8ca5d8$hk$, $hk$we:cmpz5pyy1005acwg2shpqkguy$hk$, $hk$boe26-85d11f9b554a191cd72c08cf$hk$, s.preamble_effective_from::date, 'work_edition:new '||s.preamble_royal_decree||' valid_from='||s.preamble_effective_from::date, $hk$ss26-e4fa695615aa6f24f75e682c$hk$, $hk$owner-inject-hkm030-batch2-2026-10-22$hk$ FROM legal_systems s WHERE s.id=$hk$boe26-85d11f9b554a191cd72c08cf$hk$"
+   },
+   {
+    "name": "members:تنظيم المعهد الوطني للتطوير المهني التعليمي 1441هـ",
+    "sql": "INSERT INTO search_surface_member (id, work_key, system_id, role, created_by) VALUES\n($hk$sm26-0ce8f60bdd907960674c4cdf$hk$, $hk$we:cmpz5pyy1005acwg2shpqkguy$hk$, $hk$cmpz5pyy1005acwg2shpqkguy$hk$, 'edition_old', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$),\n($hk$sm26-ea76bab722e153cb5b2f5056$hk$, $hk$we:cmpz5pyy1005acwg2shpqkguy$hk$, $hk$boe26-85d11f9b554a191cd72c08cf$hk$, 'edition_new', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$)"
+   },
+   {
+    "name": "system:تنظيم الهيئة العامة للأمن الغذائي",
+    "sql": "INSERT INTO legal_systems (id, name, classification, \"articleCount\", \"createdAt\", \"updatedAt\", domain, domain_title, sort_order, eli_slug, preamble, preamble_royal_decree, preamble_effective_from, preamble_updated_at, instrument_kind)\nSELECT l.id, $hk$تنظيم الهيئة العامة للأمن الغذائي$hk$, 'أنظمة '||l.category_path[3], 15, now(), now(), 'regulatory', 'تنظيمي قطاعي', 0, $hk$تنظيم-الهيئه-العامه-للامن-الغذائي$hk$,\n  'أداة الإصدار:'||chr(10)||(l.instruments->0->>'text')||chr(10)||'تاريخ الإصدار (هجريّ): '||replace(l.issued_hijri,'/','-')||chr(10)||'تاريخ الإصدار (ميلاديّ): '||l.issued_gregorian||chr(10)||'تاريخ النشر: '||l.published_hijri||'هـ ('||l.published_gregorian||')',\n  (l.instruments->0->>'text'), (l.published_gregorian)::timestamp, now(), $hk$تنظيم$hk$\nFROM boe.law l WHERE l.id=$hk$boe26-e8055f9af1cbb7928c204fcd$hk$ AND 'أنظمة '||l.category_path[3] IN (SELECT DISTINCT classification FROM legal_systems WHERE classification LIKE 'أنظمة %')"
+   },
+   {
+    "name": "articles:تنظيم الهيئة العامة للأمن الغذائي",
+    "sql": "INSERT INTO legal_articles (id, \"legalSystemId\", \"lawName\", classification, \"articleNumber\", \"articleBis\", title, content, \"royalDecree\", \"effectiveFrom\", status, \"createdAt\", \"updatedAt\", search_norm)\nSELECT 'boe26-'||left(encode(sha256(convert_to(l.id||'|article|'||coalesce(u.article_number, u.seq),'UTF8')),'hex'),24), l.id, $hk$تنظيم الهيئة العامة للأمن الغذائي$hk$, s.classification, coalesce(u.article_number, u.seq), 0, coalesce(nullif(u.heading,''), 'المادة '||coalesce(u.article_number, u.seq)), u.body, (l.instruments->0->>'text'), NULL, 'سارية', now(), now(),\n  uqn_fix.hkm30_search_norm($hk$تنظيم الهيئة العامة للأمن الغذائي$hk$, coalesce(nullif(u.heading,''), 'المادة '||coalesce(u.article_number, u.seq)), u.body, ARRAY[]::text[], s.classification, NULL)\nFROM boe.law l JOIN legal_systems s ON s.id=l.id JOIN boe.unit u ON u.law_id=l.id WHERE l.id=$hk$boe26-e8055f9af1cbb7928c204fcd$hk$ ORDER BY u.seq"
+   },
+   {
+    "name": "verification_work:تنظيم الهيئة العامة للأمن الغذائي",
+    "sql": "INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, evidence_quote, method, verified_by, supersedes_verification_id)\nSELECT $hk$vf26-714365febfabe7d988457b8a$hk$, 'work', l.id, 'ساري', (l.instruments->0->>'text'), l.url, 'حالة النظام في بوابة هيئة الخبراء بمجلس الوزراء: '||l.status_at_source||' (لقطة 28/9/2026). الصدور '||l.issued_hijri||'هـ ('||l.issued_gregorian||') والنشر '||l.published_hijri||'هـ ('||l.published_gregorian||')؛ المادة ('||15||'): «'||btrim((SELECT u.body FROM boe.unit u WHERE u.law_id=l.id AND coalesce(u.article_number, u.seq)=15))||'»؛ يُعمل به من '||(l.published_gregorian)::date, 'rule', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$, NULL FROM boe.law l WHERE l.id=$hk$boe26-e8055f9af1cbb7928c204fcd$hk$"
+   },
+   {
+    "name": "verification_units:تنظيم الهيئة العامة للأمن الغذائي",
+    "sql": "INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, evidence_quote, method, verified_by, supersedes_verification_id)\nSELECT 'vf26-'||left(encode(sha256(convert_to('batch2|unit|'||a.id||'|ساري','UTF8')),'hex'),24), 'unit', a.id, 'ساري', (l.instruments->0->>'text'), l.url, 'نص المادة كما في بوابة هيئة الخبراء (لقطة 28/9/2026)؛ يعمل بالنظام من '||s.preamble_effective_from::date, 'rule', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$, NULL\nFROM legal_articles a JOIN legal_systems s ON s.id=a.\"legalSystemId\" JOIN boe.law l ON l.id=s.id WHERE a.\"legalSystemId\"=$hk$boe26-e8055f9af1cbb7928c204fcd$hk$"
+   },
+   {
+    "name": "law_card:تنظيم الهيئة العامة للأمن الغذائي",
+    "sql": "INSERT INTO law_card (id, system_id, official_name, summary, issued_hijri, issued_gregorian, published_hijri, published_gregorian, status_at_source, category_path, instruments, text_blocks, source_name, source_url, retrieved_on, created_by)\nSELECT $hk$lc26-c064ca7b2cb0d6876b954eef$hk$, l.id, l.name, l.summary, l.issued_hijri, l.issued_gregorian, l.published_hijri, l.published_gregorian, l.status_at_source, l.category_path, l.instruments,\n  coalesce((SELECT jsonb_agg(jsonb_build_object('kind', b.kind, 'text', b.body, 'heading', b.heading) ORDER BY b.seq) FROM boe.text_block b WHERE b.law_id=l.id), '[]'::jsonb), 'هيئة الخبراء بمجلس الوزراء', l.url, '2026-09-28', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$\nFROM boe.law l WHERE l.id=$hk$boe26-e8055f9af1cbb7928c204fcd$hk$"
+   },
+   {
+    "name": "match:تنظيم الهيئة العامة للأمن الغذائي",
+    "sql": "INSERT INTO boe.match (id, guid, hakeem_system_id, method, candidates, decided_by, decided_at)\nVALUES ($hk$hkm30m-f9648fb3320a2d58d4a4$hk$, $hk$6d1d7df9-b061-4830-8356-b332009f07ad$hk$, $hk$boe26-e8055f9af1cbb7928c204fcd$hk$, 'owner', jsonb_build_object('basis', 'HKM-030 دفعة 22/10 ب: النظام مُدخل من لقطة الهيئة نفسها (boe.unit)'), $hk$hkm030-batch2-2026-10-22$hk$, now())"
+   },
+   {
+    "name": "supersede:الترتيبات التنظيمية للهيئة العامة للأمن الغذائي",
+    "sql": "INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, evidence_quote, method, verified_by, supersedes_verification_id)\nSELECT $hk$vf26-9c2ed330a7d097e3468cee16$hk$, 'work', $hk$cmpz5qhz0007zcwg2u08fbiul$hk$, 'مستبدل', (l.instruments->0->>'text'), l.url, (SELECT (l.instruments->0->>'text')||'، البند: «'||btrim(substring(regexp_replace(b.body,'\\s+',' ','g') from $hk$ثاني[^:]{0,3}: يحل التنظيم[^.]+\\.$hk$))||'»' FROM boe.text_block b WHERE b.law_id=l.id AND b.kind=$hk$cabinet_decision$hk$ AND regexp_replace(b.body,'\\s+',' ','g') ~ $hk$ثاني[^:]{0,3}: يحل التنظيم[^.]+\\.$hk$), 'rule', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$, $hk$boe26-8c06af0e0875821f07a21022$hk$\nFROM boe.law l WHERE l.id=$hk$boe26-e8055f9af1cbb7928c204fcd$hk$ AND (SELECT (l.instruments->0->>'text')||'، البند: «'||btrim(substring(regexp_replace(b.body,'\\s+',' ','g') from $hk$ثاني[^:]{0,3}: يحل التنظيم[^.]+\\.$hk$))||'»' FROM boe.text_block b WHERE b.law_id=l.id AND b.kind=$hk$cabinet_decision$hk$ AND regexp_replace(b.body,'\\s+',' ','g') ~ $hk$ثاني[^:]{0,3}: يحل التنظيم[^.]+\\.$hk$) IS NOT NULL"
+   },
+   {
+    "name": "surface:الترتيبات التنظيمية للهيئة العامة للأمن الغذائي",
+    "sql": "INSERT INTO search_surface (id, work_key, surface_system_id, valid_on, reason, supersedes_surface_id, created_by)\nSELECT $hk$ss26-d347c80626c4c13c1a46a210$hk$, $hk$we:cmpz5qhz0007zcwg2u08fbiul$hk$, $hk$cmpz5qhz0007zcwg2u08fbiul$hk$, $hk$2023-01-17$hk$::date, 'work_edition:old '||$hk$قرار مجلس الوزراء رقم (440) وتاريخ 1444/6/24هـ$hk$||' valid_from=2023-01-17 valid_to='||s.preamble_effective_from::date, NULL, $hk$owner-inject-hkm030-batch2-2026-10-22$hk$ FROM legal_systems s WHERE s.id=$hk$boe26-e8055f9af1cbb7928c204fcd$hk$\nUNION ALL\nSELECT $hk$ss26-f8bef7b7854d128462bb1d17$hk$, $hk$we:cmpz5qhz0007zcwg2u08fbiul$hk$, $hk$boe26-e8055f9af1cbb7928c204fcd$hk$, s.preamble_effective_from::date, 'work_edition:new '||s.preamble_royal_decree||' valid_from='||s.preamble_effective_from::date, $hk$ss26-d347c80626c4c13c1a46a210$hk$, $hk$owner-inject-hkm030-batch2-2026-10-22$hk$ FROM legal_systems s WHERE s.id=$hk$boe26-e8055f9af1cbb7928c204fcd$hk$"
+   },
+   {
+    "name": "members:الترتيبات التنظيمية للهيئة العامة للأمن الغذائي",
+    "sql": "INSERT INTO search_surface_member (id, work_key, system_id, role, created_by) VALUES\n($hk$sm26-8a578f2947fcd8ad55fdbfb5$hk$, $hk$we:cmpz5qhz0007zcwg2u08fbiul$hk$, $hk$cmpz5qhz0007zcwg2u08fbiul$hk$, 'edition_old', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$),\n($hk$sm26-d1f386a427b24e8c4167ac8e$hk$, $hk$we:cmpz5qhz0007zcwg2u08fbiul$hk$, $hk$boe26-e8055f9af1cbb7928c204fcd$hk$, 'edition_new', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$)"
+   },
+   {
+    "name": "system:تنظيم الهيئة السعودية لتسويق الاستثمار",
+    "sql": "INSERT INTO legal_systems (id, name, classification, \"articleCount\", \"createdAt\", \"updatedAt\", domain, domain_title, sort_order, eli_slug, preamble, preamble_royal_decree, preamble_effective_from, preamble_updated_at, instrument_kind)\nSELECT l.id, $hk$تنظيم الهيئة السعودية لتسويق الاستثمار$hk$, 'أنظمة '||l.category_path[3], 14, now(), now(), 'regulatory', 'تنظيمي قطاعي', 0, $hk$تنظيم-الهيئه-السعوديه-لتسويق-الاستثمار$hk$,\n  'أداة الإصدار:'||chr(10)||(l.instruments->0->>'text')||chr(10)||'تاريخ الإصدار (هجريّ): '||replace(l.issued_hijri,'/','-')||chr(10)||'تاريخ الإصدار (ميلاديّ): '||l.issued_gregorian||chr(10)||'تاريخ النشر: '||l.published_hijri||'هـ ('||l.published_gregorian||')',\n  (l.instruments->0->>'text'), (l.issued_gregorian)::timestamp, now(), $hk$تنظيم$hk$\nFROM boe.law l WHERE l.id=$hk$boe26-970129b497157f8b28961b8d$hk$ AND 'أنظمة '||l.category_path[3] IN (SELECT DISTINCT classification FROM legal_systems WHERE classification LIKE 'أنظمة %')"
+   },
+   {
+    "name": "articles:تنظيم الهيئة السعودية لتسويق الاستثمار",
+    "sql": "INSERT INTO legal_articles (id, \"legalSystemId\", \"lawName\", classification, \"articleNumber\", \"articleBis\", title, content, \"royalDecree\", \"effectiveFrom\", status, \"createdAt\", \"updatedAt\", search_norm)\nSELECT 'boe26-'||left(encode(sha256(convert_to(l.id||'|article|'||coalesce(u.article_number, u.seq),'UTF8')),'hex'),24), l.id, $hk$تنظيم الهيئة السعودية لتسويق الاستثمار$hk$, s.classification, coalesce(u.article_number, u.seq), 0, coalesce(nullif(u.heading,''), 'المادة '||coalesce(u.article_number, u.seq)), u.body, (l.instruments->0->>'text'), NULL, 'سارية', now(), now(),\n  uqn_fix.hkm30_search_norm($hk$تنظيم الهيئة السعودية لتسويق الاستثمار$hk$, coalesce(nullif(u.heading,''), 'المادة '||coalesce(u.article_number, u.seq)), u.body, ARRAY[]::text[], s.classification, NULL)\nFROM boe.law l JOIN legal_systems s ON s.id=l.id JOIN boe.unit u ON u.law_id=l.id WHERE l.id=$hk$boe26-970129b497157f8b28961b8d$hk$ ORDER BY u.seq"
+   },
+   {
+    "name": "verification_work:تنظيم الهيئة السعودية لتسويق الاستثمار",
+    "sql": "INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, evidence_quote, method, verified_by, supersedes_verification_id)\nSELECT $hk$vf26-867c5a8ebbbd95fbe6e4f681$hk$, 'work', l.id, 'ساري', (l.instruments->0->>'text'), l.url, 'حالة النظام في بوابة هيئة الخبراء بمجلس الوزراء: '||l.status_at_source||' (لقطة 28/9/2026). الصدور '||l.issued_hijri||'هـ ('||l.issued_gregorian||') والنشر '||l.published_hijri||'هـ ('||l.published_gregorian||')؛ المادة ('||14||'): «'||btrim((SELECT u.body FROM boe.unit u WHERE u.law_id=l.id AND coalesce(u.article_number, u.seq)=14))||'»؛ يُعمل به من '||(l.issued_gregorian)::date, 'rule', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$, NULL FROM boe.law l WHERE l.id=$hk$boe26-970129b497157f8b28961b8d$hk$"
+   },
+   {
+    "name": "verification_units:تنظيم الهيئة السعودية لتسويق الاستثمار",
+    "sql": "INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, evidence_quote, method, verified_by, supersedes_verification_id)\nSELECT 'vf26-'||left(encode(sha256(convert_to('batch2|unit|'||a.id||'|ساري','UTF8')),'hex'),24), 'unit', a.id, 'ساري', (l.instruments->0->>'text'), l.url, 'نص المادة كما في بوابة هيئة الخبراء (لقطة 28/9/2026)؛ يعمل بالنظام من '||s.preamble_effective_from::date, 'rule', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$, NULL\nFROM legal_articles a JOIN legal_systems s ON s.id=a.\"legalSystemId\" JOIN boe.law l ON l.id=s.id WHERE a.\"legalSystemId\"=$hk$boe26-970129b497157f8b28961b8d$hk$"
+   },
+   {
+    "name": "law_card:تنظيم الهيئة السعودية لتسويق الاستثمار",
+    "sql": "INSERT INTO law_card (id, system_id, official_name, summary, issued_hijri, issued_gregorian, published_hijri, published_gregorian, status_at_source, category_path, instruments, text_blocks, source_name, source_url, retrieved_on, created_by)\nSELECT $hk$lc26-1b33c81af51c7923c18c108d$hk$, l.id, l.name, l.summary, l.issued_hijri, l.issued_gregorian, l.published_hijri, l.published_gregorian, l.status_at_source, l.category_path, l.instruments,\n  coalesce((SELECT jsonb_agg(jsonb_build_object('kind', b.kind, 'text', b.body, 'heading', b.heading) ORDER BY b.seq) FROM boe.text_block b WHERE b.law_id=l.id), '[]'::jsonb), 'هيئة الخبراء بمجلس الوزراء', l.url, '2026-09-28', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$\nFROM boe.law l WHERE l.id=$hk$boe26-970129b497157f8b28961b8d$hk$"
+   },
+   {
+    "name": "match:تنظيم الهيئة السعودية لتسويق الاستثمار",
+    "sql": "INSERT INTO boe.match (id, guid, hakeem_system_id, method, candidates, decided_by, decided_at)\nVALUES ($hk$hkm30m-5238dd0177b0328a8d28$hk$, $hk$43151145-3b31-47d1-8a6c-b2db00a871d0$hk$, $hk$boe26-970129b497157f8b28961b8d$hk$, 'owner', jsonb_build_object('basis', 'HKM-030 دفعة 22/10 ب: النظام مُدخل من لقطة الهيئة نفسها (boe.unit)'), $hk$hkm030-batch2-2026-10-22$hk$, now())"
+   },
+   {
+    "name": "supersede:الترتيبات التنظيمية للهيئة السعودية لتسويق الاستثمار",
+    "sql": "INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, evidence_quote, method, verified_by, supersedes_verification_id)\nSELECT $hk$vf26-23b2a460870d6b121ed8ca06$hk$, 'work', $hk$cmpz5ptwh004lcwg2mlkw3um6$hk$, 'مستبدل', (l.instruments->0->>'text'), l.url, (SELECT (l.instruments->0->>'text')||'، البند: «'||btrim(substring(regexp_replace(b.body,'\\s+',' ','g') from $hk$ثاني[^:]{0,3}: يحل التنظيم[^.]+\\.$hk$))||'»' FROM boe.text_block b WHERE b.law_id=l.id AND b.kind=$hk$cabinet_decision$hk$ AND regexp_replace(b.body,'\\s+',' ','g') ~ $hk$ثاني[^:]{0,3}: يحل التنظيم[^.]+\\.$hk$), 'rule', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$, $hk$boe26-0b26e5025035be762125ceb9$hk$\nFROM boe.law l WHERE l.id=$hk$boe26-970129b497157f8b28961b8d$hk$ AND (SELECT (l.instruments->0->>'text')||'، البند: «'||btrim(substring(regexp_replace(b.body,'\\s+',' ','g') from $hk$ثاني[^:]{0,3}: يحل التنظيم[^.]+\\.$hk$))||'»' FROM boe.text_block b WHERE b.law_id=l.id AND b.kind=$hk$cabinet_decision$hk$ AND regexp_replace(b.body,'\\s+',' ','g') ~ $hk$ثاني[^:]{0,3}: يحل التنظيم[^.]+\\.$hk$) IS NOT NULL"
+   },
+   {
+    "name": "surface:الترتيبات التنظيمية للهيئة السعودية لتسويق الاستثمار",
+    "sql": "INSERT INTO search_surface (id, work_key, surface_system_id, valid_on, reason, supersedes_surface_id, created_by)\nSELECT $hk$ss26-dd27f0b1e03076e524dde71b$hk$, $hk$we:cmpz5ptwh004lcwg2mlkw3um6$hk$, $hk$cmpz5ptwh004lcwg2mlkw3um6$hk$, $hk$2022-08-02$hk$::date, 'work_edition:old '||$hk$قرار مجلس الوزراء رقم (13) وتاريخ 1444/1/4هـ$hk$||' valid_from=2022-08-02 valid_to='||s.preamble_effective_from::date, NULL, $hk$owner-inject-hkm030-batch2-2026-10-22$hk$ FROM legal_systems s WHERE s.id=$hk$boe26-970129b497157f8b28961b8d$hk$\nUNION ALL\nSELECT $hk$ss26-0801c88549573b63ce1889a4$hk$, $hk$we:cmpz5ptwh004lcwg2mlkw3um6$hk$, $hk$boe26-970129b497157f8b28961b8d$hk$, s.preamble_effective_from::date, 'work_edition:new '||s.preamble_royal_decree||' valid_from='||s.preamble_effective_from::date, $hk$ss26-dd27f0b1e03076e524dde71b$hk$, $hk$owner-inject-hkm030-batch2-2026-10-22$hk$ FROM legal_systems s WHERE s.id=$hk$boe26-970129b497157f8b28961b8d$hk$"
+   },
+   {
+    "name": "members:الترتيبات التنظيمية للهيئة السعودية لتسويق الاستثمار",
+    "sql": "INSERT INTO search_surface_member (id, work_key, system_id, role, created_by) VALUES\n($hk$sm26-e7ff3465afde88e01b60d264$hk$, $hk$we:cmpz5ptwh004lcwg2mlkw3um6$hk$, $hk$cmpz5ptwh004lcwg2mlkw3um6$hk$, 'edition_old', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$),\n($hk$sm26-35430e565b8e0d7deaabf204$hk$, $hk$we:cmpz5ptwh004lcwg2mlkw3um6$hk$, $hk$boe26-970129b497157f8b28961b8d$hk$, 'edition_new', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$)"
+   },
+   {
+    "name": "system:الترتيبات التنظيمية للمركز السعودي لكود البناء",
+    "sql": "INSERT INTO legal_systems (id, name, classification, \"articleCount\", \"createdAt\", \"updatedAt\", domain, domain_title, sort_order, eli_slug, preamble, preamble_royal_decree, preamble_effective_from, preamble_updated_at, instrument_kind)\nSELECT l.id, $hk$الترتيبات التنظيمية للمركز السعودي لكود البناء$hk$, 'أنظمة '||l.category_path[3], 14, now(), now(), 'regulatory', 'تنظيمي قطاعي', 0, $hk$الترتيبات-التنظيميه-للمركز-السعودي-لكود-البناء$hk$,\n  'أداة الإصدار:'||chr(10)||(l.instruments->0->>'text')||chr(10)||'تاريخ الإصدار (هجريّ): '||replace(l.issued_hijri,'/','-')||chr(10)||'تاريخ الإصدار (ميلاديّ): '||l.issued_gregorian||chr(10)||'تاريخ النشر: '||l.published_hijri||'هـ ('||l.published_gregorian||')',\n  (l.instruments->0->>'text'), (l.published_gregorian)::timestamp, now(), $hk$ترتيبات تنظيمية$hk$\nFROM boe.law l WHERE l.id=$hk$boe26-af97940f45cf6622a5eb757d$hk$ AND 'أنظمة '||l.category_path[3] IN (SELECT DISTINCT classification FROM legal_systems WHERE classification LIKE 'أنظمة %')"
+   },
+   {
+    "name": "articles:الترتيبات التنظيمية للمركز السعودي لكود البناء",
+    "sql": "INSERT INTO legal_articles (id, \"legalSystemId\", \"lawName\", classification, \"articleNumber\", \"articleBis\", title, content, \"royalDecree\", \"effectiveFrom\", status, \"createdAt\", \"updatedAt\", search_norm)\nSELECT 'boe26-'||left(encode(sha256(convert_to(l.id||'|article|'||coalesce(u.article_number, u.seq),'UTF8')),'hex'),24), l.id, $hk$الترتيبات التنظيمية للمركز السعودي لكود البناء$hk$, s.classification, coalesce(u.article_number, u.seq), 0, coalesce(nullif(u.heading,''), 'المادة '||coalesce(u.article_number, u.seq)), u.body, (l.instruments->0->>'text'), NULL, 'سارية', now(), now(),\n  uqn_fix.hkm30_search_norm($hk$الترتيبات التنظيمية للمركز السعودي لكود البناء$hk$, coalesce(nullif(u.heading,''), 'المادة '||coalesce(u.article_number, u.seq)), u.body, ARRAY[]::text[], s.classification, NULL)\nFROM boe.law l JOIN legal_systems s ON s.id=l.id JOIN boe.unit u ON u.law_id=l.id WHERE l.id=$hk$boe26-af97940f45cf6622a5eb757d$hk$ ORDER BY u.seq"
+   },
+   {
+    "name": "verification_work:الترتيبات التنظيمية للمركز السعودي لكود البناء",
+    "sql": "INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, evidence_quote, method, verified_by, supersedes_verification_id)\nSELECT $hk$vf26-c7626ad9d37d082500c99e24$hk$, 'work', l.id, 'ساري', (l.instruments->0->>'text'), l.url, 'حالة النظام في بوابة هيئة الخبراء بمجلس الوزراء: '||l.status_at_source||' (لقطة 28/9/2026). الصدور '||l.issued_hijri||'هـ ('||l.issued_gregorian||') والنشر '||l.published_hijri||'هـ ('||l.published_gregorian||')؛ المادة ('||14||'): «'||btrim((SELECT u.body FROM boe.unit u WHERE u.law_id=l.id AND coalesce(u.article_number, u.seq)=14))||'»؛ يُعمل به من '||(l.published_gregorian)::date, 'rule', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$, NULL FROM boe.law l WHERE l.id=$hk$boe26-af97940f45cf6622a5eb757d$hk$"
+   },
+   {
+    "name": "verification_units:الترتيبات التنظيمية للمركز السعودي لكود البناء",
+    "sql": "INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, evidence_quote, method, verified_by, supersedes_verification_id)\nSELECT 'vf26-'||left(encode(sha256(convert_to('batch2|unit|'||a.id||'|ساري','UTF8')),'hex'),24), 'unit', a.id, 'ساري', (l.instruments->0->>'text'), l.url, 'نص المادة كما في بوابة هيئة الخبراء (لقطة 28/9/2026)؛ يعمل بالنظام من '||s.preamble_effective_from::date, 'rule', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$, NULL\nFROM legal_articles a JOIN legal_systems s ON s.id=a.\"legalSystemId\" JOIN boe.law l ON l.id=s.id WHERE a.\"legalSystemId\"=$hk$boe26-af97940f45cf6622a5eb757d$hk$"
+   },
+   {
+    "name": "law_card:الترتيبات التنظيمية للمركز السعودي لكود البناء",
+    "sql": "INSERT INTO law_card (id, system_id, official_name, summary, issued_hijri, issued_gregorian, published_hijri, published_gregorian, status_at_source, category_path, instruments, text_blocks, source_name, source_url, retrieved_on, created_by)\nSELECT $hk$lc26-26ec99167e9a0cf564700833$hk$, l.id, l.name, l.summary, l.issued_hijri, l.issued_gregorian, l.published_hijri, l.published_gregorian, l.status_at_source, l.category_path, l.instruments,\n  coalesce((SELECT jsonb_agg(jsonb_build_object('kind', b.kind, 'text', b.body, 'heading', b.heading) ORDER BY b.seq) FROM boe.text_block b WHERE b.law_id=l.id), '[]'::jsonb), 'هيئة الخبراء بمجلس الوزراء', l.url, '2026-09-28', $hk$owner-inject-hkm030-batch2-2026-10-22$hk$\nFROM boe.law l WHERE l.id=$hk$boe26-af97940f45cf6622a5eb757d$hk$"
+   },
+   {
+    "name": "match:الترتيبات التنظيمية للمركز السعودي لكود البناء",
+    "sql": "INSERT INTO boe.match (id, guid, hakeem_system_id, method, candidates, decided_by, decided_at)\nVALUES ($hk$hkm30m-bda355cea6d49441d39a$hk$, $hk$664d871f-7a44-4a52-b653-b2db00b55732$hk$, $hk$boe26-af97940f45cf6622a5eb757d$hk$, 'owner', jsonb_build_object('basis', 'HKM-030 دفعة 22/10 ب: النظام مُدخل من لقطة الهيئة نفسها (boe.unit)'), $hk$hkm030-batch2-2026-10-22$hk$, now())"
+   },
+   {
+    "name": "guard_after",
+    "sql": "SELECT CASE WHEN\n  (SELECT count(*) FROM legal_articles WHERE \"legalSystemId\"=$hk$boe26-5bac2a8e68bd1f71d5819a32$hk$ AND \"articleBis\"=0 AND search_norm<>'' )=32 AND (SELECT count(DISTINCT \"articleNumber\") FROM legal_articles WHERE \"legalSystemId\"=$hk$boe26-5bac2a8e68bd1f71d5819a32$hk$)=32 AND (SELECT count(*) FROM legal_systems WHERE id=$hk$boe26-5bac2a8e68bd1f71d5819a32$hk$ AND classification IS NOT NULL AND preamble_effective_from IS NOT NULL)=1 AND (SELECT count(*) FROM verification WHERE verified_by=$hk$owner-inject-hkm030-batch2-2026-10-22$hk$ AND (object_id=$hk$boe26-5bac2a8e68bd1f71d5819a32$hk$ OR object_id IN (SELECT id FROM legal_articles WHERE \"legalSystemId\"=$hk$boe26-5bac2a8e68bd1f71d5819a32$hk$)))=33 AND (SELECT count(*) FROM law_card WHERE system_id=$hk$boe26-5bac2a8e68bd1f71d5819a32$hk$)=1 AND (SELECT count(*) FROM boe.current_match WHERE guid=$hk$7ac1a448-b042-4c73-8164-b2eb00ceb54f$hk$ AND hakeem_system_id=$hk$boe26-5bac2a8e68bd1f71d5819a32$hk$)=1 AND (SELECT count(*) FROM legal_articles WHERE \"legalSystemId\"=$hk$boe26-c59a46aed569267373a74421$hk$ AND \"articleBis\"=0 AND search_norm<>'' )=29 AND (SELECT count(DISTINCT \"articleNumber\") FROM legal_articles WHERE \"legalSystemId\"=$hk$boe26-c59a46aed569267373a74421$hk$)=29 AND (SELECT count(*) FROM legal_systems WHERE id=$hk$boe26-c59a46aed569267373a74421$hk$ AND classification IS NOT NULL AND preamble_effective_from IS NOT NULL)=1 AND (SELECT count(*) FROM verification WHERE verified_by=$hk$owner-inject-hkm030-batch2-2026-10-22$hk$ AND (object_id=$hk$boe26-c59a46aed569267373a74421$hk$ OR object_id IN (SELECT id FROM legal_articles WHERE \"legalSystemId\"=$hk$boe26-c59a46aed569267373a74421$hk$)))=30 AND (SELECT count(*) FROM law_card WHERE system_id=$hk$boe26-c59a46aed569267373a74421$hk$)=1 AND (SELECT count(*) FROM boe.current_match WHERE guid=$hk$a73b2b40-64c8-449e-aa8f-b3ca009257ce$hk$ AND hakeem_system_id=$hk$boe26-c59a46aed569267373a74421$hk$)=1 AND (SELECT count(*) FROM legal_articles WHERE \"legalSystemId\"=$hk$boe26-e857025ebc3b270d499b886b$hk$ AND \"articleBis\"=0 AND search_norm<>'' )=22 AND (SELECT count(DISTINCT \"articleNumber\") FROM legal_articles WHERE \"legalSystemId\"=$hk$boe26-e857025ebc3b270d499b886b$hk$)=22 AND (SELECT count(*) FROM legal_systems WHERE id=$hk$boe26-e857025ebc3b270d499b886b$hk$ AND classification IS NOT NULL AND preamble_effective_from IS NOT NULL)=1 AND (SELECT count(*) FROM verification WHERE verified_by=$hk$owner-inject-hkm030-batch2-2026-10-22$hk$ AND (object_id=$hk$boe26-e857025ebc3b270d499b886b$hk$ OR object_id IN (SELECT id FROM legal_articles WHERE \"legalSystemId\"=$hk$boe26-e857025ebc3b270d499b886b$hk$)))=23 AND (SELECT count(*) FROM law_card WHERE system_id=$hk$boe26-e857025ebc3b270d499b886b$hk$)=1 AND (SELECT count(*) FROM boe.current_match WHERE guid=$hk$48da5c0f-b5a6-4e93-b76c-b33200be0330$hk$ AND hakeem_system_id=$hk$boe26-e857025ebc3b270d499b886b$hk$)=1 AND (SELECT count(*) FROM legal_articles WHERE \"legalSystemId\"=$hk$boe26-7208fdd00b0e59582be85367$hk$ AND \"articleBis\"=0 AND search_norm<>'' )=19 AND (SELECT count(DISTINCT \"articleNumber\") FROM legal_articles WHERE \"legalSystemId\"=$hk$boe26-7208fdd00b0e59582be85367$hk$)=19 AND (SELECT count(*) FROM legal_systems WHERE id=$hk$boe26-7208fdd00b0e59582be85367$hk$ AND classification IS NOT NULL AND preamble_effective_from IS NOT NULL)=1 AND (SELECT count(*) FROM verification WHERE verified_by=$hk$owner-inject-hkm030-batch2-2026-10-22$hk$ AND (object_id=$hk$boe26-7208fdd00b0e59582be85367$hk$ OR object_id IN (SELECT id FROM legal_articles WHERE \"legalSystemId\"=$hk$boe26-7208fdd00b0e59582be85367$hk$)))=20 AND (SELECT count(*) FROM law_card WHERE system_id=$hk$boe26-7208fdd00b0e59582be85367$hk$)=1 AND (SELECT count(*) FROM boe.current_match WHERE guid=$hk$479e4f48-d35c-4dac-994b-b2eb00e44c48$hk$ AND hakeem_system_id=$hk$boe26-7208fdd00b0e59582be85367$hk$)=1 AND (SELECT count(*) FROM legal_articles WHERE \"legalSystemId\"=$hk$boe26-85d11f9b554a191cd72c08cf$hk$ AND \"articleBis\"=0 AND search_norm<>'' )=17 AND (SELECT count(DISTINCT \"articleNumber\") FROM legal_articles WHERE \"legalSystemId\"=$hk$boe26-85d11f9b554a191cd72c08cf$hk$)=17 AND (SELECT count(*) FROM legal_systems WHERE id=$hk$boe26-85d11f9b554a191cd72c08cf$hk$ AND classification IS NOT NULL AND preamble_effective_from IS NOT NULL)=1 AND (SELECT count(*) FROM verification WHERE verified_by=$hk$owner-inject-hkm030-batch2-2026-10-22$hk$ AND (object_id=$hk$boe26-85d11f9b554a191cd72c08cf$hk$ OR object_id IN (SELECT id FROM legal_articles WHERE \"legalSystemId\"=$hk$boe26-85d11f9b554a191cd72c08cf$hk$)))=18 AND (SELECT count(*) FROM law_card WHERE system_id=$hk$boe26-85d11f9b554a191cd72c08cf$hk$)=1 AND (SELECT count(*) FROM boe.current_match WHERE guid=$hk$46d3b1b2-6455-466d-8942-b13600c0414c$hk$ AND hakeem_system_id=$hk$boe26-85d11f9b554a191cd72c08cf$hk$)=1 AND (SELECT count(*) FROM legal_articles WHERE \"legalSystemId\"=$hk$boe26-e8055f9af1cbb7928c204fcd$hk$ AND \"articleBis\"=0 AND search_norm<>'' )=15 AND (SELECT count(DISTINCT \"articleNumber\") FROM legal_articles WHERE \"legalSystemId\"=$hk$boe26-e8055f9af1cbb7928c204fcd$hk$)=15 AND (SELECT count(*) FROM legal_systems WHERE id=$hk$boe26-e8055f9af1cbb7928c204fcd$hk$ AND classification IS NOT NULL AND preamble_effective_from IS NOT NULL)=1 AND (SELECT count(*) FROM verification WHERE verified_by=$hk$owner-inject-hkm030-batch2-2026-10-22$hk$ AND (object_id=$hk$boe26-e8055f9af1cbb7928c204fcd$hk$ OR object_id IN (SELECT id FROM legal_articles WHERE \"legalSystemId\"=$hk$boe26-e8055f9af1cbb7928c204fcd$hk$)))=16 AND (SELECT count(*) FROM law_card WHERE system_id=$hk$boe26-e8055f9af1cbb7928c204fcd$hk$)=1 AND (SELECT count(*) FROM boe.current_match WHERE guid=$hk$6d1d7df9-b061-4830-8356-b332009f07ad$hk$ AND hakeem_system_id=$hk$boe26-e8055f9af1cbb7928c204fcd$hk$)=1 AND (SELECT count(*) FROM legal_articles WHERE \"legalSystemId\"=$hk$boe26-970129b497157f8b28961b8d$hk$ AND \"articleBis\"=0 AND search_norm<>'' )=14 AND (SELECT count(DISTINCT \"articleNumber\") FROM legal_articles WHERE \"legalSystemId\"=$hk$boe26-970129b497157f8b28961b8d$hk$)=14 AND (SELECT count(*) FROM legal_systems WHERE id=$hk$boe26-970129b497157f8b28961b8d$hk$ AND classification IS NOT NULL AND preamble_effective_from IS NOT NULL)=1 AND (SELECT count(*) FROM verification WHERE verified_by=$hk$owner-inject-hkm030-batch2-2026-10-22$hk$ AND (object_id=$hk$boe26-970129b497157f8b28961b8d$hk$ OR object_id IN (SELECT id FROM legal_articles WHERE \"legalSystemId\"=$hk$boe26-970129b497157f8b28961b8d$hk$)))=15 AND (SELECT count(*) FROM law_card WHERE system_id=$hk$boe26-970129b497157f8b28961b8d$hk$)=1 AND (SELECT count(*) FROM boe.current_match WHERE guid=$hk$43151145-3b31-47d1-8a6c-b2db00a871d0$hk$ AND hakeem_system_id=$hk$boe26-970129b497157f8b28961b8d$hk$)=1 AND (SELECT count(*) FROM legal_articles WHERE \"legalSystemId\"=$hk$boe26-af97940f45cf6622a5eb757d$hk$ AND \"articleBis\"=0 AND search_norm<>'' )=14 AND (SELECT count(DISTINCT \"articleNumber\") FROM legal_articles WHERE \"legalSystemId\"=$hk$boe26-af97940f45cf6622a5eb757d$hk$)=14 AND (SELECT count(*) FROM legal_systems WHERE id=$hk$boe26-af97940f45cf6622a5eb757d$hk$ AND classification IS NOT NULL AND preamble_effective_from IS NOT NULL)=1 AND (SELECT count(*) FROM verification WHERE verified_by=$hk$owner-inject-hkm030-batch2-2026-10-22$hk$ AND (object_id=$hk$boe26-af97940f45cf6622a5eb757d$hk$ OR object_id IN (SELECT id FROM legal_articles WHERE \"legalSystemId\"=$hk$boe26-af97940f45cf6622a5eb757d$hk$)))=15 AND (SELECT count(*) FROM law_card WHERE system_id=$hk$boe26-af97940f45cf6622a5eb757d$hk$)=1 AND (SELECT count(*) FROM boe.current_match WHERE guid=$hk$664d871f-7a44-4a52-b653-b2db00b55732$hk$ AND hakeem_system_id=$hk$boe26-af97940f45cf6622a5eb757d$hk$)=1\n  AND (SELECT count(*) FROM verification WHERE verified_by=$hk$owner-inject-hkm030-batch2-2026-10-22$hk$ AND verified_status='مستبدل')=4\n  AND (SELECT count(*) FROM search_surface WHERE created_by=$hk$owner-inject-hkm030-batch2-2026-10-22$hk$)=8\n  AND (SELECT count(*) FROM search_surface_member WHERE created_by=$hk$owner-inject-hkm030-batch2-2026-10-22$hk$)=8\n  AND (SELECT string_agg(encode(sha256(convert_to(a.content,'UTF8')),'hex'), ',' ORDER BY a.\"legalSystemId\", a.\"articleNumber\") FROM legal_articles a WHERE a.\"legalSystemId\" IN ($hk$boe26-5bac2a8e68bd1f71d5819a32$hk$, $hk$boe26-c59a46aed569267373a74421$hk$, $hk$boe26-e857025ebc3b270d499b886b$hk$, $hk$boe26-7208fdd00b0e59582be85367$hk$, $hk$boe26-85d11f9b554a191cd72c08cf$hk$, $hk$boe26-e8055f9af1cbb7928c204fcd$hk$, $hk$boe26-970129b497157f8b28961b8d$hk$, $hk$boe26-af97940f45cf6622a5eb757d$hk$))\n    = (SELECT string_agg(encode(sha256(convert_to(u.body,'UTF8')),'hex'), ',' ORDER BY u.law_id, coalesce(u.article_number,u.seq)) FROM boe.unit u WHERE u.law_id IN ($hk$boe26-5bac2a8e68bd1f71d5819a32$hk$, $hk$boe26-c59a46aed569267373a74421$hk$, $hk$boe26-e857025ebc3b270d499b886b$hk$, $hk$boe26-7208fdd00b0e59582be85367$hk$, $hk$boe26-85d11f9b554a191cd72c08cf$hk$, $hk$boe26-e8055f9af1cbb7928c204fcd$hk$, $hk$boe26-970129b497157f8b28961b8d$hk$, $hk$boe26-af97940f45cf6622a5eb757d$hk$))\nTHEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard"
+   }
+  ],
+  "g3_tail": [
+   {
+    "name": "stage",
+    "sql": "CREATE TEMP TABLE hkm30_tail ON COMMIT DROP AS\n\nWITH ev AS (SELECT DISTINCT ON (unit_id) unit_id FROM unit_version WHERE valid_from <= now() ORDER BY unit_id, valid_from DESC),\nst AS (SELECT DISTINCT ON (object_id) object_id, verified_status FROM verification WHERE object_type='work' ORDER BY object_id, verified_at DESC, id DESC),\nm AS (SELECT DISTINCT ON (m.hakeem_system_id) m.hakeem_system_id sid, l.id law_id, l.status_at_source boe_status FROM boe.current_match m JOIN boe.law l ON l.guid=m.guid WHERE m.hakeem_system_id IS NOT NULL ORDER BY m.hakeem_system_id, (l.status_at_source='ساري') DESC, l.issued_gregorian DESC NULLS LAST),\np AS (SELECT DISTINCT ON (x.id) x.id aid, x.\"lawName\" law, x.\"articleNumber\" an, x.content oraw, u.body braw, uqn_fix.hkm30_norm(x.content) o, uqn_fix.hkm30_norm(u.body) b, u.seq useq, u.law_id ulaw\n FROM m JOIN legal_articles x ON x.\"legalSystemId\"=m.sid AND x.\"articleBis\"<100 JOIN boe.unit u ON u.law_id=m.law_id AND u.article_number=x.\"articleNumber\" AND u.is_bis=(x.\"articleBis\">0)\n LEFT JOIN ev ON ev.unit_id=x.id LEFT JOIN st ON st.object_id=m.sid\n WHERE ev.unit_id IS NULL AND m.boe_status='ساري' AND coalesce(st.verified_status,'') NOT IN ('مستبدل','ملغى','ملغاة','سجل مخلوط — لا يُعرض') AND m.sid<>'cmpwi0c2p001znxffggwph0fg'\n ORDER BY x.id, similarity(uqn_fix.hkm30_norm(u.body), uqn_fix.hkm30_norm(x.content)) DESC),\nt AS (SELECT * FROM p WHERE o<>b AND position(b in o)=1 AND length(o)-length(b) <= 120 AND NOT EXISTS (SELECT 1 FROM boe.amendment_note n WHERE n.law_id=p.ulaw AND n.unit_seq=p.useq)),\ncut AS (SELECT t.aid, t.law, t.an, t.oraw, t.b, (SELECT min(g) FROM generate_series(greatest(1,length(t.braw)-80), length(t.oraw)) g WHERE uqn_fix.hkm30_norm(left(t.oraw,g)) = t.b) L FROM t)\n\nSELECT aid, law, an, oraw previous_text, rtrim(left(oraw, L), E' \\t\\n\\r.،؛:') new_text, substr(oraw, L+1) suffix FROM cut WHERE L IS NOT NULL"
+   },
+   {
+    "name": "guard_before",
+    "sql": "SELECT CASE WHEN (SELECT count(*) FROM hkm30_tail)=108\n  AND (SELECT count(*) FROM hkm30_tail WHERE uqn_fix.hkm30_norm(new_text) <> uqn_fix.hkm30_norm(previous_text) AND length(new_text) >= 20)=108\n  AND (SELECT count(*) FROM hkm30_tail h WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance pv WHERE pv.entity_id=h.aid AND pv.source_id=$hk$hkm030-tail-strip-2026-10-22$hk$))=108\nTHEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard"
+   },
+   {
+    "name": "provenance",
+    "sql": "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text, created_at)\nSELECT 'hkm30p-'||left(encode(sha256(convert_to($hk$hkm030-tail-strip-2026-10-22$hk$||'|'||aid,'UTF8')),'hex'),24), 'article', aid, law, an, 'hakeem', $hk$hkm030-tail-strip-2026-10-22$hk$, 'internal:hakeem/legal_articles/'||aid, encode(sha256(convert_to(previous_text,'UTF8')),'hex'), $hk$2026-10-22$hk$::date, 'tail_strip', previous_text, now() FROM hkm30_tail"
+   },
+   {
+    "name": "strip",
+    "sql": "UPDATE legal_articles a SET content = h.new_text, \"updatedAt\" = now() FROM hkm30_tail h WHERE a.id = h.aid"
+   },
+   {
+    "name": "search_norm",
+    "sql": "UPDATE legal_articles a SET search_norm = uqn_fix.hkm30_search_norm(a.\"lawName\", a.title, a.content, a.keywords, a.classification, a.chapter) FROM hkm30_tail h WHERE a.id = h.aid"
+   },
+   {
+    "name": "guard_after",
+    "sql": "SELECT CASE WHEN (SELECT count(*) FROM legal_articles a JOIN hkm30_tail h ON h.aid=a.id WHERE a.content=h.new_text AND a.search_norm=uqn_fix.hkm30_search_norm(a.\"lawName\", a.title, a.content, a.keywords, a.classification, a.chapter))=108\n  AND (SELECT count(*) FROM legal_text_provenance WHERE source_id=$hk$hkm030-tail-strip-2026-10-22$hk$)=108\nTHEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard"
+   },
+   {
+    "name": "report",
+    "sql": "SELECT md5(string_agg(aid||'|'||new_text, '|' ORDER BY aid)) fp, count(*) n, json_agg(json_build_object('law', law, 'an', an, 'suffix', suffix) ORDER BY law, an) suffixes FROM hkm30_tail"
+   }
+  ],
+  "g4_class": [
+   {
+    "name": "guard_before",
+    "sql": "SELECT CASE WHEN (SELECT count(*) FROM legal_systems WHERE coalesce(classification,'')='')=568\n  AND (SELECT count(*) FROM legal_systems WHERE id IN ($hk$8e562e3fd0a94961ae21d898b1960e96$hk$, $hk$052f0b62d62d40929c74c7c3cf179f6e$hk$, $hk$0e760f46dbc14edf8da6e25cd04ebab2$hk$, $hk$116ff3485423485ba8645be2d198ffa7$hk$, $hk$299c9f0440964567afdb7de897e5ad5d$hk$, $hk$2e3a88883e0d4bf0951c66de52a32397$hk$, $hk$2e764888bc6f4b1cb551df7d9073d502$hk$, $hk$33a9bc4cca2f4422a6d1ff177249123b$hk$, $hk$3400122aa9804c7caff8fd74b81f252a$hk$, $hk$3b344ebeb4804b95a98d174d666a2d08$hk$, $hk$3cdf371f877644f789c14ed3fe565668$hk$, $hk$4853f74d5bdc4e3d83808e7338b29497$hk$, $hk$4e3051a4b8f341dea99286ff52307036$hk$, $hk$559ea74f00bd402eb6bb998e3db19c23$hk$, $hk$676698ddebb6477fa2ad61b9d4d9c616$hk$, $hk$6d6ea5c866d7425891e00019d20e4353$hk$, $hk$7cd752c3efb649aa86b0631d6cbb0ba2$hk$, $hk$809bc186be33473cb812c1401eeac7e8$hk$, $hk$8649876aa6504e9f9223dade0f9d89ed$hk$, $hk$9024f08449c14a329a77d6ad316d94d3$hk$, $hk$97fda75088404bbdb425da3b3c24ebd7$hk$, $hk$9a18f12c9893461fb73f56e75c881bb0$hk$, $hk$9ffbe764acf44847b9d79b1601331339$hk$, $hk$a91090c1f0e94e26823b3b85e375e2d3$hk$, $hk$b2d4ca420f9f4c878d14ac8920479b1e$hk$, $hk$c1773d7c57264b3d97a683b95326ed35$hk$, $hk$d512250c0424419ead3a3e4ba13b03cb$hk$, $hk$d7b48849ffae4f3e805cb99507f24645$hk$, $hk$e60eacd41294421f82958e55bfb741de$hk$, $hk$f26cc0ab74e94e53ba8da23d655ea0bd$hk$, $hk$fa4e60ce389e44289b8969e3e68f6346$hk$, $hk$ec284867e28f44f188cb98f877307c18$hk$, $hk$3384055a74e243f79185439b013098a7$hk$, $hk$15aa05fb96944698b94ffd5c7dff05cc$hk$, $hk$bf50cc35c11f4ca2817c2fc33efc6dc7$hk$, $hk$3cd07bd82ea84548993475c77d6e921a$hk$, $hk$f42b245c3b9b4a52b2e99c26cf573554$hk$, $hk$4840b21cb9cd4596a4daab3d4ecfd4b6$hk$, $hk$bace309b198f404ab2be1759ce887c88$hk$, $hk$ae6d1d85f1674e86b1c2b1604fb6b165$hk$, $hk$7da028d87f93423fb006a417cbc0b18e$hk$, $hk$655f3a51730e48b2bd58d5f560bf98eb$hk$, $hk$9899cf18d7ff48f4a8b588baa75032b0$hk$, $hk$80a176f6679b42b897f90b3a76f93d41$hk$, $hk$45ff7e512c574168a13ec0e1ddb1e4b6$hk$, $hk$09ae9fb4f8b64bd580c52b2d2801a2e6$hk$, $hk$658f61edf16441e59cb8b7c359af4fa3$hk$, $hk$755ade16b1754bb594873554bc7a1f54$hk$, $hk$5361577e7b1e4d3b9ffd9e294dba894e$hk$, $hk$ed25-3c30143d0ec387695e66cce3$hk$, $hk$ed25-7010964d153608cdcaa68a48$hk$, $hk$f366fd1b93e04d85a1597bfc1fd0eaf9$hk$) AND coalesce(classification,'')='')=52\nTHEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard"
+   },
+   {
+    "name": "from_parent_name",
+    "sql": "UPDATE legal_systems s SET classification = x.cls, \"updatedAt\" = now()\nFROM (SELECT DISTINCT ON (s.id) s.id sid, p.classification cls FROM legal_systems s JOIN legal_systems p ON p.classification LIKE 'أنظمة %' AND p.name<>s.name AND length(p.name)>=12 AND position(p.name in s.name)>0\n      WHERE coalesce(s.classification,'')='' ORDER BY s.id, length(p.name) DESC) x\nWHERE x.sid=s.id AND coalesce(s.classification,'')=''\n  AND (SELECT count(DISTINCT p2.classification) FROM legal_systems p2 WHERE p2.classification LIKE 'أنظمة %' AND p2.name<>s.name AND length(p2.name)>=12 AND position(p2.name in s.name)>0)=1"
+   },
+   {
+    "name": "from_name_tokens",
+    "sql": "UPDATE legal_systems s SET classification = v.cls, \"updatedAt\" = now() FROM (VALUES\n($hk$8e562e3fd0a94961ae21d898b1960e96$hk$, $hk$أنظمة التجارة والاقتصاد والاستثمار$hk$), ($hk$052f0b62d62d40929c74c7c3cf179f6e$hk$, $hk$أنظمة المواصلات والاتصالات$hk$), ($hk$0e760f46dbc14edf8da6e25cd04ebab2$hk$, $hk$أنظمة الأمن الداخلي والأحوال المدنية والأنظمة الجنائية$hk$), ($hk$116ff3485423485ba8645be2d198ffa7$hk$, $hk$أنظمة العمل والرعاية الاجتماعية$hk$), ($hk$299c9f0440964567afdb7de897e5ad5d$hk$, $hk$أنظمة التجارة والاقتصاد والاستثمار$hk$), ($hk$2e3a88883e0d4bf0951c66de52a32397$hk$, $hk$أنظمة الخدمات البلدية والتخطيط والتطوير الحضري$hk$), ($hk$2e764888bc6f4b1cb551df7d9073d502$hk$, $hk$أنظمة الزراعة والمياه والثروات الحية$hk$), ($hk$33a9bc4cca2f4422a6d1ff177249123b$hk$, $hk$أنظمة المواصلات والاتصالات$hk$), ($hk$3400122aa9804c7caff8fd74b81f252a$hk$, $hk$أنظمة المواصلات والاتصالات$hk$), ($hk$3b344ebeb4804b95a98d174d666a2d08$hk$, $hk$أنظمة العمل والرعاية الاجتماعية$hk$), ($hk$3cdf371f877644f789c14ed3fe565668$hk$, $hk$أنظمة الأمن الداخلي والأحوال المدنية والأنظمة الجنائية$hk$), ($hk$4853f74d5bdc4e3d83808e7338b29497$hk$, $hk$أنظمة العمل والرعاية الاجتماعية$hk$), ($hk$4e3051a4b8f341dea99286ff52307036$hk$, $hk$أنظمة العمل والرعاية الاجتماعية$hk$), ($hk$559ea74f00bd402eb6bb998e3db19c23$hk$, $hk$أنظمة المواصلات والاتصالات$hk$), ($hk$676698ddebb6477fa2ad61b9d4d9c616$hk$, $hk$أنظمة المواصلات والاتصالات$hk$), ($hk$6d6ea5c866d7425891e00019d20e4353$hk$, $hk$أنظمة الشباب والرياضة$hk$), ($hk$7cd752c3efb649aa86b0631d6cbb0ba2$hk$, $hk$أنظمة الأمن الداخلي والأحوال المدنية والأنظمة الجنائية$hk$), ($hk$809bc186be33473cb812c1401eeac7e8$hk$, $hk$أنظمة المواصلات والاتصالات$hk$), ($hk$8649876aa6504e9f9223dade0f9d89ed$hk$, $hk$أنظمة المواصلات والاتصالات$hk$), ($hk$9024f08449c14a329a77d6ad316d94d3$hk$, $hk$أنظمة التجارة والاقتصاد والاستثمار$hk$), ($hk$97fda75088404bbdb425da3b3c24ebd7$hk$, $hk$أنظمة التجارة والاقتصاد والاستثمار$hk$), ($hk$9a18f12c9893461fb73f56e75c881bb0$hk$, $hk$أنظمة العمل والرعاية الاجتماعية$hk$), ($hk$9ffbe764acf44847b9d79b1601331339$hk$, $hk$أنظمة العمل والرعاية الاجتماعية$hk$), ($hk$a91090c1f0e94e26823b3b85e375e2d3$hk$, $hk$أنظمة السلطة القضائية وحقوق الإنسان$hk$), ($hk$b2d4ca420f9f4c878d14ac8920479b1e$hk$, $hk$أنظمة المواصلات والاتصالات$hk$), ($hk$c1773d7c57264b3d97a683b95326ed35$hk$, $hk$أنظمة التجارة والاقتصاد والاستثمار$hk$), ($hk$d512250c0424419ead3a3e4ba13b03cb$hk$, $hk$أنظمة العمل والرعاية الاجتماعية$hk$), ($hk$d7b48849ffae4f3e805cb99507f24645$hk$, $hk$أنظمة العمل والرعاية الاجتماعية$hk$), ($hk$e60eacd41294421f82958e55bfb741de$hk$, $hk$أنظمة العمل والرعاية الاجتماعية$hk$), ($hk$f26cc0ab74e94e53ba8da23d655ea0bd$hk$, $hk$أنظمة المواصلات والاتصالات$hk$), ($hk$fa4e60ce389e44289b8969e3e68f6346$hk$, $hk$أنظمة المواصلات والاتصالات$hk$), ($hk$ec284867e28f44f188cb98f877307c18$hk$, $hk$أنظمة المواصلات والاتصالات$hk$), ($hk$3384055a74e243f79185439b013098a7$hk$, $hk$أنظمة الخدمات البلدية والتخطيط والتطوير الحضري$hk$), ($hk$15aa05fb96944698b94ffd5c7dff05cc$hk$, $hk$أنظمة العمل والرعاية الاجتماعية$hk$), ($hk$bf50cc35c11f4ca2817c2fc33efc6dc7$hk$, $hk$أنظمة الأمن الداخلي والأحوال المدنية والأنظمة الجنائية$hk$), ($hk$3cd07bd82ea84548993475c77d6e921a$hk$, $hk$أنظمة الزراعة والمياه والثروات الحية$hk$), ($hk$f42b245c3b9b4a52b2e99c26cf573554$hk$, $hk$أنظمة التجارة والاقتصاد والاستثمار$hk$), ($hk$4840b21cb9cd4596a4daab3d4ecfd4b6$hk$, $hk$أنظمة الخدمات البلدية والتخطيط والتطوير الحضري$hk$), ($hk$bace309b198f404ab2be1759ce887c88$hk$, $hk$أنظمة الخدمات البلدية والتخطيط والتطوير الحضري$hk$), ($hk$ae6d1d85f1674e86b1c2b1604fb6b165$hk$, $hk$أنظمة الخدمات البلدية والتخطيط والتطوير الحضري$hk$), ($hk$7da028d87f93423fb006a417cbc0b18e$hk$, $hk$أنظمة الخدمات البلدية والتخطيط والتطوير الحضري$hk$), ($hk$655f3a51730e48b2bd58d5f560bf98eb$hk$, $hk$أنظمة الخدمات البلدية والتخطيط والتطوير الحضري$hk$), ($hk$9899cf18d7ff48f4a8b588baa75032b0$hk$, $hk$أنظمة الخدمات البلدية والتخطيط والتطوير الحضري$hk$), ($hk$80a176f6679b42b897f90b3a76f93d41$hk$, $hk$أنظمة الخدمات البلدية والتخطيط والتطوير الحضري$hk$), ($hk$45ff7e512c574168a13ec0e1ddb1e4b6$hk$, $hk$أنظمة الخدمات البلدية والتخطيط والتطوير الحضري$hk$), ($hk$09ae9fb4f8b64bd580c52b2d2801a2e6$hk$, $hk$أنظمة الخدمات البلدية والتخطيط والتطوير الحضري$hk$), ($hk$658f61edf16441e59cb8b7c359af4fa3$hk$, $hk$أنظمة الخدمات البلدية والتخطيط والتطوير الحضري$hk$), ($hk$755ade16b1754bb594873554bc7a1f54$hk$, $hk$أنظمة الخدمات البلدية والتخطيط والتطوير الحضري$hk$), ($hk$5361577e7b1e4d3b9ffd9e294dba894e$hk$, $hk$أنظمة الخدمات البلدية والتخطيط والتطوير الحضري$hk$), ($hk$ed25-3c30143d0ec387695e66cce3$hk$, $hk$أنظمة التجارة والاقتصاد والاستثمار$hk$), ($hk$ed25-7010964d153608cdcaa68a48$hk$, $hk$أنظمة التجارة والاقتصاد والاستثمار$hk$), ($hk$f366fd1b93e04d85a1597bfc1fd0eaf9$hk$, $hk$أنظمة الإعلام والثقافة والنشر$hk$)\n) AS v(id, cls) WHERE s.id=v.id AND coalesce(s.classification,'')='' AND v.cls IN (SELECT DISTINCT classification FROM legal_systems WHERE classification LIKE 'أنظمة %')"
+   },
+   {
+    "name": "guard_after",
+    "sql": "SELECT (SELECT count(*) FROM legal_systems WHERE coalesce(classification,'')='') still_unclassified, (SELECT count(*) FROM legal_systems WHERE id IN ($hk$8e562e3fd0a94961ae21d898b1960e96$hk$, $hk$052f0b62d62d40929c74c7c3cf179f6e$hk$, $hk$0e760f46dbc14edf8da6e25cd04ebab2$hk$, $hk$116ff3485423485ba8645be2d198ffa7$hk$, $hk$299c9f0440964567afdb7de897e5ad5d$hk$, $hk$2e3a88883e0d4bf0951c66de52a32397$hk$, $hk$2e764888bc6f4b1cb551df7d9073d502$hk$, $hk$33a9bc4cca2f4422a6d1ff177249123b$hk$, $hk$3400122aa9804c7caff8fd74b81f252a$hk$, $hk$3b344ebeb4804b95a98d174d666a2d08$hk$, $hk$3cdf371f877644f789c14ed3fe565668$hk$, $hk$4853f74d5bdc4e3d83808e7338b29497$hk$, $hk$4e3051a4b8f341dea99286ff52307036$hk$, $hk$559ea74f00bd402eb6bb998e3db19c23$hk$, $hk$676698ddebb6477fa2ad61b9d4d9c616$hk$, $hk$6d6ea5c866d7425891e00019d20e4353$hk$, $hk$7cd752c3efb649aa86b0631d6cbb0ba2$hk$, $hk$809bc186be33473cb812c1401eeac7e8$hk$, $hk$8649876aa6504e9f9223dade0f9d89ed$hk$, $hk$9024f08449c14a329a77d6ad316d94d3$hk$, $hk$97fda75088404bbdb425da3b3c24ebd7$hk$, $hk$9a18f12c9893461fb73f56e75c881bb0$hk$, $hk$9ffbe764acf44847b9d79b1601331339$hk$, $hk$a91090c1f0e94e26823b3b85e375e2d3$hk$, $hk$b2d4ca420f9f4c878d14ac8920479b1e$hk$, $hk$c1773d7c57264b3d97a683b95326ed35$hk$, $hk$d512250c0424419ead3a3e4ba13b03cb$hk$, $hk$d7b48849ffae4f3e805cb99507f24645$hk$, $hk$e60eacd41294421f82958e55bfb741de$hk$, $hk$f26cc0ab74e94e53ba8da23d655ea0bd$hk$, $hk$fa4e60ce389e44289b8969e3e68f6346$hk$, $hk$ec284867e28f44f188cb98f877307c18$hk$, $hk$3384055a74e243f79185439b013098a7$hk$, $hk$15aa05fb96944698b94ffd5c7dff05cc$hk$, $hk$bf50cc35c11f4ca2817c2fc33efc6dc7$hk$, $hk$3cd07bd82ea84548993475c77d6e921a$hk$, $hk$f42b245c3b9b4a52b2e99c26cf573554$hk$, $hk$4840b21cb9cd4596a4daab3d4ecfd4b6$hk$, $hk$bace309b198f404ab2be1759ce887c88$hk$, $hk$ae6d1d85f1674e86b1c2b1604fb6b165$hk$, $hk$7da028d87f93423fb006a417cbc0b18e$hk$, $hk$655f3a51730e48b2bd58d5f560bf98eb$hk$, $hk$9899cf18d7ff48f4a8b588baa75032b0$hk$, $hk$80a176f6679b42b897f90b3a76f93d41$hk$, $hk$45ff7e512c574168a13ec0e1ddb1e4b6$hk$, $hk$09ae9fb4f8b64bd580c52b2d2801a2e6$hk$, $hk$658f61edf16441e59cb8b7c359af4fa3$hk$, $hk$755ade16b1754bb594873554bc7a1f54$hk$, $hk$5361577e7b1e4d3b9ffd9e294dba894e$hk$, $hk$ed25-3c30143d0ec387695e66cce3$hk$, $hk$ed25-7010964d153608cdcaa68a48$hk$, $hk$f366fd1b93e04d85a1597bfc1fd0eaf9$hk$) AND coalesce(classification,'')<>'')=52 rule_ok,\n  md5((SELECT string_agg(id||'|'||coalesce(classification,''), '|' ORDER BY id) FROM legal_systems)) fp"
+   }
+  ]
+ },
+ "rule_classifications": [
+  {
+   "id": "8e562e3fd0a94961ae21d898b1960e96",
+   "name": "نظام (قانون) بتعديل بعض أحكام نظام براءات الاختراع لدول مجلس التعاون المقر من المجلس الأعلى عام 1999م",
+   "classification": "أنظمة التجارة والاقتصاد والاستثمار",
+   "margin": 2.31
+  },
+  {
+   "id": "052f0b62d62d40929c74c7c3cf179f6e",
+   "name": "دليل الخطوط الحديدية - التخطيط والاستجابة للطوارئ",
+   "classification": "أنظمة المواصلات والاتصالات",
+   "margin": 2.0
+  },
+  {
+   "id": "0e760f46dbc14edf8da6e25cd04ebab2",
+   "name": "جدول المقابل المالي الذي تحصل عليه جهة الفحص لإجراء الفحص الفني الدوري للمركبات",
+   "classification": "أنظمة الأمن الداخلي والأحوال المدنية والأنظمة الجنائية",
+   "margin": 4.0
+  },
+  {
+   "id": "116ff3485423485ba8645be2d198ffa7",
+   "name": "قواعد حوكمة الجمعيات والمؤسسات الأهلية",
+   "classification": "أنظمة العمل والرعاية الاجتماعية",
+   "margin": 3.0
+  },
+  {
+   "id": "299c9f0440964567afdb7de897e5ad5d",
+   "name": "لائحة اللجان الوطنية واللجان القطاعية في الغرف التجارية",
+   "classification": "أنظمة التجارة والاقتصاد والاستثمار",
+   "margin": 1.66
+  },
+  {
+   "id": "2e3a88883e0d4bf0951c66de52a32397",
+   "name": "ضوابط تملك الدولة للعقار",
+   "classification": "أنظمة الخدمات البلدية والتخطيط والتطوير الحضري",
+   "margin": 2.33
+  },
+  {
+   "id": "2e764888bc6f4b1cb551df7d9073d502",
+   "name": "دليل اللائحة التنفيذية لمعايير ومواصفات نشاط الزراعة العضوية",
+   "classification": "أنظمة الزراعة والمياه والثروات الحية",
+   "margin": 2.0
+  },
+  {
+   "id": "33a9bc4cca2f4422a6d1ff177249123b",
+   "name": "دليل الخطوط الحديدية - تعيين استشاري مختص مستقل",
+   "classification": "أنظمة المواصلات والاتصالات",
+   "margin": 2.0
+  },
+  {
+   "id": "3400122aa9804c7caff8fd74b81f252a",
+   "name": "دليل الخطوط الحديدية - الابلاغ عن الحوادث والتحقيق فيها",
+   "classification": "أنظمة المواصلات والاتصالات",
+   "margin": 2.0
+  },
+  {
+   "id": "3b344ebeb4804b95a98d174d666a2d08",
+   "name": "لائحة مجلس الجمعيات الأهلية",
+   "classification": "أنظمة العمل والرعاية الاجتماعية",
+   "margin": 2.0
+  },
+  {
+   "id": "3cdf371f877644f789c14ed3fe565668",
+   "name": "أحكام عامة على الجداول المرفقة بنظام مكافحة المخدرات والمؤثرات العقلية",
+   "classification": "أنظمة الأمن الداخلي والأحوال المدنية والأنظمة الجنائية",
+   "margin": 3.4
+  },
+  {
+   "id": "4853f74d5bdc4e3d83808e7338b29497",
+   "name": "قواعد عمل لجنة النظر في مخالفات أحكام نظام حقوق الأشخاص ذوي الإعاقة",
+   "classification": "أنظمة العمل والرعاية الاجتماعية",
+   "margin": 3.88
+  },
+  {
+   "id": "4e3051a4b8f341dea99286ff52307036",
+   "name": "قواعد المستفيد الحقيقي للجمعيات والمؤسسات الأهلية",
+   "classification": "أنظمة العمل والرعاية الاجتماعية",
+   "margin": 2.0
+  },
+  {
+   "id": "559ea74f00bd402eb6bb998e3db19c23",
+   "name": "دليل الخطوط الحديدية - خطة تسليم وتنفيذ أعمال الترخيص",
+   "classification": "أنظمة المواصلات والاتصالات",
+   "margin": 1.67
+  },
+  {
+   "id": "676698ddebb6477fa2ad61b9d4d9c616",
+   "name": "دليل الخطوط الحديدية - الرسوم والتكاليف",
+   "classification": "أنظمة المواصلات والاتصالات",
+   "margin": 2.0
+  },
+  {
+   "id": "6d6ea5c866d7425891e00019d20e4353",
+   "name": "اللائحة التنظيمية للتصرف بالخيل المملوكة لمركز الملك عبدالعزيز للخيل العربية الأصيلة",
+   "classification": "أنظمة الشباب والرياضة",
+   "margin": 1.54
+  },
+  {
+   "id": "7cd752c3efb649aa86b0631d6cbb0ba2",
+   "name": "أحكام عامة على الجداول المرافقة لنظام مكافحة المخدرات والمؤثرات العقلية",
+   "classification": "أنظمة الأمن الداخلي والأحوال المدنية والأنظمة الجنائية",
+   "margin": 3.4
+  },
+  {
+   "id": "809bc186be33473cb812c1401eeac7e8",
+   "name": "دليل الخطوط الحديدية - المعايير الفنية وقابلية التشغيل البيني",
+   "classification": "أنظمة المواصلات والاتصالات",
+   "margin": 2.0
+  },
+  {
+   "id": "8649876aa6504e9f9223dade0f9d89ed",
+   "name": "دليل الخطوط الحديدية - الوثيقة الرئيسية وتشمل التعريفات",
+   "classification": "أنظمة المواصلات والاتصالات",
+   "margin": 2.0
+  },
+  {
+   "id": "9024f08449c14a329a77d6ad316d94d3",
+   "name": "جدول المقابل المالي المشار إليه في المادة (الثانية والأربعين) من نظام براءات الاختراع والتصميمات التخطيطية للدارات المتكاملة والأصناف النباتية والنماذج الصناعية",
+   "classification": "أنظمة التجارة والاقتصاد والاستثمار",
+   "margin": 2.33
+  },
+  {
+   "id": "97fda75088404bbdb425da3b3c24ebd7",
+   "name": "قواعد عمل لجنة النظر في مخالفات المتنافسين والمتعاقد معهم لأحكام نظام المنافسات والمشتريات الحكومية والعقود المبرمة معهم",
+   "classification": "أنظمة التجارة والاقتصاد والاستثمار",
+   "margin": 1.55
+  },
+  {
+   "id": "9a18f12c9893461fb73f56e75c881bb0",
+   "name": "القواعد الموحدة لتمكين الأشخاص ذوي الإعاقة لمجلس التعاون لدول الخليج العربية",
+   "classification": "أنظمة العمل والرعاية الاجتماعية",
+   "margin": 1.95
+  },
+  {
+   "id": "9ffbe764acf44847b9d79b1601331339",
+   "name": "دليل تسمية الجمعيات والمؤسسات الأهلية والصناديق العائلية والأهلية",
+   "classification": "أنظمة العمل والرعاية الاجتماعية",
+   "margin": 3.0
+  },
+  {
+   "id": "a91090c1f0e94e26823b3b85e375e2d3",
+   "name": "ضوابط الاستعانة بمقدمي خدمات التنفيذ أمام ديوان المظالم",
+   "classification": "أنظمة السلطة القضائية وحقوق الإنسان",
+   "margin": 2.57
+  },
+  {
+   "id": "b2d4ca420f9f4c878d14ac8920479b1e",
+   "name": "دليل الخطوط الحديدية - ترخيص التشغيل(وتشمل نموذج طلب الترخيص ودليل تأمين المسئولية تجاه الغير / الطرف الثالث)",
+   "classification": "أنظمة المواصلات والاتصالات",
+   "margin": 2.0
+  },
+  {
+   "id": "c1773d7c57264b3d97a683b95326ed35",
+   "name": "قواعد الأسماء التجارية في المناطق الاقتصادية الخاصة",
+   "classification": "أنظمة التجارة والاقتصاد والاستثمار",
+   "margin": 2.17
+  },
+  {
+   "id": "d512250c0424419ead3a3e4ba13b03cb",
+   "name": "اللائحة المنظمة للعلاقة بين المركز الوطني لتنمية القطاع غير الربحي والجهات المشرفة فنياً على الجمعيات والمؤسسات الأهلية",
+   "classification": "أنظمة العمل والرعاية الاجتماعية",
+   "margin": 2.5
+  },
+  {
+   "id": "d7b48849ffae4f3e805cb99507f24645",
+   "name": "قواعد عدم خضوع الجمعيات والمؤسسات الأهلية والوحدات التدريبية لجباية الزكاة",
+   "classification": "أنظمة العمل والرعاية الاجتماعية",
+   "margin": 2.5
+  },
+  {
+   "id": "e60eacd41294421f82958e55bfb741de",
+   "name": "لائحة إنشاء الأوقاف أو تمويلها من خلال جمع التبرعات",
+   "classification": "أنظمة العمل والرعاية الاجتماعية",
+   "margin": 1.5
+  },
+  {
+   "id": "f26cc0ab74e94e53ba8da23d655ea0bd",
+   "name": "دليل الخطوط الحديدية - التصميم والبناء الآمن",
+   "classification": "أنظمة المواصلات والاتصالات",
+   "margin": 2.0
+  },
+  {
+   "id": "fa4e60ce389e44289b8969e3e68f6346",
+   "name": "دليل الخطوط الحديدية - شهادة السلامة",
+   "classification": "أنظمة المواصلات والاتصالات",
+   "margin": 2.0
+  },
+  {
+   "id": "ec284867e28f44f188cb98f877307c18",
+   "name": "اللائحة الفنية لأجهزة الاتصالات وتقنية المعلومات",
+   "classification": "أنظمة المواصلات والاتصالات",
+   "margin": 2.12
+  },
+  {
+   "id": "3384055a74e243f79185439b013098a7",
+   "name": "ضوابط استثناء الجهات الحكومية من تطبيق المادة السابعة من نظام استئجار الدولة للعقار واخلائه",
+   "classification": "أنظمة الخدمات البلدية والتخطيط والتطوير الحضري",
+   "margin": 1.73
+  },
+  {
+   "id": "15aa05fb96944698b94ffd5c7dff05cc",
+   "name": "الموافقة على قواعد عدم خضوع الجمعيات والمؤسسات الأهلية",
+   "classification": "أنظمة العمل والرعاية الاجتماعية",
+   "margin": 3.0
+  },
+  {
+   "id": "bf50cc35c11f4ca2817c2fc33efc6dc7",
+   "name": "الموافقة على اللائحة التنفيذية لنظام استخدام كاميرات المراقبة الأمنية وعلى وثيقة الشروط والمتطلبات الأمنية",
+   "classification": "أنظمة الأمن الداخلي والأحوال المدنية والأنظمة الجنائية",
+   "margin": 2.9
+  },
+  {
+   "id": "3cd07bd82ea84548993475c77d6e921a",
+   "name": "دليل السجلات الزراعية لمربي الثروة الحيوانية والصياد الحرفي",
+   "classification": "أنظمة الزراعة والمياه والثروات الحية",
+   "margin": 2.0
+  },
+  {
+   "id": "f42b245c3b9b4a52b2e99c26cf573554",
+   "name": "عقوبة مباشرة على كل من أخلّ بأداء واجبه في إيداع القوائم المالية وفقاً لأحكام نظام الشركات ولائحته التنفيذية",
+   "classification": "أنظمة التجارة والاقتصاد والاستثمار",
+   "margin": 1.87
+  },
+  {
+   "id": "4840b21cb9cd4596a4daab3d4ecfd4b6",
+   "name": "نزع ملكية العقارات المحددة بالمخطط المرفق لتنفيذ (مشروع تأهيل موقع نحت الجمل) الواقع في مدينة سكاكا بمنطقة الجوف",
+   "classification": "أنظمة الخدمات البلدية والتخطيط والتطوير الحضري",
+   "margin": 2.6
+  },
+  {
+   "id": "bace309b198f404ab2be1759ce887c88",
+   "name": "إعلان التسجيل العيني للعقار في منطقة (حي الفلاح)",
+   "classification": "أنظمة الخدمات البلدية والتخطيط والتطوير الحضري",
+   "margin": 3.0
+  },
+  {
+   "id": "ae6d1d85f1674e86b1c2b1604fb6b165",
+   "name": "إعلان التسجيل العيني للعقار في المنطقة العقارية الثانية",
+   "classification": "أنظمة الخدمات البلدية والتخطيط والتطوير الحضري",
+   "margin": 3.8
+  },
+  {
+   "id": "7da028d87f93423fb006a417cbc0b18e",
+   "name": "إعلان التسجيل العيني للعقار في المنطقة العقارية الثامنة في مدينة الرياض",
+   "classification": "أنظمة الخدمات البلدية والتخطيط والتطوير الحضري",
+   "margin": 3.5
+  },
+  {
+   "id": "655f3a51730e48b2bd58d5f560bf98eb",
+   "name": "إعلان التسجيل العيني للعقار في المنطقة العقارية الثالثة عشرة",
+   "classification": "أنظمة الخدمات البلدية والتخطيط والتطوير الحضري",
+   "margin": 3.8
+  },
+  {
+   "id": "9899cf18d7ff48f4a8b588baa75032b0",
+   "name": "إعلان التسجيل العيني للعقار في المنطقة العقارية الرابعة عشرة",
+   "classification": "أنظمة الخدمات البلدية والتخطيط والتطوير الحضري",
+   "margin": 3.8
+  },
+  {
+   "id": "80a176f6679b42b897f90b3a76f93d41",
+   "name": "إعلان التسجيل العيني للعقار في المنطقة العقارية الخامسة عشرة بالرياض",
+   "classification": "أنظمة الخدمات البلدية والتخطيط والتطوير الحضري",
+   "margin": 3.8
+  },
+  {
+   "id": "45ff7e512c574168a13ec0e1ddb1e4b6",
+   "name": "إعلان التسجيل العيني للعقار في المنطقة العقارية التاسعة والعشرين بمدينة الرياض",
+   "classification": "أنظمة الخدمات البلدية والتخطيط والتطوير الحضري",
+   "margin": 3.8
+  },
+  {
+   "id": "09ae9fb4f8b64bd580c52b2d2801a2e6",
+   "name": "إعلان التسجيل العيني للعقار في المنطقة العقارية الثامنة والعشرين بمدينة الرياض",
+   "classification": "أنظمة الخدمات البلدية والتخطيط والتطوير الحضري",
+   "margin": 3.8
+  },
+  {
+   "id": "658f61edf16441e59cb8b7c359af4fa3",
+   "name": "إعلان التسجيل العيني للعقار في المنطقة العقارية السابعة والعشرين بمدينة الرياض",
+   "classification": "أنظمة الخدمات البلدية والتخطيط والتطوير الحضري",
+   "margin": 3.8
+  },
+  {
+   "id": "755ade16b1754bb594873554bc7a1f54",
+   "name": "إعلان التسجيل العيني للعقار في المنطقة العقارية السادسة والعشرين بمدينة الرياض",
+   "classification": "أنظمة الخدمات البلدية والتخطيط والتطوير الحضري",
+   "margin": 3.8
+  },
+  {
+   "id": "5361577e7b1e4d3b9ffd9e294dba894e",
+   "name": "إعلان التسجيل العيني للعقار في المنطقة العقارية الخامسة والعشرين بمدينة الرياض",
+   "classification": "أنظمة الخدمات البلدية والتخطيط والتطوير الحضري",
+   "margin": 3.8
+  },
+  {
+   "id": "ed25-3c30143d0ec387695e66cce3",
+   "name": "نظام السجل التجاري الصادر بالمرسوم الملكي رقم (م/1) وتاريخ 1416/2/21هـ",
+   "classification": "أنظمة التجارة والاقتصاد والاستثمار",
+   "margin": 1.75
+  },
+  {
+   "id": "ed25-7010964d153608cdcaa68a48",
+   "name": "نظام الأسماء التجارية الصادر بالمرسوم الملكي رقم (م/15) وتاريخ 1420/8/12هـ",
+   "classification": "أنظمة التجارة والاقتصاد والاستثمار",
+   "margin": 1.65
+  },
+  {
+   "id": "f366fd1b93e04d85a1597bfc1fd0eaf9",
+   "name": "تنظيم مكتبة الملك فهد الوطنية",
+   "classification": "أنظمة الإعلام والثقافة والنشر",
+   "margin": 1.63
+  }
+ ]
+}

@@ -10,6 +10,8 @@
  */
 import { prisma } from "@/lib/prisma";
 import { getOpenSearchConfig, openSearchHeaders } from "@/lib/modules/legal-search/providers/search-provider";
+import { ARTICLE_ROWS } from "@/lib/modules/legal-core/article-key";
+import { searchableTexts } from "@/lib/modules/legal-core/effective-text";
 
 const SCOPE_ALL = process.argv.includes("--all");
 const SAMPLE = 200;
@@ -136,16 +138,24 @@ async function main() {
   await ensureIndex(cfg.url, headers, cfg.indexArticles, ARTICLE_INDEX_BODY);
   await ensureIndex(cfg.url, headers, cfg.indexCases, CASE_INDEX_BODY);
 
-  // المواد (مع التصنيف والحالة وslug التشريعي للترشيح والإسناد)
+  // المواد (مع التصنيف والحالة وslug التشريعي للترشيح والإسناد).
+  // HKM-030: الصفوف التي ليست مواد (درجة «مكرر» ≥ 100) تُستبعد، والمتن المفهرس هو النص الساري
+  // (unit_version) بالمصدر الواحد نفسه (effective-text) — الخريطة (mapping) كما هي.
   const articles = await prisma.legalArticle.findMany({
+    where: ARTICLE_ROWS,
     select: { id: true, title: true, content: true, lawName: true, articleNumber: true, classification: true, status: true, legalSystem: { select: { eliSlug: true } } },
+    orderBy: { id: "asc" },
     take,
   });
+  const searchable = new Map<string, string>();
+  for (let i = 0; i < articles.length; i += 1000) {
+    for (const [id, text] of await searchableTexts(articles.slice(i, i + 1000))) searchable.set(id, text);
+  }
   await bulkIndex(
     cfg.url,
     headers,
     cfg.indexArticles,
-    articles.map((a) => ({ type: "article", id: a.id, articleId: a.id, title: a.title, content: a.content, lawName: a.lawName, articleNumber: a.articleNumber, classification: a.classification, status: a.status, eliSlug: a.legalSystem?.eliSlug ?? null }))
+    articles.map((a) => ({ type: "article", id: a.id, articleId: a.id, title: a.title, content: searchable.get(a.id) ?? a.content, lawName: a.lawName, articleNumber: a.articleNumber, classification: a.classification, status: a.status, eliSlug: a.legalSystem?.eliSlug ?? null }))
   );
   console.log(`  ✓ مواد: ${articles.length}`);
 

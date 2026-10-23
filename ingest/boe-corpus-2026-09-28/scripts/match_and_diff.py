@@ -38,6 +38,41 @@ def norm_no(x) -> str:
     return re.sub(r"[\s()\[\]]", "", str(x or "")).replace("م/", "م")
 
 
+SAME = {"identical", "whitespace_only", "normalization_only"}
+HEAD = re.compile(r"^\(?\s*(?:المادة|مادة)\s+[^\s:]+(?:\s+(?:و|بعد)\S*)*(?:\s+\S+)?\s*[:：\-–]?\s*")
+
+
+def head_window(text: str, size: int = 40) -> str:
+    """مطلع النص مطبَّعًا بلا رأس «المادة …» — يُبحث عنه في مادة أخرى."""
+    return normalize_arabic_text(ws(HEAD.sub("", ws(text), count=1)))[:size]
+
+
+def reclassify(recs: list[dict], hk: dict) -> None:
+    """بعد مقارنة مواد النظام بالرقم:
+    - shifted: نص الهيئة موجود في حكيم تحت رقم مجاور (±1..3) — انزياح ترقيم لا اختلاف لفظ.
+    - version_mismatch: أغلب المواد مختلفة بلا انزياح — حكيم يحمل نسخة أخرى من النظام (إصدار أقدم أو أحدث).
+    """
+    for r in recs:
+        if r["verdict"] not in ("wording", "missing_in_hakeem") or r["num"] is None or r["bis"]:
+            continue
+        w = head_window(r["body"])
+        if len(w) < 20:
+            continue
+        for d in (1, -1, 2, -2, 3, -3):
+            other = hk.get(r["num"] + d)
+            if other and w in normalize_arabic_text(ws(other[1]))[:400 + len(w)]:
+                r["verdict"], r["detail"] = "shifted", f"نص الهيئة في حكيم برقم {r['num'] + d}"
+                break
+    compared = [r for r in recs if r["verdict"] in SAME | {"wording", "shifted"}]
+    same = sum(r["verdict"] in SAME for r in compared)
+    shifted = sum(r["verdict"] == "shifted" for r in compared)
+    if len(compared) >= 5 and same < 0.3 * len(compared) and shifted < 0.5 * len(compared):
+        for r in compared:
+            if r["verdict"] == "wording":
+                r["verdict"] = "version_mismatch"
+                r["detail"] = f"{same}/{len(compared)} مادة فقط تطابق — نسخة أخرى من النظام؛ {r['detail'] or ''}".strip("؛ ")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--target", choices=["staging", "branch", "production"], required=True)
@@ -133,6 +168,7 @@ def main() -> None:
             for op in law_ops:
                 if not any(norm_no(op[4]) == b[0] and (op[2] is None or op[2] == next((u[2] for u in units if u[0] == b[1]), op[2])) for b in boe_instr):
                     rows_uqn_only.append([chosen[1], op[2], op[3], op[4], op[5], op[6], op[0], ""])
+            recs = []
             for seq, heading, num, bis, body, cls in units:
                 has_notes = seq in notes
                 for nt in notes.get(seq, []):
@@ -148,6 +184,7 @@ def main() -> None:
                 else:
                     seen_nums.add(num)
                     aid, content = hk[num]
+                    detail = None
                     if content.strip() == body.strip():
                         verdict, detail = "identical", None
                     elif ws(content) == ws(body):
@@ -163,13 +200,19 @@ def main() -> None:
                             x, y = ws(content), ws(body)
                             i = next((k for k in range(min(len(x), len(y))) if x[k] != y[k]), min(len(x), len(y)))
                             detail = f"أول فرق عند الحرف {i}: حكيم «{x[max(0, i - 15):i + 25]}» / الهيئة «{y[max(0, i - 15):i + 25]}»"
-                        rows_wording.append([chosen[1], heading, num, cls, "نعم" if has_notes else "", detail, content[:3000], body[:3000], ""])
+                recs.append(dict(seq=seq, heading=heading, num=num, bis=bis, body=body, cls=cls, has_notes=has_notes, aid=aid, verdict=verdict, detail=detail))
+            reclassify(recs, hk)
+            for r in recs:
+                verdict, num = r["verdict"], r["num"]
+                if verdict in ("wording", "shifted", "version_mismatch"):
+                    content = hk[num][1] if num in hk else ""
+                    rows_wording.append([chosen[1], r["heading"], num, r["cls"], "نعم" if r["has_notes"] else "", f"{verdict}: {r['detail'] or ''}", content[:3000], r["body"][:3000], ""])
                 rep["diff"][verdict] = rep["diff"].get(verdict, 0) + 1
-                did = sid("boe26-", "diff", law_id, str(seq), chosen[0])
+                did = sid("boe26-", "diff", law_id, str(r["seq"]), chosen[0])
                 cur.execute(
                     """INSERT INTO boe.diff (id, law_id, hakeem_system_id, article_number, is_bis, hakeem_article_id, verdict, boe_has_notes, detail)
                        SELECT %s,%s,%s,%s,%s,%s,%s,%s,%s WHERE NOT EXISTS (SELECT 1 FROM boe.diff WHERE id=%s)""",
-                    (did, law_id, chosen[0], num if num is not None else -seq, bis, aid, verdict, has_notes, detail, did),
+                    (did, law_id, chosen[0], num if num is not None else -r["seq"], r["bis"], r["aid"], verdict, r["has_notes"], r["detail"], did),
                 )
             for num, (aid, _) in hk.items():
                 if num not in seen_nums and num > 0 and not any(u[2] == num for u in units):

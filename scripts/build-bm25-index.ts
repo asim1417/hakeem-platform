@@ -17,9 +17,15 @@ type RawArticle = { article_number: number | string; article_bis?: number; law_n
 const K1 = 1.5;
 const B = 0.75;
 
-/** يقرأ كل المواد من قاعدة Runtime (Neon) عبر Prisma، بصفحات، ليُفهرَس كامل المحتوى. */
+/**
+ * يقرأ كل المواد من قاعدة Runtime (Neon) عبر Prisma، بصفحات، ليُفهرَس كامل المحتوى.
+ * HKM-030: المتن المفهرس هو النص الساري (آخر نسخة سارية في unit_version) لا legal_articles.content،
+ * بالمصدر الواحد نفسه المستعمل في العرض (effective-text)، فيطابق البحثُ النصَّ المعروض.
+ */
 async function loadArticlesFromDb(): Promise<RawArticle[]> {
   const { prisma } = await import("@/lib/prisma");
+  const { effectiveArticleTexts, searchableText } = await import("@/lib/modules/legal-core/effective-text");
+  let amended = 0;
   const out: RawArticle[] = [];
   const BATCH = 1000;
   let cursor: string | undefined;
@@ -35,12 +41,16 @@ async function loadArticlesFromDb(): Promise<RawArticle[]> {
     });
     if (!rows.length) break;
     cursor = rows[rows.length - 1].id;
+    const effective = await effectiveArticleTexts(rows);
     for (const r of rows) {
-      out.push({ article_number: r.articleNumber, article_bis: r.articleBis, law_name: r.lawName, title: r.title, content: r.content, keywords: r.keywords });
+      const content = searchableText(r.content, effective.get(r.id));
+      if (content !== (r.content ?? "")) amended += 1;
+      out.push({ article_number: r.articleNumber, article_bis: r.articleBis, law_name: r.lawName, title: r.title, content, keywords: r.keywords });
     }
     if (rows.length < BATCH) break;
   }
   await prisma.$disconnect().catch(() => undefined);
+  console.log(`📝 مواد بنصها الساري من unit_version: ${amended.toLocaleString("ar-SA")}`);
   return out;
 }
 

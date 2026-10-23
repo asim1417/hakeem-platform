@@ -6,6 +6,7 @@ import { TRADITIONAL_SEARCH_ENABLED, AI_SEARCH_HOME } from "@/lib/modules/config
 import { type ArabicSearchType } from "@/lib/modules/legal-core/arabic-morphology";
 import { searchLegalCore } from "@/lib/modules/legal-core/legal-retrieval";
 import { articleStatusBadge } from "@/lib/modules/legal-core/article-status";
+import { latestVerifications } from "@/lib/modules/legal-core/verification-read";
 import { sanitizeDisplayText } from "@/lib/modules/legal-core/display-text";
 import { listAllSystems } from "@/lib/modules/library/library-service";
 import { LegalCopyButton } from "@/components/LegalCopyButton";
@@ -94,6 +95,10 @@ export default async function LegalCoreSearchPage({
       message: "تعذر تنفيذ البحث القانوني حاليًا."
     }))
   ]);
+
+  // HKM-030: شارة الحالة من آخر سجل تحقق لمواد الصفحة المعروضة (استعلام دفعة واحد)، مع السقوط إلى العمود القديم.
+  const verifiedStatus = await latestVerifications("unit", response.results.map((a) => a.articleId));
+  const statusOf = (articleId: string, legacy: string | null | undefined) => verifiedStatus.get(articleId)?.verifiedStatus ?? legacy;
 
   // ── ترقيم النتائج: يُتيح تصفّح **كل** النتائج (الإجماليّ الحقيقي + الترقيم العميق من النواة). ──
   const limit = 30;
@@ -233,7 +238,7 @@ export default async function LegalCoreSearchPage({
             {response.results.length ? (
               <div className="space-y-4">
                 {response.results.map((article) => {
-                  const st = articleStatusBadge(article.status);
+                  const st = articleStatusBadge(statusOf(article.articleId, article.status));
                   return (
                   <article key={article.articleId} className="rounded-[var(--r-xl)] border border-[var(--ink-08)] bg-[var(--paper)] p-5 shadow-[var(--sh-xs)]">
                     <div className="flex flex-wrap items-start justify-between gap-3">

@@ -12,6 +12,7 @@ import { loadSearchSurface, unitStatusAsOf, workStatusAsOf } from "@/lib/modules
 import { latestVerification, unitVersions } from "@/lib/modules/legal-core/verification-read";
 import { effectiveArticleTexts, resolveEffectiveText } from "@/lib/modules/legal-core/effective-text";
 import { ARTICLE_ROWS, NON_ARTICLE_BIS, articleKey, articleLabel } from "@/lib/modules/legal-core/article-key";
+import { parseAsOfParam } from "@/lib/modules/legal-core/law-page-view";
 
 export const revalidate = 3600;
 
@@ -42,19 +43,22 @@ async function loadArticle(slug: string, articleParam: string) {
   return { system, article, n, bis, key: articleKey(n, bis) };
 }
 
+type SearchParams = Record<string, string | string[] | undefined>;
+
 export async function generateMetadata({
   params,
   searchParams,
 }: {
   params: { slug: string; article: string };
-  searchParams?: { asOf?: string };
+  searchParams?: SearchParams;
 }): Promise<Metadata> {
   const data = await loadArticle(decodeURIComponent(params.slug), params.article);
   if (!data) return { title: "مادة غير موجودة — حكيم" };
   const slug = resolveSystemSlug(data.system.eliSlug, data.system.name);
   // الوصف من النص الساري (المصدر الواحد)، لا من legal_articles.content مباشرة.
-  const asOfRaw = searchParams?.asOf?.trim() ?? "";
-  const asOf = /^\d{4}-\d{2}-\d{2}$/.test(asOfRaw) ? new Date(`${asOfRaw}T12:00:00Z`) : undefined;
+  // «كما في تاريخ»: يُقبل asOf وasof معًا (HKM-030، كصفحة /law).
+  const asOfRaw = parseAsOfParam(searchParams) ?? "";
+  const asOf = asOfRaw ? new Date(`${asOfRaw}T12:00:00Z`) : undefined;
   const effective = (await effectiveArticleTexts([{ id: data.article.id, content: sanitizeDisplayText(data.article.content) }], asOf)).get(data.article.id);
   const text = sanitizeDisplayText(effective?.text ?? data.article.content).slice(0, 155);
   return {
@@ -69,7 +73,7 @@ export default async function LegalArticlePage({
   searchParams,
 }: {
   params: { slug: string; article: string };
-  searchParams?: { asOf?: string };
+  searchParams?: SearchParams;
 }) {
   const data = await loadArticle(decodeURIComponent(params.slug), params.article);
   if (!data) notFound();
@@ -77,8 +81,8 @@ export default async function LegalArticlePage({
   const label = articleLabel(n, bis);
   const slug = resolveSystemSlug(system.eliSlug, system.name);
   const content = sanitizeDisplayText(article.content);
-  const asOfRaw = searchParams?.asOf?.trim() ?? "";
-  const asOf = /^\d{4}-\d{2}-\d{2}$/.test(asOfRaw) ? new Date(`${asOfRaw}T12:00:00Z`) : undefined;
+  const asOfRaw = parseAsOfParam(searchParams) ?? "";
+  const asOf = asOfRaw ? new Date(`${asOfRaw}T12:00:00Z`) : undefined;
   const [recorded, versions, workVerification, surfaceState] = await Promise.all([
     latestVerification("unit", article.id),
     unitVersions(article.id),

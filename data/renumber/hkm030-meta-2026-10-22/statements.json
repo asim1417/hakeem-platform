@@ -1,0 +1,43 @@
+{
+  "batch": "hkm030-meta-2026-10-22",
+  "scope": "بيانات وصفية بلا زحف (بإذن المالك «نفذ كل ما لا يحتاج زحف»): نوع الأداة لكل نظام من اسمه، تصنيف من بطاقة هيئة الخبراء ومن النظام الأم، ربط اللوائح/القواعد بنظامها الأم بالاسم (إدراج فقط في legal_relations)، تاريخ الحكم من ruling_meta إلى judicial_cases، وتصحيح articleCount. لا مساس بنصوص المواد ولا بالمشغّلات.",
+  "procedure": "المعاملة الأولى (نوع الأداة، التصنيف من الهيئة، روابط IMPLEMENTS، التصنيف من الأم، articleCount) نُفّذت كمعاملة واحدة ببصمة f03368a5fab27a1d4b14a67942a7557e = البروفة. تاريخ الحكم نُفّذ على حدة في 16 دلوًا مستقلًا (أول حرف من md5(case_id)) + دفعتين أوليين (6000 و3000 بترتيب case_id) لأن تحديث 51 ألف صف يرفع الفهارس الأربعة GIN فيتجاوز مهلة النقل 60 ثانية ويُلغى؛ كل دلو مستقل وقابل للإعادة (يختار الصفوف التي تاريخها فارغ فقط).",
+  "statements": [
+    {
+      "name": "guard_before",
+      "sql": "SELECT CASE WHEN (SELECT count(*) FROM legal_systems WHERE coalesce(instrument_kind,'')='')=1155 AND (SELECT count(*) FROM legal_systems WHERE coalesce(classification,'')='')=642 AND (SELECT count(*) FROM legal_relations WHERE relation='IMPLEMENTS' AND source_type='system')=0 AND (SELECT count(*) FROM judicial_cases WHERE \"decisionDate\" IS NOT NULL)=0 THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard"
+    },
+    {
+      "name": "instrument_kind",
+      "sql": "UPDATE legal_systems SET instrument_kind = CASE WHEN name ~ '^(اللائحة|لائحة|اللوائح|لوائح)' THEN 'لائحة' WHEN name ~ '^(تنظيم|التنظيم)' THEN 'تنظيم' WHEN name ~ '^(نظام|النظام|قانون)' THEN 'نظام' WHEN name ~ '^(الترتيبات|ترتيبات)' THEN 'ترتيبات تنظيمية' WHEN name ~ '^(قواعد|القواعد|ضوابط|الضوابط|آلية|الآلية|إجراءات|الإجراءات|شروط|الشروط|معايير|المعايير|اشتراطات|الاشتراطات|متطلبات|المتطلبات)' THEN 'قواعد' WHEN name ~ '^(قرار|أمر|مرسوم|القرار|الأمر|المرسوم|تعميم|التعميم)' THEN 'قرار' WHEN name ~ '^(اتفاقية|الاتفاقية|ميثاق|الميثاق|بروتوكول|البروتوكول|معاهدة|المعاهدة|اتفاق)' THEN 'اتفاقية' WHEN name ~ '^(سياسة|السياسة|استراتيجية|الاستراتيجية)' THEN 'سياسة' WHEN name ~ '^(دليل|الدليل)' THEN 'دليل' WHEN name ~ '^(جدول|الجدول|جداول)' THEN 'جدول' WHEN name ~ '^(مدونة|المدونة|كود)' THEN 'مدونة' ELSE 'أخرى' END, \"updatedAt\" = now() WHERE coalesce(instrument_kind,'')=''"
+    },
+    {
+      "name": "classification_from_boe",
+      "sql": "UPDATE legal_systems s SET classification = x.cls, \"updatedAt\" = now() FROM (SELECT DISTINCT ON (m.hakeem_system_id) m.hakeem_system_id sid, 'أنظمة '||l.category_path[3] cls FROM boe.match m JOIN boe.law l ON l.guid=m.guid WHERE m.hakeem_system_id IS NOT NULL AND array_length(l.category_path,1)=3 ORDER BY m.hakeem_system_id, m.decided_at DESC NULLS LAST) x WHERE x.sid=s.id AND coalesce(s.classification,'')='' AND x.cls IN (SELECT DISTINCT classification FROM legal_systems WHERE classification IS NOT NULL)"
+    },
+    {
+      "name": "implements_links",
+      "sql": "INSERT INTO legal_relations (id, source_type, source_id, target_type, target_id, relation, strength, description, status) SELECT 'hkm30r-'||substr(md5(r.id||'→'||s.id),1,24), 'system', r.id, 'system', s.id, 'IMPLEMENTS', 1.0, 'HKM-030 2026-10-22: اشتقاق من اسم الأداة «…لنظام/لتنظيم X» إلى النظام الأم («'||s.name||'»)؛ '||CASE WHEN s.name IN ('نظام '||r.tail,'تنظيم '||r.tail) THEN 'مطابقة حرفية' ELSE 'مطابقة بعد التطبيع' END, CASE WHEN s.name IN ('نظام '||r.tail,'تنظيم '||r.tail) THEN 'VERIFIED' ELSE 'PROPOSED' END::\"RelationStatus\" FROM (SELECT id, name, (regexp_match(name, '(?:ل|لـ ?)(?:نظام|تنظيم|قانون)\\s+(.+)$'))[1] tail FROM legal_systems WHERE name ~ '^(اللائحة|لائحة|اللوائح|قواعد|القواعد|ضوابط|الضوابط|جدول|الجدول|الترتيبات|آلية|إجراءات|شروط|معايير)') r JOIN legal_systems s ON s.id<>r.id AND (s.name IN ('نظام '||r.tail,'تنظيم '||r.tail) OR uqn_fix.hkm30_norm(s.name) IN (uqn_fix.hkm30_norm('نظام '||r.tail), uqn_fix.hkm30_norm('تنظيم '||r.tail))) WHERE r.tail IS NOT NULL AND NOT EXISTS (SELECT 1 FROM legal_relations z WHERE z.source_id=r.id AND z.target_id=s.id AND z.relation='IMPLEMENTS')"
+    },
+    {
+      "name": "classification_from_parent",
+      "sql": "UPDATE legal_systems s SET classification = p.classification, \"updatedAt\" = now() FROM legal_relations z JOIN legal_systems p ON p.id=z.target_id WHERE z.relation='IMPLEMENTS' AND z.source_type='system' AND z.source_id=s.id AND coalesce(s.classification,'')='' AND coalesce(p.classification,'')<>''"
+    },
+    {
+      "name": "ruling_decision_date",
+      "sql": "UPDATE judicial_cases c SET \"decisionDate\" = r.decision_date_g::timestamp, \"updatedAt\" = now() FROM ruling_meta r WHERE r.case_id=c.id AND c.\"decisionDate\" IS NULL AND r.decision_date_g IS NOT NULL AND r.date_g_method='tabular'",
+      "sql_as_applied": "WITH pick AS (SELECT r.case_id, r.decision_date_g FROM ruling_meta r JOIN judicial_cases c ON c.id=r.case_id WHERE c.\"decisionDate\" IS NULL AND r.decision_date_g IS NOT NULL AND r.date_g_method='tabular' AND substr(md5(r.case_id),1,1)=$BUCKET), upd AS (UPDATE judicial_cases c SET \"decisionDate\" = p.decision_date_g::timestamp, \"updatedAt\" = now() FROM pick p WHERE p.case_id=c.id RETURNING 1) SELECT count(*) FROM upd",
+      "note": "النسخة الأصلية (صف واحد لكل الأحكام) أُبقيت للمرجع؛ المطبّق هو sql_as_applied لكل دلو 0–f"
+    },
+    {
+      "name": "article_count",
+      "sql": "UPDATE legal_systems s SET \"articleCount\" = x.n, \"updatedAt\" = now() FROM (SELECT \"legalSystemId\" sid, count(*) n FROM legal_articles WHERE \"articleBis\"<100 GROUP BY 1) x WHERE x.sid=s.id AND s.\"articleCount\" IS DISTINCT FROM x.n"
+    },
+    {
+      "name": "guard_after_and_fingerprint",
+      "sql": "SELECT (SELECT count(*) FROM legal_systems WHERE coalesce(instrument_kind,'')='') kind_null, (SELECT count(*) FROM legal_systems WHERE coalesce(classification,'')='') class_null, (SELECT count(*) FROM legal_relations WHERE relation='IMPLEMENTS' AND source_type='system') implements, (SELECT count(*) FROM judicial_cases WHERE \"decisionDate\" IS NOT NULL) dated, (SELECT count(*) FROM legal_systems s WHERE s.\"articleCount\" <> (SELECT count(*) FROM legal_articles x WHERE x.\"legalSystemId\"=s.id AND x.\"articleBis\"<100)) count_mismatch, md5((SELECT string_agg(id||'|'||coalesce(instrument_kind,'')||'|'||coalesce(classification,'')||'|'||\"articleCount\", ';' ORDER BY id) FROM legal_systems)||(SELECT string_agg(id||'|'||source_id||'|'||target_id||'|'||status, ';' ORDER BY id) FROM legal_relations WHERE relation='IMPLEMENTS')||(SELECT md5(string_agg(id||'|'||\"decisionDate\", ';' ORDER BY id)) FROM judicial_cases WHERE \"decisionDate\" IS NOT NULL)) fp"
+    }
+  ],
+  "note_guard": "الحارس يقسم على عدٍّ صفري من استعلام فرعي لا على ثابت 1/0 لأن المخطط يطوي الثابت ويرمي الخطأ قبل تقييم CASE",
+  "applied": "2026-10-22 على الإنتاج br-rapid-salad-aq782ea2؛ نقطة الاسترجاع br-calm-thunder-aqn4raj0؛ بروفة br-mute-silence-aq71idn7 (بعد reset_from_parent)"
+}

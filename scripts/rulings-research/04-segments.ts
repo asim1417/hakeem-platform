@@ -84,7 +84,10 @@ async function apply() {
         const rows = segmentRows(r.id, r.text ?? "");
         count(t, rows);
         const key = rows[0] ? `${rows[0].content_hash}|${rows[0].segment_version}` : null;
-        if (key && have.get(r.id) === key) {
+        // صفوف أكملها النموذج (segment_version = «<قواعد>+<نموذج>») لا تُستبدل بالقواعد وحدها ما دام النص لم يتغير.
+        const stored = have.get(r.id);
+        const modelKept = Boolean(key && stored && stored.startsWith(`${rows[0].content_hash}|${rows[0].segment_version}+`));
+        if (key && (stored === key || modelKept)) {
           t.skipped++;
           continue;
         }

@@ -42,7 +42,7 @@ if (labor5) {
   ok(today.text === labor5.body, "نظام العمل م5 يُرجع نص النسخة المعدلة اليوم");
   ok(today.source === "unit_version" && !today.repealed, "المصدر unit_version وليست ملغاة");
   ok(/م\/46/.test(today.evidenceInstrument ?? "") && /1436/.test(today.evidenceInstrument ?? ""), "السند م/46 لسنة 1436هـ");
-  ok(today.basis.startsWith("معدّلة بموجب") && today.basis.includes(labor5.valid_from), "سطر الاستناد يذكر الأداة وتاريخ السريان");
+  ok(today.basis.startsWith("معدّلة بموجب") && !today.basis.includes(labor5.valid_from.slice(0, 10)), "سطر الاستناد يذكر الأداة بلا تاريخ");
   ok(today.status === "ساري", "الحالة ساري لا «قيد التحقق»");
   const before = resolveEffectiveText({ articleId: labor5.unit_id, baseText: original, versions: [toVersion(labor5)], verification: null, asOf: new Date("2010-01-01T00:00:00Z") });
   ok(before.text === original && before.source === "original", "قبل تاريخ السريان يبقى النص الأصلي");
@@ -50,7 +50,7 @@ if (labor5) {
   const view = presentArticle({ baseText: original, versions: [toVersion(labor5)], verification: null });
   ok(view.text === labor5.body, "presentArticle يعرض النص نفسه");
   ok(view.unverifiedNotice === null, "لا «الحالة قيد التحقق» على مادة لها نسخة موثقة");
-  ok(Boolean(view.amendmentLine?.startsWith("معدّلة بموجب")) && Boolean(view.amendmentLine?.includes("من تاريخ")), "سطر «معدّلة بموجب … من تاريخ …»");
+  ok(Boolean(view.amendmentLine?.startsWith("معدّلة بموجب")) && !view.amendmentLine?.includes("من تاريخ"), "سطر «معدّلة بموجب …» بلا تاريخ");
 }
 
 // ── مادة ملغاة: لا نص ساري، تُرجع الإلغاء وسنده ──
@@ -79,6 +79,14 @@ const repWithVersion = resolveEffectiveText({
   verification: repVer,
 });
 ok(repWithVersion.repealed && repWithVersion.text === repealLine(repVer), "الإلغاء يغلب أي نسخة سابقة");
+
+// HKM-030: إلغاء مؤرخ في نص أداته («— من YYYY-MM-DD») لا يُطبَّق على asOf قبل يومه (كصفحة النظام /law).
+const datedVer: VerificationRecord = { ...repVer, evidenceInstrument: "م/99 وتاريخ 1445/1/1هـ — من 2024-06-13" };
+const beforeDated = resolveEffectiveText({ articleId: rep.object_id, baseText: stale, versions: [], verification: datedVer, asOf: new Date("2024-01-01T12:00:00Z") });
+ok(!beforeDated.repealed && beforeDated.text === stale && beforeDated.source === "original", "إلغاء مؤرخ: قبل يومه يُعاد النص (لا سطر الإلغاء)");
+const afterDated = resolveEffectiveText({ articleId: rep.object_id, baseText: stale, versions: [], verification: datedVer, asOf: new Date("2024-06-13T12:00:00Z") });
+ok(afterDated.repealed && afterDated.text === repealLine(datedVer), "إلغاء مؤرخ: من يومه فصاعدًا سطر الإلغاء");
+ok(resolveEffectiveText({ articleId: rep.object_id, baseText: stale, versions: [], verification: repVer, asOf: new Date("1990-01-01T12:00:00Z") }).repealed, "إلغاء بلا يوم نفاذ: يُطبَّق على أي تاريخ كما كان");
 
 // صفحة المادة: سطر الإلغاء وسنده، والنص المحفوظ في «النسخ السابقة»
 const repView = presentArticle({ baseText: stale, versions: [], verification: repVer });

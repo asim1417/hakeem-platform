@@ -27,7 +27,7 @@ const PREAMBLE = /^(?:…)?\s*(?:بسم\s*الله|الحمد\s*لله|الحم�
 async function run(q: string, semantic: boolean) {
   process.env.RULINGS_SEMANTIC = semantic ? "on" : "off";
   const t = Date.now();
-  const r = await searchRulingsDirect({ query: q, limit: 10 }).catch(() => ({ hits: [] as Awaited<ReturnType<typeof searchRulingsDirect>>["hits"] }));
+  const r = await searchRulingsDirect({ query: q, limit: 10, semantic }).catch(() => ({ hits: [] as Awaited<ReturnType<typeof searchRulingsDirect>>["hits"] }));
   const by: Record<string, number> = {};
   const inPart: Record<string, number> = {};
   for (const h of r.hits) {

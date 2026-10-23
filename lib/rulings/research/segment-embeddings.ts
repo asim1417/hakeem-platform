@@ -58,9 +58,14 @@ export function keepEnds<T>(xs: T[], max: number): T[] {
 
 const clean = (s: string) => s.replace(/\s+/g, " ").trim();
 
-export function buildSegmentChunks(raw: string, redact: (s: string) => string = (s) => s): SegmentChunk[] {
+export function buildSegmentChunks(
+  raw: string,
+  redact: (s: string) => string = (s) => s,
+  segments?: Array<{ type: string; start: number; end: number }>,
+): SegmentChunk[] {
   const text = raw ?? "";
-  const seg = segmentRuling(text);
+  // أجزاء محسوبة مسبقًا (مثل حدود النموذج المخزّنة)، وإلا تقطيع القواعد.
+  const seg = { segments: segments ?? segmentRuling(text).segments };
   const out: SegmentChunk[] = [];
   const reasons = seg.segments.find((s) => s.type === "reasons");
   if (reasons && reasons.end - reasons.start >= MIN_PART_CHARS) {

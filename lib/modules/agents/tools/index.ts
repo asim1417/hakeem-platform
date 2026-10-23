@@ -18,6 +18,7 @@ import { applyEffectiveText, effectiveArticleText } from "@/lib/modules/legal-co
 import { validateLegalCitation } from "@/lib/modules/legal-core/legal-citation-guard";
 import { buildArticleCitation } from "@/lib/modules/legal-core/intelligence";
 import { articleStatusBadge } from "@/lib/modules/legal-core/article-status";
+import { latestVerification } from "@/lib/modules/legal-core/verification-read";
 import { parseArticleEli } from "@/lib/modules/legal-core/eli";
 import { hybridSearch, type MergedResult } from "@/lib/modules/legal-search/hybrid-search";
 import { rulingHitToMerged, searchRulingsDirect } from "@/lib/modules/legal-core/rulings-search";
@@ -54,9 +55,10 @@ async function hybridByType(query: string, type: "ruling" | "principle", limit: 
   }
 }
 // الأحكام من مسارها المستقل (لا الهجين): لا تزاحمها المواد، والمقتطف من الأسباب أو المنطوق.
+// HKM-012: بلا المسار الدلالي (الافتراض في searchRulingsDirect): متجهات الأحكام من النص الخام وفيه الأسماء.
 export async function search_rulings(query: string, limit = 6): Promise<ToolResult<MergedResult[]>> {
   try {
-    const r = await searchRulingsDirect({ query, limit });
+    const r = await searchRulingsDirect({ query, limit, semantic: false });
     const items = r.hits.map(rulingHitToMerged);
     return ok(items, "judicial_cases.search_norm", items.length ? 0.85 : 0.4, items.length ? undefined : "لا نتائج من هذا النوع");
   } catch (e) {
@@ -105,8 +107,8 @@ export async function get_articles_range(systemName: string, from: number, to: n
   try {
     const rows = await prisma.legalArticle.findMany({
       where: { lawName: { contains: systemName, mode: "insensitive" }, articleNumber: { gte: Math.min(from, to), lte: Math.max(from, to) }, ...ARTICLE_ROWS },
-      select: { id: true, articleNumber: true, title: true, content: true, status: true },
-      orderBy: { articleNumber: "asc" },
+      select: { id: true, articleNumber: true, articleBis: true, title: true, content: true, status: true },
+      orderBy: [{ articleNumber: "asc" }, { articleBis: "asc" }], // الأصل ثم «مكرر» (HKM-030)
       take: 100,
     }).then((r) => applyEffectiveText(r));
     return ok(rows, "legal_core.legal_articles", rows.length ? 0.9 : 0.3);
@@ -181,14 +183,18 @@ export async function get_amendment_history(articleId: string): Promise<ToolResu
   }
 }
 
-export async function check_article_status(articleId: string): Promise<ToolResult<{ status: string | null; badge: string | null }>> {
+// HKM-030: آخر سجل تحقق (verification) مقدَّم على العمود القديم legal_articles.status، مع السقوط إليه.
+export async function check_article_status(
+  articleId: string,
+): Promise<ToolResult<{ status: string | null; badge: string | null; source: "verification" | "legacy" | null }>> {
   try {
-    const ctx = await getArticleFullContext(articleId);
-    if (!ctx) return fail({ status: null, badge: null }, "legal_core", "المادة غير موجودة");
-    const badge = articleStatusBadge(ctx.status);
-    return ok({ status: ctx.status, badge: badge?.label ?? null }, "legal_core.status", 0.9);
+    const [ctx, verified] = await Promise.all([getArticleFullContext(articleId), latestVerification("unit", articleId)]);
+    if (!ctx) return fail({ status: null, badge: null, source: null }, "legal_core", "المادة غير موجودة");
+    const status = verified?.verifiedStatus ?? ctx.status;
+    const badge = articleStatusBadge(status);
+    return ok({ status, badge: badge?.label ?? null, source: verified ? "verification" : "legacy" }, verified ? "verification.latest" : "legal_core.status", 0.9);
   } catch (e) {
-    return fail({ status: null, badge: null }, "legal_core", `تعذّر: ${(e as Error).message}`);
+    return fail({ status: null, badge: null, source: null }, "legal_core", `تعذّر: ${(e as Error).message}`);
   }
 }
 

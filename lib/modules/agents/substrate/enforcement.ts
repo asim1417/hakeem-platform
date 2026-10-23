@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // المرحلة ١.أ — النفاذ الزمنيّ (Enforcement). لا نبني عمودًا جديدًا: نرفع حقل `status`
-// القائم («سارية/معدّلة/منسوخة/موقوفة») + `effectiveFrom` إلى **حالة نفاذ أولى-الدرجة**
-// موحّدة عبر الوكيل، فتُقرأ في مرحلة التحقّق (٤) وتُعرض في لوحة الأساس (٦).
+// القائم («سارية/معدّلة/منسوخة/موقوفة») أو تسمية طبقة التحقق + `effectiveFrom` إلى **حالة نفاذ
+// أولى-الدرجة** موحّدة عبر الوكيل، فتُقرأ في مرحلة التحقّق (٤) وتُعرض في لوحة الأساس (٦).
 // نقيّة وقابلة للاختبار — لا تلمس القاعدة ولا الأمن ولا نواة الترتيب.
 // ─────────────────────────────────────────────────────────────────────────────
 import { articleStatusBadge } from "@/lib/modules/legal-core/article-status";
@@ -18,7 +18,7 @@ export interface EnforcementInfo {
 
 /**
  * يحوّل قيمة `status` الخام (+ effectiveFrom) إلى حالة نفاذ موحّدة.
- * يعيد استخدام مُطبِّع الشارة القائم (article-status) مصدرًا وحيدًا للحقيقة الوسمية.
+ * يعيد استخدام مُطبِّع الشارة القائم (article-status) مصدرًا وحيدًا للحقيقة الوسمية، ويقرأ `kind` لا نص الشارة.
  */
 export function resolveEnforcement(
   status: string | null | undefined,
@@ -27,15 +27,26 @@ export function resolveEnforcement(
   const badge = articleStatusBadge(status);
   const effectiveDate = normalizeDate(effectiveFrom);
   if (!badge) return { state: "غير_معروف", inForce: true, effectiveDate };
-  switch (badge.label) {
-    case "سارية":
+  switch (badge.kind) {
+    case "in_force":
+    case "conditional_partial":
       return { state: "ساري", inForce: true, effectiveDate };
-    case "معدّلة":
+    case "amended":
       return { state: "معدّل", inForce: true, effectiveDate };
-    case "منسوخة":
+    // المستبدل والملغى مع بقاء أحكام مؤقتًا: للنفاذ (البناء على النص) كاللاغي، وإن اختلف عرضه (HKM-030).
+    case "repealed":
+    case "replaced":
+    case "repealed_partial":
       return { state: "لاغٍ", inForce: false, effectiveDate };
-    case "موقوفة":
+    case "suspended":
       return { state: "موقوف", inForce: false, effectiveDate };
+    // HKM-033: المكررة والمرفق ليسا نصًّا قائمًا؛ لا يُبنى عليهما ولا يُعدّان لاغيين.
+    case "duplicate":
+    case "attachment":
+      return { state: "غير_معروف", inForce: false, effectiveDate };
+    // صادر لم يسرِ بعد: ليس لاغيًا ولا موقوفًا، ولا يُبنى عليه بعد.
+    case "not_yet":
+      return { state: "غير_معروف", inForce: false, effectiveDate };
     default:
       return { state: "غير_معروف", inForce: true, effectiveDate };
   }
