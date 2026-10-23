@@ -167,6 +167,9 @@ const STARTS_CHAIN = new RegExp(`^\\s+${BIN}\\s`);
 // «ابن السبيل» مصطلح (مصارف الزكاة) لا رابط نسب: لا يبدأ سلسلة، ولا يُحجب، ويقطع ما قبله من اسم.
 const SABIL = new RegExp(`^\\s*${withHarakat("ابن")}\\s+السبيل(?![${LETTERS}])`);
 const SABIL_IN = new RegExp(`\\s+${withHarakat("ابن")}\\s+السبيل(?![${LETTERS}])`);
+// اسم عائلة بسابقة «با» ومعه أداة التعريف («بالطيور»، «بالخير») يشبه «ب + ال» («بالمبلغ»)، فيُقبل بعد السلسلة فقط إن تلاه
+// صفة عضو في الدائرة (ولو ملتصقة: «عضومحمد»)، أو سلسلة أخرى، أو سطر جديد، أو آخر النص — قائمة توقيع الدائرة.
+const BA_FAMILY_AHEAD = new RegExp(`^(?:\\s*$|\\s*[\\n\\t]|\\s+[وف]?(?:عضو|رئيس|أمين\\s*سر|القاضي|كاتب)|\\s+${NASAB_TOKEN}\\s+${BIN}\\s)`);
 const CHAIN_HEAD = new RegExp(`^${NASAB_TOKEN}(?:\\s+${BIN}\\s+${NASAB_TOKEN})+`);
 // كلمة قبل الصفة تجعل ما بعدها اسمًا بلا فاصل: «حضر المدعي فلان»، «بإلزام المدعى عليه فلان».
 const TRIGGER_BEFORE = /(?:^|[^ء-ي])[وف]?(?:حضر|حضرت|بحضور|حضور|لحضوره|لحضورها|لحضورهما|لحضورهم|إلزام|بإلزام|الزام|بالزام|ألزم|ألزمت)\s+$/;
@@ -408,7 +411,11 @@ function maskNasab(text: string): string {
         extra++;
         continue;
       }
-      if (breaksName(text, tokenStart, w) || bare(w).length < 2) break;
+      const bw = bare(w);
+      const baFamily =
+        bw.startsWith("بال") && bw.length >= 5 && !STOP.has(bw) && !ROLE_WORDS.has(bw) && !TANWEEN.test(w) &&
+        !markerStartsAt(text, tokenStart) && BA_FAMILY_AHEAD.test(text.slice(TOKEN_RE.lastIndex, TOKEN_RE.lastIndex + 40));
+      if (!baFamily && (breaksName(text, tokenStart, w) || bw.length < 2)) break;
       const cut = cutAt(glued, tokenStart, TOKEN_RE.lastIndex);
       if (cut !== -1) {
         end = cut;
