@@ -17,7 +17,7 @@ on:
         type: choice
         required: true
         default: all
-        options: [all, law, attachment]
+        options: [all, law, attachment, image]
       limit:
         description: "حد أقصى للأهداف (0 = الكل)"
         type: string
@@ -48,7 +48,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: boe-crawl
+  group: boe-crawl-${{ inputs.kind }}
   cancel-in-progress: false
 
 jobs:
