@@ -29,7 +29,20 @@ def sha(b: bytes) -> str:
     return hashlib.sha256(b).hexdigest()
 
 
+RETRY_WAITS = [5, 20, 60]  # ثوانٍ: انتظار متصاعد عند انقطاع الشبكة أو 429/503 (الخادم يرد أحيانًا بلا استجابة تحت الضغط)
+
+
 def get(url: str, timeout: int = 60) -> tuple[int, bytes, str]:
+    st, body, ct = _get_once(url, timeout)
+    for w in RETRY_WAITS:
+        if st not in (0, 429, 502, 503, 504):
+            break
+        time.sleep(w)
+        st, body, ct = _get_once(url, timeout)
+    return st, body, ct
+
+
+def _get_once(url: str, timeout: int = 60) -> tuple[int, bytes, str]:
     req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept-Language": "ar,en;q=0.8"})
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
