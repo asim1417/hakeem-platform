@@ -2,13 +2,13 @@
   "task": "HKM-030",
   "kind": "embeddings",
   "model": "text-embedding-3-small",
-  "frozen_at": "2026-10-23T08:15:36Z",
+  "frozen_at": "2026-10-23T09:02:59Z",
   "source": "قراءة الإنتاج (Neon، للقراءة فقط) بـ SUMMARY_SQL في embed-lib.mjs: النص الساري (unit_version ثم content)، كل القديمة والمفقودة",
-  "approval": "المالك 22/10/2026: «نفذها كلها»؛ وإعادة التجميد 23/10/2026 بأمر المالك «نفذ» (HKM-033: إعادة تضمين المواد المفكوكة والمواد الجديدة)",
-  "selected": 296,
-  "stale": 134,
-  "missing": 162,
-  "ids_md5": "4279b788a2f8f58a6575864df4e3a995",
-  "state_md5": "ef1a1b695aec19cfc4277575d241dd79",
-  "chars": 159070
+  "approval": "المالك 23/10/2026 «نفذها كلها» (HKM-034: الخدمة المدنية 15/16/22/25/36/37 وخدمة الأفراد 14)",
+  "selected": 7,
+  "stale": 5,
+  "missing": 2,
+  "ids_md5": "4ac6086553f48cddb525dccf55f2104b",
+  "state_md5": "d2d4198cea839699c8d7222900d53b74",
+  "chars": 914
 }
