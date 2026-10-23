@@ -1,0 +1,71 @@
+name: BOE crawl (زحف هيئة الخبراء من شبكة GitHub Actions)
+
+# HKM-036: بيئة الوكيل محجوبة عن laws.boe.gov.sa، وشبكة GitHub Actions غير محجوبة (نمط render-source/nezams).
+# خام فقط (أمر الزحف 2.2): صفحات الأنظمة R0 ومرفقات العارض R1 كما تُقدَّم (صور الصفحات أو PDF). لا OCR ولا استخراج هنا.
+# النتائج: artifact + فرع crawl/boe-<run> (لا يلمس main). يدوي فقط، بوتيرة مهذبة.
+
+on:
+  workflow_dispatch:
+    inputs:
+      targets:
+        description: "ملف الأهداف JSONL"
+        type: string
+        required: true
+        default: ingest/crawl-2026-10-23/targets/r0-empty-pages.jsonl
+      kind:
+        description: "law | attachment | all"
+        type: choice
+        required: true
+        default: all
+        options: [all, law, attachment]
+      limit:
+        description: "حد أقصى للأهداف (0 = الكل)"
+        type: string
+        required: true
+        default: "20"
+      pace_ms:
+        description: "الوتيرة بين الطلبات بالملّي ثانية"
+        type: string
+        required: true
+        default: "1500"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boe-crawl
+  cancel-in-progress: false
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - name: فحص الوصول
+        run: |
+          code=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 40 "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/53cfe087-dae1-4b95-8dff-a9a700f29f3b/1" || echo 000)
+          echo "laws.boe.gov.sa -> HTTP $code" | tee -a "$GITHUB_STEP_SUMMARY"
+          [ "$code" = "200" ] || { echo "::error::الهيئة غير متاحة من هذا المشغّل (HTTP $code)"; exit 1; }
+      - name: الزحف
+        run: |
+          out="ingest/crawl-2026-10-23/runs/${GITHUB_RUN_ID}"
+          mkdir -p "$out"
+          python3 ingest/crawl-2026-10-23/scripts/boe_fetch.py --targets "${{ inputs.targets }}" --out "$out" --kind "${{ inputs.kind }}" --limit "${{ inputs.limit }}" --pace-ms "${{ inputs.pace_ms }}" | tee "$out/log.txt"
+          tail -1 "$out/log.txt" >> "$GITHUB_STEP_SUMMARY"
+          echo "OUT=$out" >> "$GITHUB_ENV"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: boe-crawl-${{ github.run_id }}
+          path: ${{ env.OUT }}
+          retention-days: 30
+      - name: حفظ الخام في فرع crawl/boe-<run>
+        run: |
+          git config user.name "hakeem-crawl-bot"
+          git config user.email "noreply@hakeemsa.com"
+          b="crawl/boe-${GITHUB_RUN_ID}"
+          git checkout -b "$b"
+          git add "$OUT"
+          git commit -q -m "HKM-036: زحف هيئة الخبراء الخام (run ${GITHUB_RUN_ID}) — $(tail -1 "$OUT/log.txt")" || { echo "لا شيء للحفظ"; exit 0; }
+          git push -q origin "$b"
+          echo "branch=$b" >> "$GITHUB_STEP_SUMMARY"
