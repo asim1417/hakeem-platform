@@ -1,0 +1,53 @@
+name: BOE Load Attachments (حقن المرفقات ونصها الآلي — إضافة فقط)
+
+# HKM-037: يحقن ingest/crawl-2026-10-23/ocr/<run>/{attachments,pages}.jsonl في boe.attachment / boe.attachment_page.
+# إضافة فقط (WHERE NOT EXISTS)؛ preview يتراجع ويطبع العدّ، apply يثبّت. يدوي فقط. يتطلّب NEON_DATABASE_URL.
+
+on:
+  workflow_dispatch:
+    inputs:
+      CONFIRM_RUNTIME_DB_ALIGNMENT:
+        description: "اكتب NEON_RUNTIME_CONFIRMED لتأكيد قاعدة Runtime قبل أي كتابة"
+        type: string
+        required: true
+        default: ""
+      dir:
+        description: "مجلد المخرجات (attachments.jsonl + pages.jsonl + meta.json)"
+        type: string
+        required: true
+        default: ingest/crawl-2026-10-23/ocr/2026-10-23
+      mode:
+        description: "preview (تراجع) | apply (تثبيت)"
+        type: choice
+        required: true
+        default: preview
+        options: [preview, apply]
+
+concurrency:
+  group: boe-load-attachments
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  load:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+    steps:
+      - name: "🔒 Runtime DB alignment gate"
+        run: |
+          if [ "${{ inputs.CONFIRM_RUNTIME_DB_ALIGNMENT }}" != "NEON_RUNTIME_CONFIRMED" ]; then
+            echo "::error::DB writes LOCKED — اضبط CONFIRM_RUNTIME_DB_ALIGNMENT=NEON_RUNTIME_CONFIRMED."; exit 1; fi
+          if [ -z "$DATABASE_URL" ]; then echo "::error::يلزم ضبط NEON_DATABASE_URL."; exit 1; fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q psycopg2-binary
+      - name: الحقن (${{ inputs.mode }})
+        run: |
+          python3 ingest/crawl-2026-10-23/scripts/load_attachments.py --dir "${{ inputs.dir }}" --mode "${{ inputs.mode }}" | tee load.log
+          { echo '```json'; cat load.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
