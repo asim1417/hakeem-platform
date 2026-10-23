@@ -1,52 +1,52 @@
 {
-  "measuredAt": "2026-10-16T03:26:47.128Z",
+  "measuredAt": "2026-10-23T14:40:03.384Z",
   "mode": "apply",
-  "segmentVersion": "segment-rules-v3",
-  "embedVersion": "seg-embed-v1",
+  "segmentVersion": "segment-rules-v4",
+  "embedVersion": "seg-embed-v2-masked",
   "rulings": 51105,
   "coveragePct": {
-    "reasons": 76.71,
-    "disposition": 96.91,
-    "neither": 0.24
+    "reasons": 98.95,
+    "disposition": 99.95,
+    "neither": 0
   },
   "chunks": {
-    "reasons": 43914,
-    "disposition": 49526
+    "reasons": 53207,
+    "disposition": 51080
   },
   "meanCharsPerChunk": {
-    "reasons": 2268,
-    "disposition": 791
+    "reasons": 1808,
+    "disposition": 230
   },
   "reasonsChunksPerRuling": {
-    "0": 11902,
-    "1": 35890,
-    "2": 2338,
-    "3": 552,
-    "4": 423
+    "0": 538,
+    "1": 48759,
+    "2": 1245,
+    "3": 294,
+    "4": 269
   },
   "estimate": {
     "model": "text-embedding-3-small",
     "dims": 1536,
     "pricePerMTokUsd": 0.02,
-    "chunks": 93440,
-    "chars": 138770647,
-    "calls": 1460,
+    "chunks": 104287,
+    "chars": 107953523,
+    "calls": 1630,
     "inputsPerCall": 64,
     "tokens": {
-      "at2_0": 69385324,
-      "at2.5": 55508259,
-      "at3_0": 46256882
+      "at2_0": 53976762,
+      "at2.5": 43181409,
+      "at3_0": 35984508
     },
     "costUsd": {
-      "high": 1.39,
-      "mid": 1.11,
-      "low": 0.93
+      "high": 1.08,
+      "mid": 0.86,
+      "low": 0.72
     }
   },
   "target": "production",
-  "calls": 10,
-  "written": 539,
-  "skipped": 92901,
+  "calls": 1668,
+  "written": 104287,
+  "skipped": 0,
   "failed": 0,
   "stoppedAtCap": false
 }
