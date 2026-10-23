@@ -49,5 +49,6 @@ jobs:
       - run: pip install -q psycopg2-binary
       - name: الحقن (${{ inputs.mode }})
         run: |
+          set -o pipefail
           python3 ingest/crawl-2026-10-23/scripts/load_attachments.py --dir "${{ inputs.dir }}" --mode "${{ inputs.mode }}" | tee load.log
           { echo '```json'; cat load.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
