@@ -25,6 +25,8 @@ import { matchThesaurusConcepts } from "@/lib/modules/legal-thesaurus/concept-in
 import { prismaSqlClient } from "@/lib/modules/legal-core/sql-port";
 import { getSiteUrl } from "@/lib/modules/config/site-url";
 import { getLawTool } from "@/lib/mcp/tools/get-law";
+import { articleRef } from "@/lib/mcp/tools/citation";
+import type { SqlClient } from "@/lib/modules/legal-core/sql-port";
 import { queryTokens } from "@/lib/modules/legal-core/ruling-excerpts";
 import {
   checkedLexicalGroups,
@@ -435,6 +437,7 @@ export async function verifyCitation(lawName: string, articleNumber: string, cla
       status: amended && !flags.inForce ? "ساري" : flags.statusLabel,
       actual_text: actualText,
       text_basis: e?.basis ?? null,
+      ref: articleRef(article.id, actualText),
     };
   }
   return {
@@ -446,5 +449,16 @@ export async function verifyCitation(lawName: string, articleNumber: string, cla
     status: amended && !flags.inForce ? "ساري" : flags.statusLabel,
     actual_text: actualText,
     text_basis: e?.basis ?? null,
+    // HKM-044: بصمة النص الساري؛ hakeem_check_ref يكشف لاحقًا تعديله أو إلغاءه.
+    ref: articleRef(article.id, actualText),
   };
+}
+
+// HKM-044 المرحلة الأولى: أدوات SqlClient (الفهرس، البحث النصي، الاستناد، الدلالي) تأخذ القاعدة والاعتماديات من هنا.
+export function mcpSql(): SqlClient {
+  return prismaSqlClient(prisma);
+}
+
+export function mcpDeps() {
+  return { effective: (rows: Array<{ id: string; content: string | null }>) => effectiveArticleTexts(rows), siteUrl: getSiteUrl() };
 }

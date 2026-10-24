@@ -4,7 +4,7 @@
  * وترقيم cursor. الحل المباشر لمشكلة top-k: حصر لفظي كامل لا ترتيب دلالي.
  *
  * HKM-044: المطابقة بحدود الكلمة افتراضيًا (word-match.ts): «التعدي» لا تطابق «التعديل». التصفية المسبقة
- * بـ ILIKE على النص المطبَّع ثم شرط النمط بـ ~*؛ ووضع contains يبقي الاحتواء القديم صراحةً. الصفوف التي ليست
+ * بنمط على النص الخام يكافئ الاحتواء في المطبَّع (rawLiteralPattern) ثم شرط النمط بـ ~* على المطبَّع؛ ووضع contains يبقي الاحتواء القديم صراحةً. الصفوف التي ليست
  * مواد (درجة «مكرر» ≥ 100، HKM-030) لا تُحصر ولا تُعدّ، كما في البحث والنطاق. والملاحظة تقول ما فُتّش وكيف.
  *
  * مُكيَّف على مخطط حكيم الفعلي:
@@ -16,7 +16,7 @@
 import { prisma } from "@/lib/prisma";
 import { effectiveArticleTexts } from "@/lib/modules/legal-core/effective-text";
 import { NON_ARTICLE_BIS } from "@/lib/modules/legal-core/article-key";
-import { compileTerm, matchModeLabel, normalizeAr, normSqlExpr, type CompiledTerm, type MatchMode } from "./word-match";
+import { compileTerm, matchModeLabel, normalizeAr, normSqlExpr, rawLiteralPattern, type CompiledTerm, type MatchMode } from "./word-match";
 
 export { normalizeAr };
 
@@ -35,21 +35,41 @@ export const NORM_EXPR = normSqlExpr(`a."content"`);
 export const NORM_LATERAL = `CROSS JOIN LATERAL (SELECT ${NORM_EXPR} AS n OFFSET 0) nt`;
 const NORM_REF = `nt.n`;
 
-/** شرط لفظ واحد على النص المطبَّع (nt.n): تصفية ILIKE ثم نمط حدود الكلمة. يضيف معاملاته إلى params. */
-export function termConditionSql(t: CompiledTerm, params: unknown[], normRef = NORM_REF): string {
-  params.push(`%${t.literal.replace(/[\\%_]/g, "\\$&")}%`);
-  const like = `${normRef} ILIKE $${params.length}`;
-  if (!t.regex) return `(${like})`;
+const RAW_REF = `a."content"`;
+
+/**
+ * تصفية لفظ مسبقة على النص الخام (rawLiteralPattern): تكافئ «المطبَّع يحوي literal» تمامًا، وتمسّ عمود الجدول وحده،
+ * فيدفعها المخطِّط إلى مسح legal_articles ولا يُحسب التطبيع في NORM_LATERAL إلا لما يجتازها.
+ */
+export function termPrefilterSql(t: CompiledTerm, params: unknown[], rawRef = RAW_REF): string {
+  params.push(rawLiteralPattern(t.literal));
+  return `${rawRef} ~* $${params.length}`;
+}
+
+/** التصفية المسبقة لعدة ألفاظ بينها OR (شرط على العمود وحده، يُضاف بـ AND إلى الشرط الكامل). */
+export function anyTermPrefilterSql(ts: CompiledTerm[], params: unknown[], rawRef = RAW_REF): string {
+  return `(${ts.map((t) => termPrefilterSql(t, params, rawRef)).join(" OR ")})`;
+}
+
+/**
+ * شرط لفظ واحد: التصفية المسبقة على الخام ثم نمط حدود الكلمة على المطبَّع (nt.n). يضيف معاملاته إلى params.
+ * وضع contains: التصفية وحدها هي الشرط (= ILIKE على المطبَّع).
+ */
+export function termConditionSql(t: CompiledTerm, params: unknown[], normRef = NORM_REF, rawRef = RAW_REF): string {
+  const pre = termPrefilterSql(t, params, rawRef);
+  if (!t.regex) return `(${pre})`;
   params.push(t.regex);
-  return `(${like} AND ${normRef} ~* $${params.length})`;
+  return `(${pre} AND ${normRef} ~* $${params.length})`;
 }
 
 /**
  * شرط WHERE للحصر (يُصدَّر للاختبار، مراجعة الجودة ٥): الألفاظ بـ OR، والصفوف غير المادية مستبعدة،
- * ثم النظام ثم المؤشر. يُستعمل بعد «FROM legal_articles a» و NORM_LATERAL.
+ * ثم النظام ثم المؤشر. يُستعمل بعد «FROM legal_articles a» و NORM_LATERAL. لأكثر من لفظ تُقدَّم تصفية OR على الخام
+ * شرطًا مستقلًّا (OR الشروط الكاملة لا يُدفع إلى المسح لأنه يمسّ nt).
  */
 export function enumerateWhereSql(compiled: CompiledTerm[], opts: { lawId?: string; cursor?: string }, params: unknown[]): string {
-  let w = `(${compiled.map((t) => termConditionSql(t, params)).join(" OR ")}) AND a."articleBis" < ${NON_ARTICLE_BIS}`;
+  const pre = compiled.length > 1 ? `${anyTermPrefilterSql(compiled, params)} AND ` : "";
+  let w = `${pre}(${compiled.map((t) => termConditionSql(t, params)).join(" OR ")}) AND a."articleBis" < ${NON_ARTICLE_BIS}`;
   if (opts.lawId) {
     params.push(opts.lawId);
     w += ` AND a."legalSystemId" = $${params.length}`;

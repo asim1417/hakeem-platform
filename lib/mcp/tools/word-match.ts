@@ -28,7 +28,8 @@
  * («آلية» = «إليه»)؛ والمنقوص المنوّن («تعدٍّ»، «قاضٍ») لا تطابقه صورته بالياء؛ والجمع المكسر («عقود») ليس من صور «عقد».
  */
 
-export type MatchMode = "word" | "derivatives" | "contains";
+export type MatchMode = "word" | "derivatives" | "contains" | "exact";
+/** أوضاع الحصر (hakeem_enumerate). «exact» لأدوات العبارة وحدها (HKM-044 المرحلة الأولى). */
 export const MATCH_MODES: readonly MatchMode[] = ["word", "derivatives", "contains"] as const;
 
 /** حروف عربية بعد التطبيع: ء–ؿ، ف–ي، والممتدة ٱ–ۓ (الكاف والياء الفارسيتان في النصوص المكشوطة). */
@@ -104,6 +105,31 @@ export function normSqlExpr(column: string): string {
   return `translate(${column}, '${NORM_TRANSLATE_FROM}', '${NORM_TRANSLATE_TO}')`;
 }
 
+/**
+ * ما يحذفه التطبيع (التشكيل U+064B–U+065F، والألف الخنجرية، والتطويل) صنفًا في نمط، بمهارب \uXXXX لا بالحروف نفسها:
+ * تطبيع يونيكود (NFC) في أي طبقة يعيد ترتيب العلامات المركّبة بدرجة اتصالها فيقلب المدى («ً-ٰ» يبتلع الأرقام الهندية
+ * و«٫»)، كما وقع في قياس 24/10 عبر أداة الاستعلام. المهارب يفهمها Postgres (ARE) وRegExp معًا.
+ */
+const MARKS_CLASS = "[\\u064B-\\u065F\\u0670\\u0640]";
+const RAW_VARIANTS: Record<string, string> = { "ا": "[اأإآٱ]", "ي": "[يىئ]", "ه": "[هة]", "و": "[وؤ]" };
+
+/**
+ * نمط على النص الخام يكافئ «النص المطبَّع يحوي literal» (translate ثم ILIKE) تمامًا: كل حرف بصوره قبل التطبيع
+ * (ا ← أإآٱ، ي ← ىئ، ه ← ة، و ← ؤ، والرقم بصورته الهندية)، وبين كل حرفين ما يحذفه التطبيع. يُستعمل تصفيةً مسبقة
+ * على العمود نفسه فتُدفع إلى مسح الجدول، ولا يُحسب التطبيع (translate، أغلى ما في الاستعلام) إلا لما يجتازها
+ * (قياس 24/10 على 28,910 مادة: 3.1 ث بالتطبيع لكل صف، و0.16 ث بهذا النمط، بالعدد نفسه).
+ */
+export function rawLiteralPattern(literal: string): string {
+  const chars = Array.from(String(literal ?? ""));
+  return chars
+    .map((ch) => {
+      if (RAW_VARIANTS[ch]) return RAW_VARIANTS[ch];
+      if (/[0-9]/.test(ch)) return `[${ch}${String.fromCharCode(0x0660 + Number(ch))}]`;
+      return ch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    })
+    .join(`${MARKS_CLASS}*`);
+}
+
 /** يزيل التشكيل والتطويل فقط (يبقى الشكل الخام للتاء المربوطة والهمزة). */
 function stripMarks(s: string): string {
   return s.replace(/[ً-ٰٟـ]/g, "");
@@ -125,7 +151,7 @@ export interface CompiledWord {
 }
 
 /** نمط كلمة عربية واحدة بحسب الوضع. rawWord بلا فواصل. */
-export function arabicWordPattern(rawWord: string, mode: Exclude<MatchMode, "contains">): CompiledWord {
+export function arabicWordPattern(rawWord: string, mode: Exclude<MatchMode, "contains" | "exact">): CompiledWord {
   const raw = stripMarks(rawWord);
   const full = normalizeAr(raw);
   let core = full;
@@ -203,8 +229,9 @@ export function compileTerm(term: string, mode: MatchMode = "word"): CompiledTer
   const all = raw.split(new RegExp(`[^${WORD_CHAR}]+`, "u")).filter(Boolean);
   const words = all.slice(0, MAX_PHRASE_WORDS);
   if (!words.length) return null;
+  // exact: الكلمات نفسها بترتيبها بلا سوابق ولا لواحق (الإملاء مطبَّع كالقاعدة: الهمزات والتاء والألف المقصورة).
   const parts: CompiledWord[] = words.map((w) =>
-    IS_ARABIC_WORD.test(w) ? arabicWordPattern(w, mode) : { pattern: escapeRe(normalizeAr(w)), literal: normalizeAr(w) },
+    mode !== "exact" && IS_ARABIC_WORD.test(w) ? arabicWordPattern(w, mode) : { pattern: escapeRe(normalizeAr(w)), literal: normalizeAr(w) },
   );
   const literal = parts.reduce((a, b) => (b.literal.length > a.length ? b.literal : a), "");
   if (!literal) return null;
@@ -233,6 +260,7 @@ export function matchesText(text: string, t: CompiledTerm): boolean {
 
 /** وصف عربي قصير لطريقة المطابقة (يُعاد في مخرج الأداة). */
 export function matchModeLabel(mode: MatchMode): string {
+  if (mode === "exact") return "الكلمات نفسها بترتيبها، كلمةً كاملة بلا سوابق ولا لواحق؛ الإملاء مطبَّع (الهمزات، التاء المربوطة، الألف المقصورة) والتشكيل مهمل";
   return mode === "word"
     ? "كلمة كاملة بسوابق الإلحاق (و، ف، ب، ك، ل، ال، لل) ولواحق التصريف، والضمير مع النكرة وحدها؛ لا جزء كلمة. الصيغ الفعلية والنسبة (يفسخ، ينفسخ، التعويضية) بـ match=derivatives"
     : mode === "derivatives"

@@ -17,6 +17,7 @@ import { handleResearch } from "@/lib/mcp/tools/research";
 import { handleRange, handleGuide } from "@/lib/mcp/tools/range-and-guide";
 import { getRuling, enumerateRulings } from "@/lib/mcp/tools/rulings";
 import { registerAmanTools } from "@/lib/mcp/aman-server";
+import { registerPhase1Tools } from "@/lib/mcp/register-phase1";
 import { mcpAccessMode, mcpClosedResponse } from "@/lib/mcp/policy";
 import { verifyMcpRequest } from "@/lib/mcp/principal";
 import { runMcpTool } from "@/lib/mcp/tool-runner";
@@ -121,7 +122,7 @@ const handler = createMcpHandler(
       "hakeem_verify_citation",
       {
         description:
-          "التحقق من صحة إحالة نظامية قبل عزوها: هل المادة رقم كذا من نظام كذا موجودة فعلًا؟ وهل النص المنسوب إليها مطابق؟ يمنع اختلاق المواد. أرجِع: verdict (صحيحة/غير موجودة/نصها مختلف) + النص الفعلي.",
+          "التحقق من صحة إحالة نظامية قبل عزوها: هل المادة رقم كذا من نظام كذا موجودة فعلًا؟ وهل النص المنسوب إليها مطابق؟ يمنع اختلاق المواد. أرجِع: verdict (صحيحة/غير موجودة/نصها مختلف) + النص الفعلي + ref (بصمة النص الساري؛ احفظها مع الاقتباس وتحقق منها لاحقًا بـ hakeem_check_ref).",
         inputSchema: z.object({
           law_name: z.string().describe("اسم النظام"),
           article_number: z.string().describe("رقم المادة (يقبل «12 مكرر» و«12 مكرر 2»)"),
@@ -246,6 +247,9 @@ const handler = createMcpHandler(
       async ({ terms, court, year_h, count_only, page_size, cursor, snippet_len }, ctx) =>
         runMcpTool("hakeem_enumerate_rulings", ctx, () => enumerateRulings(terms, court, year_h, count_only, page_size, cursor, snippet_len))
     );
+
+    // ١٤–٢٥) HKM-044 المرحلة الأولى: الفهرس والتشخيص، والبحث النصي الدقيق والدلالي، وتتبع النص، والاستناد والبصمة.
+    registerPhase1Tools(server);
   },
   {
     serverInfo: { name: "hakeem-legal-mcp", version: "1.0.0" },
