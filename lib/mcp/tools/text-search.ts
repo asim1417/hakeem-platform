@@ -13,13 +13,16 @@ import { articleLabel, NON_ARTICLE_BIS } from "../../modules/legal-core/article-
 import type { EffectiveArticleText } from "../../modules/legal-core/effective-text";
 import { compileTerm, matchModeLabel, normalizeAr, type CompiledTerm, type MatchMode } from "./word-match";
 import {
+  amendedMatches,
   amendedMatchIds,
+  currentlyAmendedIds,
   NORM_LATERAL,
   STORED_REFS,
   termConditionSql,
   termPrefilterSql,
   VERSION_REFS,
   withAmendedIds,
+  withCurrentTextOnly,
   type TextRefs,
 } from "./enumerate";
 import { filtersFromArgs, lawScopeForFilters, lawScopeSql, type LawFilters, type LawScope } from "./catalog";
@@ -121,22 +124,29 @@ export type ConditionBuilder = (refs: TextRefs, params: unknown[]) => { pre: str
  * الشرط على المحفوظ مع ضم المواد التي يطابق نصُّها الساري المعدّل (مراجعة الجودة، الملاحظة ١). يُصدَّر للاختبار.
  * يعيد WHERE (بلا الدرجة والنطاق) ومعاملاته.
  */
-export async function textWhere(db: SqlClient, build: ConditionBuilder): Promise<{ where: string; params: unknown[]; amendedIds: string[] }> {
+export async function textWhere(
+  db: SqlClient,
+  build: ConditionBuilder,
+  opts: { currentTextOnly?: boolean } = {},
+): Promise<{ where: string; params: unknown[]; amendedIds: string[] }> {
   // كل معامل يُضاف يرد في SQL (pre وfull معًا)، فلا يبقى معامل بلا نوع (42P18).
   const vParams: unknown[] = [];
   const vb = build(VERSION_REFS, vParams);
   const amendedIds = await amendedMatchIds(db, vb.pre ? `${vb.pre} AND ${vb.full}` : vb.full, vParams);
   const params: unknown[] = [];
   const b = build(STORED_REFS, params);
-  return { where: withAmendedIds(b.pre, b.full, amendedIds, params), params, amendedIds };
+  const where = opts.currentTextOnly
+    ? withCurrentTextOnly(b.pre, b.full, amendedIds, await currentlyAmendedIds(db), params)
+    : withAmendedIds(b.pre, b.full, amendedIds, params);
+  return { where, params, amendedIds };
 }
 
 async function runArticleQuery(
   db: SqlClient,
   deps: TextSearchDeps,
-  o: { build: ConditionBuilder; scope: LawScope; cursor?: string; pageSize: number; snippetLen: number; snippetTerms: CompiledTerm[] },
+  o: { build: ConditionBuilder; currentTextOnly?: boolean; scope: LawScope; cursor?: string; pageSize: number; snippetLen: number; snippetTerms: CompiledTerm[] },
 ) {
-  const tw = await textWhere(db, o.build);
+  const tw = await textWhere(db, o.build, { currentTextOnly: o.currentTextOnly });
   const scopeParams = [...tw.params];
   const scopeCond = lawScopeSql(o.scope, scopeParams);
   const base = `(${tw.where}) AND a."articleBis" < ${NON_ARTICLE_BIS}${scopeCond ? ` AND ${scopeCond}` : ""}`;
@@ -467,6 +477,8 @@ export async function handleSearchBoolean(
   const { pos, neg } = leavesOf(root);
   const r = await runArticleQuery(db, deps, {
     build: (refs, params) => ({ pre: boolPrefilterSql(root, params, refs.raw), full: boolToSql(root, params, refs) }),
+    // المعدّلة بنصها الساري وحده: «دون كذا» على نصها القديم كان يُرجع مادة نصُّها اليوم يحوي المنفي.
+    currentTextOnly: true,
     scope,
     cursor: args.cursor,
     pageSize: clampInt(args.page_size, 1, 50, 20),
@@ -582,20 +594,34 @@ export async function handleTraceText(
       .filter((c): c is CompiledTerm => c !== null);
     if (!anchors.length) return [] as ArticleRow[];
     // المراسي على المحفوظ وعلى النص الساري المعدّل (الاقتباس من نص اليوم لمادة عُدّلت).
-    const tw = await textWhere(db, (refs, ps) => ({
-      pre: `(${anchors.map((a) => termPrefilterSql(a, ps, refs.raw)).join(" OR ")})`,
-      full: `(${anchors.map((a) => termConditionSql(a, ps, refs.norm, refs.raw)).join(" OR ")})`,
-    }));
-    const params = tw.params;
+    // درجة كل مادة عدد مراسيها المطابقة في المحفوظ أو في النص الساري (أيهما أكثر)، فلا تسقط المعدّلة دون حد المرشحين
+    // حين يكون مطلع الاقتباس عبارةً متكررة (مراجعة الجودة على d11bc97، الملاحظة A).
+    const vParams: unknown[] = [];
+    const vConds = anchors.map((a) => termConditionSql(a, vParams, VERSION_REFS.norm, VERSION_REFS.raw));
+    const vm = await amendedMatches(db, `(${vConds.join(" OR ")})`, vParams, vConds.map((c) => `(${c})::int`).join(" + "));
+    const params: unknown[] = [];
+    const where = withAmendedIds(
+      `(${anchors.map((a) => termPrefilterSql(a, params)).join(" OR ")})`,
+      `(${anchors.map((a) => termConditionSql(a, params)).join(" OR ")})`,
+      vm.map((x) => x.id),
+      params,
+    );
     const conds = anchors.map((a) => termConditionSql(a, params));
+    let score = conds.map((c) => `(${c})::int`).join(" + ");
+    if (vm.length) {
+      params.push(vm.map((x) => x.id));
+      const ids = params.length;
+      params.push(vm.map((x) => x.score));
+      score = `GREATEST(${score}, COALESCE(($${params.length}::int[])[array_position($${ids}::text[], a."id")], 0))`;
+    }
     const scopeCond = lawScopeSql(scope, params);
     return db.query<ArticleRow>(
       `SELECT a."id", a."articleNumber" AS article_number, a."articleBis" AS article_bis, a."legalSystemId" AS law_id,
               COALESCE(l."name", a."lawName") AS law, a."content"
          FROM legal_articles a ${NORM_LATERAL}
          LEFT JOIN legal_systems l ON l."id" = a."legalSystemId"
-        WHERE (${tw.where}) AND a."articleBis" < ${NON_ARTICLE_BIS}${scopeCond ? ` AND ${scopeCond}` : ""}
-        ORDER BY (${conds.map((c) => `(${c})::int`).join(" + ")}) DESC, a."id"
+        WHERE (${where}) AND a."articleBis" < ${NON_ARTICLE_BIS}${scopeCond ? ` AND ${scopeCond}` : ""}
+        ORDER BY ${score} DESC, a."id"
         LIMIT ${TRACE_CANDIDATES}`,
       params,
     );
@@ -692,8 +718,8 @@ export async function handleTraceText(
       verdictText[verdict] +
       warn +
       (incomplete ? ` فُحصت أول ${TRACE_MAX_WORDS} كلمة فقط.` : "") +
-      (firstCapped || rows.length >= TRACE_CANDIDATES
-        ? ` المراسي تتكرر في أكثر من ${TRACE_CANDIDATES} مادة فقورن أولها فقط؛ النص عام متكرر — ضيّق بـ law_id أو category.`
+      ((firstCapped || rows.length >= TRACE_CANDIDATES) && verdict !== "verbatim" && verdict !== "near_verbatim"
+        ? ` المراسي تتكرر في أكثر من ${TRACE_CANDIDATES} مادة فقورن أولها فقط؛ قد يكون المصدر خارجها — ضيّق بـ law_id أو category.`
         : "") +
       " المقارنة كلمةً بكلمة بعد تطبيع الإملاء والتشكيل، والمرشحات من مراسٍ في النص (أول 30 مادة)." +
       (rulings ? " الأحكام: مطابقة أول ست كلمات عبارةً فقط." : ""),

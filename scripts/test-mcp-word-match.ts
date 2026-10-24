@@ -248,6 +248,11 @@ async function pgTests() {
     const vp: unknown[] = [];
     const vIds = await amendedMatchIds(db, termConditionSql(terms(["فسخ"])[0], vp, VERSION_REFS.norm, VERSION_REFS.raw), vp);
     ok(vIds.join() === "e05", `P معرّفات النص الساري: أحدث نسخة سارية الآن وحدها (${vIds.join()})`);
+    // نسختان بتاريخ نفاذ واحد: الأعلى معرّفًا (= textAsOf).
+    await db.query(`INSERT INTO unit_version VALUES ('w5','e06','نص بلا اللفظ','2020-01-01'), ('w6','e06','فيه فسخ','2020-01-01'), ('w9','e02','بلا شيء','2020-01-01'), ('w8','e02','فيه فسخ','2020-01-01')`);
+    const vp2: unknown[] = [];
+    const tie = await amendedMatchIds(db, termConditionSql(terms(["فسخ"])[0], vp2, VERSION_REFS.norm, VERSION_REFS.raw), vp2);
+    ok(tie.sort().join() === "e05,e06", `P نسختان بتاريخ واحد: الأعلى معرّفًا هي السارية (${tie.sort().join()})`);
     await db.query(`DROP TABLE unit_version`);
     resetUnitVersionCache();
     ok((await amendedMatchIds(db, "TRUE", [])).length === 0, "P بلا جدول النسخ: لا معرّفات ولا خطأ");

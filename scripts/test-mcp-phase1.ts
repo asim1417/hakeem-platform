@@ -45,6 +45,8 @@ import {
 import { articleRef, handleCheckRef, handleGetCitation, handleGetToc, issuedPhrase, parseRef, textFingerprint } from "../lib/mcp/tools/citation";
 import { handleSemanticSearch, hintedLaws, queryKeywords, rerankScore } from "../lib/mcp/tools/semantic";
 import { compileTerm, normalizeAr, normSqlExpr, rawLiteralPattern } from "../lib/mcp/tools/word-match";
+import { resetUnitVersionCache } from "../lib/mcp/tools/enumerate";
+import { textAsOf } from "../lib/modules/legal-core/verified-status";
 
 let failed = 0;
 let passed = 0;
@@ -133,6 +135,12 @@ ok(evalBoolean(tree, normalizeAr("يجوز فسخ العقد")) && !evalBoolean(
     }
   ok(agree === total, `U التصفية المسبقة على الخام تكافئ الاحتواء في المطبَّع (${agree}/${total})`);
   ok(lits.every((l) => rawLiteralPattern(l) === rawLiteralPattern(l).normalize("NFC") && !/[\u064B-\u065F\u0670]/.test(rawLiteralPattern(l))), "U نمط التصفية بلا علامات مركّبة حرفية (لا يغيّره تطبيع NFC)");
+}
+
+// نسختان بتاريخ نفاذ واحد: الأعلى معرّفًا (كما في SQL)
+{
+  const v = (id: string, body: string) => ({ id, body, validFrom: "2020-01-01T00:00:00.000Z", evidenceInstrument: null, evidenceUrl: null });
+  ok(textAsOf("أصل", [v("v6", "ب"), v("v5", "أ")], new Date()).text === "ب" && textAsOf("أصل", [v("v9", "ج"), v("v8", "د")], new Date()).text === "ج", "U نسختان بتاريخ واحد: الأعلى معرّفًا حتمًا");
 }
 
 // المحاذاة والتصنيف
@@ -376,11 +384,19 @@ async function dbTests(db: SqlClient) {
   const nestedTree = parseBoolean(nestedQ, "word");
   const expectNested = allArts
     .filter((a) => a.bis < 100 && a.law_id !== "sys-old")
-    .filter((a) => evalBoolean(nestedTree, normalizeAr(a.content)) || (curText.get(a.id)?.source === "unit_version" && evalBoolean(nestedTree, normalizeAr(curText.get(a.id)!.text))))
+    // المعدّلة بنصها الساري وحده، وغيرها بمحفوظها.
+    .filter((a) => {
+      const e = curText.get(a.id);
+      return evalBoolean(nestedTree, normalizeAr(e?.source === "unit_version" ? e.text : a.content));
+    })
     .map((a) => a.id)
     .sort();
   const gotNested = (bn.page ?? []).map((h) => h.article_id).sort();
   ok(!bn.error && JSON.stringify(gotNested) === JSON.stringify(expectNested) && gotNested.length >= 4, `D OR متداخل بفرع منفي: بلا خطأ، وSQL = تقييم الكود (${gotNested.join("، ")})`);
+  // النفي على المعدّلة بنصها الساري: «محددًا» في الساري وحده، و«هيئة» في القديم وحده.
+  const bOld = L(await handleSearchBoolean(db, { query: '"لسبب غير مشروع" دون محددا' }, deps));
+  const bNew = L(await handleSearchBoolean(db, { query: '"لسبب غير مشروع" دون هيئة' }, deps));
+  ok(!(bOld.page ?? []).some((h) => h.article_id === "a-lab-077") && (bNew.page ?? []).some((h) => h.article_id === "a-lab-077"), "D المنطقي: المادة المعدّلة تُقيَّم بنصها الساري وحده (النفي لا يُفحص على القديم)");
   const b2 = L(await handleSearchBoolean(db, { query: "فسخ (العقد" }, deps));
   ok("error" in b2 && /لم يُغلق/.test(String(b2.error)) && "hint" in b2, "D خطأ الصيغة يُشرح بمثال ولا يُرمى");
   const b3 = L(await handleSearchBoolean(db, { query: '"صاحب العمل" -فسخ', status: "all" }, deps));
@@ -411,6 +427,25 @@ async function dbTests(db: SqlClient) {
     },
   });
   ok(t7.verdict === "verbatim" && t7.matches[0].article_id === "a-mur-187" && rulingsPhrase.split(" ").length === 6 && "rulings" in t7, "D تتبع مع الأحكام: أول ست كلمات عبارةً");
+
+  // تتبع اقتباس من النص الساري لمادة معدّلة مطلعه عبارة متكررة في أكثر من 30 مادة (مراجعة الجودة على d11bc97، A).
+  {
+    const boiler = "يعمل بهذا النظام بعد مضي تسعين يوما من تاريخ نشره في الجريدة الرسمية";
+    await db.query(`INSERT INTO legal_systems (id, name, "articleCount") VALUES ('sys-boil', 'نظام اصطناعي للنفاذ', 33)`);
+    for (let i = 0; i < 32; i++)
+      await db.query(`INSERT INTO legal_articles (id, "legalSystemId", "lawName", "articleNumber", title, content) VALUES ($1, 'sys-boil', 'نظام اصطناعي للنفاذ', $2, 'م', $3)`, [
+        `b${String(i).padStart(3, "0")}`, i + 1, `${boiler}، ويلغي كل ما يتعارض معه من أحكام (${i}).`,
+      ]);
+    const current = `${boiler} وتتولى الهيئة الوطنية للرقابة إصدار القواعد التنفيذية خلال مدة لا تتجاوز سنة من نفاذه`;
+    await db.query(`INSERT INTO legal_articles (id, "legalSystemId", "lawName", "articleNumber", title, content) VALUES ('zz-amended', 'sys-boil', 'نظام اصطناعي للنفاذ', 99, 'م', 'نص قديم مختلف تماما عن النص الساري')`);
+    await db.query(`INSERT INTO unit_version (id, unit_id, body, valid_from, evidence_instrument) VALUES ('uv-boil', 'zz-amended', $1, '2020-01-01', 'المرسوم الملكي رقم (م/7)')`, [current]);
+    resetUnitVersionCache();
+    resetCatalogCache();
+    const tb = await handleTraceText(db, { text: current }, deps);
+    ok(tb.verdict === "verbatim" && tb.matches[0]?.article_id === "zz-amended" && tb.matches[0].matched_on === "current" && !/قد يكون المصدر خارجها/.test(tb.note), `D تتبع: المعدّلة لا تسقط دون حد المرشحين حين يتكرر مطلع الاقتباس (${tb.verdict}، ${tb.matches[0]?.article_id})`);
+    const tg = await handleTraceText(db, { text: `${boiler} وكلام آخر لا يرد في أي مادة البتة هنا` }, deps);
+    ok("candidates_capped" in tg && tg.candidates_capped === true && /قد يكون المصدر خارجها/.test(tg.note), "D تتبع: اقتباس عام متكرر بلا مطابقة حرفية — تنبيه حد المرشحين");
+  }
 
   // البصمة
   const art84 = (await deps.effective([{ id: "a-lab-084", content: (await db.query<{ content: string }>(`SELECT content FROM legal_articles WHERE id='a-lab-084'`))[0].content }])).get("a-lab-084")!;

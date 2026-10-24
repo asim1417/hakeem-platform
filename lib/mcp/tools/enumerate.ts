@@ -77,31 +77,55 @@ export const STORED_REFS: TextRefs = { raw: RAW_REF, norm: NORM_REF };
 export const VERSION_REFS: TextRefs = { raw: "v.body", norm: "vt.n" };
 
 /** أحدث نسخة سارية الآن لكل مادة، مطبَّعةً مرة واحدة (v.body، vt.n). */
-export const CURRENT_VERSIONS_FROM = `(SELECT DISTINCT ON (unit_id) unit_id, body FROM unit_version WHERE valid_from <= now() ORDER BY unit_id, valid_from DESC) v CROSS JOIN LATERAL (SELECT ${normSqlExpr("v.body")} AS n OFFSET 0) vt`;
+export const CURRENT_VERSIONS_FROM = `(SELECT DISTINCT ON (unit_id) unit_id, body FROM unit_version WHERE valid_from <= now() ORDER BY unit_id, valid_from DESC, id DESC) v CROSS JOIN LATERAL (SELECT ${normSqlExpr("v.body")} AS n OFFSET 0) vt`;
 
 let unitVersionKnown: { at: number; ok: boolean } | null = null;
+let currentAmendedCache: { at: number; ids: string[] } | null = null;
+const UV_CACHE_MS = 5 * 60_000;
 
-/**
- * معرّفات المواد التي يطابق نصُّها الساري المعدّل الشرطَ (cond مبني بـ VERSION_REFS). [] إن لم يوجد الجدول.
- * وجود الجدول يُخزَّن 5 دقائق، فلا يُسأل عنه في كل نداء.
- */
-export async function amendedMatchIds(db: SqlClient, cond: string, params: unknown[]): Promise<string[]> {
-  if (!unitVersionKnown || Date.now() - unitVersionKnown.at > 5 * 60_000) {
+async function unitVersionExists(db: SqlClient): Promise<boolean> {
+  if (!unitVersionKnown || Date.now() - unitVersionKnown.at > UV_CACHE_MS) {
     unitVersionKnown = { at: Date.now(), ok: await relationExists(db, "unit_version") };
   }
-  if (!unitVersionKnown.ok) return [];
+  return unitVersionKnown.ok;
+}
+
+/**
+ * المواد التي يطابق نصُّها الساري المعدّل الشرطَ (cond مبني بـ VERSION_REFS)، ودرجة كل منها إن مُرّر scoreExpr
+ * (عدد المراسي المطابقة في تتبع النص). [] إن لم يوجد الجدول؛ ووجوده يُخزَّن 5 دقائق.
+ */
+export async function amendedMatches(db: SqlClient, cond: string, params: unknown[], scoreExpr?: string): Promise<Array<{ id: string; score: number }>> {
+  if (!(await unitVersionExists(db))) return [];
   try {
-    const rows = await db.query<{ id: string }>(`SELECT DISTINCT v.unit_id AS id FROM ${CURRENT_VERSIONS_FROM} WHERE ${cond}`, params);
-    return rows.map((r) => r.id);
+    const rows = await db.query<{ id: string; score: number | string }>(
+      `SELECT v.unit_id AS id, ${scoreExpr ? `(${scoreExpr})::int` : "1"} AS score FROM ${CURRENT_VERSIONS_FROM} WHERE ${cond}`,
+      params,
+    );
+    return rows.map((r) => ({ id: r.id, score: Number(r.score) }));
   } catch (e) {
     if (isMissingRelation(e)) return [];
     throw e;
   }
 }
 
-/** للاختبارات: يُسقط ما خُزّن عن وجود unit_version. */
+/** معرّفات المواد التي يطابق نصُّها الساري المعدّل الشرطَ. */
+export async function amendedMatchIds(db: SqlClient, cond: string, params: unknown[]): Promise<string[]> {
+  return (await amendedMatches(db, cond, params)).map((r) => r.id);
+}
+
+/** كل المواد التي لها نسخة سارية الآن (نحو 700 في الإنتاج)، مخزَّنة 5 دقائق. */
+export async function currentlyAmendedIds(db: SqlClient): Promise<string[]> {
+  if (currentAmendedCache && Date.now() - currentAmendedCache.at < UV_CACHE_MS) return currentAmendedCache.ids;
+  if (!(await unitVersionExists(db))) return [];
+  const rows = await db.query<{ id: string }>(`SELECT DISTINCT unit_id AS id FROM unit_version WHERE valid_from <= now()`);
+  currentAmendedCache = { at: Date.now(), ids: rows.map((r) => r.id) };
+  return currentAmendedCache.ids;
+}
+
+/** للاختبارات: يُسقط ما خُزّن عن unit_version. */
 export function resetUnitVersionCache(): void {
   unitVersionKnown = null;
+  currentAmendedCache = null;
 }
 
 /**
@@ -113,6 +137,20 @@ export function withAmendedIds(pre: string | null, full: string, ids: string[], 
   params.push(ids);
   const v = `a."id" = ANY($${params.length}::text[])`;
   return `(${pre ?? "TRUE"} OR ${v}) AND (${full} OR ${v})`;
+}
+
+/**
+ * النص الساري وحده للمادة المعدّلة (للمنطقي: النفي على النص القديم يُرجع مادة نصُّها اليوم يحوي المنفي — مراجعة الجودة
+ * على d11bc97): المادة المعدّلة تُقبل بمطابقة ساريها وحده، وغير المعدّلة بمحفوظها. التصفية على الخام تبقى مدفوعة إلى المسح.
+ */
+export function withCurrentTextOnly(pre: string | null, full: string, matched: string[], allAmended: string[], params: unknown[]): string {
+  if (!allAmended.length) return withAmendedIds(pre, full, matched, params);
+  params.push(allAmended);
+  const amended = `a."id" = ANY($${params.length}::text[])`;
+  if (!matched.length) return `${pre ? `${pre} AND ` : ""}NOT ${amended} AND ${full}`;
+  params.push(matched);
+  const v = `a."id" = ANY($${params.length}::text[])`;
+  return `(${pre ?? "TRUE"} OR ${v}) AND ((NOT ${amended} AND ${full}) OR ${v})`;
 }
 
 /**
