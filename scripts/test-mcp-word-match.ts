@@ -102,6 +102,8 @@ for (const [term, mode, text, expect] of CASES) {
 
 ok(compileTerm("؟؟", "word") === null, "W لفظ بلا حرف ولا رقم يُرفض");
 ok(compileTerm("  ", "word") === null, "W لفظ فارغ يُرفض");
+const longPhrase = compileTerm(Array.from({ length: 40 }, () => "فسخ").join(" "), "word");
+ok(longPhrase !== null && (longPhrase.regex?.match(/فسخ/g)?.length ?? 0) === 16, "W العبارة مسقوفة بـ16 كلمة");
 ok(normalizeAr("أإآٱ ى ة ؤ ئ ـ") === "اااا ي ه و ي ", "W التطبيع: الهمزات والوصلية والمقصورة والمربوطة والتطويل");
 ok(compileTerm("الغبن", "word")?.literal === "غبن", "W «ال» تُجرَّد إن بقي ثلاثة أحرف (التصفية على «غبن»)");
 ok(compileTerm("الشركة", "word")?.literal === "شرك", "W التصفية للتاء المربوطة على أصل الكلمة");

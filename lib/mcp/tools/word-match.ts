@@ -61,6 +61,8 @@ const RE_SPECIAL = /[.*+?^${}()|[\]\\]/g;
 const escapeRe = (s: string) => s.replace(RE_SPECIAL, "\\$&");
 const IS_ARABIC_WORD = new RegExp(`^[${AR_LETTER}]+$`, "u");
 
+export const MAX_PHRASE_WORDS = 16;
+
 export interface CompiledWord {
   /** النمط الكامل للكلمة بلا حدودها. */
   pattern: string;
@@ -125,7 +127,8 @@ export function compileTerm(term: string, mode: MatchMode = "word"): CompiledTer
     const lit = normalizeAr(raw);
     return lit ? { term, mode, literal: lit, regex: null } : null;
   }
-  const words = raw.split(new RegExp(`[^${WORD_CHAR}]+`, "u")).filter(Boolean);
+  // سقف العبارة: 16 كلمة (لا عبارة نظامية حقيقية أطول، ويبقى النمط قصيرًا).
+  const words = raw.split(new RegExp(`[^${WORD_CHAR}]+`, "u")).filter(Boolean).slice(0, MAX_PHRASE_WORDS);
   if (!words.length) return null;
   const parts: CompiledWord[] = words.map((w) =>
     IS_ARABIC_WORD.test(w) ? arabicWordPattern(w, mode) : { pattern: escapeRe(normalizeAr(w)), literal: normalizeAr(w) },
