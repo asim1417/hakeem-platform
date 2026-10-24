@@ -2,13 +2,13 @@
   "task": "HKM-030",
   "kind": "embeddings",
   "model": "text-embedding-3-small",
-  "frozen_at": "2026-10-24T15:19:40Z",
+  "frozen_at": "2026-10-24T15:30:55Z",
   "source": "قراءة الإنتاج (Neon، للقراءة فقط) بـ SUMMARY_SQL في embed-lib.mjs: النص الساري (unit_version ثم content)، كل القديمة والمفقودة",
   "approval": "المالك 22/10/2026: «نفذها كلها»",
-  "selected": 32,
-  "stale": 32,
-  "missing": 0,
-  "ids_md5": "64908772d03853ef4ad57fcd7a03fcbe",
-  "state_md5": "aaf829f5fff01db1361c85ab311d6701",
-  "chars": 31878
+  "selected": 268,
+  "stale": 0,
+  "missing": 268,
+  "ids_md5": "23a99e7e7f6bc9f0db756f80ce2c0b0b",
+  "state_md5": "d8b6646a9612e5418d3e4c7a4bea2e3d",
+  "chars": 486768
 }
