@@ -42,15 +42,23 @@ def get(url: str, timeout: int = 60) -> tuple[int, bytes, str]:
     return st, body, ct
 
 
+def safe_url(url: str) -> str:
+    """ترميز ما ليس ASCII في المسار والاستعلام (روابط المرفقات تحمل attachmentTitle بالعربية).
+    بلا هذا يرفع urllib خطأ ترميز قبل أي طلب، فيُسجَّل الهدف «فشل شبكة» وهو لم يُرسل أصلًا."""
+    return urllib.parse.quote(url, safe=":/?&=%#+,;@!$'()*[]~-._")
+
+
 def _get_once(url: str, timeout: int = 60) -> tuple[int, bytes, str]:
-    req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept-Language": "ar,en;q=0.8"})
+    req = urllib.request.Request(safe_url(url), headers={"User-Agent": UA, "Accept-Language": "ar,en;q=0.8"})
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
             return r.status, r.read(), r.headers.get("Content-Type", "")
     except urllib.error.HTTPError as e:
         return e.code, e.read() if e.fp else b"", ""
-    except Exception as e:  # شبكة
+    except (urllib.error.URLError, TimeoutError, ConnectionError, OSError) as e:  # شبكة فقط: يُعاد
         return 0, str(e).encode(), ""
+    except Exception as e:  # خطأ محلي (ترميز ونحوه): لا يُعاد ويُسجَّل -1
+        return -1, f"{type(e).__name__}: {e}".encode(), ""
 
 
 def fetch_law(t: dict, out: pathlib.Path, pace: float) -> dict:
