@@ -328,7 +328,11 @@ async function mcpTests(db: SqlClient) {
   ok(r1.issue_instrument === "مرسوم ملكي رقم (م/43) وتاريخ 1443/5/26هـ" && r1.issue_date_h === "1443/05/26" && r1.status === "ساري", "M-13 الحقول التي كانت null صارت تُملأ (الأداة والتاريخ والحالة)");
   ok(r1.issue_instruments.length === 2 && r1.dates.issued.hijri === "1443/05/26" && r1.dates.applied.gregorian === null, "M-13 issue_instruments[] والتواريخ الأربعة");
   // HKM-044: نص المقدمة بطلب صريح؛ والافتراض وصفها وطولها.
-  ok("text_included" in r1.preamble && r1.preamble.text_included === false && !("units" in r1.preamble) && r1.preamble.chars > 0 && r1.preamble.complete === true, "HKM-044 الافتراض: وصف المقدمة وطولها بلا نصها");
+  ok("text_included" in r1.preamble && r1.preamble.text_included === false && "units" in r1.preamble && r1.preamble.units === null && r1.preamble.chars > 0 && r1.preamble.complete === true, "HKM-044 الافتراض: وصف المقدمة وطولها بلا نصها (units=null)");
+  ok("instruments" in r1.preamble && Array.isArray(r1.preamble.instruments) && r1.preamble.instruments.length > 0 && r1.preamble.truncated === false, "HKM-044 الافتراض يبقي أدوات المقدمة (بلا نص) وtruncated");
+  ok("text" in r2.preamble && r2.preamble.text === null && r2.preamble.kind === "legacy_text", "HKM-044 الافتراض للنص القديم: text=null لا غياب المفتاح");
+  const lkLean = await getLawTool(db, { lawId: "sys-leak" });
+  ok("law_id" in lkLean && "body_leak" in lkLean.preamble && lkLean.preamble.body_leak === true, "HKM-044 الافتراض يبقي تحذير body_leak");
   const r1p = await getLawTool(db, { name: "نظام الإثبات" }, { asOf: "2026-10-17", includePreamble: true });
   const r2p = await getLawTool(db, { name: "نظام المرافعات الشرعية" }, { includePreamble: true });
   if (!("law_id" in r1p) || !("law_id" in r2p)) return;
@@ -433,6 +437,11 @@ async function mcpTests(db: SqlClient) {
   const fdiOwn = ["مرسوم ملكي رقم م/1 بتاريخ 5 / 1 / 1421", "قرار مجلس الوزراء رقم 1 بتاريخ 5 / 1 / 1421"].map(looseInstrumentKey);
   ok(fdiOwn.includes(looseInstrumentKey("م/1 وتاريخ 1421/1/5هـ — من 2025-02-07")), "HKM-044 الصيغة المختصرة في سجل التحقق تطابق مرسوم الإصدار (م/1 لعام 1421)");
   ok(!fdiOwn.includes(looseInstrumentKey("م/19 وتاريخ 1446/1/16هـ")) && looseInstrumentKey("م/٤٦ وتاريخ ١٤٣٦/٦/٥هـ") === "م/46|1436", "HKM-044 أداة أخرى لا تطابق، والأرقام الهندية تُقرأ");
+  // مراجعة الجودة ٧: بطاقة تحمل أداة من سنة أخرى (مرسوم النظام اللاحق) لا تُخفي أداة الإلغاء الحقيقية.
+  const mixed = JSON.parse(JSON.stringify(base)) as typeof base;
+  mixed.card.instruments = [...mixed.card.instruments, { kind: "royal_decree", text: "مرسوم ملكي رقم (م/43) وتاريخ 1443/5/26هـ", number: "م/43", dateHijri: "1443/05/26", source: "law_card", url: null }];
+  const mixedOut = toMcpLaw(mixed, { by: "id", query: "sys-murafaat", alternatives: [] }, "", { tocLimit: 300 });
+  ok(mixedOut.toc.find((t) => t.number === 101)?.repealed_by?.includes("م/43") === true && mixedOut.data_warnings.length === 0, "HKM-044 الحارس مقصور على أدوات سنة الإصدار: م/43 لعام 1443 تبقى أداة إلغاء");
   const normal = toMcpLaw(base, { by: "id", query: "sys-murafaat", alternatives: [] }, "", { tocLimit: 300 });
   ok(normal.data_warnings.length === 0 && normal.toc.find((t) => t.number === 101)?.repealed_by?.includes("م/43") === true, "HKM-044 الضبط: أداة إلغاء أخرى (م/43) تبقى ظاهرة بلا تحذير");
 }

@@ -16,7 +16,7 @@
 import { prisma } from "@/lib/prisma";
 import { effectiveArticleTexts } from "@/lib/modules/legal-core/effective-text";
 import { NON_ARTICLE_BIS } from "@/lib/modules/legal-core/article-key";
-import { compileTerm, matchModeLabel, normalizeAr, type CompiledTerm, type MatchMode } from "./word-match";
+import { compileTerm, matchModeLabel, normalizeAr, normSqlExpr, type CompiledTerm, type MatchMode } from "./word-match";
 
 export { normalizeAr };
 
@@ -26,21 +26,39 @@ export const enumerateToolDef = {
     "حصر شامل (غير مرتَّب دلاليًا) لكل المواد التي يرد فيها لفظ أو أكثر. يرجع العدد الإجمالي، وتوزيعًا حسب النظام، وصفحة نتائج مع cursor للمتابعة. استخدمه للدراسات الحصرية بدل hakeem_search.",
 };
 
-// تعبير التطبيع في Postgres — مطابِق تمامًا لـ normalizeAr، عبر translate نقيّ: صور الحروف الثمانية
-// تُبدَّل، وكل حرف تشكيل أو تطويل يقع بعدها في «from» فيتجاوز طول «to» يحذفه translate.
-const _VARIANTS_FROM = "أإآٱىةؤئ"; // أ إ آ ٱ ى ة ؤ ئ
-const _VARIANTS_TO = "اااايهوي"; // ا ا ا ا ي ه و ي (٨ مقابل ٨)
-const _DIACRITICS =
-  Array.from({ length: 0x065f - 0x064b + 1 }, (_, i) => String.fromCharCode(0x064b + i)).join("") + "ٰ" + "ـ";
-export const NORM_EXPR = `translate(a."content", '${_VARIANTS_FROM}${_DIACRITICS}', '${_VARIANTS_TO}')`;
+/** تعبير التطبيع على نص المادة (مطابق لـ normalizeAr). */
+export const NORM_EXPR = normSqlExpr(`a."content"`);
+/**
+ * التطبيع يُحسب مرة واحدة لكل صف (مراجعة الجودة ٦: كان يُحسب مرتين للتصفية والنمط): LATERAL مع OFFSET 0
+ * يمنع المخطِّط من تسطيح الاستعلام الفرعي ونسخ التعبير.
+ */
+export const NORM_LATERAL = `CROSS JOIN LATERAL (SELECT ${NORM_EXPR} AS n OFFSET 0) nt`;
+const NORM_REF = `nt.n`;
 
-/** شرط لفظ واحد على النص المطبَّع: تصفية ILIKE ثم نمط حدود الكلمة. يضيف معاملاته إلى params. */
-export function termConditionSql(t: CompiledTerm, params: unknown[]): string {
+/** شرط لفظ واحد على النص المطبَّع (nt.n): تصفية ILIKE ثم نمط حدود الكلمة. يضيف معاملاته إلى params. */
+export function termConditionSql(t: CompiledTerm, params: unknown[], normRef = NORM_REF): string {
   params.push(`%${t.literal.replace(/[\\%_]/g, "\\$&")}%`);
-  const like = `${NORM_EXPR} ILIKE $${params.length}`;
+  const like = `${normRef} ILIKE $${params.length}`;
   if (!t.regex) return `(${like})`;
   params.push(t.regex);
-  return `(${like} AND ${NORM_EXPR} ~* $${params.length})`;
+  return `(${like} AND ${normRef} ~* $${params.length})`;
+}
+
+/**
+ * شرط WHERE للحصر (يُصدَّر للاختبار، مراجعة الجودة ٥): الألفاظ بـ OR، والصفوف غير المادية مستبعدة،
+ * ثم النظام ثم المؤشر. يُستعمل بعد «FROM legal_articles a» و NORM_LATERAL.
+ */
+export function enumerateWhereSql(compiled: CompiledTerm[], opts: { lawId?: string; cursor?: string }, params: unknown[]): string {
+  let w = `(${compiled.map((t) => termConditionSql(t, params)).join(" OR ")}) AND a."articleBis" < ${NON_ARTICLE_BIS}`;
+  if (opts.lawId) {
+    params.push(opts.lawId);
+    w += ` AND a."legalSystemId" = $${params.length}`;
+  }
+  if (opts.cursor) {
+    params.push(opts.cursor);
+    w += ` AND a."id" > $${params.length}`;
+  }
+  return w;
 }
 
 export interface EnumeratePage {
@@ -60,23 +78,48 @@ export interface EnumerateResult {
   page: EnumeratePage[];
   next_cursor: string | null;
   /** HKM-044: طريقة المطابقة وما فُتّش. */
-  match: { mode: MatchMode; rule: string; terms: string[]; rejected_terms: string[] };
+  match: {
+    mode: MatchMode;
+    rule: string;
+    terms: string[];
+    rejected_terms: string[];
+    /** عبارات جاوزت 16 كلمة فطوبق أولها فقط. */
+    truncated_terms: string[];
+    /** ألفاظ تلتبس بعد التطبيع بكلمة وظيفية («آلية» = «إليه»). */
+    ambiguous_terms: Array<{ term: string; with: string[] }>;
+  };
   scope: { law_id: string | null; rows: string; exhaustive: true };
   note: string;
 }
 
+/** وصف النطاق في الملاحظة: «مدونة حكيم كلها» أو «النظام المحدد كله». */
+export function scopePhrase(lawId?: string | null): { name: string; whole: string } {
+  return lawId ? { name: "النظام المحدد (law_id)", whole: "النظام المحدد (law_id) كله" } : { name: "مدونة حكيم", whole: "مدونة حكيم كلها" };
+}
+
 /** الملاحظة بثلاث حالات: وُجد (كاملًا أو بصفحات)، فُتّش النطاق كله فلم يوجد، أو رُفضت الألفاظ كلها. */
-export function enumerateNote(o: { total: number; hasMore: boolean; scopeLabel: string; mode: MatchMode; rejected: string[] }): string {
-  const rej = o.rejected.length ? ` ورُفض ${o.rejected.length} لفظ لا حرف فيه ولا رقم.` : "";
+export function enumerateNote(o: {
+  total: number;
+  hasMore: boolean;
+  lawId?: string | null;
+  mode: MatchMode;
+  rejected: string[];
+  truncated?: string[];
+  ambiguous?: string[];
+}): string {
+  const sc = scopePhrase(o.lawId);
+  const extra =
+    (o.rejected.length ? ` رُفض ${o.rejected.length} لفظ لا حرف فيه ولا رقم.` : "") +
+    (o.truncated?.length ? ` قُطعت ${o.truncated.length} عبارة عند 16 كلمة فطوبق أولها فقط.` : "") +
+    (o.ambiguous?.length ? ` يلتبس بعد التطبيع بكلمات وظيفية: ${o.ambiguous.join("، ")}، فقد تدخل في النتائج.` : "");
   if (o.total === 0)
     return (
-      `فُتّش ${o.scopeLabel} كله بهذه الألفاظ (${matchModeLabel(o.mode)}) فلم توجد مادة. ` +
+      `فُتّش ${sc.whole} بهذه الألفاظ (${matchModeLabel(o.mode)}) فلم توجد مادة. ` +
       `هذا نفي في هذا النطاق وبهذه الصيغ وحدها، لا نفي للحكم؛ جرّب صيغًا أخرى أو match="derivatives" أو hakeem_search.` +
-      rej
+      extra
     );
-  if (o.hasMore)
-    return `total وby_law كاملان لـ${o.scopeLabel}؛ الصفحة جزء منها — أعد الاستدعاء بـ cursor حتى يرجع next_cursor فارغًا.${rej}`;
-  return `هذه كل المواد المطابقة في ${o.scopeLabel} (${matchModeLabel(o.mode)}).${rej}`;
+  if (o.hasMore) return `total وby_law كاملان في ${sc.whole}؛ الصفحة جزء منها — أعد الاستدعاء بـ cursor حتى يرجع next_cursor فارغًا.${extra}`;
+  return `هذه كل المواد المطابقة في ${sc.whole} (${matchModeLabel(o.mode)}).${extra}`;
 }
 
 export async function handleEnumerate(args: {
@@ -97,8 +140,16 @@ export async function handleEnumerate(args: {
     if (c) compiled.push(c);
     else rejected.push(String(t ?? ""));
   }
-  const scopeLabel = args.law_id ? "النظام المحدد (law_id)" : "مدونة حكيم كلها";
-  const matchOut = { mode, rule: matchModeLabel(mode), terms: compiled.map((c) => c.term), rejected_terms: rejected };
+  const truncated = compiled.filter((c) => c.truncated).map((c) => c.term);
+  const ambiguous = compiled.filter((c) => c.ambiguous?.length).map((c) => ({ term: c.term, with: c.ambiguous ?? [] }));
+  const matchOut = {
+    mode,
+    rule: matchModeLabel(mode),
+    terms: compiled.map((c) => c.term),
+    rejected_terms: rejected,
+    truncated_terms: truncated,
+    ambiguous_terms: ambiguous,
+  };
   const scope = { law_id: args.law_id ?? null, rows: "مواد الأنظمة واللوائح (بلا الصفوف غير المادية)", exhaustive: true as const };
   if (!compiled.length) {
     return {
@@ -112,24 +163,15 @@ export async function handleEnumerate(args: {
     };
   }
 
-  const where = (params: unknown[]): string => {
-    let w = `(${compiled.map((t) => termConditionSql(t, params)).join(" OR ")}) AND a."articleBis" < ${NON_ARTICLE_BIS}`;
-    if (args.law_id) {
-      params.push(args.law_id);
-      w += ` AND a."legalSystemId" = $${params.length}`;
-    }
-    return w;
-  };
-
   // العدّ الإجمالي والتوزيع حسب النظام (بلا cursor حتى يبقى ثابتًا عبر الصفحات).
   // LEFT JOIN + COALESCE: لا تُسقَط مادة يتيمة (legalSystemId فارغ) — شرط صحّة «الحصر الشامل».
   const countParams: unknown[] = [];
-  const countWhere = where(countParams);
+  const countWhere = enumerateWhereSql(compiled, { lawId: args.law_id }, countParams);
   const byLaw = await prisma.$queryRawUnsafe<Array<{ law_id: string | null; law: string; n: bigint }>>(
     `SELECT a."legalSystemId" AS law_id,
             COALESCE(l."name", a."lawName") AS law,
             COUNT(*)::bigint AS n
-       FROM "legal_articles" a
+       FROM "legal_articles" a ${NORM_LATERAL}
        LEFT JOIN "legal_systems" l ON l."id" = a."legalSystemId"
       WHERE ${countWhere}
       GROUP BY a."legalSystemId", COALESCE(l."name", a."lawName")
@@ -139,17 +181,13 @@ export async function handleEnumerate(args: {
 
   // صفحة النتائج — ترتيب ثابت بالمعرّف (شرط صحّة الـ cursor).
   const pageParams: unknown[] = [];
-  let pageWhere = where(pageParams);
-  if (args.cursor) {
-    pageParams.push(args.cursor);
-    pageWhere += ` AND a."id" > $${pageParams.length}`;
-  }
+  const pageWhere = enumerateWhereSql(compiled, { lawId: args.law_id, cursor: args.cursor }, pageParams);
   const rows = await prisma.$queryRawUnsafe<
     Array<{ id: string; article_number: number; law_id: string | null; law: string; content: string }>
   >(
     `SELECT a."id", a."articleNumber" AS article_number, a."legalSystemId" AS law_id,
             COALESCE(l."name", a."lawName") AS law, a."content"
-       FROM "legal_articles" a
+       FROM "legal_articles" a ${NORM_LATERAL}
        LEFT JOIN "legal_systems" l ON l."id" = a."legalSystemId"
       WHERE ${pageWhere}
       ORDER BY a."id" ASC
@@ -184,6 +222,6 @@ export async function handleEnumerate(args: {
     next_cursor: hasMore ? page[page.length - 1].id : null,
     match: matchOut,
     scope,
-    note: enumerateNote({ total, hasMore, scopeLabel, mode, rejected }),
+    note: enumerateNote({ total, hasMore, lawId: args.law_id, mode, rejected, truncated, ambiguous: ambiguous.flatMap((a) => a.with) }),
   };
 }

@@ -82,10 +82,9 @@ export function handleGuide() {
    المطابقة كلمة كاملة: «التعدي» لا تطابق «التعديل». للمشتقات (يفسخ، انفسخ) match="derivatives"،
    أو اذكر الصيغ ألفاظًا مستقلة (مفسوخ، انفساخ). total=0 نفي في النطاق وبالصيغ المطلوبة وحدها.
 
-٣-أ. بطاقة نظام: hakeem_get_law يعيد الفهرس صفحات (toc_page.next_offset)، والمقدمة بـ include_preamble=true.
-
 ٣. سؤال عن مادة معروفة:
    hakeem_get_article، وقبل عزو أي إحالة في مخرج نهائي: hakeem_verify_citation.
+   بطاقة النظام: hakeem_get_law يعيد الفهرس صفحات (toc_page.next_offset)، والمقدمة بـ include_preamble=true.
 
 ٤. فهم مصطلح أو بناء استراتيجية بحث:
    hakeem_expand_terms أولًا، ثم ابحث بالمرادفات والأخص.

@@ -2,12 +2,15 @@
  * HKM-044: مطابقة الحصر بحدود الكلمة (lib/mcp/tools/word-match.ts) وملاحظات النفي ووضع بطاقة النظام المختصر.
  *   W-*  المطابقة في الكود: الحالات التي فشلت في فحص 24/10/2026 حيًّا عبر الموصل، ونظائرها.
  *   N-*  ملاحظات النفي: ثلاث حالات، ولا «تغطية شاملة» بلا قيد.
- *   P-*  المطابقة نفسها داخل Postgres (~* وtranslate) على قاعدة محلية _test — تخطٍّ إن لم تتوفر.
+ *   Q-*  ملاحظات المراجعة المستقلة على 567a895 (السوابق المركبة، الكلمات الوظيفية، «ال» والضمير، النسبة…).
+ *   P-*  المطابقة نفسها داخل Postgres (~* وtranslate) وشرط WHERE للحصر على قاعدة محلية _test.
+ *        غياب القاعدة تخطٍّ معلَن، وفشلٌ إن ضُبط HKM044_REQUIRE_DB=1 (أو CI).
  * لا إنتاج ولا فرع منه: النصوص اصطناعية أو جمل قصيرة بصيغ الأنظمة.
  */
 import { compileTerm, matchesText, normalizeAr, type MatchMode } from "../lib/mcp/tools/word-match";
-import { enumerateNote, termConditionSql } from "../lib/mcp/tools/enumerate";
-import { researchNote } from "../lib/mcp/tools/research";
+import { enumerateNote, enumerateWhereSql, NORM_LATERAL, termConditionSql } from "../lib/mcp/tools/enumerate";
+import { researchLexical, researchNote } from "../lib/mcp/tools/research";
+import { NORM_TRANSLATE_FROM, NORM_TRANSLATE_TO, normSqlExpr, type CompiledTerm } from "../lib/mcp/tools/word-match";
 import { connectLocalTest } from "./hkm-023-b/local-db";
 
 let failed = 0;
@@ -56,7 +59,8 @@ const CASES: Case[] = [
   ["فساخ", "derivatives", "بانفساخ العقد", true],
   ["فسوخ", "derivatives", "يعد العقد مفسوخًا من تلقاء نفسه", true],
   // حصر 24/10: «تعويض» بالكلمة الكاملة أسقط «تعويضيًا» و«الحق» أسقط «الحقوق» و«الحقيقة» (صواب)
-  ["تعويض", "word", "يستحق مبلغًا تعويضيًا", true],
+  ["تعويض", "word", "يستحق مبلغًا تعويضيًا", false], // النسبة في derivatives وحده (مراجعة الجودة ٣)
+  ["تعويض", "derivatives", "يستحق مبلغًا تعويضيًا", true],
   ["الحق", "word", "حماية الحقوق", false],
   ["الحق", "word", "في الحقيقة", false],
   ["المدة", "word", "شركة المدهون", false],
@@ -93,6 +97,40 @@ const CASES: Case[] = [
   // ⑩ الاحتواء صراحةً يبقي السلوك القديم
   ["التعدي", "contains", "أو التعديل في أحكامها", true],
   ["غبون", "contains", "يرغبون بتأسيس", true],
+  // ⑪ مراجعة الجودة ١: السوابق المركبة لا تُجرَّد
+  ["والدين", "word", "نفقة الوالدين", true],
+  ["والدين", "word", "سداد الدين", false],
+  ["والديه", "word", "ما لديه من مال", false],
+  ["بالغين", "word", "الأشخاص البالغين", true],
+  // ⑫ مراجعة الجودة ٢: التاء القصيرة والكلمات الوظيفية
+  ["آلة", "word", "المادة التي تليها", false],
+  ["آلة", "word", "لله الأمر", false],
+  ["آلة", "word", "استعمال آلة حادة", true],
+  ["الدية", "word", "ما لديه من أموال", false],
+  ["الدية", "word", "تجب الدية على العاقلة", true],
+  ["الدية", "word", "دفع ديته", true],
+  // ⑬ مراجعة الجودة ٣: لا ضمير بعد «ال»، والنسبة في derivatives
+  ["مال", "word", "حقوق المالك", false],
+  ["مال", "word", "الأوراق المالية", false],
+  ["مال", "word", "رأس المال", true],
+  ["مال", "word", "رأس ماله", true],
+  ["مال", "word", "حقوق مالك العقار", false], // فحص 24/10: «مالك» 489 مرة و«مالي» 409 في المدونة
+  ["مال", "word", "مركز مالي", false],
+  ["مال", "derivatives", "مركز مالي", true],
+  ["رسم", "word", "الجريدة الرسمية", false],
+  ["عمل", "word", "العملية الجراحية", false],
+  ["عمل", "word", "صاحب العمل", true],
+  ["شرط", "word", "رجال الشرطة", false],
+  ["شرط", "word", "الشرط الجزائي", true],
+  ["جمع", "word", "الجمعية العامة", false],
+  ["تعويض", "derivatives", "الدعوى التعويضية", true],
+  // ⑭ مراجعة الجودة ١٠: صرفيات وأرقام هندية
+  ["فسخ", "derivatives", "وللدائن أن سيفسخ العقد", true],
+  ["فسخ", "derivatives", "إن لم يفسخوه", true],
+  ["30", "word", "خلال (٣٠) يومًا", true],
+  ["٣٠", "word", "خلال (30) يومًا", true],
+  ["الشركه", "word", "دائني الشركات", true],
+  ["التنبيه", "word", "قراءة التنبيهات", true],
 ];
 
 for (const [term, mode, text, expect] of CASES) {
@@ -103,56 +141,99 @@ for (const [term, mode, text, expect] of CASES) {
 ok(compileTerm("؟؟", "word") === null, "W لفظ بلا حرف ولا رقم يُرفض");
 ok(compileTerm("  ", "word") === null, "W لفظ فارغ يُرفض");
 const longPhrase = compileTerm(Array.from({ length: 40 }, () => "فسخ").join(" "), "word");
-ok(longPhrase !== null && (longPhrase.regex?.match(/فسخ/g)?.length ?? 0) === 16, "W العبارة مسقوفة بـ16 كلمة");
-ok(normalizeAr("أإآٱ ى ة ؤ ئ ـ") === "اااا ي ه و ي ", "W التطبيع: الهمزات والوصلية والمقصورة والمربوطة والتطويل");
+const words = (n: number) => Array.from({ length: n }, () => "فسخ").join(" ");
+ok(longPhrase !== null && matchesText(words(16), longPhrase) && !matchesText(words(15), longPhrase), "W العبارة مسقوفة بـ16 كلمة (تطابق 16 ولا تطابق 15)");
+ok(normalizeAr("أإآٱ ى ة ؤ ئ ـ ٣٠") === "اااا ي ه و ي  30", "W التطبيع: الهمزات والوصلية والمقصورة والمربوطة والتطويل والأرقام الهندية");
+ok(longPhrase?.truncated === true && compileTerm("فسخ العقد", "word")?.truncated === undefined, "Q العبارة المقطوعة موسومة truncated");
+const amb = compileTerm("آلية", "word");
+ok(amb !== null && (amb.ambiguous ?? []).includes("اليه") && matchesText("رجع إليه", amb), "Q «آلية» تلتبس بـ«إليه» بعد التطبيع: لا حاجز، وموسومة ambiguous");
+ok(compileTerm("الدية", "word")?.ambiguous === undefined, "Q «الدية» ليست ملتبسة (الحاجز يمنع «لديه»)");
+const nTr = enumerateNote({ total: 3, hasMore: false, mode: "word", rejected: [], truncated: ["عبارة طويلة"], ambiguous: ["اليه"] });
+ok(/قُطعت 1 عبارة/.test(nTr) && /يلتبس بعد التطبيع/.test(nTr), "Q الملاحظة تعلن القطع والالتباس");
+const nScope = enumerateNote({ total: 0, hasMore: false, mode: "word", rejected: [] }) + enumerateNote({ total: 0, hasMore: false, lawId: "x", mode: "word", rejected: [] });
+ok(!/كلها كله/.test(nScope) && !/لـ[^\s]/.test(nScope) && /مدونة حكيم كلها/.test(nScope) && /النظام المحدد \(law_id\) كله/.test(nScope), "Q صياغة النطاق («كلها» لا «كلها كله»، ولا «لـال»)");
+const rl = researchLexical("الغبن");
+ok(rl.head === "غبن" && rl.compiled.length === 3 && rl.compiled.every((c) => c.mode === "derivatives") && !rl.compiled.some((c) => matchesText("يرغبون بتأسيس", c)) && rl.compiled.some((c) => matchesText("المتعاقد المغبون", c)), "Q البحث الموضوعي: صيغ الرأس بوضع derivatives، و«يرغبون» خارجها و«المغبون» داخلها");
+const rRej = researchNote({ head: "؟", forms: ["؟"], lexicalTotal: 0, shown: 0, more: false, rejected: true });
+ok(/رُفض رأس الموضوع/.test(rRej) && !/فُتّش/.test(rRej), "Q البحث الموضوعي: الرأس المرفوض لا يُوصف بأنه فُتّش");
 ok(compileTerm("الغبن", "word")?.literal === "غبن", "W «ال» تُجرَّد إن بقي ثلاثة أحرف (التصفية على «غبن»)");
 ok(compileTerm("الشركة", "word")?.literal === "شرك", "W التصفية للتاء المربوطة على أصل الكلمة");
 
 // ── ملاحظات النفي ──
-const n0 = enumerateNote({ total: 0, hasMore: false, scopeLabel: "مدونة حكيم كلها", mode: "word", rejected: [] });
+const n0 = enumerateNote({ total: 0, hasMore: false, mode: "word", rejected: [] });
 ok(/فُتّش مدونة حكيم كلها/.test(n0) && /نفي في هذا النطاق وبهذه الصيغ وحدها/.test(n0), "N صفر: فُتّش النطاق كله، ونفي محدود بالنطاق والصيغ");
-const nAll = enumerateNote({ total: 6, hasMore: false, scopeLabel: "مدونة حكيم كلها", mode: "word", rejected: [] });
+const nAll = enumerateNote({ total: 6, hasMore: false, mode: "word", rejected: [] });
 ok(/هذه كل المواد المطابقة/.test(nAll) && /لا جزء كلمة/.test(nAll), "N كامل: كل المطابق مع طريقة المطابقة");
-const nMore = enumerateNote({ total: 120, hasMore: true, scopeLabel: "مدونة حكيم كلها", mode: "derivatives", rejected: ["؟"] });
+const nMore = enumerateNote({ total: 120, hasMore: true, mode: "derivatives", rejected: ["؟"] });
 ok(/cursor/.test(nMore) && /رُفض 1 لفظ/.test(nMore), "N صفحات: المتابعة بـ cursor، والألفاظ المرفوضة معلنة");
-const r0 = researchNote({ head: "غبن", forms: ["غبن", "غبان", "غبون"], lexicalTotal: 0, shown: 0, more: false, scoped: false });
+const r0 = researchNote({ head: "غبن", forms: ["غبن", "غبان", "غبون"], lexicalTotal: 0, shown: 0, more: false });
 ok(/فُتّش/.test(r0) && /نفي لفظي/.test(r0) && !/التغطية شاملة/.test(r0), "N بحث موضوعي صفر: نفي لفظي في النطاق");
-const r6 = researchNote({ head: "غبن", forms: ["غبن", "غبان", "غبون"], lexicalTotal: 6, shown: 6, more: false, scoped: false });
+const r6 = researchNote({ head: "غبن", forms: ["غبن", "غبان", "غبون"], lexicalTotal: 6, shown: 6, more: false });
 ok(/مكتمل/.test(r6) && /الشمول لفظي لا دلالي/.test(r6) && !/التغطية شاملة/.test(r6), "N بحث موضوعي: مكتمل لفظيًّا، لا ادعاء شمول دلالي");
-const rMore = researchNote({ head: "فسخ", forms: ["فسخ"], lexicalTotal: 118, shown: 50, more: true, scoped: false });
+const rMore = researchNote({ head: "فسخ", forms: ["فسخ"], lexicalTotal: 118, shown: 50, more: true });
 ok(/118/.test(rMore) && /أول 50/.test(rMore) && /derivatives/.test(rMore), "N بحث موضوعي بصفحات: العدد كامل والمعروض جزء");
 
 // ── المطابقة داخل Postgres ──
+const REQUIRE_DB = process.env.HKM044_REQUIRE_DB === "1" || Boolean(process.env.CI);
 async function pgTests() {
   const conn = await connectLocalTest(process.env.HKM044_TEST_DATABASE_URL || "postgres://hakeem:localtest@127.0.0.1:54329/hakeem_hkm044_test");
-  if (!conn) return;
+  if (!conn) {
+    console.log("⚠ تخطٍّ: لا قاعدة محلية — اختبارات P (تطابق القاعدة والكود) لم تُشغَّل");
+    if (REQUIRE_DB) ok(false, "P يلزم Postgres محلي (HKM044_REQUIRE_DB=1)");
+    return;
+  }
   const { client, db } = conn;
   try {
     await db.query(`DROP TABLE IF EXISTS legal_articles`);
-    await db.query(`CREATE TABLE legal_articles (id text PRIMARY KEY, content text NOT NULL, "articleBis" int NOT NULL DEFAULT 0)`);
+    await db.query(`CREATE TABLE legal_articles (id text PRIMARY KEY, content text NOT NULL, "articleBis" int NOT NULL DEFAULT 0, "legalSystemId" text)`);
     const texts = [...new Set(CASES.map((c) => c[2]))];
-    for (let i = 0; i < texts.length; i++) await db.query(`INSERT INTO legal_articles (id, content) VALUES ($1, $2)`, [`t${String(i).padStart(3, "0")}`, texts[i]]);
     const idOf = new Map(texts.map((t, i) => [t, `t${String(i).padStart(3, "0")}`]));
+    for (const t of texts) await db.query(`INSERT INTO legal_articles (id, content) VALUES ($1, $2)`, [idOf.get(t), t]);
     let agree = 0;
     for (const [term, mode, text, expect] of CASES) {
       const c = compileTerm(term, mode)!;
       const params: unknown[] = [];
       const cond = termConditionSql(c, params);
       params.push(idOf.get(text));
-      const rows = await db.query<{ id: string }>(`SELECT a.id FROM legal_articles a WHERE ${cond} AND a.id = $${params.length}`, params);
+      const rows = await db.query<{ id: string }>(`SELECT a.id FROM legal_articles a ${NORM_LATERAL} WHERE ${cond} AND a.id = $${params.length}`, params);
       const got = rows.length === 1;
       if (got === expect) agree++;
       else ok(false, `P ${mode} «${term}» في Postgres ${expect ? "يطابق" : "لا يطابق"}: ${text}`);
     }
     ok(agree === CASES.length, `P Postgres يوافق الكود في كل الحالات (${agree}/${CASES.length})`);
-    // التطبيع داخل القاعدة = normalizeAr
-    const sample = "أإآٱ ى ة ؤ ئ فَسْخ الفســخ";
-    const n = await db.query<{ n: string }>(`SELECT translate($1::text, $2::text, $3::text) AS n`, [
-      sample,
-      "أإآٱىةؤئ" + Array.from({ length: 0x065f - 0x064b + 1 }, (_, i) => String.fromCharCode(0x064b + i)).join("") + "ٰـ",
-      "اااايهوي",
-    ]);
-    ok(n[0].n === normalizeAr(sample), "P تطبيع translate في القاعدة = normalizeAr في الكود");
+    // التطبيع داخل القاعدة = normalizeAr (بالتعبير المصدَّر نفسه)
+    const sample = "أإآٱ ى ة ؤ ئ فَسْخ الفســخ ٣٠٠";
+    const n = await db.query<{ n: string }>(`SELECT ${normSqlExpr("$1::text")} AS n`, [sample]);
+    ok(n[0].n === normalizeAr(sample), "P تطبيع translate في القاعدة = normalizeAr في الكود (normSqlExpr)");
+    ok(NORM_TRANSLATE_FROM.length >= NORM_TRANSLATE_TO.length && NORM_TRANSLATE_TO.length === 18, "P جدول translate: 8 حروف و10 أرقام، والباقي يُحذف");
+
+    // شرط WHERE للحصر (مراجعة الجودة ٥): OR بين الألفاظ، واستبعاد الدرجة ≥ 100، والنظام، والمؤشر، واتساق الإجمالي.
+    await db.query(`DELETE FROM legal_articles`);
+    const rowsIn: Array<[string, string, number, string]> = [
+      ["e01", "للمتعاقد طلب فسخ العقد", 0, "law-a"],
+      ["e02", "يجوز الفسخ بحكم المحكمة", 0, "law-a"],
+      ["e03", "ويضمن الأمين بالتعدي", 0, "law-b"],
+      ["e04", "فسخ العقد (نص تاريخي لمادة ملغاة)", 100, "law-a"],
+      ["e05", "أو التعديل في أحكامها", 0, "law-b"],
+      ["e06", "وفسخه جائز", 0, "law-b"],
+      ["e07", "ينفسخ العقد", 0, "law-a"],
+    ];
+    for (const [id, content, bis, law] of rowsIn) await db.query(`INSERT INTO legal_articles (id, content, "articleBis", "legalSystemId") VALUES ($1, $2, $3, $4)`, [id, content, bis, law]);
+    const terms = (t: string[], mode: MatchMode = "word") => t.map((x) => compileTerm(x, mode)).filter((x): x is CompiledTerm => x !== null);
+    const run = async (c: CompiledTerm[], o: { lawId?: string; cursor?: string } = {}) => {
+      const params: unknown[] = [];
+      const w = enumerateWhereSql(c, o, params);
+      return (await db.query<{ id: string }>(`SELECT a.id FROM legal_articles a ${NORM_LATERAL} WHERE ${w} ORDER BY a.id`, params)).map((r) => r.id);
+    };
+    const all = await run(terms(["فسخ", "التعدي"]));
+    ok(all.join() === "e01,e02,e03,e06", `P WHERE: OR بين الألفاظ، والدرجة 100 مستبعدة، و«التعديل» و«ينفسخ» خارج word (${all.join()})`);
+    const deriv = await run(terms(["فسخ"], "derivatives"));
+    ok(deriv.join() === "e01,e02,e06,e07", `P WHERE derivatives: «ينفسخ» داخلها والدرجة 100 خارجها (${deriv.join()})`);
+    const lawB = await run(terms(["فسخ", "التعدي"]), { lawId: "law-b" });
+    ok(lawB.join() === "e03,e06", `P WHERE بنظام: law-b وحده (${lawB.join()})`);
+    const page1 = all.slice(0, 2);
+    const rest = await run(terms(["فسخ", "التعدي"]), { cursor: page1[page1.length - 1] });
+    ok([...page1, ...rest].join() === all.join(), "P WHERE بمؤشر: الصفحات تغطي النتائج بلا تكرار ولا فقد، فالإجمالي = مجموع الصفحات");
   } finally {
     await client.end();
   }

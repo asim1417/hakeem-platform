@@ -130,8 +130,20 @@ function preambleOut(data: LawPageData, include = true) {
     source_url: p.officialSourceUrl,
   };
   if (!include) {
+    // مراجعة الجودة ٤: المفاتيح القديمة باقية (بقيمة null بلا نص)، وما لا نص فيه يبقى: أدوات المقدمة وتحذير body_leak.
     const chars = preambleChars(data);
-    return { ...base, text_included: false as const, chars, hint: chars ? "نص المقدمة بـ include_preamble=true" : null };
+    const bodyLeak = p.kind === "legacy_text" && Boolean(p.legacy?.bodyLeak);
+    return {
+      ...base,
+      ...(p.kind === "units" && p.units
+        ? { instruments: p.units.instruments.map((i) => ({ index: i.index, kind: i.kind, number: i.number, date_h: i.dateHijri, heading: i.heading })), units: null }
+        : { text: null }),
+      ...(bodyLeak ? { body_leak: true } : {}),
+      truncated: false,
+      text_included: false as const,
+      chars,
+      hint: chars ? "نص المقدمة بـ include_preamble=true" : null,
+    };
   }
   if (p.kind === "units" && p.units) {
     let budget = MCP_PREAMBLE_MAX_CHARS;
@@ -182,7 +194,13 @@ export function toMcpLaw(
   const first = card.instruments[0] ?? null;
   const articles = data.body.divisions.flatMap((d) => d.articles);
   const lawUrl = `${siteUrl}/legal/${encodeURIComponent(data.system.slug)}`;
-  const ownKeys = new Set(card.instruments.map((i) => looseInstrumentKey(i.text)).filter((k): k is string => k !== null));
+  // مراجعة الجودة ٧: أدوات الإصدار في سنة إصدار النظام وحدها (بطاقة طبعة قديمة قد تحمل مرسوم نظام آخر).
+  const issuedYear = (card.dates.issued.hijri ?? first?.dateHijri ?? "").split("/")[0] || null;
+  const ownKeys = new Set(
+    card.instruments
+      .map((i) => looseInstrumentKey(i.text))
+      .filter((k): k is string => k !== null && (!issuedYear || k.endsWith(`|${issuedYear}`))),
+  );
   const offset = Math.max(0, Math.floor(view.tocOffset ?? 0));
   const limit = Math.min(Math.max(Math.floor(view.tocLimit ?? MCP_TOC_DEFAULT_LIMIT), 1), MCP_TOC_MAX_LIMIT);
   const tocSlice = articles.slice(offset, offset + limit);
@@ -192,7 +210,13 @@ export function toMcpLaw(
   const ownRepeal = isOwnInstrument(card.repeal?.instrument, ownKeys) || isOwnInstrument(evidenceInstrument, ownKeys);
   const ownArticleRepeals = articles.filter((a) => a.repeal && !a.inheritedFromWork && isOwnInstrument(a.repeal.instrument, ownKeys)).length;
   if (ownRepeal || ownArticleRepeals) {
-    const recorded = (ownRepeal ? card.repeal?.instrument ?? evidenceInstrument : articles.find((a) => a.repeal && isOwnInstrument(a.repeal.instrument, ownKeys))?.repeal?.instrument) ?? "";
+    // يُقتبس ما طابق فعلًا (أداة الإلغاء، أو أداة السند، أو أداة المادة).
+    const recorded =
+      (isOwnInstrument(card.repeal?.instrument, ownKeys)
+        ? card.repeal?.instrument
+        : isOwnInstrument(evidenceInstrument, ownKeys)
+          ? evidenceInstrument
+          : articles.find((a) => a.repeal && !a.inheritedFromWork && isOwnInstrument(a.repeal.instrument, ownKeys))?.repeal?.instrument) ?? "";
     warnings.push(
       `أداة الإلغاء المسجلة${ownArticleRepeals ? ` (${ownRepeal ? "للنظام و" : "لـ"}${ownArticleRepeals} مادة)` : ""} تطابق أداة إصدار النظام نفسه، فلم تُعرض أداةً للإلغاء: «${recorded.slice(0, 300)}». الحالة والتاريخ باقيان بسندهما (evidence_url) حتى تُصحَّح البيانات.`,
     );

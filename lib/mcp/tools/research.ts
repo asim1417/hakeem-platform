@@ -14,7 +14,7 @@
  * فدخلت أربع مواد لا صلة لها في بحث «الغبن» مع ملاحظة «التغطية شاملة». الآن الصيغة كلمة كاملة بسوابقها وحروف
  * اشتقاقها ولواحقها، ووسم المقتطف الدلالي بالنمط نفسه، والملاحظة تقول ما فُتّش وبأي صيغ، ولا تدّعي شمولًا دلاليًا.
  */
-import { handleEnumerate, normalizeAr } from "./enumerate";
+import { handleEnumerate, normalizeAr, scopePhrase } from "./enumerate";
 import { compileTerm, matchesText, matchModeLabel, type CompiledTerm } from "./word-match";
 import { searchArticles, expandTerms } from "@/lib/mcp/adapter";
 
@@ -100,9 +100,7 @@ export async function handleResearch(args: {
   const strict = args.strict ?? true;
 
   // ① رأس الموضوع ومشتقاته اللفظية (المسار اللفظي وحده)
-  const head = headToken(args.topic);
-  const lexicalTerms = lexicalVariants(head);
-  const lexicalCompiled = lexicalTerms.map((t) => compileTerm(t, "derivatives")).filter((c): c is CompiledTerm => c !== null);
+  const { head, terms: lexicalTerms, compiled: lexicalCompiled } = researchLexical(args.topic);
   const snippetHasHead = (snippet?: string): boolean => Boolean(snippet) && lexicalCompiled.some((c) => matchesText(snippet as string, c));
 
   // ② التوسيع من المكنز، ثم تنقيح صيغ المسار الدلالي بفلتر «يحتوي الرأس»
@@ -204,17 +202,43 @@ export async function handleResearch(args: {
           lexical_match: a.lexical_match,
         })),
     })),
-    note: researchNote({ head, forms: lexicalTerms, lexicalTotal: lexical.total, shown: lexical.page.length, more: lexical.next_cursor !== null, scoped: Boolean(args.law_id) }),
+    note: researchNote({
+      head,
+      forms: lexicalTerms,
+      lexicalTotal: lexical.total,
+      shown: lexical.page.length,
+      more: lexical.next_cursor !== null,
+      lawId: args.law_id,
+      rejected: lexicalCompiled.length === 0,
+    }),
   };
 }
 
-/** ملاحظة البحث الموضوعي: ما فُتّش وبأي صيغ، ونوع الشمول (لفظي لا دلالي)، وما بقي. */
-export function researchNote(o: { head: string; forms: string[]; lexicalTotal: number; shown: number; more: boolean; scoped: boolean }): string {
-  const scope = o.scoped ? "النظام المحدد" : "مدونة حكيم كلها";
+/** المسار اللفظي للبحث الموضوعي: رأس الموضوع وصيغه مجمّعة بوضع derivatives (يُصدَّر للاختبار). */
+export function researchLexical(topic: string): { head: string; terms: string[]; compiled: CompiledTerm[] } {
+  const head = headToken(topic);
+  const terms = lexicalVariants(head);
+  const compiled = terms.map((t) => compileTerm(t, "derivatives")).filter((c): c is CompiledTerm => c !== null);
+  return { head, terms, compiled };
+}
+
+/** ملاحظة البحث الموضوعي: ما فُتّش وبأي صيغ، ونوع الشمول (لفظي لا دلالي)، وما بقي — أو أن الرأس رُفض فلم يُفتَّش شيء. */
+export function researchNote(o: {
+  head: string;
+  forms: string[];
+  lexicalTotal: number;
+  shown: number;
+  more: boolean;
+  lawId?: string | null;
+  rejected?: boolean;
+}): string {
+  if (o.rejected)
+    return `رُفض رأس الموضوع «${o.head}»: لا حرف فيه ولا رقم، فلم يُفتَّش لفظيًّا شيء. هذا ليس نفيًا؛ أعد الصياغة بلفظ المسألة.`;
+  const sc = scopePhrase(o.lawId);
   const forms = `«${o.head}» بصيغه (${o.forms.join("، ")}) كلماتٍ كاملة`;
   if (o.lexicalTotal === 0)
-    return `فُتّش ${scope} كله فلم يرد ${forms} في أي مادة. هذا نفي لفظي في هذا النطاق وحده؛ المسألة قد ترد بلفظ آخر — انظر نتائج المسار الدلالي (strict=false) أو hakeem_search.`;
+    return `فُتّش ${sc.whole} فلم يرد ${forms} في أي مادة. هذا نفي لفظي في هذا النطاق وحده؛ المسألة قد ترد بلفظ آخر — انظر نتائج المسار الدلالي (strict=false) أو hakeem_search.`;
   if (o.more)
-    return `العدد اللفظي lexical_total_in_corpus (${o.lexicalTotal}) كامل لـ${scope}، والمعروض أول ${o.shown} منه — أكمل بـ hakeem_enumerate(match="derivatives") بالصيغ نفسها مع cursor. الشمول لفظي لا دلالي: ما عبّر عن المسألة بلفظ آخر لا يدخل في هذا العدد.`;
-  return `الحصر اللفظي لـ${forms} مكتمل في ${scope} (${o.lexicalTotal} مادة). الشمول لفظي لا دلالي: ما عبّر عن المسألة بلفظ آخر لا يدخل في هذا العدد.`;
+    return `العدد اللفظي lexical_total_in_corpus (${o.lexicalTotal}) كامل في ${sc.whole}، والمعروض أول ${o.shown} منه — أكمل بـ hakeem_enumerate(match="derivatives") بالصيغ نفسها مع cursor. الشمول لفظي لا دلالي: ما عبّر عن المسألة بلفظ آخر لا يدخل في هذا العدد.`;
+  return `الحصر اللفظي ${forms} مكتمل في ${sc.whole} (${o.lexicalTotal} مادة). الشمول لفظي لا دلالي: ما عبّر عن المسألة بلفظ آخر لا يدخل في هذا العدد.`;
 }
