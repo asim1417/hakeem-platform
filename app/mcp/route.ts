@@ -17,6 +17,7 @@ import { handleResearch } from "@/lib/mcp/tools/research";
 import { handleRange, handleGuide } from "@/lib/mcp/tools/range-and-guide";
 import { getRuling, enumerateRulings } from "@/lib/mcp/tools/rulings";
 import { registerAmanTools } from "@/lib/mcp/aman-server";
+import { registerPhase1Tools } from "@/lib/mcp/register-phase1";
 import { mcpAccessMode, mcpClosedResponse } from "@/lib/mcp/policy";
 import { verifyMcpRequest } from "@/lib/mcp/principal";
 import { runMcpTool } from "@/lib/mcp/tool-runner";
@@ -61,13 +62,17 @@ const handler = createMcpHandler(
       "hakeem_get_law",
       {
         description:
-          "بطاقة نظام سعودي: الاسم الرسمي، التصنيف، أدوات الإصدار (issue_instruments)، التواريخ الأربعة، الحالة، المقدمة (وحدات أو نص مع وسم الاكتمال)، وفهرس مواده (toc). في كل مادة status (ساري/معدّل/ملغى) إن كانت موثّقة، وغيابه = غير مؤكد، وrepealed_by للملغاة بأداة خاصة بها، وbis/key للمادة المكررة («12 مكرر» = key 12_bis). رابط المادة: article_url_template مع key (أو number). بالاسم: المطابقة التامة أولًا ثم «يبدأ بـ» ثم الاحتواء، مع البدائل في match.",
+          "بطاقة نظام سعودي: الاسم الرسمي، التصنيف، أدوات الإصدار (issue_instruments)، التواريخ الأربعة، الحالة، وصف المقدمة، وفهرس مواده (toc) صفحاتٍ: الافتراض أول 100 مادة، وtoc_page.next_offset للصفحة التالية (toc_offset وtoc_limit حتى 300). نص المقدمة لا يُعاد إلا بـ include_preamble=true. في كل مادة status (ساري/معدّل/ملغى) إن كانت موثّقة، وغيابه = غير مؤكد، وrepealed_by للملغاة بأداة خاصة بها، وbis/key للمادة المكررة («12 مكرر» = key 12_bis). رابط المادة: article_url_template مع key (أو number). data_warnings ينبّه إلى بيانات مشكوك فيها (مثل أداة إلغاء هي أداة الإصدار نفسها، فلا تُعرض). بالاسم: المطابقة التامة أولًا ثم «يبدأ بـ» ثم الاحتواء، مع البدائل في match. لنص المواد: hakeem_get_articles_range.",
         inputSchema: z.object({
           law_id: z.string().optional().describe("معرّف النظام"),
           name: z.string().optional().describe("أو البحث باسم النظام"),
+          toc_offset: z.number().int().min(0).default(0).describe("بداية صفحة الفهرس (toc_page.next_offset من الاستدعاء السابق)"),
+          toc_limit: z.number().int().min(1).max(300).default(100).describe("عدد مواد صفحة الفهرس"),
+          include_preamble: z.boolean().default(false).describe("true = إعادة نص المقدمة (حتى 12 ألف حرف)"),
         }),
       },
-      async ({ law_id, name }, ctx) => runMcpTool("hakeem_get_law", ctx, () => hakeem.getLaw(law_id, name))
+      async ({ law_id, name, toc_offset, toc_limit, include_preamble }, ctx) =>
+        runMcpTool("hakeem_get_law", ctx, () => hakeem.getLaw(law_id, name, { tocOffset: toc_offset, tocLimit: toc_limit, includePreamble: include_preamble }))
     );
 
     // ٤) روابط النظام بلوائحه
@@ -117,7 +122,7 @@ const handler = createMcpHandler(
       "hakeem_verify_citation",
       {
         description:
-          "التحقق من صحة إحالة نظامية قبل عزوها: هل المادة رقم كذا من نظام كذا موجودة فعلًا؟ وهل النص المنسوب إليها مطابق؟ يمنع اختلاق المواد. أرجِع: verdict (صحيحة/غير موجودة/نصها مختلف) + النص الفعلي.",
+          "التحقق من صحة إحالة نظامية قبل عزوها: هل المادة رقم كذا من نظام كذا موجودة فعلًا؟ وهل النص المنسوب إليها مطابق؟ يمنع اختلاق المواد. أرجِع: verdict (صحيحة/غير موجودة/نصها مختلف) + النص الفعلي + ref (بصمة النص الساري؛ احفظها مع الاقتباس وتحقق منها لاحقًا بـ hakeem_check_ref).",
         inputSchema: z.object({
           law_name: z.string().describe("اسم النظام"),
           article_number: z.string().describe("رقم المادة (يقبل «12 مكرر» و«12 مكرر 2»)"),
@@ -134,7 +139,7 @@ const handler = createMcpHandler(
       "hakeem_research",
       {
         description:
-          "بحث موضوعي شامل باستدعاء واحد: يوسّع المصطلح من المكنز القانوني السعودي ثم يشغّل بحثات متوازية (دلالية + حصر لفظي) بكل النظائر، ويرجع النتائج مجمّعة حسب النظام مع إحصاء تغطية وقائمة الصيغ المستعملة. الأداة المفضلة لإعداد الدراسات والمذكرات.",
+          "بحث موضوعي شامل باستدعاء واحد: يوسّع المصطلح من المكنز القانوني السعودي ثم يشغّل بحثات متوازية (دلالية + حصر لفظي) بكل النظائر، ويرجع النتائج مجمّعة حسب النظام مع إحصاء تغطية وقائمة الصيغ المستعملة. الحصر اللفظي لرأس الموضوع وصيغه كلماتٍ كاملة مع حروف الاشتقاق (لا جزء كلمة)، والشمول لفظي لا دلالي كما تقول note. الأداة المفضلة لإعداد الدراسات والمذكرات.",
         inputSchema: z.object({
           topic: z.string().describe("المفهوم محل البحث، مثال: فسخ العقد"),
           extra_terms: z.array(z.string()).max(8).optional().describe("صيغ إضافية يضمّها المستخدم يدويًّا"),
@@ -155,21 +160,22 @@ const handler = createMcpHandler(
       "hakeem_enumerate",
       {
         description:
-          "حصر شامل (غير مرتَّب دلاليًا) لكل المواد التي تحتوي لفظًا أو أكثر. يرجع العدد الإجمالي، وتوزيعًا حسب النظام، وصفحة نتائج مع cursor للمتابعة. استخدمه للدراسات الحصرية بدل hakeem_search.",
+          "حصر شامل (غير مرتَّب دلاليًا) لكل المواد التي يرد فيها لفظ أو أكثر (OR بينها). المطابقة كلمة كاملة لا جزء كلمة: match=word (الافتراض) يقبل السوابق (و، ف، ب، ك، ل، ال، لل) ولواحق التصريف والضمائر، فلا تطابق «التعدي» «التعديل» ولا «ربا» «الأرباح»؛ وmatch=derivatives يضيف حروف المضارعة والاشتقاق (فسخ ← يفسخ، انفسخ، ينفسخ، مفسوخ تحتاج «فسوخ»)؛ وmatch=contains الاحتواء الحرفي القديم بضجيجه. العبارة كلماتها بترتيبها. يرجع العدد الإجمالي، وتوزيعًا حسب النظام، وصفحة نتائج مع cursor للمتابعة، وmatch وscope وnote: total=0 نفي في النطاق وبالصيغ المطلوبة وحدها. استخدمه للدراسات الحصرية بدل hakeem_search.",
         inputSchema: z.object({
           terms: z
-            .array(z.string())
+            .array(z.string().max(200))
             .min(1)
             .max(12)
-            .describe('الألفاظ المطلوب حصرها (OR بينها). مثال: ["فسخ","انفساخ","ينفسخ"]'),
+            .describe('الألفاظ المطلوب حصرها (OR بينها). مثال: ["فسخ","انفساخ","مفسوخ"]'),
           law_id: z.string().optional().describe("اختياري: حصر النتائج في نظام واحد"),
+          match: z.enum(["word", "derivatives", "contains"]).default("word").describe("word كلمة كاملة (الافتراض)، derivatives مع حروف الاشتقاق، contains جزء كلمة"),
           page_size: z.number().int().min(1).max(50).default(25),
           cursor: z.string().optional().describe("معرّف آخر مادة من الصفحة السابقة للمتابعة"),
           snippet_len: z.number().int().min(120).max(2000).default(700),
         }),
       },
-      async ({ terms, law_id, page_size, cursor, snippet_len }, ctx) =>
-        runMcpTool("hakeem_enumerate", ctx, () => handleEnumerate({ terms, law_id, page_size, cursor, snippet_len }))
+      async ({ terms, law_id, match, page_size, cursor, snippet_len }, ctx) =>
+        runMcpTool("hakeem_enumerate", ctx, () => handleEnumerate({ terms, law_id, match, page_size, cursor, snippet_len }))
     );
 
     // ١٠) قراءة نطاق مواد متتابع بالنص الكامل (حتى ٢٠ مادة)
@@ -241,6 +247,9 @@ const handler = createMcpHandler(
       async ({ terms, court, year_h, count_only, page_size, cursor, snippet_len }, ctx) =>
         runMcpTool("hakeem_enumerate_rulings", ctx, () => enumerateRulings(terms, court, year_h, count_only, page_size, cursor, snippet_len))
     );
+
+    // ١٤–٢٥) HKM-044 المرحلة الأولى: الفهرس والتشخيص، والبحث النصي الدقيق والدلالي، وتتبع النص، والاستناد والبصمة.
+    registerPhase1Tools(server);
   },
   {
     serverInfo: { name: "hakeem-legal-mcp", version: "1.0.0" },

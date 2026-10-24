@@ -47,6 +47,8 @@
     "test:preamble-parser": "tsx scripts/test-preamble-parser.ts",
     "test:preamble-signals": "tsx scripts/test-preamble-signals.ts",
     "test:law-page-data": "tsx scripts/test-law-page-data.ts",
+    "test:mcp-word-match": "tsx scripts/test-mcp-word-match.ts",
+    "test:mcp-phase1": "tsx scripts/test-mcp-phase1.ts",
     "test:article-key": "tsx scripts/test-article-key.ts",
     "test:mcp-hardening": "tsx scripts/test-mcp-hardening.ts && tsx scripts/test-mcp-authorize-route.ts",
     "test:mcp-account-linking": "tsx scripts/test-mcp-account-linking.ts",

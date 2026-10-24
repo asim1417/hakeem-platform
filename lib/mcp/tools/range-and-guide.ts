@@ -70,18 +70,39 @@ export function handleGuide() {
 ## القاعدة الذهبية
 سؤال محدد → hakeem_search مباشرة.
 دراسة أو حصر أو مذكرة → hakeem_research أولًا، دائمًا.
+اسم نظام غير دقيق أو مختصر أو فيه خطأ → hakeem_resolve قبل أي أداة تحتاج law_id.
 
 ## حسب نوع المهمة
 ١. دراسة موضوع (مثل: فسخ العقود):
    hakeem_research(topic) → يوسّع من المكنز ويبحث بكل الصيغ ويجمّع حسب النظام.
    ثم hakeem_get_articles_range لقراءة النصوص الكاملة للمواد المحورية.
-   وإن ظهر next_cursor في الحصر: hakeem_enumerate للاستكمال حتى النهاية.
+   وإن ظهر next_cursor في الحصر: hakeem_enumerate(match="derivatives") بالصيغ نفسها للاستكمال حتى النهاية.
 
 ٢. حصر لفظ بعينه في كامل المدونة أو نظام واحد:
    hakeem_enumerate(terms, law_id?) مع المتابعة بالـ cursor حتى يفرغ.
+   المطابقة كلمة كاملة: «التعدي» لا تطابق «التعديل». للمشتقات (يفسخ، انفسخ) match="derivatives"،
+   أو اذكر الصيغ ألفاظًا مستقلة (مفسوخ، انفساخ). total=0 نفي في النطاق وبالصيغ المطلوبة وحدها.
 
 ٣. سؤال عن مادة معروفة:
    hakeem_get_article، وقبل عزو أي إحالة في مخرج نهائي: hakeem_verify_citation.
+   بطاقة النظام: hakeem_get_law يعيد الفهرس صفحات (toc_page.next_offset)، والمقدمة بـ include_preamble=true.
+   أبواب النظام وفصوله: hakeem_get_toc. صيغة الاستناد للمذكرة: hakeem_get_citation (short/full/footnote).
+   احفظ ref مع كل اقتباس، وقبل الإيداع hakeem_check_ref يقول: النص كما هو، أو تغيّر بتعديل، أو أُلغي.
+
+٣ب. عبارة بعينها أو استعلام مركّب:
+   hakeem_search_phrase للعبارة بكلماتها بترتيبها (match=exact بلا سوابق ولا لواحق).
+   hakeem_search_boolean للمركّب: (فسخ أو انفساخ) عقد دون تعويض — وparsed يبيّن كيف فُهم.
+   الأداتان تحصران العدد كاملًا مثل hakeem_enumerate، وتستبعدان الأنظمة الملغاة افتراضًا (status="all" لإدخالها)،
+   وتقبلان law_ids وcategory وkind وissued_from_h/issued_to_h.
+
+٣ج. اقتباس لا يُعرف مصدره، أو تحقق من نص منسوب:
+   hakeem_trace_text: حرفي، بتصرف يسير، جزئي، أو غير موجود — وينبّه إن كان الاقتباس نص ما قبل التعديل.
+
+٣د. سؤال لا يُعرف لفظه في النظام («كم مدة الاستئناف؟»):
+   hakeem_semantic_search بالمعنى وحده، ثم اقرأ المادة وتحقق منها؛ ليس حصرًا.
+
+٣هـ. ما في المدونة:
+   hakeem_list_categories وhakeem_list_laws للتصفح بلا كلمة بحث، وhakeem_stats للأعداد، وhakeem_health للحالة.
 
 ٤. فهم مصطلح أو بناء استراتيجية بحث:
    hakeem_expand_terms أولًا، ثم ابحث بالمرادفات والأخص.

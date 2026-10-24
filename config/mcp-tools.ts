@@ -28,6 +28,8 @@ export const MCP_TOOL_POLICY = {
   hakeem_research: { tier: "paid", service: "HYBRID_SEARCH" },
   hakeem_enumerate: { tier: "paid", service: "HYBRID_SEARCH" },
   hakeem_enumerate_rulings: { tier: "paid", service: "HYBRID_SEARCH" },
+  // HKM-044 المرحلة الأولى: تسعير الأدوات الاثنتي عشرة مؤجل بقرار المالك (24/10/2026 «أجّل التسعير»)، فتسري عليها
+  // القاعدة الافتراضية أدناه (مدفوعة بخصم بحث) حتى يقرر. القائمة في lib/mcp/register-phase1.ts (PHASE1_TOOL_NAMES).
 } as const satisfies Record<string, McpToolPolicy>;
 
 export type McpToolName = keyof typeof MCP_TOOL_POLICY;

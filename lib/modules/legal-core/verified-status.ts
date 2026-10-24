@@ -116,7 +116,9 @@ export function textAsOf(
   versions: UnitVersionRecord[],
   asOf: Date,
 ): { text: string; version: UnitVersionRecord | null; validTo: string | null } {
-  const sorted = [...versions].sort((a, b) => a.validFrom.localeCompare(b.validFrom));
+  // نسختان بتاريخ نفاذ واحد (بيانات معيبة): الأعلى معرّفًا هي السارية، حتمًا لا بترتيب القاعدة، وكذلك يختار الحصر في SQL
+  // (lib/mcp/tools/enumerate.ts، CURRENT_VERSIONS_FROM) — HKM-044، مراجعة الجودة على d11bc97.
+  const sorted = [...versions].sort((a, b) => a.validFrom.localeCompare(b.validFrom) || a.id.localeCompare(b.id));
   let chosen: UnitVersionRecord | null = null;
   let validTo: string | null = null;
   for (let i = 0; i < sorted.length; i += 1) {
