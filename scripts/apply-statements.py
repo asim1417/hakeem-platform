@@ -57,9 +57,14 @@ def main() -> int:
                 return out
             before = counts()
             rows = 0
-            for s in st:
-                cur.execute(s)
-                rows += max(cur.rowcount, 0)
+            per = []
+            for i, s in enumerate(st):
+                try:
+                    cur.execute(s)
+                except Exception as e:
+                    raise RuntimeError(f'العبارة {i} فشلت ({e}); صفوف ما قبلها: {per}') from e
+                per.append(max(cur.rowcount, 0))
+                rows += per[-1]
             after = counts()
             # الأصل: لا يتغير عدد المواد والأنظمة. ملف يضيف إصدارًا جديدًا يعلن الفرق المتوقع بدقة في expect_delta.
             exp = d.get('expect_delta', {})
@@ -71,7 +76,7 @@ def main() -> int:
                 prov = cur.fetchone()[0]
             else:
                 prov = None
-            print(json.dumps({'mode': a.mode, 'provenance_rows_for_batch': prov, 'md5': got, 'statements': len(st), 'rows_inserted': rows, 'before': before, 'after': after,
+            print(json.dumps({'mode': a.mode, 'provenance_rows_for_batch': prov, 'md5': got, 'statements': len(st), 'rows_inserted': rows, 'rows_per_statement': per, 'before': before, 'after': after,
                               'delta': {t: after[t] - before[t] for t in tables}}, ensure_ascii=False, indent=1))
             if a.mode == 'apply':
                 con.commit(); print('COMMITTED')
