@@ -1,0 +1,15 @@
+{
+ "task": "HKM-037",
+ "source_runs": [
+  "39982828368",
+  "40019834094"
+ ],
+ "engine": "tesseract-5 ara psm6 (OMP_THREAD_LIMIT=1)",
+ "attachments": 407,
+ "pages": 5136,
+ "md5": {
+  "attachments.jsonl": "d65a2fa82c4e869deffe9ee77cf4bd1a",
+  "pages.jsonl": "9e21627fd925efd9921f64684c5b3471"
+ },
+ "note": "R2: أصول وثائق ومرفقات مواد. النص الآلي تقريبي؛ لا يُعتمد نصًّا قانونيًّا إلا بعد مطابقته بالصورة"
+}
