@@ -496,7 +496,7 @@ export async function handleSearchBoolean(
     by_law: r.by_law,
     page: r.page,
     next_cursor: r.next_cursor,
-    note: searchNote(r.total, r.hasMore, scope, `بالاستعلام ${boolToText(root)}`) + " parsed يبيّن كيف فُهم الاستعلام؛ إن خالف قصدك فأضف أقواسًا.",
+    note: searchNote(r.total, r.hasMore, scope, `بالاستعلام ${boolToText(root)}`) + " parsed يبيّن كيف فُهم الاستعلام؛ إن خالف قصدك فأضف أقواسًا. المادة المعدّلة قُيّمت بنصها الساري وحده.",
   };
 }
 

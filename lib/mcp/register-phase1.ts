@@ -103,7 +103,7 @@ export function registerPhase1Tools(server: McpServer) {
     "hakeem_search_phrase",
     {
       description:
-        "عبارة بكلماتها بترتيبها في مواد المدونة، حصرًا كاملًا بالعدد والتوزيع حسب النظام وترقيم cursor. match=exact الكلمات نفسها بلا سوابق ولا لواحق؛ word (الافتراض) يقبل السوابق واللواحق لكل كلمة؛ derivatives يضيف الاشتقاق. المقتطف حول موضع العبارة. الافتراض يستبعد الأنظمة الملغاة.",
+        "عبارة بكلماتها بترتيبها في مواد المدونة، حصرًا كاملًا بالعدد والتوزيع حسب النظام وترقيم cursor، على النص المحفوظ والنص الساري المعدّل معًا (term_in_current_text=false = في النص قبل التعديل وحده). match=exact الكلمات نفسها بلا سوابق ولا لواحق؛ word (الافتراض) يقبل السوابق واللواحق لكل كلمة؛ derivatives يضيف الاشتقاق. المقتطف حول موضع العبارة. الافتراض يستبعد الأنظمة الملغاة.",
       inputSchema: z.object({
         phrase: z.string().min(2).max(300).describe("العبارة"),
         match: z.enum(["exact", "word", "derivatives"]).default("word"),
@@ -120,7 +120,7 @@ export function registerPhase1Tools(server: McpServer) {
     "hakeem_search_boolean",
     {
       description:
-        'استعلام منطقي في مواد المدونة: الألفاظ المتجاورة AND، و«أو»/OR، و«دون»/NOT أو -لفظ، وأقواس، والعبارة بين "…" أو «…». مثال: (فسخ أو انفساخ) عقد دون تعويض. حصر كامل بالعدد والتوزيع وcursor، وparsed يبيّن كيف فُهم الاستعلام، والخطأ في الصيغة يُشرح. كل لفظ كلمة كاملة (match=word أو derivatives أو exact).',
+        'استعلام منطقي في مواد المدونة: الألفاظ المتجاورة AND، و«أو»/OR، و«دون»/NOT أو -لفظ، وأقواس، والعبارة بين "…" أو «…». مثال: (فسخ أو انفساخ) عقد دون تعويض. حصر كامل بالعدد والتوزيع وcursor، وparsed يبيّن كيف فُهم الاستعلام، والخطأ في الصيغة يُشرح. كل لفظ كلمة كاملة (match=word أو derivatives أو exact). المادة المعدّلة تُقيَّم بنصها الساري وحده (لا بنصها قبل التعديل)، بخلاف hakeem_search_phrase وhakeem_enumerate اللتين تطابقان النصين وتسمان ما ليس في الساري.',
       inputSchema: z.object({
         query: z.string().min(2).max(500),
         match: z.enum(["word", "derivatives", "exact"]).default("word"),
