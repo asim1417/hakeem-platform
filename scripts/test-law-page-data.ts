@@ -14,7 +14,7 @@ import { composeLawCardText } from "../lib/modules/legal-core/preamble-parser";
 import { buildPreambleEditionRows, insertPreambleEdition, PreambleRejected, sha256 } from "../lib/modules/legal-core/preamble-edition";
 import { getLawPageData, NOT_AVAILABLE, PREAMBLE_INCOMPLETE_LABEL, PREAMBLE_NONE_LABEL, toBoeStatus, BOE_LAW_STATUSES } from "../lib/modules/legal-core/law-page-data";
 import { rankLawNameMatches, normalizeLawName, queryYears } from "../lib/modules/legal-core/law-name-match";
-import { getLawTool, MCP_BODY_LEAK_MAX_CHARS, MCP_PREAMBLE_MAX_CHARS } from "../lib/mcp/tools/get-law";
+import { getLawTool, toMcpLaw, looseInstrumentKey, MCP_BODY_LEAK_MAX_CHARS, MCP_PREAMBLE_MAX_CHARS, MCP_TOC_DEFAULT_LIMIT } from "../lib/mcp/tools/get-law";
 import { articleLabel } from "../lib/modules/legal-core/article-key";
 import { mergeArticleAndPreambleHits, searchPreambleUnits } from "../lib/modules/legal-core/preamble-search";
 import { connectLocalTest } from "./hkm-023-b/local-db";
@@ -327,8 +327,14 @@ async function mcpTests(db: SqlClient) {
   ok(Object.keys(r1.toc[0]).slice(0, 3).join() === "article_id,number,title", "M-13 عناصر toc تبدأ بحقولها القديمة");
   ok(r1.issue_instrument === "مرسوم ملكي رقم (م/43) وتاريخ 1443/5/26هـ" && r1.issue_date_h === "1443/05/26" && r1.status === "ساري", "M-13 الحقول التي كانت null صارت تُملأ (الأداة والتاريخ والحالة)");
   ok(r1.issue_instruments.length === 2 && r1.dates.issued.hijri === "1443/05/26" && r1.dates.applied.gregorian === null, "M-13 issue_instruments[] والتواريخ الأربعة");
-  ok(r1.preamble.kind === "units" && r1.preamble.complete === true && "units" in r1.preamble && (r1.preamble.units?.length ?? 0) > 20, "M-13 preamble وحدات بوسم الاكتمال");
-  ok(r2.preamble.kind === "legacy_text" && r2.preamble.complete === false && "text" in r2.preamble && r2.preamble.text === MURAFAAT_LEGACY && r2.preamble.label === PREAMBLE_INCOMPLETE_LABEL, "M-13 preamble نص قديم بوسم «مقدمة غير مكتملة»");
+  // HKM-044: نص المقدمة بطلب صريح؛ والافتراض وصفها وطولها.
+  ok("text_included" in r1.preamble && r1.preamble.text_included === false && !("units" in r1.preamble) && r1.preamble.chars > 0 && r1.preamble.complete === true, "HKM-044 الافتراض: وصف المقدمة وطولها بلا نصها");
+  const r1p = await getLawTool(db, { name: "نظام الإثبات" }, { asOf: "2026-10-17", includePreamble: true });
+  const r2p = await getLawTool(db, { name: "نظام المرافعات الشرعية" }, { includePreamble: true });
+  if (!("law_id" in r1p) || !("law_id" in r2p)) return;
+  ok(r1p.preamble.kind === "units" && r1p.preamble.complete === true && "units" in r1p.preamble && (r1p.preamble.units?.length ?? 0) > 20, "M-13 preamble وحدات بوسم الاكتمال (include_preamble)");
+  ok("chars" in r1.preamble && "chars" in r1p.preamble && r1.preamble.chars === r1p.preamble.chars, "HKM-044 الطول في الوصف = طول النص المعاد");
+  ok(r2p.preamble.kind === "legacy_text" && r2p.preamble.complete === false && "text" in r2p.preamble && r2p.preamble.text === MURAFAAT_LEGACY && r2p.preamble.label === PREAMBLE_INCOMPLETE_LABEL, "M-13 preamble نص قديم بوسم «مقدمة غير مكتملة» (include_preamble)");
   const t101 = r2.toc.find((t) => t.number === 101)!;
   const urlOf = (t: (typeof r2.toc)[number]) => r2.article_url_template.replace("{key}", t.key ?? String(t.number));
   ok(t101.status === "ملغى" && t101.repealed_by?.includes("م/43") === true && urlOf(t101).endsWith("/101"), "M-13 حالة كل مادة في الفهرس وبيان إلغائها، ورابطها من article_url_template");
@@ -341,7 +347,7 @@ async function mcpTests(db: SqlClient) {
   ok(!r2.toc.some((t) => t.article_id === "a-mur-103x"), "BIS في MCP: الصف غير المادي غائب عن الفهرس");
   const ss = await getLawTool(db, { lawId: "sys-ss-old" }, { asOf: "2026-10-17" });
   ok("law_id" in ss && ss.toc.every((t) => t.status === "ملغى" && !("repealed_by" in t)) && ss.repeal?.type === "replacement", "M-13 الملغاة تبعًا لإلغاء النظام: الحالة فقط، وبيان الإلغاء مرة واحدة في repeal");
-  const lk = await getLawTool(db, { lawId: "sys-leak" });
+  const lk = await getLawTool(db, { lawId: "sys-leak" }, { includePreamble: true });
   ok("law_id" in lk && "body_leak" in lk.preamble && lk.preamble.body_leak === true && "text" in lk.preamble && (lk.preamble.text?.length ?? 0) === MCP_BODY_LEAK_MAX_CHARS && lk.preamble.truncated === true, "M-13 حقل مقدمة فيه متن: body_leak ونص مقتطع إلى 1000 حرف");
 
   // لا يُقرأ نص المواد، ولا تُمسح جداول البطاقات والتحقق كلها.
@@ -387,6 +393,48 @@ async function mcpTests(db: SqlClient) {
   const ratio = bytes(newOut) / bytes(oldOut);
   console.log(`  الحجم: القديم ${bytes(oldOut)} بايت، الجديد ${bytes(newOut)} بايت (×${ratio.toFixed(2)})، منها الفهرس ${"toc" in newOut ? bytes(newOut.toc) : 0} والمقدمة ${"preamble" in newOut ? bytes(newOut.preamble) : 0}`);
   ok(ratio <= 1.2, `M-13 مخرج 721 مادة لا يزيد على القديم بأكثر من 20% (×${ratio.toFixed(2)})`);
+
+  // HKM-044: الفهرس صفحات، والمخرج تحت نحو ٢٠ ألف حرف، والصفحات تغطي الفهرس كله بلا تكرار.
+  if (!("law_id" in newOut)) return;
+  const chars = JSON.stringify(newOut).length;
+  ok(newOut.toc.length === MCP_TOC_DEFAULT_LIMIT && newOut.toc_page.total === 721 && newOut.toc_page.next_offset === MCP_TOC_DEFAULT_LIMIT && chars <= 20000, `HKM-044 الافتراض: أول ${MCP_TOC_DEFAULT_LIMIT} مادة وtoc_page، والمخرج ${chars} حرفًا (≤ 20000)`);
+  const seen = new Set<string>();
+  let off: number | null = 0;
+  let pages = 0;
+  while (off !== null && pages < 20) {
+    const pg = await getLawTool(db, { lawId: "sys-size" }, { asOf: "2026-10-17", tocOffset: off, tocLimit: 300 });
+    if (!("law_id" in pg)) break;
+    for (const t of pg.toc) seen.add(t.article_id);
+    off = pg.toc_page.next_offset;
+    pages++;
+  }
+  ok(seen.size === 721 && pages === 3, `HKM-044 الصفحات (300) تغطي 721 مادة بلا تكرار في ${pages} صفحات`);
+  const big = await getLawTool(db, { lawId: "sys-size" }, { tocLimit: 5000 });
+  ok("law_id" in big && big.toc.length === 300, "HKM-044 toc_limit مسقوف بـ 300");
+
+  // HKM-044: حارس أداة الإلغاء — أداة الإصدار نفسها لا تُعرض أداةَ إلغاء (نظام الاستثمار الأجنبي: م/1 لعام 1421).
+  const base = await getLawPageData(db, "sys-murafaat", { asOf: "2026-10-17", withText: false, withOutgoingRepeals: false, resolveRepealingSystems: false });
+  if (!base) return ok(false, "HKM-044 حارس الإلغاء: لا بيانات");
+  const own = base.card.instruments[0]?.text ?? "";
+  ok(Boolean(own), `HKM-044 أداة الإصدار في البيانات: ${own}`);
+  const clone = JSON.parse(JSON.stringify(base)) as typeof base;
+  const ownRepeal = { type: "express_total" as const, typeDerived: true, instrument: `${own} — من 2025-02-07`, url: "https://www.uqn.gov.sa/details?p=0", quote: null, effectiveDate: "2025-02-07", effectiveDateSource: "evidence_text" as const, repealingSystem: null, repealingSystemBasis: null, repealingArticle: null };
+  clone.card.repeal = ownRepeal;
+  clone.card.status.evidence = { instrument: ownRepeal.instrument, url: ownRepeal.url, quote: null };
+  const arts = clone.body.divisions.flatMap((d) => d.articles);
+  const victim = arts.find((a) => !a.repeal) ?? arts[0];
+  victim.repeal = { ...ownRepeal };
+  victim.inheritedFromWork = false;
+  const guarded = toMcpLaw(clone, { by: "id", query: "sys-murafaat", alternatives: [] }, "", { tocLimit: 300 });
+  const ve = guarded.toc.find((t) => t.article_id === victim.id);
+  ok(guarded.repeal?.instrument === null && guarded.status_detail.evidence_instrument === null && guarded.repeal?.effective_date === "2025-02-07" && guarded.status_detail.evidence_url === ownRepeal.url, "HKM-044 أداة إلغاء = أداة الإصدار: لا تُعرض، والتاريخ والسند باقيان");
+  ok(Boolean(ve) && !("repealed_by" in (ve as object)) && guarded.data_warnings.length === 1 && /أداة إصدار النظام نفسه/.test(guarded.data_warnings[0]) && /1 مادة/.test(guarded.data_warnings[0]), "HKM-044 والمادة كذلك، مع تحذير واحد في data_warnings");
+  // صيغ الإنتاج كما ظهرت في فحص 24/10/2026 لنظام الاستثمار الأجنبي.
+  const fdiOwn = ["مرسوم ملكي رقم م/1 بتاريخ 5 / 1 / 1421", "قرار مجلس الوزراء رقم 1 بتاريخ 5 / 1 / 1421"].map(looseInstrumentKey);
+  ok(fdiOwn.includes(looseInstrumentKey("م/1 وتاريخ 1421/1/5هـ — من 2025-02-07")), "HKM-044 الصيغة المختصرة في سجل التحقق تطابق مرسوم الإصدار (م/1 لعام 1421)");
+  ok(!fdiOwn.includes(looseInstrumentKey("م/19 وتاريخ 1446/1/16هـ")) && looseInstrumentKey("م/٤٦ وتاريخ ١٤٣٦/٦/٥هـ") === "م/46|1436", "HKM-044 أداة أخرى لا تطابق، والأرقام الهندية تُقرأ");
+  const normal = toMcpLaw(base, { by: "id", query: "sys-murafaat", alternatives: [] }, "", { tocLimit: 300 });
+  ok(normal.data_warnings.length === 0 && normal.toc.find((t) => t.number === 101)?.repealed_by?.includes("م/43") === true, "HKM-044 الضبط: أداة إلغاء أخرى (م/43) تبقى ظاهرة بلا تحذير");
 }
 
 async function searchTests(db: SqlClient) {

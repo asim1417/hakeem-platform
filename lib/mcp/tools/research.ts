@@ -9,8 +9,13 @@
  * SKOS: broader للفسخ نافع دائمًا، وnarrower لأنواع العقد ضارّ غالبًا.
  *
  * يعيد استخدام دوال الأدوات القائمة (searchArticles/expandTerms) — لا محرّك جديد.
+ *
+ * HKM-044: المسار اللفظي بحدود الكلمة في وضع derivatives (word-match.ts): كانت «غبون» المولَّدة تطابق «يرغبون»
+ * فدخلت أربع مواد لا صلة لها في بحث «الغبن» مع ملاحظة «التغطية شاملة». الآن الصيغة كلمة كاملة بسوابقها وحروف
+ * اشتقاقها ولواحقها، ووسم المقتطف الدلالي بالنمط نفسه، والملاحظة تقول ما فُتّش وبأي صيغ، ولا تدّعي شمولًا دلاليًا.
  */
 import { handleEnumerate, normalizeAr } from "./enumerate";
+import { compileTerm, matchesText, matchModeLabel, type CompiledTerm } from "./word-match";
 import { searchArticles, expandTerms } from "@/lib/mcp/adapter";
 
 export const researchToolDef = {
@@ -34,11 +39,10 @@ function headToken(topic: string): string {
 }
 
 /**
- * مشتقات لفظية للمطابقة بـ ILIKE '%..%':
- * المطابقة الجزئية تغطي تلقائيًّا كل صيغة تحتوي الجذر متصلًا
- * (فسخ ⊂ يفسخ، تفسخ، الفسخ، انفسخ، ينفسخ، فسخه...)،
- * ويبقى نمطان لكسر الاتصال بحرف علة قبل اللام:
- * ألف المصدر (انفساخ ⊃ فساخ) وواو المفعول (مفسوخ ⊃ فسوخ).
+ * صيغ رأس الموضوع للحصر اللفظي (وضع derivatives بحدود الكلمة):
+ * الرأس نفسه بسوابقه وحروف مضارعته واشتقاقه ولواحقه (فسخ، يفسخ، الفسخ، انفسخ، ينفسخ، فسخه...)،
+ * ونمطان لكسر الاتصال بحرف علة قبل اللام: ألف المصدر (انفساخ ← فساخ) وواو المفعول (مفسوخ ← فسوخ).
+ * الصيغة كلمة كاملة لا جزء كلمة: «غبون» تطابق «مغبون» ولا تطابق «يرغبون».
  */
 function lexicalVariants(head: string): string[] {
   const h = head.replace(/^ال/, "").trim();
@@ -98,12 +102,8 @@ export async function handleResearch(args: {
   // ① رأس الموضوع ومشتقاته اللفظية (المسار اللفظي وحده)
   const head = headToken(args.topic);
   const lexicalTerms = lexicalVariants(head);
-  const lexicalNorm = lexicalTerms.map(normalizeAr).filter(Boolean);
-  const snippetHasHead = (snippet?: string): boolean => {
-    if (!snippet) return false;
-    const n = normalizeAr(snippet);
-    return lexicalNorm.some((v) => n.includes(v));
-  };
+  const lexicalCompiled = lexicalTerms.map((t) => compileTerm(t, "derivatives")).filter((c): c is CompiledTerm => c !== null);
+  const snippetHasHead = (snippet?: string): boolean => Boolean(snippet) && lexicalCompiled.some((c) => matchesText(snippet as string, c));
 
   // ② التوسيع من المكنز، ثم تنقيح صيغ المسار الدلالي بفلتر «يحتوي الرأس»
   const thesaurus = await expandFromThesaurus(args.topic);
@@ -120,7 +120,7 @@ export async function handleResearch(args: {
   // ③ تشغيل متوازٍ: دلالي بصيغ المكنز المنقّحة + حصر لفظي بمشتقات الرأس فقط
   const [hybridBatches, lexical] = await Promise.all([
     Promise.all(semanticTerms.map((t) => hybridSearch(t, limit, args.law_id).catch(() => [] as SearchHit[]))),
-    handleEnumerate({ terms: lexicalTerms, law_id: args.law_id, page_size: 50, snippet_len: 500 }),
+    handleEnumerate({ terms: lexicalTerms, law_id: args.law_id, page_size: 50, snippet_len: 500, match: "derivatives" }),
   ]);
 
   // ④ الدمج ووسم الصلة اللفظية
@@ -185,6 +185,7 @@ export async function handleResearch(args: {
       lexical_by_law: lexical.by_law,
       exhaustive: lexical.next_cursor === null,
       semantic_only_excluded: strict ? excludedCount : 0,
+      lexical_match: matchModeLabel("derivatives"),
     },
     grouped_by_law: [...byLaw.values()].map((g) => ({
       law_id: g.law_id,
@@ -203,8 +204,17 @@ export async function handleResearch(args: {
           lexical_match: a.lexical_match,
         })),
     })),
-    note: lexical.next_cursor
-      ? "الحصر اللفظي فيه صفحات إضافية — استعمل hakeem_enumerate بمشتقات الرأس مع cursor لاستكماله."
-      : "الحصر اللفظي مكتمل؛ التغطية شاملة على مستوى اللفظ.",
+    note: researchNote({ head, forms: lexicalTerms, lexicalTotal: lexical.total, shown: lexical.page.length, more: lexical.next_cursor !== null, scoped: Boolean(args.law_id) }),
   };
+}
+
+/** ملاحظة البحث الموضوعي: ما فُتّش وبأي صيغ، ونوع الشمول (لفظي لا دلالي)، وما بقي. */
+export function researchNote(o: { head: string; forms: string[]; lexicalTotal: number; shown: number; more: boolean; scoped: boolean }): string {
+  const scope = o.scoped ? "النظام المحدد" : "مدونة حكيم كلها";
+  const forms = `«${o.head}» بصيغه (${o.forms.join("، ")}) كلماتٍ كاملة`;
+  if (o.lexicalTotal === 0)
+    return `فُتّش ${scope} كله فلم يرد ${forms} في أي مادة. هذا نفي لفظي في هذا النطاق وحده؛ المسألة قد ترد بلفظ آخر — انظر نتائج المسار الدلالي (strict=false) أو hakeem_search.`;
+  if (o.more)
+    return `العدد اللفظي lexical_total_in_corpus (${o.lexicalTotal}) كامل لـ${scope}، والمعروض أول ${o.shown} منه — أكمل بـ hakeem_enumerate(match="derivatives") بالصيغ نفسها مع cursor. الشمول لفظي لا دلالي: ما عبّر عن المسألة بلفظ آخر لا يدخل في هذا العدد.`;
+  return `الحصر اللفظي لـ${forms} مكتمل في ${scope} (${o.lexicalTotal} مادة). الشمول لفظي لا دلالي: ما عبّر عن المسألة بلفظ آخر لا يدخل في هذا العدد.`;
 }

@@ -147,8 +147,9 @@ export async function getArticle(articleId: string) {
 
 // ٣) بطاقة النظام وفهرسه (HKM-023-B ع-١٣): المطابقة تامة ← يبدأ بـ ← احتواء، والبطاقة والمقدمة وحالة كل مادة
 // من getLawPageData. العقد إضافي: الحقول القديمة باقية بأسمائها (lib/mcp/tools/get-law.ts).
-export async function getLaw(lawId?: string, name?: string) {
-  return getLawTool(prismaSqlClient(prisma), { lawId, name }, { siteUrl: getSiteUrl() });
+// HKM-044: الفهرس صفحات (toc_offset/toc_limit) ونص المقدمة بطلب صريح (include_preamble).
+export async function getLaw(lawId?: string, name?: string, view: { tocOffset?: number; tocLimit?: number; includePreamble?: boolean } = {}) {
+  return getLawTool(prismaSqlClient(prisma), { lawId, name }, { siteUrl: getSiteUrl(), ...view });
 }
 
 // ٤) روابط النظام واللوائح (IMPLEMENTS) — LegalRelation متعدّد الأشكال (type+id).

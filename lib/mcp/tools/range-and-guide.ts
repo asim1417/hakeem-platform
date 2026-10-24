@@ -75,10 +75,14 @@ export function handleGuide() {
 ١. دراسة موضوع (مثل: فسخ العقود):
    hakeem_research(topic) → يوسّع من المكنز ويبحث بكل الصيغ ويجمّع حسب النظام.
    ثم hakeem_get_articles_range لقراءة النصوص الكاملة للمواد المحورية.
-   وإن ظهر next_cursor في الحصر: hakeem_enumerate للاستكمال حتى النهاية.
+   وإن ظهر next_cursor في الحصر: hakeem_enumerate(match="derivatives") بالصيغ نفسها للاستكمال حتى النهاية.
 
 ٢. حصر لفظ بعينه في كامل المدونة أو نظام واحد:
    hakeem_enumerate(terms, law_id?) مع المتابعة بالـ cursor حتى يفرغ.
+   المطابقة كلمة كاملة: «التعدي» لا تطابق «التعديل». للمشتقات (يفسخ، انفسخ) match="derivatives"،
+   أو اذكر الصيغ ألفاظًا مستقلة (مفسوخ، انفساخ). total=0 نفي في النطاق وبالصيغ المطلوبة وحدها.
+
+٣-أ. بطاقة نظام: hakeem_get_law يعيد الفهرس صفحات (toc_page.next_offset)، والمقدمة بـ include_preamble=true.
 
 ٣. سؤال عن مادة معروفة:
    hakeem_get_article، وقبل عزو أي إحالة في مخرج نهائي: hakeem_verify_citation.
