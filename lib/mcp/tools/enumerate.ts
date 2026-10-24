@@ -14,6 +14,7 @@
  * التطبيع العربي يتمّ داخل SQL ليطابق normalizeAr حرفًا بحرف — فلا حاجة لعمود مُطبَّع.
  */
 import { prisma } from "@/lib/prisma";
+import { isMissingRelation, prismaSqlClient, relationExists, type SqlClient } from "@/lib/modules/legal-core/sql-port";
 import { effectiveArticleTexts } from "@/lib/modules/legal-core/effective-text";
 import { NON_ARTICLE_BIS } from "@/lib/modules/legal-core/article-key";
 import { compileTerm, matchModeLabel, normalizeAr, normSqlExpr, rawLiteralPattern, type CompiledTerm, type MatchMode } from "./word-match";
@@ -62,14 +63,71 @@ export function termConditionSql(t: CompiledTerm, params: unknown[], normRef = N
   return `(${pre} AND ${normRef} ~* $${params.length})`;
 }
 
+// ── النص الساري المعدّل (مراجعة الجودة على 308bdb3، الملاحظة ١) ──
+// المادة المعدّلة نصها الساري في unit_version والمحفوظ في legal_articles.content هو الأصلي، فالحصر على المحفوظ وحده
+// لا يجد لفظًا لا يرد إلا في النص الساري، ثم يقول «فُتّش فلم يوجد». يُطابَق الشرط نفسه على أحدث نسخة سارية لكل مادة
+// (قليلة: نحو 309 في الإنتاج)، وتُضم معرّفاتها إلى الحصر.
+
+/** مراجع الأعمدة للشرط: المحفوظ (a.content ومطبَّعه nt.n) أو النسخة السارية (v.body ومطبَّعها vt.n). */
+export interface TextRefs {
+  raw: string;
+  norm: string;
+}
+export const STORED_REFS: TextRefs = { raw: RAW_REF, norm: NORM_REF };
+export const VERSION_REFS: TextRefs = { raw: "v.body", norm: "vt.n" };
+
+/** أحدث نسخة سارية الآن لكل مادة، مطبَّعةً مرة واحدة (v.body، vt.n). */
+export const CURRENT_VERSIONS_FROM = `(SELECT DISTINCT ON (unit_id) unit_id, body FROM unit_version WHERE valid_from <= now() ORDER BY unit_id, valid_from DESC) v CROSS JOIN LATERAL (SELECT ${normSqlExpr("v.body")} AS n OFFSET 0) vt`;
+
+let unitVersionKnown: { at: number; ok: boolean } | null = null;
+
+/**
+ * معرّفات المواد التي يطابق نصُّها الساري المعدّل الشرطَ (cond مبني بـ VERSION_REFS). [] إن لم يوجد الجدول.
+ * وجود الجدول يُخزَّن 5 دقائق، فلا يُسأل عنه في كل نداء.
+ */
+export async function amendedMatchIds(db: SqlClient, cond: string, params: unknown[]): Promise<string[]> {
+  if (!unitVersionKnown || Date.now() - unitVersionKnown.at > 5 * 60_000) {
+    unitVersionKnown = { at: Date.now(), ok: await relationExists(db, "unit_version") };
+  }
+  if (!unitVersionKnown.ok) return [];
+  try {
+    const rows = await db.query<{ id: string }>(`SELECT DISTINCT v.unit_id AS id FROM ${CURRENT_VERSIONS_FROM} WHERE ${cond}`, params);
+    return rows.map((r) => r.id);
+  } catch (e) {
+    if (isMissingRelation(e)) return [];
+    throw e;
+  }
+}
+
+/** للاختبارات: يُسقط ما خُزّن عن وجود unit_version. */
+export function resetUnitVersionCache(): void {
+  unitVersionKnown = null;
+}
+
+/**
+ * يضمّ مطابقات النص الساري إلى شرط المحفوظ دون أن يفقد دفع التصفية إلى المسح: (تصفية الخام أو المعرّف) و(الشرط أو المعرّف).
+ * pre = تصفية على a.content وحده (أو null)، full = الشرط الكامل.
+ */
+export function withAmendedIds(pre: string | null, full: string, ids: string[], params: unknown[]): string {
+  if (!ids.length) return pre ? `${pre} AND ${full}` : full;
+  params.push(ids);
+  const v = `a."id" = ANY($${params.length}::text[])`;
+  return `(${pre ?? "TRUE"} OR ${v}) AND (${full} OR ${v})`;
+}
+
 /**
  * شرط WHERE للحصر (يُصدَّر للاختبار، مراجعة الجودة ٥): الألفاظ بـ OR، والصفوف غير المادية مستبعدة،
- * ثم النظام ثم المؤشر. يُستعمل بعد «FROM legal_articles a» و NORM_LATERAL. لأكثر من لفظ تُقدَّم تصفية OR على الخام
- * شرطًا مستقلًّا (OR الشروط الكاملة لا يُدفع إلى المسح لأنه يمسّ nt).
+ * ثم النظام ثم المؤشر. يُستعمل بعد «FROM legal_articles a» و NORM_LATERAL. تصفية OR على الخام تُقدَّم شرطًا مستقلًّا
+ * (OR الشروط الكاملة لا يُدفع إلى المسح لأنه يمسّ nt)، وamendedIds مواد طابق نصُّها الساري المعدّل.
  */
-export function enumerateWhereSql(compiled: CompiledTerm[], opts: { lawId?: string; cursor?: string }, params: unknown[]): string {
-  const pre = compiled.length > 1 ? `${anyTermPrefilterSql(compiled, params)} AND ` : "";
-  let w = `${pre}(${compiled.map((t) => termConditionSql(t, params)).join(" OR ")}) AND a."articleBis" < ${NON_ARTICLE_BIS}`;
+export function enumerateWhereSql(
+  compiled: CompiledTerm[],
+  opts: { lawId?: string; cursor?: string; amendedIds?: string[] },
+  params: unknown[],
+): string {
+  const full = `(${compiled.map((t) => termConditionSql(t, params)).join(" OR ")})`;
+  const pre = compiled.length > 1 || opts.amendedIds?.length ? anyTermPrefilterSql(compiled, params) : null;
+  let w = `${withAmendedIds(pre, full, opts.amendedIds ?? [], params)} AND a."articleBis" < ${NON_ARTICLE_BIS}`;
   if (opts.lawId) {
     params.push(opts.lawId);
     w += ` AND a."legalSystemId" = $${params.length}`;
@@ -170,7 +228,7 @@ export async function handleEnumerate(args: {
     truncated_terms: truncated,
     ambiguous_terms: ambiguous,
   };
-  const scope = { law_id: args.law_id ?? null, rows: "مواد الأنظمة واللوائح (بلا الصفوف غير المادية)", exhaustive: true as const };
+  const scope = { law_id: args.law_id ?? null, rows: "مواد الأنظمة واللوائح: النص المحفوظ والنص الساري المعدّل (بلا الصفوف غير المادية)", exhaustive: true as const };
   if (!compiled.length) {
     return {
       total: 0,
@@ -183,10 +241,18 @@ export async function handleEnumerate(args: {
     };
   }
 
+  // المواد التي يطابق نصُّها الساري المعدّل (يُضم إلى الحصر؛ الصفحة تعرض النص الساري دائمًا).
+  const vParams: unknown[] = [];
+  const amendedIds = await amendedMatchIds(
+    prismaSqlClient(prisma),
+    `(${compiled.map((t) => termConditionSql(t, vParams, VERSION_REFS.norm, VERSION_REFS.raw)).join(" OR ")})`,
+    vParams,
+  );
+
   // العدّ الإجمالي والتوزيع حسب النظام (بلا cursor حتى يبقى ثابتًا عبر الصفحات).
   // LEFT JOIN + COALESCE: لا تُسقَط مادة يتيمة (legalSystemId فارغ) — شرط صحّة «الحصر الشامل».
   const countParams: unknown[] = [];
-  const countWhere = enumerateWhereSql(compiled, { lawId: args.law_id }, countParams);
+  const countWhere = enumerateWhereSql(compiled, { lawId: args.law_id, amendedIds }, countParams);
   const byLaw = await prisma.$queryRawUnsafe<Array<{ law_id: string | null; law: string; n: bigint }>>(
     `SELECT a."legalSystemId" AS law_id,
             COALESCE(l."name", a."lawName") AS law,
@@ -201,7 +267,7 @@ export async function handleEnumerate(args: {
 
   // صفحة النتائج — ترتيب ثابت بالمعرّف (شرط صحّة الـ cursor).
   const pageParams: unknown[] = [];
-  const pageWhere = enumerateWhereSql(compiled, { lawId: args.law_id, cursor: args.cursor }, pageParams);
+  const pageWhere = enumerateWhereSql(compiled, { lawId: args.law_id, cursor: args.cursor, amendedIds }, pageParams);
   const rows = await prisma.$queryRawUnsafe<
     Array<{ id: string; article_number: number; law_id: string | null; law: string; content: string }>
   >(
@@ -235,7 +301,7 @@ export async function handleEnumerate(args: {
         snippet: text.length > snip ? text.slice(0, snip) + " (...)" : text,
         truncated: text.length > snip,
         repealed: e?.repealed ?? false,
-        // طابق الحصر النص الأصلي والنص الساري معدّل: قد لا يحوي اللفظ.
+        // الحصر على المحفوظ والساري معًا؛ في المعدّلة قد يكون اللفظ في أحدهما وحده.
         amended: e?.source === "unit_version",
       };
     }),

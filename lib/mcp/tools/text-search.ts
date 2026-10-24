@@ -12,7 +12,16 @@ import type { SqlClient } from "../../modules/legal-core/sql-port";
 import { articleLabel, NON_ARTICLE_BIS } from "../../modules/legal-core/article-key";
 import type { EffectiveArticleText } from "../../modules/legal-core/effective-text";
 import { compileTerm, matchModeLabel, normalizeAr, type CompiledTerm, type MatchMode } from "./word-match";
-import { anyTermPrefilterSql, NORM_LATERAL, termConditionSql, termPrefilterSql } from "./enumerate";
+import {
+  amendedMatchIds,
+  NORM_LATERAL,
+  STORED_REFS,
+  termConditionSql,
+  termPrefilterSql,
+  VERSION_REFS,
+  withAmendedIds,
+  type TextRefs,
+} from "./enumerate";
 import { filtersFromArgs, lawScopeForFilters, lawScopeSql, type LawFilters, type LawScope } from "./catalog";
 
 export type EffectiveFn = (rows: Array<{ id: string; content: string | null }>) => Promise<Map<string, EffectiveArticleText>>;
@@ -105,14 +114,32 @@ export interface TextHit {
   term_in_current_text: boolean;
 }
 
+/** شرط البحث على مراجع نص (المحفوظ أو الساري): pre تصفية على الخام وحده تُدفع إلى المسح (أو null)، وfull الشرط كاملًا. */
+export type ConditionBuilder = (refs: TextRefs, params: unknown[]) => { pre: string | null; full: string };
+
+/**
+ * الشرط على المحفوظ مع ضم المواد التي يطابق نصُّها الساري المعدّل (مراجعة الجودة، الملاحظة ١). يُصدَّر للاختبار.
+ * يعيد WHERE (بلا الدرجة والنطاق) ومعاملاته.
+ */
+export async function textWhere(db: SqlClient, build: ConditionBuilder): Promise<{ where: string; params: unknown[]; amendedIds: string[] }> {
+  // كل معامل يُضاف يرد في SQL (pre وfull معًا)، فلا يبقى معامل بلا نوع (42P18).
+  const vParams: unknown[] = [];
+  const vb = build(VERSION_REFS, vParams);
+  const amendedIds = await amendedMatchIds(db, vb.pre ? `${vb.pre} AND ${vb.full}` : vb.full, vParams);
+  const params: unknown[] = [];
+  const b = build(STORED_REFS, params);
+  return { where: withAmendedIds(b.pre, b.full, amendedIds, params), params, amendedIds };
+}
+
 async function runArticleQuery(
   db: SqlClient,
   deps: TextSearchDeps,
-  o: { where: string; params: unknown[]; scope: LawScope; cursor?: string; pageSize: number; snippetLen: number; snippetTerms: CompiledTerm[] },
+  o: { build: ConditionBuilder; scope: LawScope; cursor?: string; pageSize: number; snippetLen: number; snippetTerms: CompiledTerm[] },
 ) {
-  const scopeParams = [...o.params];
+  const tw = await textWhere(db, o.build);
+  const scopeParams = [...tw.params];
   const scopeCond = lawScopeSql(o.scope, scopeParams);
-  const base = `(${o.where}) AND a."articleBis" < ${NON_ARTICLE_BIS}${scopeCond ? ` AND ${scopeCond}` : ""}`;
+  const base = `(${tw.where}) AND a."articleBis" < ${NON_ARTICLE_BIS}${scopeCond ? ` AND ${scopeCond}` : ""}`;
   const byLaw = await db.query<{ law_id: string | null; law: string; n: number }>(
     `SELECT a."legalSystemId" AS law_id, COALESCE(l."name", a."lawName") AS law, COUNT(*)::int AS n
        FROM legal_articles a ${NORM_LATERAL}
@@ -200,11 +227,8 @@ export async function handleSearchPhrase(
   if (!c) {
     return { phrase: args.phrase, match: matchOut, scope: scopeOut(scope), total: 0, by_law: [], page: [], next_cursor: null, note: "العبارة بلا حرف ولا رقم، فلم يُفتَّش شيء. هذا ليس نفيًا." };
   }
-  const params: unknown[] = [];
-  const where = termConditionSql(c, params);
   const r = await runArticleQuery(db, deps, {
-    where,
-    params,
+    build: (refs, params) => ({ pre: termPrefilterSql(c, params, refs.raw), full: termConditionSql(c, params, refs.norm, refs.raw) }),
     scope,
     cursor: args.cursor,
     pageSize: clampInt(args.page_size, 1, 50, 20),
@@ -238,7 +262,12 @@ type Tok = { k: "term"; v: string; phrase: boolean } | { k: "and" | "or" | "not"
 
 const OP_AND = new Set(["and", "و", "&&", "&"]);
 const OP_OR = new Set(["or", "أو", "او", "||", "|"]);
-const OP_NOT = new Set(["not", "دون", "بدون", "ليس", "!"]);
+const OP_NOT = new Set(["not", "!"]);
+/**
+ * «دون» و«بدون» و«ليس» نفيٌ بين لفظين فقط («فسخ دون تعويض»)؛ في أول الاستعلام أو القوس أو بعد عامل كلماتٌ عادية،
+ * فلا تنقلب «دون الإخلال بأحكام النظام» إلى «NOT الإخلال» (مراجعة الجودة، الملاحظة ٥).
+ */
+const OP_NOT_INFIX_AR = new Set(["دون", "بدون", "ليس"]);
 export const BOOL_MAX_TERMS = 12;
 export const BOOL_MAX_CHARS = 500;
 
@@ -280,6 +309,7 @@ export function tokenizeBoolean(q: string): Tok[] {
     if (OP_AND.has(lw)) out.push({ k: "and" });
     else if (OP_OR.has(lw)) out.push({ k: "or" });
     else if (OP_NOT.has(lw)) out.push({ k: "not" });
+    else if (OP_NOT_INFIX_AR.has(lw) && (out[out.length - 1]?.k === "term" || out[out.length - 1]?.k === "rp")) out.push({ k: "not" });
     else if (w) out.push({ k: "term", v: w, phrase: false });
   }
   return out;
@@ -358,25 +388,36 @@ export function hasPositive(n: BoolNode): boolean {
   return n.t === "and" ? n.kids.some(hasPositive) : n.kids.every(hasPositive);
 }
 
-/**
- * تصفية مسبقة على الخام يلزمها الاستعلام (لا تمسّ nt، فتُدفع إلى المسح): اللفظ ← تصفيته، AND ← ما لأبنائه المثبتة،
- * OR ← OR أبنائه إن كان لكلها تصفية، NOT ← لا شيء. null = لا تصفية (لا يقع للجذر بعد hasPositive).
- */
-export function boolPrefilterSql(n: BoolNode, params: unknown[]): string | null {
-  if (n.t === "term") return termPrefilterSql(n.c, params);
+/** شجرة التصفية المسبقة: ما يلزمه الاستعلام من ألفاظ مثبتة (لا NOT). */
+type PreNode = { t: "term"; c: CompiledTerm } | { t: "and" | "or"; kids: PreNode[] };
+
+/** AND ← أبناؤه الذين لهم تصفية، OR ← إن كان لكل أبنائه تصفية، NOT ← لا شيء. تُبنى الشجرة قبل أي معامل. */
+export function boolPrefilterTree(n: BoolNode): PreNode | null {
+  if (n.t === "term") return { t: "term", c: n.c };
   if (n.t === "not") return null;
-  const kids = n.kids.map((k) => boolPrefilterSql(k, params));
+  const kids = n.kids.map(boolPrefilterTree);
   if (n.t === "and") {
-    const kept = kids.filter((k): k is string => k !== null);
-    return kept.length ? `(${kept.join(" AND ")})` : null;
+    const kept = kids.filter((k): k is PreNode => k !== null);
+    return kept.length ? (kept.length === 1 ? kept[0] : { t: "and", kids: kept }) : null;
   }
-  return kids.every((k) => k !== null) ? `(${kids.join(" OR ")})` : null;
+  return kids.every((k) => k !== null) ? { t: "or", kids: kids as PreNode[] } : null;
 }
 
-export function boolToSql(n: BoolNode, params: unknown[]): string {
-  if (n.t === "term") return termConditionSql(n.c, params);
-  if (n.t === "not") return `NOT ${boolToSql(n.kid, params)}`;
-  return `(${n.kids.map((k) => boolToSql(k, params)).join(n.t === "and" ? " AND " : " OR ")})`;
+/**
+ * تصفية مسبقة على الخام يلزمها الاستعلام (لا تمسّ nt، فتُدفع إلى المسح). null = لا تصفية (لا يقع للجذر بعد hasPositive).
+ * المعاملات تُضاف لما يدخل SQL وحده (مراجعة الجودة، الملاحظة ٢: معامل لا يرد في النص يُسقط الاستعلام بـ 42P18).
+ */
+export function boolPrefilterSql(n: BoolNode, params: unknown[], rawRef = STORED_REFS.raw): string | null {
+  const emit = (p: PreNode): string =>
+    p.t === "term" ? termPrefilterSql(p.c, params, rawRef) : `(${p.kids.map(emit).join(p.t === "and" ? " AND " : " OR ")})`;
+  const tree = boolPrefilterTree(n);
+  return tree ? emit(tree) : null;
+}
+
+export function boolToSql(n: BoolNode, params: unknown[], refs: TextRefs = STORED_REFS): string {
+  if (n.t === "term") return termConditionSql(n.c, params, refs.norm, refs.raw);
+  if (n.t === "not") return `NOT ${boolToSql(n.kid, params, refs)}`;
+  return `(${n.kids.map((k) => boolToSql(k, params, refs)).join(n.t === "and" ? " AND " : " OR ")})`;
 }
 
 export function boolToText(n: BoolNode, top = true): string {
@@ -423,13 +464,9 @@ export async function handleSearchBoolean(
   }
   const filters = filtersFromArgs(args);
   const scope = await lawScopeForFilters(db, filters);
-  const params: unknown[] = [];
-  const pre = boolPrefilterSql(root, params);
-  const where = `${pre ? `${pre} AND ` : ""}${boolToSql(root, params)}`;
   const { pos, neg } = leavesOf(root);
   const r = await runArticleQuery(db, deps, {
-    where,
-    params,
+    build: (refs, params) => ({ pre: boolPrefilterSql(root, params, refs.raw), full: boolToSql(root, params, refs) }),
     scope,
     cursor: args.cursor,
     pageSize: clampInt(args.page_size, 1, 50, 20),
@@ -511,6 +548,7 @@ export function classifyTrace(n: number, run: number, lcs: number): TraceClass {
 }
 
 const TRACE_MAX_WORDS = 300;
+const TRACE_CANDIDATES = 30;
 const TRACE_DOC_MAX_WORDS = 20_000;
 
 export type RulingsTraceFn = (phrase: string) => Promise<{ total: number; total_is_lower_bound: boolean; results: Array<Record<string, unknown>> }>;
@@ -543,8 +581,12 @@ export async function handleTraceText(
       .map((t) => compileTerm(t, mode))
       .filter((c): c is CompiledTerm => c !== null);
     if (!anchors.length) return [] as ArticleRow[];
-    const params: unknown[] = [];
-    const pre = anchors.length > 1 ? `${anyTermPrefilterSql(anchors, params)} AND ` : "";
+    // المراسي على المحفوظ وعلى النص الساري المعدّل (الاقتباس من نص اليوم لمادة عُدّلت).
+    const tw = await textWhere(db, (refs, ps) => ({
+      pre: `(${anchors.map((a) => termPrefilterSql(a, ps, refs.raw)).join(" OR ")})`,
+      full: `(${anchors.map((a) => termConditionSql(a, ps, refs.norm, refs.raw)).join(" OR ")})`,
+    }));
+    const params = tw.params;
     const conds = anchors.map((a) => termConditionSql(a, params));
     const scopeCond = lawScopeSql(scope, params);
     return db.query<ArticleRow>(
@@ -552,13 +594,14 @@ export async function handleTraceText(
               COALESCE(l."name", a."lawName") AS law, a."content"
          FROM legal_articles a ${NORM_LATERAL}
          LEFT JOIN legal_systems l ON l."id" = a."legalSystemId"
-        WHERE ${pre}(${conds.join(" OR ")}) AND a."articleBis" < ${NON_ARTICLE_BIS}${scopeCond ? ` AND ${scopeCond}` : ""}
+        WHERE (${tw.where}) AND a."articleBis" < ${NON_ARTICLE_BIS}${scopeCond ? ` AND ${scopeCond}` : ""}
         ORDER BY (${conds.map((c) => `(${c})::int`).join(" + ")}) DESC, a."id"
-        LIMIT 30`,
+        LIMIT ${TRACE_CANDIDATES}`,
       params,
     );
   };
   let rows = await candidates(5, "exact");
+  const firstCapped = rows.length >= TRACE_CANDIDATES;
   let anchorsMode = "exact5";
   if (!rows.length) {
     rows = await candidates(3, "word");
@@ -644,10 +687,14 @@ export async function handleTraceText(
     ...(rulings ? { rulings } : {}),
     scope: scopeOut(scope),
     anchors: anchorsMode,
+    candidates_capped: firstCapped || rows.length >= TRACE_CANDIDATES,
     note:
       verdictText[verdict] +
       warn +
       (incomplete ? ` فُحصت أول ${TRACE_MAX_WORDS} كلمة فقط.` : "") +
+      (firstCapped || rows.length >= TRACE_CANDIDATES
+        ? ` المراسي تتكرر في أكثر من ${TRACE_CANDIDATES} مادة فقورن أولها فقط؛ النص عام متكرر — ضيّق بـ law_id أو category.`
+        : "") +
       " المقارنة كلمةً بكلمة بعد تطبيع الإملاء والتشكيل، والمرشحات من مراسٍ في النص (أول 30 مادة)." +
       (rulings ? " الأحكام: مطابقة أول ست كلمات عبارةً فقط." : ""),
   };

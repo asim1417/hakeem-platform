@@ -8,7 +8,7 @@
  * لا إنتاج ولا فرع منه: النصوص اصطناعية أو جمل قصيرة بصيغ الأنظمة.
  */
 import { compileTerm, matchesText, normalizeAr, type MatchMode } from "../lib/mcp/tools/word-match";
-import { enumerateNote, enumerateWhereSql, NORM_LATERAL, termConditionSql } from "../lib/mcp/tools/enumerate";
+import { amendedMatchIds, enumerateNote, enumerateWhereSql, NORM_LATERAL, resetUnitVersionCache, termConditionSql, VERSION_REFS } from "../lib/mcp/tools/enumerate";
 import { researchLexical, researchNote } from "../lib/mcp/tools/research";
 import { NORM_TRANSLATE_FROM, NORM_TRANSLATE_TO, normSqlExpr, type CompiledTerm } from "../lib/mcp/tools/word-match";
 import { connectLocalTest } from "./hkm-023-b/local-db";
@@ -220,7 +220,7 @@ async function pgTests() {
     ];
     for (const [id, content, bis, law] of rowsIn) await db.query(`INSERT INTO legal_articles (id, content, "articleBis", "legalSystemId") VALUES ($1, $2, $3, $4)`, [id, content, bis, law]);
     const terms = (t: string[], mode: MatchMode = "word") => t.map((x) => compileTerm(x, mode)).filter((x): x is CompiledTerm => x !== null);
-    const run = async (c: CompiledTerm[], o: { lawId?: string; cursor?: string } = {}) => {
+    const run = async (c: CompiledTerm[], o: { lawId?: string; cursor?: string; amendedIds?: string[] } = {}) => {
       const params: unknown[] = [];
       const w = enumerateWhereSql(c, o, params);
       return (await db.query<{ id: string }>(`SELECT a.id FROM legal_articles a ${NORM_LATERAL} WHERE ${w} ORDER BY a.id`, params)).map((r) => r.id);
@@ -234,6 +234,23 @@ async function pgTests() {
     const page1 = all.slice(0, 2);
     const rest = await run(terms(["فسخ", "التعدي"]), { cursor: page1[page1.length - 1] });
     ok([...page1, ...rest].join() === all.join(), "P WHERE بمؤشر: الصفحات تغطي النتائج بلا تكرار ولا فقد، فالإجمالي = مجموع الصفحات");
+
+    // النص الساري المعدّل (مراجعة الجودة على 308bdb3): مادة طابق نصُّها الساري تُضم ولو لم يطابق المحفوظ، وتبقى قيود الدرجة والنظام.
+    const withAmended = await run(terms(["فسخ"]), { amendedIds: ["e05", "e04"] });
+    ok(withAmended.join() === "e01,e02,e05,e06", `P WHERE مع معرّفات النص الساري: e05 داخل، والدرجة 100 خارجة ولو طابق ساريها (${withAmended.join()})`);
+    const amendedLaw = await run(terms(["فسخ"]), { amendedIds: ["e05"], lawId: "law-a" });
+    ok(amendedLaw.join() === "e01,e02", `P WHERE مع النص الساري ونظام: قيد النظام يبقى (${amendedLaw.join()})`);
+    // amendedMatchIds على جدول النسخ: أحدث نسخة سارية وحدها، والمستقبلية لا.
+    await db.query(`DROP TABLE IF EXISTS unit_version`);
+    await db.query(`CREATE TABLE unit_version (id text PRIMARY KEY, unit_id text NOT NULL, body text NOT NULL, valid_from timestamptz NOT NULL)`);
+    await db.query(`INSERT INTO unit_version VALUES ('v1','e05','يجوز فسخ الالتزام','2015-01-01'), ('v2','e03','نص قديم فيه فسخ','2010-01-01'), ('v3','e03','نص أحدث بلا اللفظ','2016-01-01'), ('v4','e07','فسخ مستقبلي','2999-01-01')`);
+    resetUnitVersionCache();
+    const vp: unknown[] = [];
+    const vIds = await amendedMatchIds(db, termConditionSql(terms(["فسخ"])[0], vp, VERSION_REFS.norm, VERSION_REFS.raw), vp);
+    ok(vIds.join() === "e05", `P معرّفات النص الساري: أحدث نسخة سارية الآن وحدها (${vIds.join()})`);
+    await db.query(`DROP TABLE unit_version`);
+    resetUnitVersionCache();
+    ok((await amendedMatchIds(db, "TRUE", [])).length === 0, "P بلا جدول النسخ: لا معرّفات ولا خطأ");
   } finally {
     await client.end();
   }

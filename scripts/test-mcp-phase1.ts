@@ -13,6 +13,7 @@ import { resolveEffectiveText, type EffectiveArticleText } from "../lib/modules/
 import type { UnitVersionRecord, VerificationRecord } from "../lib/modules/legal-core/verified-status";
 import {
   filtersFromArgs,
+  fuzzyMaxDistance,
   handleHealth,
   handleListCategories,
   handleListLaws,
@@ -103,8 +104,10 @@ ok(P("فسخ أو انفساخ عقد") === "فسخ OR (انفساخ AND عقد)
 ok(P("(فسخ أو انفساخ) عقد دون تعويض") === "(فسخ OR انفساخ) AND عقد AND NOT تعويض", "U أقواس و«دون»");
 ok(P('"فسخ العقد" OR -تعويض إلزام') === "«فسخ العقد» OR (NOT تعويض AND إلزام)", "U عبارة بين علامتي تنصيص، و-لفظ نفي");
 ok(P("«فسخ العقد» و التعويض") === "«فسخ العقد» AND التعويض", "U «…» عبارة و«و» منفصلة عامل AND");
-throws(() => parseBoolean("دون تعويض", "word"), /لفظ مثبت/, "U النفي وحده مرفوض");
-throws(() => parseBoolean("فسخ أو دون تعويض", "word"), /لفظ مثبت/, "U فرع OR منفي كله مرفوض");
+throws(() => parseBoolean("NOT تعويض", "word"), /لفظ مثبت/, "U النفي وحده مرفوض");
+throws(() => parseBoolean("فسخ أو -تعويض", "word"), /لفظ مثبت/, "U فرع OR منفي كله مرفوض");
+ok(P("دون الإخلال بأحكام النظام") === "دون AND الإخلال AND بأحكام AND النظام" && P("فسخ دون تعويض") === "فسخ AND NOT تعويض", "U «دون» نفي بين لفظين فقط، وفي أول الاستعلام كلمة عادية");
+ok(P("(دون الإخلال) أو فسخ") === "(دون AND الإخلال) OR فسخ" && P("فسخ أو دون تعويض") === "فسخ OR (دون AND تعويض)", "U «دون» بعد قوس فتح أو عامل كلمة عادية");
 throws(() => parseBoolean("(فسخ عقد", "word"), /لم يُغلق/, "U قوس مفتوح");
 throws(() => parseBoolean("فسخ)", "word"), /بلا قوس فتح/, "U قوس إغلاق زائد");
 throws(() => parseBoolean('"فسخ العقد', "word"), /تنصيص/, "U علامة تنصيص مفتوحة");
@@ -168,6 +171,7 @@ const hl = hintedLaws("مكافأة نهاية الخدمة في نظام الع
   { law_id: "m", name: "نظام العمل البحري" },
 ]);
 ok(hl.has("m") && !hl.has("w"), "U النظام المسمّى: الأطول يغلب");
+ok(fuzzyMaxDistance(10) === 2 && fuzzyMaxDistance(24) === 3 && fuzzyMaxDistance(60) === 4, "U حد مسافة التحرير: 2 للقصير و4 أقصى");
 ok(rerankScore(0.8, 1, false) === 0.87 && rerankScore(0.8, 0, true) === 0.6, "U وزن الترتيب 0.65/0.35 و0.08 للنظام المسمّى");
 
 // ── D: قاعدة محلية ──
@@ -291,6 +295,10 @@ async function dbTests(db: SqlClient) {
   ok(rs4.candidates[0]?.law_id === "sys-labor" && rs4.candidates.some((c) => c.law_id === "sys-old"), "D «نظام العمل» تامة، والبدائل تشمل القديم");
   const rsOld = await handleResolve(db, { q: "نظام العمل والعمال" });
   ok(rsOld.candidates[0]?.law_id === "sys-old" && rsOld.candidates[0].match === "exact" && rsOld.candidates[0].status === "لاغي", "D اسم النظام الملغى نفسه يُحسم إليه (لا اسم مستعار يحوّله إلى الجديد)");
+  const rsLong = await handleResolve(db, { q: "نظام حماية البيانات الشخصية والخصوصية الرقمية" });
+  ok(rsLong.count === 0, `D اسم طويل لا يقابله نظام: لا مرشحين (كان يقبل كل نظام؛ ${rsLong.count})`);
+  const rsTypo = await handleResolve(db, { q: "اللائحة التنفيدية لنظام العمل" });
+  ok(rsTypo.candidates[0]?.law_id === "sys-lawaih" && rsTypo.candidates[0].match === "fuzzy" && rsTypo.candidates[0].score <= 0.6, "D خطأ إملائي في اسم طويل ← الاسم الصحيح، ودرجة fuzzy دون الاحتواء");
   const rs5 = await handleResolve(db, { q: "نظام الطيران المدني" });
   ok(rs5.count === 0 && /لا نظام/.test(rs5.note), "D اسم لا يقابله نظام: لا مرشحين وملاحظة صريحة");
 
@@ -300,6 +308,9 @@ async function dbTests(db: SqlClient) {
   const y1444 = st.rulings.by_year_h?.find((y) => y.year_h === 1444);
   ok(st.rulings.total === 3 && st.rulings.by_court?.[0].court === "المحكمة العمالية" && y1444?.count === 1, "D الأحكام بالمحكمة وبالسنة الهجرية (أرقام هندية)");
   ok(st.bylaw_links === 1 && st.thesaurus_concepts === 2, "D روابط اللوائح ومفاهيم المكنز");
+  const leaky: SqlClient = { query: async () => { throw Object.assign(new Error("Can't reach database server at ep-secret-host.neon.tech:5432 user neondb_owner"), {}); } };
+  const hb = await handleHealth(leaky, { tools: 25, semantic: true });
+  ok(hb.status === "degraded" && !JSON.stringify(hb).includes("neon") && hb.database.error === "unreachable", "D الحالة عند تعذر القاعدة: رمز لا نص الخطأ (لا مضيف ولا مستخدم)");
   const hl = await handleHealth(db, { tools: 25, semantic: false });
   ok(hl.status === "ok" && hl.database.reachable && hl.corpus?.laws === 7 && hl.semantic_search === "disabled", "D الحالة: القاعدة والمدونة والدلالي");
 
@@ -345,6 +356,10 @@ async function dbTests(db: SqlClient) {
   const p1 = await handleSearchPhrase(db, { phrase: "فسخ العقد", page_size: 1 }, deps);
   const p2 = await handleSearchPhrase(db, { phrase: "فسخ العقد", page_size: 1, cursor: p1.next_cursor ?? undefined }, deps);
   ok(p1.page.length === 1 && p1.next_cursor !== null && p2.page[0].article_id > p1.page[0].article_id && p2.total === p1.total, "D ترقيم cursor ثابت العدد");
+  const amNew = await handleSearchPhrase(db, { phrase: "يستحق الطرف المتضرر" }, deps);
+  ok(amNew.total === 1 && amNew.page[0]?.article_id === "a-lab-077" && amNew.page[0].amended && amNew.page[0].term_in_current_text, "D عبارة في النص الساري المعدّل وحده تُوجد (لا «فُتّش فلم يوجد»)");
+  const amBool = L(await handleSearchBoolean(db, { query: '"يستحق الطرف المتضرر" -فسخ' }, deps));
+  ok((amBool.page ?? []).map((h) => h.article_id).join() === "a-lab-077", "D المنطقي يطابق النص الساري المعدّل أيضًا");
   const am = await handleSearchPhrase(db, { phrase: "تعويض تقدره هيئة" }, deps);
   ok(am.total === 1 && am.page[0].amended && !am.page[0].term_in_current_text, "D مادة معدّلة لم يعد نصها الساري يحوي العبارة: موسومة");
 
@@ -353,6 +368,19 @@ async function dbTests(db: SqlClient) {
   const b1ids = (b1.page ?? []).map((h) => h.article_id).sort();
   ok(JSON.stringify(b1ids) === JSON.stringify(["a-civ-107", "a-civ-108", "a-law-001"]), `D منطقي: OR وAND وNOT (${b1ids.join("، ")})`);
   ok(b1.parsed === "(فسخ OR ينفسخ) AND العقد AND NOT تعويض" && JSON.stringify(b1.excluded_terms) === JSON.stringify(["تعويض"]), "D parsed والألفاظ المنفية");
+  // OR متداخل فيه فرع منفي (كان يسقط بـ 42P18: معامل تصفية لا يرد في SQL)، ومطابقة SQL لتقييم الكود على المدونة كلها.
+  const nestedQ = "العقد (تعويض أو -الهيئة)";
+  const bn = L(await handleSearchBoolean(db, { query: nestedQ }, deps));
+  const allArts = await db.query<{ id: string; content: string; law_id: string; bis: number }>(`SELECT id, content, "legalSystemId" AS law_id, "articleBis" AS bis FROM legal_articles`);
+  const curText = await deps.effective(allArts.map((a) => ({ id: a.id, content: a.content })));
+  const nestedTree = parseBoolean(nestedQ, "word");
+  const expectNested = allArts
+    .filter((a) => a.bis < 100 && a.law_id !== "sys-old")
+    .filter((a) => evalBoolean(nestedTree, normalizeAr(a.content)) || (curText.get(a.id)?.source === "unit_version" && evalBoolean(nestedTree, normalizeAr(curText.get(a.id)!.text))))
+    .map((a) => a.id)
+    .sort();
+  const gotNested = (bn.page ?? []).map((h) => h.article_id).sort();
+  ok(!bn.error && JSON.stringify(gotNested) === JSON.stringify(expectNested) && gotNested.length >= 4, `D OR متداخل بفرع منفي: بلا خطأ، وSQL = تقييم الكود (${gotNested.join("، ")})`);
   const b2 = L(await handleSearchBoolean(db, { query: "فسخ (العقد" }, deps));
   ok("error" in b2 && /لم يُغلق/.test(String(b2.error)) && "hint" in b2, "D خطأ الصيغة يُشرح بمثال ولا يُرمى");
   const b3 = L(await handleSearchBoolean(db, { query: '"صاحب العمل" -فسخ', status: "all" }, deps));
@@ -370,6 +398,8 @@ async function dbTests(db: SqlClient) {
   ok(t4.verdict === "verbatim" && t4.matches[0].matched_on === "repealed_text" && /ملغاة/.test(t4.note), "D تتبع: من مادة ملغاة — تنبيه");
   const t5 = await handleTraceText(db, { text: "تختص المحكمة العليا بمراقبة سلامة تطبيق أحكام الشريعة" }, deps);
   ok(t5.verdict === "not_found" && /ليس نفيًا/.test(t5.note), "D تتبع: غير موجود بملاحظة أمينة");
+  const tNew = await handleTraceText(db, { text: "ما لم يتضمن العقد تعويضًا محددًا مقابل إنهائه من أحد الطرفين لسبب غير مشروع" }, deps);
+  ok(tNew.verdict === "verbatim" && tNew.matches[0]?.article_id === "a-lab-077" && tNew.matches[0].matched_on === "current" && "candidates_capped" in tNew && tNew.candidates_capped === false, "D تتبع: اقتباس من النص الساري المعدّل ← حرفي (كان not_found)");
   const t6 = await handleTraceText(db, { text: "قصير جدا" }, deps);
   ok(t6.verdict === "too_short", "D تتبع: أقل من ثلاث كلمات");
   let rulingsPhrase = "";

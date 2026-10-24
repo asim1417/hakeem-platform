@@ -12,7 +12,7 @@
  * legal_system_issuance) يُسأل عن وجودها قبل قراءتها، فتعمل الأدوات على قاعدة لم تُطبَّق عليها ترحيلاتها.
  */
 import type { SqlClient } from "../../modules/legal-core/sql-port";
-import { relationExists } from "../../modules/legal-core/sql-port";
+import { pgErrorCode, relationExists } from "../../modules/legal-core/sql-port";
 import { toBoeStatus } from "../../modules/legal-core/law-page-data";
 import { normalizeLawName, rankLawNameMatches, type LawCandidate } from "../../modules/legal-core/law-name-match";
 import { resolveWorkKind, WORK_KINDS } from "../../modules/legal-core/work-kind";
@@ -269,7 +269,12 @@ export async function handleListLaws(
 // ── hakeem_resolve ──
 
 /** مسافة تحرير (ليفنشتاين) بحدّ؛ لتصويب الخطأ الإملائي في الاسم. */
-function editDistance(a: string, b: string, max = 6): number {
+/** أقصى مسافة تحرير مقبولة لاسم بطوله: حرفان للقصير، ونحو حرف لكل ثمانية، وأربعة على الأكثر. */
+export function fuzzyMaxDistance(len: number): number {
+  return Math.min(4, Math.max(2, Math.floor(len / 8)));
+}
+
+export function editDistance(a: string, b: string, max = 6): number {
   if (Math.abs(a.length - b.length) > max) return max + 1;
   const prev = Array.from({ length: b.length + 1 }, (_, i) => i);
   for (let i = 1; i <= a.length; i++) {
@@ -305,16 +310,20 @@ export async function handleResolve(db: SqlClient, args: { q: string; kind?: str
     out = [ranked.match, ...ranked.alternatives].map((c, i) => ({ ...byId.get(c.id)!, match: i === 0 ? ranked.matchType : "alternative", score: i === 0 ? score : 0.5 }));
   } else {
     // لا تامة ولا جزئية: أقرب الأسماء بمسافة التحرير على الاسم المطبَّع (خطأ إملائي، كلمة زائدة أو ناقصة).
+    // الحد يُحسب أولًا ويُمرَّر إلى editDistance: كان الحد 20٪ من الطول (7 فأكثر للاسم الطويل) أكبر من سقف الدالة
+    // (6، وتعيد 7 عند تجاوزه)، فقُبل كل نظام للاسم الطويل (مراجعة الجودة، الملاحظة ٣). والدرجة دون «الاحتواء» (0.7) دائمًا.
     const nqq = normalizeLawName(q);
     const scored = pool
       .map((l) => {
         const n = normalizeLawName(l.name);
-        const d = Math.min(editDistance(nqq, n), editDistance(`نظام ${nqq}`, n));
-        return { l, d, len: Math.max(n.length, nqq.length) };
+        const len = Math.max(n.length, nqq.length);
+        const max = fuzzyMaxDistance(len);
+        const d = Math.min(editDistance(nqq, n, max), editDistance(`نظام ${nqq}`, n, max));
+        return { l, d, len, max };
       })
-      .filter((x) => x.d <= Math.max(2, Math.floor(x.len * 0.2)))
+      .filter((x) => x.d <= x.max)
       .sort((a, b) => a.d - b.d || b.l.articles_count - a.l.articles_count);
-    out = scored.map((x) => ({ ...x.l, match: "fuzzy", score: Math.max(0.3, 1 - x.d / x.len) }));
+    out = scored.map((x) => ({ ...x.l, match: "fuzzy", score: Math.round(Math.min(0.6, Math.max(0.3, 1 - x.d / x.len)) * 100) / 100 }));
   }
   out = out.slice(0, limit);
   return {
@@ -391,7 +400,8 @@ export async function handleHealth(db: SqlClient, info: { tools: number; semanti
     await db.query(`SELECT 1 AS ok`);
     dbOk = true;
   } catch (e) {
-    dbError = String((e as Error)?.message ?? e).slice(0, 120);
+    // رمز الخطأ وحده: نص الخطأ قد يحمل مضيف القاعدة أو اسم مستخدمها (مراجعة الجودة، الملاحظة ٤). الأداة مجانية.
+    dbError = pgErrorCode(e) ?? "unreachable";
   }
   const dbMs = Date.now() - t0;
   let corpus: { laws: number; articles: number } | null = null;
