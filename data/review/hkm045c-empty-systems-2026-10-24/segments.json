@@ -1,0 +1,3291 @@
+{
+ "systems": [
+  {
+   "system_id": "16299b0a4a2e45a3af1908f3cebaaed7",
+   "name": "إجراءات طلبات التنفيذ المقدمة من الجهات الإدارية",
+   "source_id": "uqn:17002",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=17002",
+   "md5": "d09d1577ba26065114283f6deff9e5d3",
+   "text_sha": "41012478c89ec35c",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 30,
+     "end": 2599
+    }
+   ],
+   "seg_md5": [
+    "1b0460de404f069e3545231f9bf0733d"
+   ]
+  },
+  {
+   "system_id": "e00306468ef84f46b6e5c5bdcb87b1eb",
+   "name": "السياسة الوطنية لإدارة النفايات المشعة في المملكة",
+   "source_id": "uqn:17070",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=17070",
+   "md5": "1a31b5186bd119b8ac3fd9043e9bdb2d",
+   "text_sha": "19e1cb8c46318905",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 30,
+     "end": 5635
+    }
+   ],
+   "seg_md5": [
+    "c919ac1d1236e861f84eee69a159692c"
+   ]
+  },
+  {
+   "system_id": "3826f23b4eba487aae2cab17e9c37246",
+   "name": "سياسة الاقتصاد الرقمي في المملكة",
+   "source_id": "uqn:17384",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=17384",
+   "md5": "5fbfe7b6aa5a908916e414ab52297ec9",
+   "text_sha": "ce4c412299be8dff",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 30,
+     "end": 7683
+    }
+   ],
+   "seg_md5": [
+    "a837f3e9d8395a2e9081a2c9937a6c21"
+   ]
+  },
+  {
+   "system_id": "bcf12c6093914392806c81b35b5758dd",
+   "name": "القواعد والإجراءات التنفيذية اللازمة لتطبيق تعريفة استهلاك الكهرباء لنشاط الحوسبة السحابية",
+   "source_id": "uqn:17472",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=17472",
+   "md5": "4feb19bd376b6a33a365749c4bc95cd4",
+   "text_sha": "73c04a0686ebbfe7",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 30,
+     "end": 13590
+    }
+   ],
+   "seg_md5": [
+    "84960c97a39d32ea838364a6abbc8a7a"
+   ]
+  },
+  {
+   "system_id": "df6fc34a20df4aa491ae3763c11493ae",
+   "name": "السياسة الوطنية لمنع عمل الأطفال في المملكة (مشروع)",
+   "source_id": "uqn:17578",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=17578",
+   "md5": "e1f36f74f00d79d7d7055d2738b8cc78",
+   "text_sha": "ef3396706df78ff0",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 30,
+     "end": 29363
+    }
+   ],
+   "seg_md5": [
+    "3eb805fbbc0238908a5a33fe15d8b918"
+   ]
+  },
+  {
+   "system_id": "caaae23a60e449c7b4af2cf46212e1cb",
+   "name": "قواعد وشروط التحقق من إثبات المنشأ",
+   "source_id": "uqn:18071",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=18071",
+   "md5": "d642f51483c694e9d74d29da7e81a379",
+   "text_sha": "dc1630d14e2f58b6",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 31,
+     "end": 5936
+    }
+   ],
+   "seg_md5": [
+    "e794fff7aae626127148375d20ffe66f"
+   ]
+  },
+  {
+   "system_id": "e1e5b14cc14442b7b0cade4ffc58b668",
+   "name": "اللائحة التنفيذية لنظام القياس والمعايرة",
+   "source_id": "uqn:18476",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=18476",
+   "md5": "39c42afa58b6d7c8d5e0d94e3497fd8b",
+   "text_sha": "bd94e05e5c319a82",
+   "kind": "articles",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "المادة 1",
+     "start": 42,
+     "end": 2212
+    },
+    {
+     "n": 2,
+     "bis": 0,
+     "title": "المادة 2",
+     "start": 2224,
+     "end": 2427
+    },
+    {
+     "n": 3,
+     "bis": 0,
+     "title": "المادة 3",
+     "start": 2439,
+     "end": 2591
+    },
+    {
+     "n": 4,
+     "bis": 0,
+     "title": "المادة 4",
+     "start": 2603,
+     "end": 3595
+    },
+    {
+     "n": 5,
+     "bis": 0,
+     "title": "المادة 5",
+     "start": 3607,
+     "end": 3985
+    },
+    {
+     "n": 6,
+     "bis": 0,
+     "title": "المادة 6",
+     "start": 3997,
+     "end": 4411
+    },
+    {
+     "n": 7,
+     "bis": 0,
+     "title": "المادة 7",
+     "start": 4423,
+     "end": 4632
+    },
+    {
+     "n": 8,
+     "bis": 0,
+     "title": "المادة 8",
+     "start": 4644,
+     "end": 5328
+    },
+    {
+     "n": 9,
+     "bis": 0,
+     "title": "المادة 9",
+     "start": 5340,
+     "end": 5512
+    },
+    {
+     "n": 10,
+     "bis": 0,
+     "title": "المادة 10",
+     "start": 5525,
+     "end": 6358
+    },
+    {
+     "n": 11,
+     "bis": 0,
+     "title": "المادة 11",
+     "start": 6371,
+     "end": 7284
+    },
+    {
+     "n": 12,
+     "bis": 0,
+     "title": "المادة 12",
+     "start": 7297,
+     "end": 7719
+    },
+    {
+     "n": 13,
+     "bis": 0,
+     "title": "المادة 13",
+     "start": 7732,
+     "end": 7898
+    },
+    {
+     "n": 14,
+     "bis": 0,
+     "title": "المادة 14",
+     "start": 7911,
+     "end": 8692
+    },
+    {
+     "n": 15,
+     "bis": 0,
+     "title": "المادة 15",
+     "start": 8705,
+     "end": 9652
+    },
+    {
+     "n": 16,
+     "bis": 0,
+     "title": "المادة 16",
+     "start": 9665,
+     "end": 10344
+    },
+    {
+     "n": 17,
+     "bis": 0,
+     "title": "المادة 17",
+     "start": 10357,
+     "end": 12627
+    }
+   ],
+   "seg_md5": [
+    "6b625754d212d4ae19ab40101d361215",
+    "0756b1d20ab46cb53b5478d92099f94a",
+    "607a869ad2a2205c4aabb18d6b5615ee",
+    "8ece63c79747fc181e5e13199e6d627e",
+    "d0f0957da647b456d1dd79b496b69955",
+    "da911e0cce0e1d92ae547058718611dc",
+    "4523f4ad768e6e872be02f5b9189f436",
+    "8472870d8cd09d81b8514fa65a409cc6",
+    "3bf167a75e2a476949a837dba710035e",
+    "47db0c746e180ef26f44111e41630970",
+    "dbe5713155a59679860e6e3426398630",
+    "94ae49936c28a151a0b0247365413739",
+    "ad1af04cfaebf06a9cc2f037ae6254a5",
+    "a15778f0589dd9870550d499db0c8a25",
+    "a46016c1338a5fe05a118084f0964c2b",
+    "374a0c82b46298d74d4a83b1a61d3085",
+    "ce4233946d803bd90d620fdaa5ada427"
+   ]
+  },
+  {
+   "system_id": "1a1629bbc31f4f48920f4422d7fbb9b8",
+   "name": "قواعد ومعايير التأهيل الفني والمالي للمطورين العقاريين لمشاريع البيع على الخارطة",
+   "source_id": "uqn:18498",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=18498",
+   "md5": "c8ca48f54fd5c01ebdbc722b83a47346",
+   "text_sha": "b01927080d92ad26",
+   "kind": "articles",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "المادة 1",
+     "start": 42,
+     "end": 856
+    },
+    {
+     "n": 2,
+     "bis": 0,
+     "title": "المادة 2",
+     "start": 868,
+     "end": 1142
+    },
+    {
+     "n": 3,
+     "bis": 0,
+     "title": "المادة 3",
+     "start": 1154,
+     "end": 1324
+    },
+    {
+     "n": 4,
+     "bis": 0,
+     "title": "المادة 4",
+     "start": 1336,
+     "end": 1476
+    },
+    {
+     "n": 5,
+     "bis": 0,
+     "title": "المادة 5",
+     "start": 1488,
+     "end": 1749
+    },
+    {
+     "n": 6,
+     "bis": 0,
+     "title": "المادة 6",
+     "start": 1761,
+     "end": 2090
+    },
+    {
+     "n": 7,
+     "bis": 0,
+     "title": "المادة 7",
+     "start": 2102,
+     "end": 2295
+    },
+    {
+     "n": 8,
+     "bis": 0,
+     "title": "المادة 8",
+     "start": 2307,
+     "end": 2689
+    },
+    {
+     "n": 9,
+     "bis": 0,
+     "title": "المادة 9",
+     "start": 2701,
+     "end": 2829
+    },
+    {
+     "n": 10,
+     "bis": 0,
+     "title": "المادة 10",
+     "start": 2842,
+     "end": 3173
+    },
+    {
+     "n": 11,
+     "bis": 0,
+     "title": "المادة 11",
+     "start": 3186,
+     "end": 3456
+    },
+    {
+     "n": 12,
+     "bis": 0,
+     "title": "المادة 12",
+     "start": 3469,
+     "end": 3523
+    },
+    {
+     "n": 13,
+     "bis": 0,
+     "title": "المادة 13",
+     "start": 3536,
+     "end": 3571
+    }
+   ],
+   "seg_md5": [
+    "0de6c66f612a8062fd8075e7e21b54ae",
+    "da5ce51be85f1d3aff020b01a8c83c74",
+    "bff7ee1b1597feced5a7dd5637a1e286",
+    "f24e366904f55b31f6047cf12260af91",
+    "b14df0cc10cf58be7da05d623455b481",
+    "876c6637bf0d422b7ba6e1db5832d23d",
+    "70628f2cd264b41493ac56376bf143de",
+    "09d86eec0c8b39451c9cb944bb72cc70",
+    "7ca9f33620f0bb9b887c7cb91704b642",
+    "facdcccb2a59e17b492654a7e93aca32",
+    "4d6e9501fb93523888cfb5c9dcd83cfe",
+    "1517e4b6355939b750cff83916fc8126",
+    "666247902f6d3c37cdf8b907b136aef5"
+   ]
+  },
+  {
+   "system_id": "babfa7584d954bd39426664ee5abd667",
+   "name": "اللائحة الفنية للمركبات الهيدروجينية",
+   "source_id": "uqn:19145",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=19145",
+   "md5": "b2e71416790d1979ebc4b066815227bd",
+   "text_sha": "413102e00462c88a",
+   "kind": "articles",
+   "segments": [
+    {
+     "n": 0,
+     "bis": 100,
+     "title": "الديباجة",
+     "start": 30,
+     "end": 2124
+    },
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "المادة 1",
+     "start": 2138,
+     "end": 7692
+    },
+    {
+     "n": 2,
+     "bis": 0,
+     "title": "المادة 2",
+     "start": 7706,
+     "end": 8245
+    },
+    {
+     "n": 3,
+     "bis": 0,
+     "title": "المادة 3",
+     "start": 8259,
+     "end": 8664
+    },
+    {
+     "n": 4,
+     "bis": 0,
+     "title": "المادة 4",
+     "start": 8678,
+     "end": 13801
+    },
+    {
+     "n": 5,
+     "bis": 0,
+     "title": "المادة 5",
+     "start": 13813,
+     "end": 14396
+    },
+    {
+     "n": 6,
+     "bis": 0,
+     "title": "المادة 6",
+     "start": 14410,
+     "end": 15423
+    },
+    {
+     "n": 7,
+     "bis": 0,
+     "title": "المادة 7",
+     "start": 15437,
+     "end": 16053
+    },
+    {
+     "n": 8,
+     "bis": 0,
+     "title": "المادة 8",
+     "start": 16067,
+     "end": 16671
+    },
+    {
+     "n": 9,
+     "bis": 0,
+     "title": "المادة 9",
+     "start": 16685,
+     "end": 18721
+    },
+    {
+     "n": 10,
+     "bis": 0,
+     "title": "المادة 10",
+     "start": 18736,
+     "end": 20497
+    },
+    {
+     "n": 11,
+     "bis": 0,
+     "title": "المادة 11",
+     "start": 20512,
+     "end": 20924
+    },
+    {
+     "n": 12,
+     "bis": 0,
+     "title": "المادة 12",
+     "start": 20939,
+     "end": 64805
+    }
+   ],
+   "seg_md5": [
+    "c95750f24b7b35a6331c669283a4726a",
+    "4a6e3cc9a7fa967223f576d89f735998",
+    "7cd32413dc23d832b515fc922c8f3ca1",
+    "da238adde0cc4d7ba8b43f482a2a6aea",
+    "75c6fedcccf3c3779315fb8f174ffb37",
+    "cad6368684fa134496b862a3315c1696",
+    "d68ddf0cd282ef929da488907dc7171a",
+    "010012ca7185184be97634e5b9b36639",
+    "8d61ee17aeb31d0927fa06fb245e8d14",
+    "b438a6959b710332dfd612802fa0f946",
+    "8d7b22432189dc3ac28dcdb190072577",
+    "6f4b547621e02a71b6254bbe1b37ce29",
+    "fe10ec002394c39d53a854e727ad07b4"
+   ]
+  },
+  {
+   "system_id": "b4d2dcbc294f44b789eb588c1417fd55",
+   "name": "اللائحة الفنية للصهاريج – الجزء الثاني: صهاريج نقل الغاز البترولي المسال",
+   "source_id": "uqn:19146",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=19146",
+   "md5": "a7aacf1ca8c869d3d44d47c415ff013e",
+   "text_sha": "e7840b217f30cbc7",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 30,
+     "end": 24745
+    }
+   ],
+   "seg_md5": [
+    "0600bcb83159ee1a7d6d1fc154305ac2"
+   ]
+  },
+  {
+   "system_id": "89f62c146fb64f5eb3f0513242ec47b6",
+   "name": "قواعد الضبط ورفع الدعوى التأديبية ونظرها",
+   "source_id": "uqn:19348",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=19348",
+   "md5": "bd3cf29c7f2ef6305914b13412ceb4bc",
+   "text_sha": "07ddeb6174f4721a",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 30,
+     "end": 5456
+    }
+   ],
+   "seg_md5": [
+    "c517e62521b651b871a9a23229da0b1b"
+   ]
+  },
+  {
+   "system_id": "19e650d6971e4a9584a4da9dae1d1960",
+   "name": "القواعد والإجراءات الخاصة بالمطورين العقاريين المرخصين باعتبارهم أشخاصاً مؤهلين لاسترداد ضريبة القيمة المضافة",
+   "source_id": "uqn:19767",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=19767",
+   "md5": "7df63657c348fa732be6ffa294158c49",
+   "text_sha": "f39c7441175b1e2c",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 0,
+     "end": 9472
+    }
+   ],
+   "seg_md5": [
+    "7df63657c348fa732be6ffa294158c49"
+   ]
+  },
+  {
+   "system_id": "33051c1d03e04f0da3ef46e64571550f",
+   "name": "اللائحة المنظمة لنشاط بيع تذاكر السفر البحرية",
+   "source_id": "uqn:20004",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=20004",
+   "md5": "eea1eb87043416358ad8034c16a093cb",
+   "text_sha": "89973bb111c7e7ae",
+   "kind": "articles",
+   "segments": [
+    {
+     "n": 0,
+     "bis": 100,
+     "title": "الديباجة",
+     "start": 30,
+     "end": 66
+    },
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "المادة 1",
+     "start": 88,
+     "end": 1184
+    },
+    {
+     "n": 2,
+     "bis": 0,
+     "title": "المادة 2",
+     "start": 1207,
+     "end": 1454
+    },
+    {
+     "n": 3,
+     "bis": 0,
+     "title": "المادة 3",
+     "start": 1477,
+     "end": 1651
+    },
+    {
+     "n": 4,
+     "bis": 0,
+     "title": "المادة 4",
+     "start": 1674,
+     "end": 2368
+    },
+    {
+     "n": 5,
+     "bis": 0,
+     "title": "المادة 5",
+     "start": 2391,
+     "end": 3053
+    },
+    {
+     "n": 6,
+     "bis": 0,
+     "title": "المادة 6",
+     "start": 3076,
+     "end": 3688
+    },
+    {
+     "n": 7,
+     "bis": 0,
+     "title": "المادة 7",
+     "start": 3711,
+     "end": 3849
+    },
+    {
+     "n": 8,
+     "bis": 0,
+     "title": "المادة 8",
+     "start": 3872,
+     "end": 4966
+    },
+    {
+     "n": 9,
+     "bis": 0,
+     "title": "المادة 9",
+     "start": 4989,
+     "end": 6169
+    },
+    {
+     "n": 10,
+     "bis": 0,
+     "title": "المادة 10",
+     "start": 6193,
+     "end": 6414
+    },
+    {
+     "n": 11,
+     "bis": 0,
+     "title": "المادة 11",
+     "start": 6443,
+     "end": 6623
+    },
+    {
+     "n": 12,
+     "bis": 0,
+     "title": "المادة 12",
+     "start": 6652,
+     "end": 7021
+    },
+    {
+     "n": 13,
+     "bis": 0,
+     "title": "المادة 13",
+     "start": 7050,
+     "end": 7291
+    },
+    {
+     "n": 14,
+     "bis": 0,
+     "title": "المادة 14",
+     "start": 7320,
+     "end": 7446
+    },
+    {
+     "n": 15,
+     "bis": 0,
+     "title": "المادة 15",
+     "start": 7475,
+     "end": 7543
+    },
+    {
+     "n": 16,
+     "bis": 0,
+     "title": "المادة 16",
+     "start": 7572,
+     "end": 8694
+    }
+   ],
+   "seg_md5": [
+    "a84154c1900e867bd278661c9ef53fe1",
+    "2afbf21ae80c1cee33f1c8a525c96feb",
+    "876543c44a8f98c284f22225a7928d02",
+    "fa3b0b5d17e13c8682476e16427bd32f",
+    "a71eeb456c113071542be0bf9d20f289",
+    "42d9b7d236250b66d9c0f1db3b181c40",
+    "c2e2e0393a081e60d5b3457130e66fc2",
+    "1af9165962f2cc321fa4d890ac69fc96",
+    "7d28d687ae4157fe26976217a1dbdfea",
+    "8f03509314a94c06e09893068788a752",
+    "94801b0429889cdf78d4ae9c6d34dded",
+    "e7f5bc14ed63c1ef15bf9900c2d28267",
+    "dc65c57134aa3914450493eca10d251b",
+    "a6f33fc83b6a229f81283239a357dc41",
+    "4ab8772e6735f8d58bc5203f5bc8bfe6",
+    "b53c3232139f708afb39e9f349cbc204",
+    "1551d0046461601e71c88ed6e87dd1a8"
+   ]
+  },
+  {
+   "system_id": "0e760f46dbc14edf8da6e25cd04ebab2",
+   "name": "جدول المقابل المالي الذي تحصل عليه جهة الفحص لإجراء الفحص الفني الدوري للمركبات",
+   "source_id": "uqn:20977",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=20977",
+   "md5": "64fe6b5f14b682e54f32468a5601dbb0",
+   "text_sha": "a343d09fb82c4836",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 30,
+     "end": 2357
+    }
+   ],
+   "seg_md5": [
+    "787589f9830c6a7b70874df1669e1502"
+   ]
+  },
+  {
+   "system_id": "b2d3df462449470bbb1cf954113fd94a",
+   "name": "القواعد والضوابط والإجراءات التنفيذية",
+   "source_id": "uqn:21165",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=21165",
+   "md5": "eaf573b3ea77822f3c1ade857d72dd6e",
+   "text_sha": "5a3f78cca3d043f7",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 30,
+     "end": 21226
+    }
+   ],
+   "seg_md5": [
+    "dc3b172dce4fb6797e959c709c661734"
+   ]
+  },
+  {
+   "system_id": "2a1165b988634198b14759135dc66632",
+   "name": "السياسة الوطنية لتشجيع تكافؤ الفرص والمساواة في المعاملة في الاستخدام والمهنة في المملكة",
+   "source_id": "uqn:21280",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=21280",
+   "md5": "28835ae057f7b9c730f3cbcd337659e8",
+   "text_sha": "da06423a33155686",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 0,
+     "end": 8531
+    }
+   ],
+   "seg_md5": [
+    "28835ae057f7b9c730f3cbcd337659e8"
+   ]
+  },
+  {
+   "system_id": "cfdca7e338534b0998439612cf051379",
+   "name": "ضوابط تقديم الخدمة الكهربائية عن طريق التوليد المتنقل",
+   "source_id": "uqn:21467",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=21467",
+   "md5": "a912bd523fd355beeb6b1653cd6ec4e0",
+   "text_sha": "763706635bbe4154",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 30,
+     "end": 3447
+    }
+   ],
+   "seg_md5": [
+    "0265b261722b51020e4026c4be5493d3"
+   ]
+  },
+  {
+   "system_id": "e1eaba764b8243469122374bffb88866",
+   "name": "قواعد التحكيم في عقود التخصيص",
+   "source_id": "uqn:21584",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=21584",
+   "md5": "bb60d6703aae54dd62047174eb717c16",
+   "text_sha": "8ed251986a5930a2",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 30,
+     "end": 12765
+    }
+   ],
+   "seg_md5": [
+    "d7e673e57c6c9b3593558adae614f5be"
+   ]
+  },
+  {
+   "system_id": "edc78001727e498680d18322d75f934e",
+   "name": "قواعد المصادر الاحتياطية للطاقة الكهربائية",
+   "source_id": "uqn:21641",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=21641",
+   "md5": "7b64144234549a9a156ac056e25fbd43",
+   "text_sha": "cf71663d0b77bd8b",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 30,
+     "end": 8819
+    }
+   ],
+   "seg_md5": [
+    "83ca0a6f4dff322f2f8be55abf69c530"
+   ]
+  },
+  {
+   "system_id": "c95379da6808481aa9914ea7fa3955cb",
+   "name": "دليل الخطوط الحديدية - إدارة الأداء والامتثال",
+   "source_id": "uqn:23084",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=23084",
+   "md5": "0bc038926fdbf68edd257d091229e507",
+   "text_sha": "55b2bec02398b573",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 31,
+     "end": 35744
+    }
+   ],
+   "seg_md5": [
+    "182cb01e484bcee52e1360790220bbae"
+   ]
+  },
+  {
+   "system_id": "85cb257b3f924249a25ea6e8d26b3374",
+   "name": "دليل الخطوط الحديدية - إدارة الأصول",
+   "source_id": "uqn:23085",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=23085",
+   "md5": "3a33dd77e4a4100685df2046adc728b4",
+   "text_sha": "29dee03b55f65471",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 31,
+     "end": 21571
+    }
+   ],
+   "seg_md5": [
+    "ee59773084860f9f5eb40c663a694cf6"
+   ]
+  },
+  {
+   "system_id": "8649876aa6504e9f9223dade0f9d89ed",
+   "name": "دليل الخطوط الحديدية - الوثيقة الرئيسية وتشمل التعريفات",
+   "source_id": "uqn:23086",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=23086",
+   "md5": "f38f1d4ecb1e66dc5e7ec844fe8b0faa",
+   "text_sha": "459e02363b6e8489",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 31,
+     "end": 36191
+    }
+   ],
+   "seg_md5": [
+    "501a502ceb6fa14ce6b1015bab6fb523"
+   ]
+  },
+  {
+   "system_id": "052f0b62d62d40929c74c7c3cf179f6e",
+   "name": "دليل الخطوط الحديدية - التخطيط والاستجابة للطوارئ",
+   "source_id": "uqn:23087",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=23087",
+   "md5": "4fcfaea24351fbe299c13c2aa7428839",
+   "text_sha": "4a03b06e19158c6b",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 31,
+     "end": 38013
+    }
+   ],
+   "seg_md5": [
+    "f87ec319f22891bc221c1a15acf3300b"
+   ]
+  },
+  {
+   "system_id": "b2d4ca420f9f4c878d14ac8920479b1e",
+   "name": "دليل الخطوط الحديدية - ترخيص التشغيل(وتشمل نموذج طلب الترخيص ودليل تأمين المسئولية تجاه الغير / الطرف الثالث)",
+   "source_id": "uqn:23088",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=23088",
+   "md5": "f94b902a9ab1183ad0ccd6bf9ff52993",
+   "text_sha": "7facf8d00cfaa195",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 31,
+     "end": 61962
+    }
+   ],
+   "seg_md5": [
+    "96c7c4f3799ecbb4e9854071bf7f0214"
+   ]
+  },
+  {
+   "system_id": "a93599eb88094670b12b302346c0f87f",
+   "name": "دليل الخطوط الحديدية - نقل ومناولة البضائع الخطرة بالخطوط الحديدية",
+   "source_id": "uqn:23089",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=23089",
+   "md5": "bb9b583e7217300450d2357b0c4c897b",
+   "text_sha": "e36bfe20d5be2d9a",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 31,
+     "end": 20969
+    }
+   ],
+   "seg_md5": [
+    "7a2e41c01560a33950a96f7ed7c61539"
+   ]
+  },
+  {
+   "system_id": "3400122aa9804c7caff8fd74b81f252a",
+   "name": "دليل الخطوط الحديدية - الابلاغ عن الحوادث والتحقيق فيها",
+   "source_id": "uqn:23090",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=23090",
+   "md5": "f1ccb99622dfa6951b5e712388313f9b",
+   "text_sha": "ce001781a71fda0b",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 31,
+     "end": 38915
+    }
+   ],
+   "seg_md5": [
+    "bcaee929c23f1ed99bb042e2f3e03baa"
+   ]
+  },
+  {
+   "system_id": "8d9a08e55c294036825a21a507d74a02",
+   "name": "دليل الخطوط الحديدية - أنظمة إدارة السلامة",
+   "source_id": "uqn:23091",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=23091",
+   "md5": "4defafd3dfd3ac6779adc504fd7aa3a3",
+   "text_sha": "727c2e63ba2aa6c6",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 31,
+     "end": 137371
+    }
+   ],
+   "seg_md5": [
+    "88918efa81b59ceab0432dc1b30aabe5"
+   ]
+  },
+  {
+   "system_id": "676698ddebb6477fa2ad61b9d4d9c616",
+   "name": "دليل الخطوط الحديدية - الرسوم والتكاليف",
+   "source_id": "uqn:23093",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=23093",
+   "md5": "1b8201e1e57a6e1cf7190b5cb2ead6d4",
+   "text_sha": "06cc59ce84360008",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 31,
+     "end": 8350
+    }
+   ],
+   "seg_md5": [
+    "dd2b723b027e2860b5415048d9c14167"
+   ]
+  },
+  {
+   "system_id": "f26cc0ab74e94e53ba8da23d655ea0bd",
+   "name": "دليل الخطوط الحديدية - التصميم والبناء الآمن",
+   "source_id": "uqn:23094",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=23094",
+   "md5": "e04964f1550db2f63c5f55b5185925a8",
+   "text_sha": "5dc1f762fbd801f2",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 31,
+     "end": 28153
+    }
+   ],
+   "seg_md5": [
+    "724847970fafe6ccc1d7dd270022140e"
+   ]
+  },
+  {
+   "system_id": "fa4e60ce389e44289b8969e3e68f6346",
+   "name": "دليل الخطوط الحديدية - شهادة السلامة",
+   "source_id": "uqn:23095",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=23095",
+   "md5": "5fe81f18761341ad0262419840fc5429",
+   "text_sha": "9a852eeb2c969f13",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 31,
+     "end": 27789
+    }
+   ],
+   "seg_md5": [
+    "cf2982b01e471f6c3ff877fcf0e9fc2f"
+   ]
+  },
+  {
+   "system_id": "809bc186be33473cb812c1401eeac7e8",
+   "name": "دليل الخطوط الحديدية - المعايير الفنية وقابلية التشغيل البيني",
+   "source_id": "uqn:23096",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=23096",
+   "md5": "6efba31843c0a47e63c794329b1faf34",
+   "text_sha": "35a0a048e61f59df",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 31,
+     "end": 41470
+    }
+   ],
+   "seg_md5": [
+    "3c400757a6abd09b108dc85637e95b28"
+   ]
+  },
+  {
+   "system_id": "559ea74f00bd402eb6bb998e3db19c23",
+   "name": "دليل الخطوط الحديدية - خطة تسليم وتنفيذ أعمال الترخيص",
+   "source_id": "uqn:23097",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=23097",
+   "md5": "27e249b925da17d0d80318af87e9f5ee",
+   "text_sha": "6f094b0d739bbbe9",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 31,
+     "end": 10159
+    }
+   ],
+   "seg_md5": [
+    "52bd80a310e1a9f28d29c5ca7db165c8"
+   ]
+  },
+  {
+   "system_id": "65a9007060b44104899adc9c31cbf6f3",
+   "name": "دليل الخطوط الحديدية - إدارة التغيير والسيطرة",
+   "source_id": "uqn:23098",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=23098",
+   "md5": "42f91a4844de4c733125d56255dbb117",
+   "text_sha": "27a6d429d9212a7b",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 31,
+     "end": 17679
+    }
+   ],
+   "seg_md5": [
+    "76fe9cdee3d3cd7d86a1810a339defca"
+   ]
+  },
+  {
+   "system_id": "1426fb507d314b3bbb7246f887ef8e70",
+   "name": "اللائحة التنظيمية لمنظم الرحلات البحرية السياحية",
+   "source_id": "uqn:23415",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=23415",
+   "md5": "6e3563c291bc7936b32e4ee9c6c6c0e3",
+   "text_sha": "243fa4ed12f5aba7",
+   "kind": "articles",
+   "segments": [
+    {
+     "n": 0,
+     "bis": 100,
+     "title": "الديباجة",
+     "start": 30,
+     "end": 105
+    },
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "المادة 1",
+     "start": 123,
+     "end": 1779
+    },
+    {
+     "n": 2,
+     "bis": 0,
+     "title": "المادة 2",
+     "start": 1798,
+     "end": 1944
+    },
+    {
+     "n": 3,
+     "bis": 0,
+     "title": "المادة 3",
+     "start": 1963,
+     "end": 3809
+    },
+    {
+     "n": 4,
+     "bis": 0,
+     "title": "المادة 4",
+     "start": 3828,
+     "end": 5814
+    },
+    {
+     "n": 5,
+     "bis": 0,
+     "title": "المادة 5",
+     "start": 5833,
+     "end": 6294
+    },
+    {
+     "n": 6,
+     "bis": 0,
+     "title": "المادة 6",
+     "start": 6313,
+     "end": 6722
+    },
+    {
+     "n": 7,
+     "bis": 0,
+     "title": "المادة 7",
+     "start": 6741,
+     "end": 7344
+    },
+    {
+     "n": 8,
+     "bis": 0,
+     "title": "المادة 8",
+     "start": 7363,
+     "end": 7524
+    },
+    {
+     "n": 9,
+     "bis": 0,
+     "title": "المادة 9",
+     "start": 7543,
+     "end": 7689
+    },
+    {
+     "n": 10,
+     "bis": 0,
+     "title": "المادة 10",
+     "start": 7709,
+     "end": 7817
+    }
+   ],
+   "seg_md5": [
+    "69d8a8ad91a3d5151e96cd5fd8491b6b",
+    "dde0d1674ef864c3adbf76c1facbe040",
+    "df0315ca21631cfd67b902e6942a82ae",
+    "36c8bceac100ed134e42ff56c09e0d63",
+    "2ca06f0d40dd18f5fdcb60a3c681dae9",
+    "064537c8e43d46aa724a018c837cf45f",
+    "529c23478aed446e670baedc6b1dfe62",
+    "57b9d3a908bbc1a875c8204ced5d50c8",
+    "24c58fb96614391cf6e1770411826a20",
+    "97b1bc8d70ddfc9a54ebac5bbfb14490",
+    "0df59444c660e659e06d3b20fcbcc61f"
+   ]
+  },
+  {
+   "system_id": "3eccb27ea02b41ff93de16b4116177eb",
+   "name": "اللائحة التنظيمية لليخوت الخاصة الزائرة",
+   "source_id": "uqn:23416",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=23416",
+   "md5": "818adeb19bbcf065c046b30b89f2fafc",
+   "text_sha": "c55df6e40b4701d9",
+   "kind": "articles",
+   "segments": [
+    {
+     "n": 0,
+     "bis": 100,
+     "title": "الديباجة",
+     "start": 30,
+     "end": 105
+    },
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "المادة 1",
+     "start": 123,
+     "end": 1650
+    },
+    {
+     "n": 2,
+     "bis": 0,
+     "title": "المادة 2",
+     "start": 1669,
+     "end": 1778
+    },
+    {
+     "n": 3,
+     "bis": 0,
+     "title": "المادة 3",
+     "start": 1797,
+     "end": 3396
+    },
+    {
+     "n": 4,
+     "bis": 0,
+     "title": "المادة 4",
+     "start": 3415,
+     "end": 3594
+    },
+    {
+     "n": 5,
+     "bis": 0,
+     "title": "المادة 5",
+     "start": 3613,
+     "end": 4414
+    },
+    {
+     "n": 6,
+     "bis": 0,
+     "title": "المادة 6",
+     "start": 4433,
+     "end": 4872
+    },
+    {
+     "n": 7,
+     "bis": 0,
+     "title": "المادة 7",
+     "start": 4891,
+     "end": 6380
+    },
+    {
+     "n": 8,
+     "bis": 0,
+     "title": "المادة 8",
+     "start": 6399,
+     "end": 6991
+    },
+    {
+     "n": 9,
+     "bis": 0,
+     "title": "المادة 9",
+     "start": 7010,
+     "end": 7170
+    },
+    {
+     "n": 10,
+     "bis": 0,
+     "title": "المادة 10",
+     "start": 7190,
+     "end": 7336
+    },
+    {
+     "n": 11,
+     "bis": 0,
+     "title": "المادة 11",
+     "start": 7361,
+     "end": 7469
+    }
+   ],
+   "seg_md5": [
+    "69d8a8ad91a3d5151e96cd5fd8491b6b",
+    "d324ee6e05f53391508c141b46f0c57b",
+    "6ae38ff2ceb1ab69526fe5dd69b052d2",
+    "696fbf37a1cd2c9e0e5e6c9eb86c94ee",
+    "6d1826df55fadab8b56e1241f5d8be97",
+    "2a627275d4f33726142718b8056335ea",
+    "ce97d0c5758ad7fbfb0004f33d7ea78e",
+    "50884c78f06732204b352a8d2d9f19ec",
+    "f3b27914aa2ee6bec928948ef00eca98",
+    "0b6c57c73d1d23127d52e09a2ce66369",
+    "97b1bc8d70ddfc9a54ebac5bbfb14490",
+    "0df59444c660e659e06d3b20fcbcc61f"
+   ]
+  },
+  {
+   "system_id": "bb027b9fe0c74bca93118a2ed2185cee",
+   "name": "اللائحة التنظيمية للوكيل الملاحي السياحي",
+   "source_id": "uqn:23417",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=23417",
+   "md5": "06f47293e98f2c1fe3d8a84ad67436e3",
+   "text_sha": "1fb7313a6fe44152",
+   "kind": "articles",
+   "segments": [
+    {
+     "n": 0,
+     "bis": 100,
+     "title": "الديباجة",
+     "start": 30,
+     "end": 105
+    },
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "المادة 1",
+     "start": 123,
+     "end": 1055
+    },
+    {
+     "n": 2,
+     "bis": 0,
+     "title": "المادة 2",
+     "start": 1074,
+     "end": 1323
+    },
+    {
+     "n": 3,
+     "bis": 0,
+     "title": "المادة 3",
+     "start": 1342,
+     "end": 2933
+    },
+    {
+     "n": 4,
+     "bis": 0,
+     "title": "المادة 4",
+     "start": 2952,
+     "end": 5934
+    },
+    {
+     "n": 5,
+     "bis": 0,
+     "title": "المادة 5",
+     "start": 5953,
+     "end": 7272
+    },
+    {
+     "n": 6,
+     "bis": 0,
+     "title": "المادة 6",
+     "start": 7291,
+     "end": 7807
+    },
+    {
+     "n": 7,
+     "bis": 0,
+     "title": "المادة 7",
+     "start": 7826,
+     "end": 8371
+    },
+    {
+     "n": 8,
+     "bis": 0,
+     "title": "المادة 8",
+     "start": 8390,
+     "end": 9552
+    },
+    {
+     "n": 9,
+     "bis": 0,
+     "title": "المادة 9",
+     "start": 9570,
+     "end": 9835
+    },
+    {
+     "n": 10,
+     "bis": 0,
+     "title": "المادة 10",
+     "start": 9855,
+     "end": 10016
+    },
+    {
+     "n": 11,
+     "bis": 0,
+     "title": "المادة 11",
+     "start": 10041,
+     "end": 10171
+    },
+    {
+     "n": 12,
+     "bis": 0,
+     "title": "المادة 12",
+     "start": 10196,
+     "end": 10303
+    }
+   ],
+   "seg_md5": [
+    "69d8a8ad91a3d5151e96cd5fd8491b6b",
+    "cd439639e176846e9e0ad4b1766c5fd8",
+    "b18f4f5e3f44425d3f8f3ad72b521abc",
+    "89cda7108e52500507576ecd65804b10",
+    "e6572fbb7e2a86bb2a9b18551ef0f8ea",
+    "0649ed2ffb1cd7c0d74d4ab3e24b1e8e",
+    "7a4a81a26bc9dce9751c7e24eac43575",
+    "596c64ef707753160933dd4f74705e3b",
+    "dd16ea43b7302073e827ec1592394cdc",
+    "338f37445de8aa3c18c6aa05032b581a",
+    "24c58fb96614391cf6e1770411826a20",
+    "55d4aa60f4be6eb890131a4f6afab019",
+    "7785815f2a7c366f2963f3599bfa980c"
+   ]
+  },
+  {
+   "system_id": "0a66a71ec4074546ad3e82bf99b666a6",
+   "name": "اللائحة التنظيمية لتصميم وتشغيل المراسي البحرية السياحية",
+   "source_id": "uqn:23419",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=23419",
+   "md5": "555c920acaf9b4f01addfbd7d0c22f10",
+   "text_sha": "d499d12c06afa92d",
+   "kind": "articles",
+   "segments": [
+    {
+     "n": 0,
+     "bis": 100,
+     "title": "الديباجة",
+     "start": 30,
+     "end": 105
+    },
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "المادة 1",
+     "start": 124,
+     "end": 1283
+    },
+    {
+     "n": 2,
+     "bis": 0,
+     "title": "المادة 2",
+     "start": 1303,
+     "end": 1570
+    },
+    {
+     "n": 3,
+     "bis": 0,
+     "title": "المادة 3",
+     "start": 1590,
+     "end": 2775
+    },
+    {
+     "n": 4,
+     "bis": 0,
+     "title": "المادة 4",
+     "start": 2795,
+     "end": 4214
+    },
+    {
+     "n": 5,
+     "bis": 0,
+     "title": "المادة 5",
+     "start": 4234,
+     "end": 6606
+    },
+    {
+     "n": 6,
+     "bis": 0,
+     "title": "المادة 6",
+     "start": 6625,
+     "end": 9159
+    },
+    {
+     "n": 7,
+     "bis": 0,
+     "title": "المادة 7",
+     "start": 9179,
+     "end": 12266
+    },
+    {
+     "n": 8,
+     "bis": 0,
+     "title": "المادة 8",
+     "start": 12286,
+     "end": 13266
+    },
+    {
+     "n": 9,
+     "bis": 0,
+     "title": "المادة 9",
+     "start": 13286,
+     "end": 14780
+    },
+    {
+     "n": 10,
+     "bis": 0,
+     "title": "المادة 10",
+     "start": 14801,
+     "end": 15436
+    },
+    {
+     "n": 11,
+     "bis": 0,
+     "title": "المادة 11",
+     "start": 15462,
+     "end": 16923
+    },
+    {
+     "n": 12,
+     "bis": 0,
+     "title": "المادة 12",
+     "start": 16949,
+     "end": 17299
+    },
+    {
+     "n": 13,
+     "bis": 0,
+     "title": "المادة 13",
+     "start": 17325,
+     "end": 17484
+    },
+    {
+     "n": 14,
+     "bis": 0,
+     "title": "المادة 14",
+     "start": 17510,
+     "end": 17655
+    },
+    {
+     "n": 15,
+     "bis": 0,
+     "title": "المادة 15",
+     "start": 17681,
+     "end": 17787
+    }
+   ],
+   "seg_md5": [
+    "69d8a8ad91a3d5151e96cd5fd8491b6b",
+    "dbe3178e3a221afd6f493979d6a984f8",
+    "8551107a96c5c0b06454bdc5c479af61",
+    "3f56c1806ae0d9ee04ee7d43ae309ea0",
+    "032166ef5c038814cf6c35d0b2200d29",
+    "6a564e4f2949ae7888c045cacb43585a",
+    "c952b1057b3f6cdc4211887c7b490c6f",
+    "f6de6904c4f3bb9fbb903f3c51279683",
+    "9049b3c2fe3c64d9db0df182218e100a",
+    "44c6773fe884595ce9f385397abccec8",
+    "edd4889df9c54a032490f406017d79d7",
+    "1cfe6ec94681ee0ce30b7823142582ce",
+    "c15a6988ef727cee8a15f0557bc4f3e6",
+    "24c58fb96614391cf6e1770411826a20",
+    "a87684dd49ebb4a284c6c4de7b49ef70",
+    "0df59444c660e659e06d3b20fcbcc61f"
+   ]
+  },
+  {
+   "system_id": "3bd7335e53824055acfc72ffb0bc37ac",
+   "name": "اللائحة التنظيمية لتأجير اليخوت الضخمة",
+   "source_id": "uqn:23420",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=23420",
+   "md5": "3e9465fb71af766ed6c1ac1b9ec0c751",
+   "text_sha": "a34793fbaa70e3b1",
+   "kind": "articles",
+   "segments": [
+    {
+     "n": 0,
+     "bis": 100,
+     "title": "الديباجة",
+     "start": 30,
+     "end": 105
+    },
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "المادة 1",
+     "start": 124,
+     "end": 2233
+    },
+    {
+     "n": 2,
+     "bis": 0,
+     "title": "المادة 2",
+     "start": 2253,
+     "end": 2391
+    },
+    {
+     "n": 3,
+     "bis": 0,
+     "title": "المادة 3",
+     "start": 2411,
+     "end": 3321
+    },
+    {
+     "n": 4,
+     "bis": 0,
+     "title": "المادة 4",
+     "start": 3341,
+     "end": 5465
+    },
+    {
+     "n": 5,
+     "bis": 0,
+     "title": "المادة 5",
+     "start": 5486,
+     "end": 7454
+    },
+    {
+     "n": 6,
+     "bis": 0,
+     "title": "المادة 6",
+     "start": 7474,
+     "end": 7689
+    },
+    {
+     "n": 7,
+     "bis": 0,
+     "title": "المادة 7",
+     "start": 7709,
+     "end": 8127
+    },
+    {
+     "n": 8,
+     "bis": 0,
+     "title": "المادة 8",
+     "start": 8147,
+     "end": 8378
+    },
+    {
+     "n": 9,
+     "bis": 0,
+     "title": "المادة 9",
+     "start": 8398,
+     "end": 8535
+    },
+    {
+     "n": 10,
+     "bis": 0,
+     "title": "المادة 10",
+     "start": 8556,
+     "end": 8661
+    }
+   ],
+   "seg_md5": [
+    "69d8a8ad91a3d5151e96cd5fd8491b6b",
+    "6ebd88d753a599df664cafaa18eae468",
+    "27bd570da230a15557f3a16083cd7d60",
+    "bfe92ea689ed38523593ee91fa353a10",
+    "ac2e20b78da9622d0e1fdf3629d15ac6",
+    "e34de6b4651842f0ba6f315b256305f7",
+    "b48705aa9588130a1db3807998f57a83",
+    "989f84f855e5642b6a81267b9573d1c1",
+    "76ef25f85f32304f700a63e8e947962d",
+    "490a6a6a9ccf393ad496d96519042b16",
+    "7785815f2a7c366f2963f3599bfa980c"
+   ]
+  },
+  {
+   "system_id": "fb3b116704794d8999787bb42e0c30cf",
+   "name": "اللائحة التنظيمية لتصنيف الوسائط البحرية المستخدمة في السياحة الساحلية",
+   "source_id": "uqn:23421",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=23421",
+   "md5": "0fa64f2bfd1f5b4c179f6dd110987e67",
+   "text_sha": "a80f62a37c6d5bf8",
+   "kind": "articles",
+   "segments": [
+    {
+     "n": 0,
+     "bis": 100,
+     "title": "الديباجة",
+     "start": 30,
+     "end": 105
+    },
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "المادة 1",
+     "start": 124,
+     "end": 2227
+    },
+    {
+     "n": 2,
+     "bis": 0,
+     "title": "المادة 2",
+     "start": 2247,
+     "end": 2477
+    },
+    {
+     "n": 3,
+     "bis": 0,
+     "title": "المادة 3",
+     "start": 2497,
+     "end": 3815
+    },
+    {
+     "n": 4,
+     "bis": 0,
+     "title": "المادة 4",
+     "start": 3835,
+     "end": 4237
+    },
+    {
+     "n": 5,
+     "bis": 0,
+     "title": "المادة 5",
+     "start": 4257,
+     "end": 4400
+    },
+    {
+     "n": 6,
+     "bis": 0,
+     "title": "المادة 6",
+     "start": 4420,
+     "end": 4525
+    }
+   ],
+   "seg_md5": [
+    "69d8a8ad91a3d5151e96cd5fd8491b6b",
+    "c2b3ca3ba839b406ffd38a327d98e7a5",
+    "1ff99f95d043898be3526b2f79d54cdc",
+    "d0e3b8a9479a3f30c1ad83b42681eea5",
+    "417db98e353f4f260cadb19a09b23f7f",
+    "457f7298f53d2b7110552d521ff0ba72",
+    "7785815f2a7c366f2963f3599bfa980c"
+   ]
+  },
+  {
+   "system_id": "07b1bb28a2b743018c4a520dc1956671",
+   "name": "اللائحة الفنية لتركيبات العربات المعلقة",
+   "source_id": "uqn:23539",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=23539",
+   "md5": "e182c00cde50e89b0dd80f0d03dd4eaf",
+   "text_sha": "2431eda715e21096",
+   "kind": "articles",
+   "segments": [
+    {
+     "n": 0,
+     "bis": 100,
+     "title": "الديباجة",
+     "start": 0,
+     "end": 2572
+    },
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "المادة 1",
+     "start": 2582,
+     "end": 8059
+    },
+    {
+     "n": 2,
+     "bis": 0,
+     "title": "المادة 2",
+     "start": 8069,
+     "end": 9061
+    },
+    {
+     "n": 3,
+     "bis": 0,
+     "title": "المادة 3",
+     "start": 9071,
+     "end": 9404
+    },
+    {
+     "n": 4,
+     "bis": 0,
+     "title": "المادة 4",
+     "start": 9414,
+     "end": 14251
+    },
+    {
+     "n": 5,
+     "bis": 0,
+     "title": "المادة 5",
+     "start": 14261,
+     "end": 14482
+    },
+    {
+     "n": 6,
+     "bis": 0,
+     "title": "المادة 6",
+     "start": 14492,
+     "end": 15278
+    },
+    {
+     "n": 7,
+     "bis": 0,
+     "title": "المادة 7",
+     "start": 15288,
+     "end": 16885
+    },
+    {
+     "n": 8,
+     "bis": 0,
+     "title": "المادة 8",
+     "start": 16895,
+     "end": 17455
+    },
+    {
+     "n": 9,
+     "bis": 0,
+     "title": "المادة 9",
+     "start": 17465,
+     "end": 18746
+    },
+    {
+     "n": 10,
+     "bis": 0,
+     "title": "المادة 10",
+     "start": 18757,
+     "end": 19430
+    },
+    {
+     "n": 11,
+     "bis": 0,
+     "title": "المادة 11",
+     "start": 19441,
+     "end": 20216
+    },
+    {
+     "n": 12,
+     "bis": 0,
+     "title": "المادة 12",
+     "start": 20227,
+     "end": 21947
+    },
+    {
+     "n": 13,
+     "bis": 0,
+     "title": "المادة 13",
+     "start": 21958,
+     "end": 23768
+    },
+    {
+     "n": 14,
+     "bis": 0,
+     "title": "المادة 14",
+     "start": 23779,
+     "end": 24182
+    },
+    {
+     "n": 15,
+     "bis": 0,
+     "title": "المادة 15",
+     "start": 24193,
+     "end": 48222
+    }
+   ],
+   "seg_md5": [
+    "a8dff7feeed8f771bbbc5a628801f78e",
+    "66ac69c0010964473386276fe887cc5e",
+    "da581d5a4547daf2db34b5ee7eca2918",
+    "c1f21df0981aa81c34ae087f87a20310",
+    "eb10da84ba951a11b3b86c608884ff3f",
+    "a878e64f1a47f58d6df859dfde694eec",
+    "235df3f0c0021818218f64f67738975f",
+    "9418d2e0137dba4c12bb0b96f755498a",
+    "12d88d18f1b05b2290f4dcf021cb2943",
+    "a567dff6ae14583c210252a3901c71cc",
+    "f524ae8ecb1ea8481cbdc2750689b19a",
+    "4cdbbf4666ec7890fce207f0d1f8aa3e",
+    "925b1a600d610f9aa1514b803a7ce14c",
+    "c5383e6685ba3db9ad88e1f15cabbfd0",
+    "31a623b5a3c69e93a0198d8864673a2c",
+    "dc671e95496306525e3dd34aa8ec160a"
+   ]
+  },
+  {
+   "system_id": "9024f08449c14a329a77d6ad316d94d3",
+   "name": "جدول المقابل المالي المشار إليه في المادة (الثانية والأربعين) من نظام براءات الاختراع والتصميمات التخطيطية للدارات المتكاملة والأصناف النباتية والنماذج الصناعية",
+   "source_id": "uqn:23824",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=23824",
+   "md5": "bf06e6eb261104dadc16cbb4c8253b8a",
+   "text_sha": "f1c4212ccc8a12eb",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 0,
+     "end": 3240
+    }
+   ],
+   "seg_md5": [
+    "bf06e6eb261104dadc16cbb4c8253b8a"
+   ]
+  },
+  {
+   "system_id": "fb67544631754977bd861490fbd32ff9",
+   "name": "دليل المعايير المضمونة",
+   "source_id": "uqn:23862",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=23862",
+   "md5": "920576c168a2a2a19f2dce6888e8f820",
+   "text_sha": "7df63157e0f2e4fb",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 30,
+     "end": 7638
+    }
+   ],
+   "seg_md5": [
+    "2e2e44b8ab40597d11a606d08d918e72"
+   ]
+  },
+  {
+   "system_id": "ac12c181f6434d3d8479faacc424d159",
+   "name": "القواعد الضريبية للمقرات الإقليمية",
+   "source_id": "uqn:24526",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=24526",
+   "md5": "0a2429b066b1d6a8ef5407045e03a750",
+   "text_sha": "d35640abcabc7332",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 30,
+     "end": 22711
+    }
+   ],
+   "seg_md5": [
+    "89b110e1b08920fe98ae48ec70b30187"
+   ]
+  },
+  {
+   "system_id": "e01d5e7eb9fa48e785ea4f1e8f97a05d",
+   "name": "جدول المواد والأدوات الخاصة بذوي الاحتياجات الخاصة المشار إليها في المادة (24) من اللائحة التنفيذية من قانون الجمارك الموحد",
+   "source_id": "uqn:24558",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=24558",
+   "md5": "2fc565a83abb60feb5105b10dc3929f0",
+   "text_sha": "a136211c4da9964a",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 30,
+     "end": 2315
+    }
+   ],
+   "seg_md5": [
+    "3a39e581af904179bf9735a02a896da0"
+   ]
+  },
+  {
+   "system_id": "25852152be1440c483374f1c1a98f86b",
+   "name": "ضوابط اعتماد جهات التفتيش والرقابة على سلامة المعدات الثقيلة",
+   "source_id": "uqn:24886",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=24886",
+   "md5": "8f80c596b7266b20650a279afd5576eb",
+   "text_sha": "171a333d766bc8ff",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 31,
+     "end": 2559
+    }
+   ],
+   "seg_md5": [
+    "f0a280bb6d77729445909120c0e093d1"
+   ]
+  },
+  {
+   "system_id": "b3239b26ac1041fdac87d3e819614edb",
+   "name": "الآلية المنظمة لإصدار رخص استخراج المياه غير الصالحة للشرب للأشياب القائمة لمن لا يملكون صك تملك",
+   "source_id": "uqn:26930",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=26930",
+   "md5": "1fe424014bdc5fb39ee305472b0c0f7f",
+   "text_sha": "4051604dcb41359b",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 30,
+     "end": 1411
+    }
+   ],
+   "seg_md5": [
+    "06a840f4e041cc99cbe7fbfc3a12bc0f"
+   ]
+  },
+  {
+   "system_id": "7e1c048e059246cc82fe7d2d03f60c7e",
+   "name": "دليل معايير مستوى الخدمة الكهربائية",
+   "source_id": "uqn:27249",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=27249",
+   "md5": "924d2d441d06837cb2e77782ac1866de",
+   "text_sha": "254f071c2ac01372",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 30,
+     "end": 9999
+    }
+   ],
+   "seg_md5": [
+    "959aee712f4be5f76d1e2a3aa3aeef3e"
+   ]
+  },
+  {
+   "system_id": "dd6e62ad817941c4a63e3f3532431100",
+   "name": "قواعد نظر دعاوى إلغاء القرارات المتعلقة بتطبيق أحكام أوامر الطوارئ",
+   "source_id": "uqn:27275",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=27275",
+   "md5": "c43132ea896c2465cdd7d556a23156c7",
+   "text_sha": "f60f1a4717b458c3",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 30,
+     "end": 1120
+    }
+   ],
+   "seg_md5": [
+    "b87f0d5c8e2f7643a7eda6d8166c0af9"
+   ]
+  },
+  {
+   "system_id": "9a18f12c9893461fb73f56e75c881bb0",
+   "name": "القواعد الموحدة لتمكين الأشخاص ذوي الإعاقة لمجلس التعاون لدول الخليج العربية",
+   "source_id": "uqn:28755",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/details?p=28755",
+   "md5": "dce7fdcf1a06cd087b11946f73703b81",
+   "text_sha": "99ded7147510e3d6",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 30,
+     "end": 4426
+    }
+   ],
+   "seg_md5": [
+    "feb204fe1435a07057272760ae56007e"
+   ]
+  },
+  {
+   "system_id": "9ffbe764acf44847b9d79b1601331339",
+   "name": "دليل تسمية الجمعيات والمؤسسات الأهلية والصناديق العائلية والأهلية",
+   "source_id": "uqn:4000248",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/decisions-and-regulations/4000248",
+   "md5": "b22877439b26ce643b8c0a5d13c347bc",
+   "text_sha": "d97606e4a1ca52d5",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 30,
+     "end": 4908
+    }
+   ],
+   "seg_md5": [
+    "d074ce2cc123bba96f8d782738a472f9"
+   ]
+  },
+  {
+   "system_id": "dad5021a7e7144cd997af063f22df522",
+   "name": "السياسة الوطنية للغة العربية في السعودية",
+   "source_id": "uqn:4000302",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/decisions-and-regulations/4000302",
+   "md5": "db22f94d4fec06eb83b3ec804c1876e4",
+   "text_sha": "3cc02a63578420e1",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 30,
+     "end": 7604
+    }
+   ],
+   "seg_md5": [
+    "9d4b810a5b3d8ff845e5ca5455926d0d"
+   ]
+  },
+  {
+   "system_id": "15e96e6ea7d5446b9eb6159d35fd4afe",
+   "name": "لائحة جدول مخالفات أحكام نظام إمدادات الطاقة وعقوباتها",
+   "source_id": "uqn:4000461",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/decisions-and-regulations/4000461",
+   "md5": "4623805692565ac1ff0a6434eed82710",
+   "text_sha": "ec12ca3431a1c6fa",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 30,
+     "end": 35380
+    }
+   ],
+   "seg_md5": [
+    "4613adb54661365fd920efcbc8b84123"
+   ]
+  },
+  {
+   "system_id": "10b833168b9a4e36993c1a45a6c5ea82",
+   "name": "السياسة الوطنية لتعزيز النمط التغذوي الصحي",
+   "source_id": "uqn:4000587",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/decisions-and-regulations/rules-and-regulations/4000587",
+   "md5": "e52f1c6c25b940229beaa430e887ba17",
+   "text_sha": "9d6167b95d1eb00b",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 30,
+     "end": 9130
+    }
+   ],
+   "seg_md5": [
+    "9d57f9bc259e9c6dd662826519f36c12"
+   ]
+  },
+  {
+   "system_id": "f0035e7153b549668e4c05488e0daf9a",
+   "name": "السياسة الوطنية لحماية الطفل في المؤسسات التعليمية",
+   "source_id": "uqn:4000588",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/decisions-and-regulations/rules-and-regulations/4000588",
+   "md5": "ddbb95f6d11a9cf7d7744e9b3b88bfe8",
+   "text_sha": "c673b1a0e65f78e4",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 30,
+     "end": 8428
+    }
+   ],
+   "seg_md5": [
+    "ee084fff692a965f4abd9ba1e269e8c7"
+   ]
+  },
+  {
+   "system_id": "fb7b81db0dfb4d668e7207db6e8cc9cb",
+   "name": "قواعد سجل الشركات في المناطق الاقتصادية الخاصة",
+   "source_id": "uqn:4001345",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/decisions-and-regulations/4001345",
+   "md5": "2bbf69fd8a85c015ae631b82d836fba8",
+   "text_sha": "9601d6abf403a748",
+   "kind": "articles",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "المادة 1",
+     "start": 49,
+     "end": 2656
+    },
+    {
+     "n": 2,
+     "bis": 0,
+     "title": "المادة 2",
+     "start": 2676,
+     "end": 2851
+    },
+    {
+     "n": 3,
+     "bis": 0,
+     "title": "المادة 3",
+     "start": 2871,
+     "end": 3135
+    },
+    {
+     "n": 4,
+     "bis": 0,
+     "title": "المادة 4",
+     "start": 3155,
+     "end": 3849
+    },
+    {
+     "n": 5,
+     "bis": 0,
+     "title": "المادة 5",
+     "start": 3869,
+     "end": 4022
+    },
+    {
+     "n": 6,
+     "bis": 0,
+     "title": "المادة 6",
+     "start": 4042,
+     "end": 5481
+    },
+    {
+     "n": 7,
+     "bis": 0,
+     "title": "المادة 7",
+     "start": 5501,
+     "end": 6766
+    },
+    {
+     "n": 8,
+     "bis": 0,
+     "title": "المادة 8",
+     "start": 6786,
+     "end": 7009
+    },
+    {
+     "n": 9,
+     "bis": 0,
+     "title": "المادة 9",
+     "start": 7029,
+     "end": 7778
+    },
+    {
+     "n": 10,
+     "bis": 0,
+     "title": "المادة 10",
+     "start": 7798,
+     "end": 8171
+    },
+    {
+     "n": 11,
+     "bis": 0,
+     "title": "المادة 11",
+     "start": 8196,
+     "end": 8577
+    },
+    {
+     "n": 12,
+     "bis": 0,
+     "title": "المادة 12",
+     "start": 8602,
+     "end": 8812
+    },
+    {
+     "n": 13,
+     "bis": 0,
+     "title": "المادة 13",
+     "start": 8837,
+     "end": 9317
+    },
+    {
+     "n": 14,
+     "bis": 0,
+     "title": "المادة 14",
+     "start": 9342,
+     "end": 9630
+    },
+    {
+     "n": 15,
+     "bis": 0,
+     "title": "المادة 15",
+     "start": 9655,
+     "end": 10141
+    },
+    {
+     "n": 16,
+     "bis": 0,
+     "title": "المادة 16",
+     "start": 10166,
+     "end": 10306
+    },
+    {
+     "n": 17,
+     "bis": 0,
+     "title": "المادة 17",
+     "start": 10331,
+     "end": 10896
+    },
+    {
+     "n": 18,
+     "bis": 0,
+     "title": "المادة 18",
+     "start": 10921,
+     "end": 11202
+    },
+    {
+     "n": 19,
+     "bis": 0,
+     "title": "المادة 19",
+     "start": 11227,
+     "end": 11526
+    },
+    {
+     "n": 20,
+     "bis": 0,
+     "title": "المادة 20",
+     "start": 11546,
+     "end": 11788
+    },
+    {
+     "n": 21,
+     "bis": 0,
+     "title": "المادة 21",
+     "start": 11817,
+     "end": 12475
+    },
+    {
+     "n": 22,
+     "bis": 0,
+     "title": "المادة 22",
+     "start": 12504,
+     "end": 12908
+    },
+    {
+     "n": 23,
+     "bis": 0,
+     "title": "المادة 23",
+     "start": 12937,
+     "end": 13784
+    },
+    {
+     "n": 24,
+     "bis": 0,
+     "title": "المادة 24",
+     "start": 13813,
+     "end": 14128
+    },
+    {
+     "n": 25,
+     "bis": 0,
+     "title": "المادة 25",
+     "start": 14157,
+     "end": 14794
+    },
+    {
+     "n": 26,
+     "bis": 0,
+     "title": "المادة 26",
+     "start": 14823,
+     "end": 15116
+    },
+    {
+     "n": 27,
+     "bis": 0,
+     "title": "المادة 27",
+     "start": 15145,
+     "end": 15918
+    },
+    {
+     "n": 28,
+     "bis": 0,
+     "title": "المادة 28",
+     "start": 15947,
+     "end": 16048
+    },
+    {
+     "n": 29,
+     "bis": 0,
+     "title": "المادة 29",
+     "start": 16077,
+     "end": 16195
+    },
+    {
+     "n": 30,
+     "bis": 0,
+     "title": "المادة 30",
+     "start": 16216,
+     "end": 16300
+    },
+    {
+     "n": 31,
+     "bis": 0,
+     "title": "المادة 31",
+     "start": 16330,
+     "end": 16570
+    },
+    {
+     "n": 32,
+     "bis": 0,
+     "title": "المادة 32",
+     "start": 16600,
+     "end": 16675
+    }
+   ],
+   "seg_md5": [
+    "0fb994e2425db22c1fe41669099a02aa",
+    "e87aca197f2def446ede41f66ce9cafa",
+    "bd847a01792d1be494c38798944a3f38",
+    "9643a3e819ab622ab7a7c2a1be77f526",
+    "3d701cef94d5d92dae8958088be8f5db",
+    "f2c483c403455865f70d2bd9433e421b",
+    "1ccf0fef27e3e0972899098fc6b91a44",
+    "8a309d5bec737ecb251acc7b91efba62",
+    "bdfa97ed92ab6054b8529ff857700383",
+    "4832697b1a91c77db35e114502324873",
+    "92edbf66f9725188b31c7de6e0cdf87e",
+    "bc9276de034092df31436f66006b338f",
+    "00b6bc91abe44eb6e677cfd7afa27d96",
+    "f04aa663eac3142395de7734b10afc6f",
+    "463a0c4a9ff3521da3d91f4e9a97e2d6",
+    "80446520d846f94ed31de05c9b2a051b",
+    "3182b172a8e347bae96fafb32b3995a9",
+    "cd3df36dea9d18e3b219979163cba9e1",
+    "3ed62ee5811562e9bdc15ec1b0b5cae8",
+    "1eda9e81a8d28c87491415de09b903f8",
+    "15a82152d88beec714ee14a112db44f1",
+    "bae5230acff121e132d01b160353d5ba",
+    "604daa86efa54fcaa7a83344549db326",
+    "d127f1828b7369b328e07c4c90c40c94",
+    "a76d7009122040fc256e708c420a8711",
+    "02eb8f2879d418fb2487791503cd6189",
+    "b0250b7b4a4d816d6404a9e35ac23ea4",
+    "291f9d769efde85971260fb9c5fad216",
+    "97d61a57dbbe167b072b9b73a35aed23",
+    "102aa0d2f52fcc160d36df3676ea59c2",
+    "e4319eb4d76825f3a852d55f15eb09fd",
+    "52ced6a33d5e9153a2b5f199ff800440"
+   ]
+  },
+  {
+   "system_id": "c1773d7c57264b3d97a683b95326ed35",
+   "name": "قواعد الأسماء التجارية في المناطق الاقتصادية الخاصة",
+   "source_id": "uqn:4001349",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/decisions-and-regulations/4001349",
+   "md5": "40e46677cd5ca34df18d0e0c3af759e9",
+   "text_sha": "131be4bc22b45dc6",
+   "kind": "articles",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "المادة 1",
+     "start": 49,
+     "end": 2770
+    },
+    {
+     "n": 2,
+     "bis": 0,
+     "title": "المادة 2",
+     "start": 2790,
+     "end": 2925
+    },
+    {
+     "n": 3,
+     "bis": 0,
+     "title": "المادة 3",
+     "start": 2945,
+     "end": 3209
+    },
+    {
+     "n": 4,
+     "bis": 0,
+     "title": "المادة 4",
+     "start": 3229,
+     "end": 3663
+    },
+    {
+     "n": 5,
+     "bis": 0,
+     "title": "المادة 5",
+     "start": 3683,
+     "end": 4776
+    },
+    {
+     "n": 6,
+     "bis": 0,
+     "title": "المادة 6",
+     "start": 4796,
+     "end": 5466
+    },
+    {
+     "n": 7,
+     "bis": 0,
+     "title": "المادة 7",
+     "start": 5486,
+     "end": 6520
+    },
+    {
+     "n": 8,
+     "bis": 0,
+     "title": "المادة 8",
+     "start": 6540,
+     "end": 6814
+    },
+    {
+     "n": 9,
+     "bis": 0,
+     "title": "المادة 9",
+     "start": 6834,
+     "end": 7735
+    },
+    {
+     "n": 10,
+     "bis": 0,
+     "title": "المادة 10",
+     "start": 7755,
+     "end": 8534
+    },
+    {
+     "n": 11,
+     "bis": 0,
+     "title": "المادة 11",
+     "start": 8559,
+     "end": 8705
+    },
+    {
+     "n": 12,
+     "bis": 0,
+     "title": "المادة 12",
+     "start": 8730,
+     "end": 9054
+    },
+    {
+     "n": 13,
+     "bis": 0,
+     "title": "المادة 13",
+     "start": 9079,
+     "end": 9464
+    },
+    {
+     "n": 14,
+     "bis": 0,
+     "title": "المادة 14",
+     "start": 9489,
+     "end": 9854
+    },
+    {
+     "n": 15,
+     "bis": 0,
+     "title": "المادة 15",
+     "start": 9879,
+     "end": 10224
+    },
+    {
+     "n": 16,
+     "bis": 0,
+     "title": "المادة 16",
+     "start": 10249,
+     "end": 11258
+    },
+    {
+     "n": 17,
+     "bis": 0,
+     "title": "المادة 17",
+     "start": 11283,
+     "end": 11560
+    },
+    {
+     "n": 18,
+     "bis": 0,
+     "title": "المادة 18",
+     "start": 11585,
+     "end": 12150
+    },
+    {
+     "n": 19,
+     "bis": 0,
+     "title": "المادة 19",
+     "start": 12175,
+     "end": 12452
+    },
+    {
+     "n": 20,
+     "bis": 0,
+     "title": "المادة 20",
+     "start": 12472,
+     "end": 12789
+    },
+    {
+     "n": 21,
+     "bis": 0,
+     "title": "المادة 21",
+     "start": 12818,
+     "end": 12927
+    },
+    {
+     "n": 22,
+     "bis": 0,
+     "title": "المادة 22",
+     "start": 12956,
+     "end": 13396
+    },
+    {
+     "n": 23,
+     "bis": 0,
+     "title": "المادة 23",
+     "start": 13425,
+     "end": 13548
+    },
+    {
+     "n": 24,
+     "bis": 0,
+     "title": "المادة 24",
+     "start": 13577,
+     "end": 13661
+    },
+    {
+     "n": 25,
+     "bis": 0,
+     "title": "المادة 25",
+     "start": 13690,
+     "end": 13767
+    }
+   ],
+   "seg_md5": [
+    "12b416f6cad395437652d0ec3350604c",
+    "602a288f7ce9afd42c71368af193ed70",
+    "bd847a01792d1be494c38798944a3f38",
+    "370b437e478f586771181ecaf8b414fc",
+    "ae931ff484746c3d8c17b651338574f1",
+    "95e92fef80025124e0cc8769eca8b9a1",
+    "6b511deba449fe87e4de45f46223ab21",
+    "e1c88b1e2879db9e4eaa89d3b7844ff4",
+    "d1054772c7dc85e49c5bec3f9e455ed0",
+    "8cee4c4379f58e7b12aaf40293022174",
+    "724dacc96407cc2784b7d1812feb6373",
+    "c109dc34874623b6530e7e7e4ff8b346",
+    "807da2ed82d34ead772afc0464f12c60",
+    "514f093910a6b48dbb75d642500953c4",
+    "bd0ba79db75ae509dae6c1649833f6d0",
+    "0d2cbd393b418cb55eac89e0fab6e9b8",
+    "00a07c15f0e3d0e7f70aeb7d007410ff",
+    "5d0b2758722c51af7d35c1ece125232f",
+    "8d6f361d02888df8de9b5be3303730de",
+    "08602ef9b1538f5cb906675b370bfce5",
+    "822d0e1313163d7043ac8d949ba9fb14",
+    "73fa3ba18054d647065640ce9806fef0",
+    "f76c0cc0f318d6ea890ad80f811d9b90",
+    "102aa0d2f52fcc160d36df3676ea59c2",
+    "754ba603753d405c56ff7364c9ebbdf8"
+   ]
+  },
+  {
+   "system_id": "22155410b6ef4d7fb1e77d9d9ff0c4a3",
+   "name": "لائحة المتطلبات الاقتصادية الفعلية للمناطق الاقتصادية الخاصة",
+   "source_id": "uqn:4001553",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/decisions-and-regulations/4001553",
+   "md5": "864b84f9a502af204be701af650f7c6f",
+   "text_sha": "0c54b5f48ee4b327",
+   "kind": "single",
+   "segments": [
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "البند 1",
+     "start": 30,
+     "end": 12206
+    }
+   ],
+   "seg_md5": [
+    "8ba2e6dec16741c794705d52e9bbec6b"
+   ]
+  },
+  {
+   "system_id": "7b0eda14bcb148319fae7a1ffa0029f3",
+   "name": "القواعد الموحدة لملاك العقارات المشتركة بدول مجلس التعاون لدول الخليج العربية",
+   "source_id": "uqn:4001558",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/decisions-and-regulations/4001558",
+   "md5": "9656bca8508869425eb873faf73da8e6",
+   "text_sha": "900d9f897a6b04df",
+   "kind": "articles",
+   "segments": [
+    {
+     "n": 0,
+     "bis": 100,
+     "title": "الديباجة",
+     "start": 30,
+     "end": 1120
+    },
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "المادة 1",
+     "start": 1133,
+     "end": 2531
+    },
+    {
+     "n": 2,
+     "bis": 0,
+     "title": "المادة 2",
+     "start": 2545,
+     "end": 2881
+    },
+    {
+     "n": 3,
+     "bis": 0,
+     "title": "المادة 3",
+     "start": 2895,
+     "end": 3059
+    },
+    {
+     "n": 4,
+     "bis": 0,
+     "title": "المادة 4",
+     "start": 3073,
+     "end": 3517
+    },
+    {
+     "n": 5,
+     "bis": 0,
+     "title": "المادة 5",
+     "start": 3531,
+     "end": 3598
+    },
+    {
+     "n": 6,
+     "bis": 0,
+     "title": "المادة 6",
+     "start": 3612,
+     "end": 3809
+    },
+    {
+     "n": 7,
+     "bis": 0,
+     "title": "المادة 7",
+     "start": 3823,
+     "end": 4186
+    },
+    {
+     "n": 8,
+     "bis": 0,
+     "title": "المادة 8",
+     "start": 4200,
+     "end": 4511
+    },
+    {
+     "n": 9,
+     "bis": 0,
+     "title": "المادة 9",
+     "start": 4525,
+     "end": 4654
+    },
+    {
+     "n": 10,
+     "bis": 0,
+     "title": "المادة 10",
+     "start": 4668,
+     "end": 4953
+    },
+    {
+     "n": 11,
+     "bis": 0,
+     "title": "المادة 11",
+     "start": 4972,
+     "end": 5118
+    },
+    {
+     "n": 12,
+     "bis": 0,
+     "title": "المادة 12",
+     "start": 5137,
+     "end": 5456
+    },
+    {
+     "n": 13,
+     "bis": 0,
+     "title": "المادة 13",
+     "start": 5475,
+     "end": 5551
+    },
+    {
+     "n": 14,
+     "bis": 0,
+     "title": "المادة 14",
+     "start": 5570,
+     "end": 5648
+    }
+   ],
+   "seg_md5": [
+    "cdd287c20e6a2bb4514d4966b9009540",
+    "f89581d8851d6993d103f448e18b17a5",
+    "dfbfac24492cd0a59b1a2e6df24fd36b",
+    "83736fb1f1f7b3ba22e8244cf4637050",
+    "623f534edcd36bccfbf7ea495f83f91c",
+    "17f4fecc1af7e63c03528760b10a44a1",
+    "fc2d93ce733d2d10d822a0a588455eb8",
+    "7ec61387240dbb9d24e7f344563ddee0",
+    "5b7cf3effcd234dcde3fdd2e0f7d5701",
+    "2fdf8c6cce47ff91b02543050dd45b85",
+    "6e2cee63988cf327948bb674e2c6eba2",
+    "4be7e82bedff41fd5a55e5f0b97cb08a",
+    "2498915c995827996203ecb905a9ce4a",
+    "ee223bce64fb174bdb18f6b712877f51",
+    "053abdbdc014e2465530656eff34f5cb"
+   ]
+  },
+  {
+   "system_id": "ed5631d2ada1400294bc6a2e23adcbea",
+   "name": "لائحة المنطقة الاقتصادية الخاصة للحوسبة السحابية والمعلوماتية",
+   "source_id": "uqn:4001863",
+   "batch_id": "uqn-2026-09-25",
+   "seq": 2,
+   "source_url": "https://www.uqn.gov.sa/decisions-and-regulations/rules-and-regulations/4001863",
+   "md5": "453d073f9f8089649b4b89389fa1a24a",
+   "text_sha": "f83351b35e051272",
+   "kind": "articles",
+   "segments": [
+    {
+     "n": 0,
+     "bis": 100,
+     "title": "الديباجة",
+     "start": 30,
+     "end": 63
+    },
+    {
+     "n": 1,
+     "bis": 0,
+     "title": "المادة 1",
+     "start": 80,
+     "end": 2311
+    },
+    {
+     "n": 2,
+     "bis": 0,
+     "title": "المادة 2",
+     "start": 2329,
+     "end": 2686
+    },
+    {
+     "n": 3,
+     "bis": 0,
+     "title": "المادة 3",
+     "start": 2704,
+     "end": 3055
+    },
+    {
+     "n": 4,
+     "bis": 0,
+     "title": "المادة 4",
+     "start": 3073,
+     "end": 3405
+    },
+    {
+     "n": 5,
+     "bis": 0,
+     "title": "المادة 5",
+     "start": 3423,
+     "end": 4207
+    },
+    {
+     "n": 6,
+     "bis": 0,
+     "title": "المادة 6",
+     "start": 4225,
+     "end": 5346
+    },
+    {
+     "n": 7,
+     "bis": 0,
+     "title": "المادة 7",
+     "start": 5364,
+     "end": 6405
+    },
+    {
+     "n": 8,
+     "bis": 0,
+     "title": "المادة 8",
+     "start": 6423,
+     "end": 7612
+    },
+    {
+     "n": 9,
+     "bis": 0,
+     "title": "المادة 9",
+     "start": 7630,
+     "end": 8375
+    },
+    {
+     "n": 10,
+     "bis": 0,
+     "title": "المادة 10",
+     "start": 8393,
+     "end": 9027
+    },
+    {
+     "n": 11,
+     "bis": 0,
+     "title": "المادة 11",
+     "start": 9050,
+     "end": 9351
+    },
+    {
+     "n": 12,
+     "bis": 0,
+     "title": "المادة 12",
+     "start": 9374,
+     "end": 9783
+    },
+    {
+     "n": 13,
+     "bis": 0,
+     "title": "المادة 13",
+     "start": 9806,
+     "end": 13503
+    },
+    {
+     "n": 14,
+     "bis": 0,
+     "title": "المادة 14",
+     "start": 13526,
+     "end": 13926
+    },
+    {
+     "n": 15,
+     "bis": 0,
+     "title": "المادة 15",
+     "start": 13949,
+     "end": 14095
+    },
+    {
+     "n": 16,
+     "bis": 0,
+     "title": "المادة 16",
+     "start": 14118,
+     "end": 14190
+    }
+   ],
+   "seg_md5": [
+    "8e4ddfeb49e43581730d7382c624c771",
+    "3960e69caa30dfa8462910a33aeb0a84",
+    "c8dcea0a28d5de8286b5707b70c5c088",
+    "e111f1d5dee676599123e5232cef28fd",
+    "706e8261e2ef9b7563961b491edb2e10",
+    "e5a06f6d792a0924bb4153a08d632da2",
+    "93999f1234d4e6cb78dfef61d7383ead",
+    "a33b337fd071b22a55c297b562aa4f4c",
+    "bc772af1b17f840164419d27abc8a847",
+    "531dc36e3bbea28fcf4fd7f380eb1e5d",
+    "e70d1fd22262749eddf4c8a85478d9d3",
+    "f6f6f8a3a978166a461b108021b9f28b",
+    "9b5ffed7ecd51fc3ed393bc7f9397ddc",
+    "8b1dc1790ed32876d75d92f744230505",
+    "72323f7b722ed22b476c7da7aa73937b",
+    "99946a06e6c8514d421be51e40dae0f2",
+    "91bbe30398bf6ea8f293eb4503cd991e"
+   ]
+  }
+ ],
+ "skipped": [
+  {
+   "system_id": "78010899d2ad4f18974666920313e329",
+   "name": "جدول تصنيف المخالفات والعقوبات المقررة لها وفقا لنظام الأعلاف ولائحته التنفيذية",
+   "verdict": "no_source",
+   "complete": null,
+   "source": "uqn:16948"
+  },
+  {
+   "system_id": "8e92cc6eded04884a9a22881ce64a714",
+   "name": "لائحة فرق الإطفاء والإنقاذ الخاصة",
+   "verdict": "no_source",
+   "complete": null,
+   "source": "uqn:18539"
+  },
+  {
+   "system_id": "f569d45d51e94366b59da3ea608b178e",
+   "name": "اللائحة الفنية لسلامة معدات الرفع",
+   "verdict": "source_units",
+   "complete": false,
+   "source": "uqn:18733"
+  },
+  {
+   "system_id": "eb1fdf0694674867903b7650c61f7d36",
+   "name": "اللائحة الفنية للغراء والمواد اللاصقة",
+   "verdict": "source_units",
+   "complete": false,
+   "source": "uqn:18734"
+  },
+  {
+   "system_id": "3bb09120fa04417aa229e0b29b6b6106",
+   "name": "اللائحة الفنية لمعدات الضغط",
+   "verdict": "source_units",
+   "complete": false,
+   "source": "uqn:21065"
+  },
+  {
+   "system_id": "0f99c1d2c5eb4b2884890ab5c796103b",
+   "name": "اللائحة الفنية المعتمدة في اجتماع مجلس إدارة الهيئة رقم (188) المنعقد بتاريخ 12 /06/ 1444هـ",
+   "verdict": "no_source",
+   "complete": null,
+   "source": "uqn:21451"
+  },
+  {
+   "system_id": "15e83219779240a583a58095b1e6b429",
+   "name": "اللائحة الفنية لقطع غيار السيارات",
+   "verdict": "source_units",
+   "complete": false,
+   "source": "uqn:23454"
+  },
+  {
+   "system_id": "a70bd2028e03486baf9d6a865b63b69b",
+   "name": "معايير وضوابط طلب إعفاء نشاط إدارة النفايات من شروط أو متطلبات الرخصة أو التصريح أو المقابل المالي لها",
+   "verdict": "no_source",
+   "complete": null,
+   "source": "uqn:25045"
+  },
+  {
+   "system_id": "8266b035a29247f294a6700470457b3f",
+   "name": "اللائحة التنفيذية لصيد الكائنات الفطرية البرية",
+   "verdict": "source_units",
+   "complete": false,
+   "source": "uqn:25427"
+  },
+  {
+   "system_id": "9a7b4430a5bf405fbae1c8fb38c1b1c2",
+   "name": "اللائحة التنفيذية لإعادة التأهيل البيئي للمواقع المتدهورة ومعالجة المواقع الملوثة",
+   "verdict": "source_units",
+   "complete": false,
+   "source": "uqn:25429"
+  },
+  {
+   "system_id": "df975e97a03c4018910cd8201df48aa0",
+   "name": "اللائحة التنفيذية لمنع ومعالجة تلوث التربة",
+   "verdict": "source_units",
+   "complete": false,
+   "source": "uqn:25431"
+  },
+  {
+   "system_id": "20f9b5359d2d43bda8543c105a1294b0",
+   "name": "اللائحة التنفيذية لحماية الكائنات الفطرية ومنتجاتها ومشتقاتها",
+   "verdict": "duplicate_of",
+   "complete": null,
+   "source": "uqn:25433"
+  },
+  {
+   "system_id": "d5f30b4d776c496486a3688f97f5ae0a",
+   "name": "اللائحة التنفيذية لحماية الأوساط المائية من التلوث",
+   "verdict": "source_units",
+   "complete": false,
+   "source": "uqn:25435"
+  },
+  {
+   "system_id": "2b7f7d75e1e940fab1bb59dca808430a",
+   "name": "اللائحة التنفيذية لجودة الهواء",
+   "verdict": "duplicate_of",
+   "complete": null,
+   "source": "uqn:25437"
+  },
+  {
+   "system_id": "5e58b44954ed4740a5f10a5d884a86ba",
+   "name": "اللائحة التنفيذية للمناطق المحمية",
+   "verdict": "source_units",
+   "complete": false,
+   "source": "uqn:25439"
+  },
+  {
+   "system_id": "07b0f8554a6341a08e26797b0e05f0e6",
+   "name": "اللائحة التنفيذية للاحتطاب",
+   "verdict": "source_units",
+   "complete": false,
+   "source": "uqn:25443"
+  },
+  {
+   "system_id": "dbd77fdd910f4cbca5b84aa77ca0a323",
+   "name": "اللائحة التنفيذية للتصاريح البيئية لإنشاء وتشغيل الأنشطة",
+   "verdict": "source_units",
+   "complete": false,
+   "source": "uqn:25444"
+  },
+  {
+   "system_id": "a5a2dcd02bc140a3a72963b042993f4d",
+   "name": "اللائحة التنفيذية للمواد المستنفدة لطبقة الأوزون ومركبات الكربون الهيدروفلورية",
+   "verdict": "source_units",
+   "complete": false,
+   "source": "uqn:25446"
+  },
+  {
+   "system_id": "b32df6721eb04132ba0a694aaacaf1c9",
+   "name": "اللائحة التنفيذية للضوضاء",
+   "verdict": "source_units",
+   "complete": false,
+   "source": "uqn:25454"
+  },
+  {
+   "system_id": "cmpz5r1zd00ascwg288khl9y3",
+   "name": "تنظيم المجلس الأعلى لشؤون البترول والمعادن",
+   "verdict": "source_units",
+   "complete": true,
+   "source": "boe.text_block law_id=boe26-8a033d73f865d8cd29d887b8 seq=2 (+ seq 4 و6 أدوات لاحقة)"
+  },
+  {
+   "system_id": "cmpz5r7vl00bdcwg2so6kjq51",
+   "name": "قواعد ترشيح رواد العمل التطوعي واختيارهم وتكريمهم",
+   "verdict": "image_text",
+   "complete": true,
+   "source": "boe.attachment boe26-0c09465bf428575fd22d8e96 (اصل الوثيقة، 4 صفحات)"
+  },
+  {
+   "system_id": "cmpz5rwtp00decwg205jpy10g",
+   "name": "لائحة ضوابط دخول القوارب (السنابيك) إلى موانئ المملكة العربية السعودية والغرامات المترتبة",
+   "verdict": "image_text",
+   "complete": true,
+   "source": "boe.attachment boe26-228e0f2445c23111127a37d9 (اصل الوثيقة، 3 صفحات)"
+  },
+  {
+   "system_id": "cmpz5rjdr00cbcwg21dd5xfqa",
+   "name": "نظام رسوم وأجور خدمات الموانئ",
+   "verdict": "image_text",
+   "complete": true,
+   "source": "boe.attachment boe26-601d7c94d64cfe406625d845 (اصل الوثيقة، 20 صفحة)"
+  },
+  {
+   "system_id": "fix25-1d499fa86360862021ef73aa",
+   "name": "نظام تأديب الموظفين",
+   "verdict": "no_source",
+   "complete": false,
+   "source": null
+  }
+ ]
+}

@@ -86,6 +86,10 @@ def main() -> int:
         # تصنيف النظام: تعبئة حقل فارغ فقط
         if a.allow_guarded_update and re.match(r"^\s*UPDATE legal_systems SET classification = \$hk\$[^$]+\$hk\$ WHERE id = \$hk\$[^$]+\$hk\$ AND coalesce\(classification, ''\) = ''\s*$", s):
             return True
+        # عدد مواد نظام كان فارغًا: من المواد نفسها، ولا يستبدل عددًا قائمًا
+        m = re.match(r'^\s*UPDATE legal_systems SET "articleCount" = \(SELECT count\(\*\) FROM legal_articles WHERE "legalSystemId" = \$hk\$([^$]+)\$hk\$ AND "articleBis" < 100\) WHERE id = \$hk\$([^$]+)\$hk\$ AND "articleCount" = 0\s*$', s)
+        if a.allow_guarded_update and m and m.group(1) == m.group(2):
+            return True
         # بيانات وصفية لا نص قانوني: اعتماد علاقة مقترحة، وقرار ملاحظة مراقب مفتوحة
         if a.allow_guarded_update and re.match(r"^\s*UPDATE legal_relations SET status = 'VERIFIED', description = .* WHERE id = \$hk\$[^$]+\$hk\$ AND status = 'PROPOSED'\s*$", s, re.S):
             return True
