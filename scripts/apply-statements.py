@@ -32,6 +32,9 @@ def main() -> int:
     def ok(s):
         if s.lstrip().upper().startswith('INSERT'):
             return True
+        # حارس قراءة فقط: SELECT CASE WHEN ... THEN 'ok' ELSE (1/0) — يُفشل المعاملة كلها إن لم يتحقق الشرط
+        if re.match(r'^\s*SELECT CASE WHEN', s) and not re.search(r'\b(INSERT|UPDATE|DELETE|DROP|ALTER|TRUNCATE|CREATE|GRANT)\b', s, re.I):
+            return True
         return a.allow_guarded_update and bool(guarded.match(s))
     bad = [i for i, s in enumerate(st) if not ok(s)]
     if bad:
