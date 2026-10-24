@@ -83,6 +83,9 @@ def main() -> int:
         # تاريخ نفاذ النظام: تعبئة حقل فارغ فقط (لا يستبدل قيمة قائمة)
         if a.allow_guarded_update and re.match(r"^\s*UPDATE legal_systems SET preamble_effective_from = \$hk\$\d{4}-\d{2}-\d{2}\$hk\$::timestamptz WHERE id = \$hk\$[^$]+\$hk\$ AND preamble_effective_from IS NULL\s*$", s):
             return True
+        # تصنيف النظام: تعبئة حقل فارغ فقط
+        if a.allow_guarded_update and re.match(r"^\s*UPDATE legal_systems SET classification = \$hk\$[^$]+\$hk\$ WHERE id = \$hk\$[^$]+\$hk\$ AND coalesce\(classification, ''\) = ''\s*$", s):
+            return True
         # بيانات وصفية لا نص قانوني: اعتماد علاقة مقترحة، وقرار ملاحظة مراقب مفتوحة
         if a.allow_guarded_update and re.match(r"^\s*UPDATE legal_relations SET status = 'VERIFIED', description = .* WHERE id = \$hk\$[^$]+\$hk\$ AND status = 'PROPOSED'\s*$", s, re.S):
             return True
