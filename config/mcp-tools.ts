@@ -28,20 +28,8 @@ export const MCP_TOOL_POLICY = {
   hakeem_research: { tier: "paid", service: "HYBRID_SEARCH" },
   hakeem_enumerate: { tier: "paid", service: "HYBRID_SEARCH" },
   hakeem_enumerate_rulings: { tier: "paid", service: "HYBRID_SEARCH" },
-  // HKM-044 المرحلة الأولى (التسعير مقترح وينتظر اعتماد المالك): الفهرس والتشخيص والاستناد والبصمة بلا خصم،
-  // والفهرس الكامل للنظام كبطاقته (مدفوع بلا خصم)، والبحث النصي والدلالي وتتبع النص بخصم بحث.
-  hakeem_health: { tier: "free", service: null },
-  hakeem_stats: { tier: "free", service: null },
-  hakeem_list_categories: { tier: "free", service: null },
-  hakeem_list_laws: { tier: "free", service: null },
-  hakeem_resolve: { tier: "free", service: null },
-  hakeem_get_citation: { tier: "free", service: null },
-  hakeem_check_ref: { tier: "free", service: null },
-  hakeem_get_toc: { tier: "paid", service: null },
-  hakeem_search_phrase: { tier: "paid", service: "HYBRID_SEARCH" },
-  hakeem_search_boolean: { tier: "paid", service: "HYBRID_SEARCH" },
-  hakeem_semantic_search: { tier: "paid", service: "HYBRID_SEARCH" },
-  hakeem_trace_text: { tier: "paid", service: "HYBRID_SEARCH" },
+  // HKM-044 المرحلة الأولى: تسعير الأدوات الاثنتي عشرة مؤجل بقرار المالك (24/10/2026 «أجّل التسعير»)، فتسري عليها
+  // القاعدة الافتراضية أدناه (مدفوعة بخصم بحث) حتى يقرر. القائمة في lib/mcp/register-phase1.ts (PHASE1_TOOL_NAMES).
 } as const satisfies Record<string, McpToolPolicy>;
 
 export type McpToolName = keyof typeof MCP_TOOL_POLICY;

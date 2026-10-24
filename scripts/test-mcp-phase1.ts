@@ -47,6 +47,7 @@ import { handleSemanticSearch, hintedLaws, queryKeywords, rerankScore } from "..
 import { compileTerm, normalizeAr, normSqlExpr, rawLiteralPattern } from "../lib/mcp/tools/word-match";
 import { resetUnitVersionCache } from "../lib/mcp/tools/enumerate";
 import { textAsOf } from "../lib/modules/legal-core/verified-status";
+import { MCP_TOOL_POLICY, mcpToolPolicy } from "../config/mcp-tools";
 
 let failed = 0;
 let passed = 0;
@@ -181,6 +182,12 @@ const hl = hintedLaws("مكافأة نهاية الخدمة في نظام الع
 ok(hl.has("m") && !hl.has("w"), "U النظام المسمّى: الأطول يغلب");
 ok(fuzzyMaxDistance(10) === 2 && fuzzyMaxDistance(24) === 3 && fuzzyMaxDistance(60) === 4, "U حد مسافة التحرير: 2 للقصير و4 أقصى");
 ok(rerankScore(0.8, 1, false) === 0.87 && rerankScore(0.8, 0, true) === 0.6, "U وزن الترتيب 0.65/0.35 و0.08 للنظام المسمّى");
+
+// التسعير مؤجل بقرار المالك (24/10): أدوات المرحلة الأولى غير مدرجة، فتسري القاعدة الآمنة (مدفوعة بخصم بحث).
+{
+  const names = ["hakeem_health", "hakeem_stats", "hakeem_list_categories", "hakeem_list_laws", "hakeem_resolve", "hakeem_search_phrase", "hakeem_search_boolean", "hakeem_semantic_search", "hakeem_trace_text", "hakeem_get_citation", "hakeem_check_ref", "hakeem_get_toc"];
+  ok(names.every((n) => !(n in MCP_TOOL_POLICY) && mcpToolPolicy(n).tier === "paid" && mcpToolPolicy(n).service === "HYBRID_SEARCH"), "U تسعير المرحلة الأولى مؤجل: القاعدة الافتراضية الآمنة لكل أداة");
+}
 
 // ── D: قاعدة محلية ──
 

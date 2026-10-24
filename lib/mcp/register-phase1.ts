@@ -16,6 +16,22 @@ import { handleSemanticSearch } from "@/lib/mcp/tools/semantic";
 
 const kindEnum = z.enum(WORK_KINDS);
 
+/** أدوات المرحلة الأولى (تسعيرها مؤجل: القاعدة الافتراضية في config/mcp-tools.ts). */
+export const PHASE1_TOOL_NAMES = [
+  "hakeem_health",
+  "hakeem_stats",
+  "hakeem_list_categories",
+  "hakeem_list_laws",
+  "hakeem_resolve",
+  "hakeem_search_phrase",
+  "hakeem_search_boolean",
+  "hakeem_semantic_search",
+  "hakeem_trace_text",
+  "hakeem_get_citation",
+  "hakeem_check_ref",
+  "hakeem_get_toc",
+] as const;
+
 /** المرشحات المشتركة لأدوات البحث (العقد المشترك). */
 function filterShape(defaultStatus: "in_force" | "all") {
   return {
@@ -42,7 +58,7 @@ export function registerPhase1Tools(server: McpServer) {
     async (_args, ctx) =>
       runMcpTool("hakeem_health", ctx, async () => {
         const { semanticSearchEnabled } = await import("@/lib/modules/ai/embeddings");
-        return handleHealth(mcpSql(), { tools: Object.keys(MCP_TOOL_POLICY).length, semantic: semanticSearchEnabled() });
+        return handleHealth(mcpSql(), { tools: new Set([...Object.keys(MCP_TOOL_POLICY), ...PHASE1_TOOL_NAMES]).size, semantic: semanticSearchEnabled() });
       }),
   );
 
