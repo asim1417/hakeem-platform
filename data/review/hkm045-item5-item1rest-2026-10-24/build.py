@@ -54,7 +54,7 @@ for l in (D / 'verify.jsonl').read_text(encoding='utf-8').splitlines():
     if v['status'] == 'reject' or any('new_unit' in e for e in eds):
         skipped.append(v['note_id'])
         continue
-    target = next((e['target_article'] for e in eds if e.get('target_article')), None) or v['article_id']
+    target = next((e['target_article'].split()[0] for e in eds if e.get('target_article')), None) or v['article_id']
     eff = s.get('effective_gregorian')
     approx = False
     if not eff:
@@ -65,27 +65,34 @@ for l in (D / 'verify.jsonl').read_text(encoding='utf-8').splitlines():
                   'quote': (s.get('quote') or '')[:1500], 'basis': s.get('effective_basis') or ''})
 items.sort(key=lambda x: (x['aid'], x['eff'], x['note']))
 st, post, n = [], [], 0
+# مواد لها نسخة قائمة أحدث من تاريخ نفاذ التعديل (فحص 24/10/2026)
+LATER = {'2016-11-14': {'cmpz6ba8f06hvcwg2p6drnuym'}, '2021-06-25': {'cmpz6h21908hhcwg273u052m7'}, '2021-06-11': {'cmpzcv9t70b5zvtrkz3d9iw1t'}}
 for it in items:
     aid, eff = it['aid'], it['eff']
-    base = (f"coalesce((SELECT v.body FROM unit_version v WHERE v.unit_id = {lit(aid)} AND v.valid_from::date <= {lit(eff)}::date "
+    # النسخة تقع بعد آخر نسخة قائمة للمادة (حتى الآن) إن كانت تلك أحدث من تاريخ النفاذ، وتُبنى على نصها.
+    vf = (f"greatest({lit(eff)}::timestamptz, coalesce((SELECT max(valid_from) + interval '1 second' FROM unit_version "
+          f"WHERE unit_id = {lit(aid)} AND valid_from <= now()), {lit(eff)}::timestamptz))")
+    base = (f"coalesce((SELECT v.body FROM unit_version v WHERE v.unit_id = {lit(aid)} AND v.valid_from <= {vf} "
             f"ORDER BY v.valid_from DESC, v.created_at DESC LIMIT 1), (SELECT content FROM legal_articles WHERE id = {lit(aid)}))")
     expr, conds, news = base, [f"EXISTS (SELECT 1 FROM legal_articles WHERE id = {lit(aid)})"], []
+    it_wholes = [e['whole'] for e in it['edits'] if 'whole' in e]
     for e in it['edits']:
         if 'whole_ref' in e:
             r = e['whole_ref']
             expr = f"(SELECT body FROM boe.unit WHERE law_id = {lit(r['law_id'])} AND seq = {int(r['seq'])})"
         elif 'whole' in e:
             expr = lit(e['whole'])
-            news.append(e['whole'])
+            news = [e['whole']]
         elif 'old' in e:
             conds.append(f"(length({expr}) - length(replace({expr}, {lit(e['old'])}, ''))) / length({lit(e['old'])}) = 1")
             expr = f"replace({expr}, {lit(e['old'])}, {lit(e['new'])})"
+            news = [x for x in news if x not in it_wholes]
             if e['new']:
                 news.append(e['new'])
     vid = 'hk45u-' + hashlib.sha256(f"{aid}|{eff}|{it['note']}".encode()).hexdigest()[:24]
-    vf = (f"greatest({lit(eff)}::timestamptz, coalesce((SELECT max(valid_from) + interval '1 second' FROM unit_version WHERE unit_id = {lit(aid)} "
-          f"AND valid_from::date = {lit(eff)}::date), {lit(eff)}::timestamptz))")
-    q = ('تاريخ تقريبي — تاريخ صدور الأداة (النشر غير معروف). ' if it['approx'] else '') + it['quote']
+    q = (('تاريخ تقريبي — تاريخ صدور الأداة (النشر غير معروف). ' if it['approx'] else '')
+         + (f"نافذ من {eff}؛ رُكّب بعد نسخة لاحقة قائمة بُنيت دونه، فتاريخ النسخة تاريخ تلك النسخة + ثانية. " if aid in LATER.get(eff, ()) else '')
+         + it['quote'])
     st.append(f"""INSERT INTO unit_version (id, unit_id, body, valid_from, evidence_instrument, evidence_url, evidence_quote, created_at)
 SELECT {lit(vid)}, {lit(aid)}, {expr}, {vf}, {lit(it['instr'])}, {lit('boe.amendment_note:' + it['note'])}, {lit(q[:1800])}, now()
 WHERE {' AND '.join(conds)} AND NOT EXISTS (SELECT 1 FROM unit_version WHERE id = {lit(vid)})""")
