@@ -20,6 +20,8 @@ A24, A25 = 'cmpzcuxfd07l1vtrks2pni2ym', 'cmpzcuxfd07l2vtrkarl3462j'
 A211, A217 = 'cmpwibpf901yhnxffsxmllv7m', 'cmpwibrek01ytnxffw28acmmf'
 CIVIL = 'boe26-18804cb8b1d8b64f98293028'  # نظام المعاملات المدنية: م/191 «يلغى اعتباراً من تاريخ العمل بنظام المعاملات المدنية»، وم721 «بعد مضي (مائة وثمانين) يومًا من تاريخ نشره»
 VALID_FROM = f"(SELECT (l.published_gregorian + 180)::timestamptz FROM boe.law l WHERE l.id = $hk${CIVIL}$hk$)"
+# مقسوم عليه غير ثابت: (1/0) الثابت يطويه المخطط فيفشل الحارس دائمًا
+GUARD_FAIL = "(1/(SELECT count(*) FROM legal_systems WHERE false))::text"
 INSTR = 'مرسوم ملكي رقم م/191 وتاريخ 1444/11/29هـ'
 
 
@@ -60,7 +62,7 @@ def build(md5_211):
   AND (SELECT "articleNumber" FROM legal_articles WHERE id = {lit(A25)}) = 25
   AND (SELECT "articleNumber" FROM legal_articles WHERE id = {lit(A24)}) = 24
   AND (SELECT "articleNumber" FROM legal_articles WHERE id = {lit(A217)}) = 217
-  THEN 'ok' ELSE (1/0)::text END""")
+  THEN 'ok' ELSE {GUARD_FAIL} END""")
     # «ملغاة» لـ م25 وم217
     for law, aid in ((MUH[0], A25), (MUR[0], A217)):
         art = 25 if aid == A25 else 217
@@ -86,7 +88,7 @@ FROM article_amendments aa WHERE aa."articleId" = {lit(A24)} AND aa."changeType"
   AND (SELECT count(*) FROM unit_version WHERE unit_id = {lit(A211)}) = 1
   AND (SELECT body FROM unit_version WHERE unit_id = {lit(A211)}) LIKE '%تحت يد حائزه.'
   AND (SELECT length(a.content) - length(v.body) FROM legal_articles a JOIN unit_version v ON v.unit_id = a.id WHERE a.id = {lit(A211)}) = length({PH}) + 2
-  THEN 'ok' ELSE (1/0)::text END""")
+  THEN 'ok' ELSE {GUARD_FAIL} END""")
     return st
 
 
