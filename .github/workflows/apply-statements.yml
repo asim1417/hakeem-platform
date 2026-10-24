@@ -19,6 +19,12 @@ on:
         description: "بصمة md5 المتوقعة للعبارات"
         type: string
         required: true
+      allow_guarded_update:
+        description: "يسمح بتحديث نص المادة المحروس ببصمة نصها الحالي (no | yes)"
+        type: choice
+        required: true
+        default: "no"
+        options: ["no", "yes"]
       mode:
         description: "preview (تراجع) | apply (تثبيت)"
         type: choice
@@ -53,5 +59,5 @@ jobs:
       - name: التنفيذ (${{ inputs.mode }})
         run: |
           set -o pipefail
-          python3 scripts/apply-statements.py --file "${{ inputs.file }}" --mode "${{ inputs.mode }}" --expect-md5 "${{ inputs.expect_md5 }}" | tee apply.log
+          python3 scripts/apply-statements.py --file "${{ inputs.file }}" --mode "${{ inputs.mode }}" --expect-md5 "${{ inputs.expect_md5 }}" $([ "${{ inputs.allow_guarded_update }}" = "yes" ] && echo --allow-guarded-update) | tee apply.log
           { echo '```json'; cat apply.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
