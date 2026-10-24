@@ -35,6 +35,9 @@ def main() -> int:
         # حارس قراءة فقط: SELECT CASE WHEN ... THEN 'ok' ELSE (1/0) — يُفشل المعاملة كلها إن لم يتحقق الشرط
         if re.match(r'^\s*SELECT CASE WHEN', s) and not re.search(r'\b(INSERT|UPDATE|DELETE|DROP|ALTER|TRUNCATE|CREATE|GRANT)\b', s, re.I):
             return True
+        # تاريخ نفاذ النظام: تعبئة حقل فارغ فقط (لا يستبدل قيمة قائمة)
+        if a.allow_guarded_update and re.match(r"^\s*UPDATE legal_systems SET preamble_effective_from = \$hk\$\d{4}-\d{2}-\d{2}\$hk\$::timestamptz WHERE id = \$hk\$[^$]+\$hk\$ AND preamble_effective_from IS NULL\s*$", s):
+            return True
         return a.allow_guarded_update and bool(guarded.match(s))
     bad = [i for i, s in enumerate(st) if not ok(s)]
     if bad:
