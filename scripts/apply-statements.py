@@ -13,6 +13,51 @@ import argparse, hashlib, json, os, sys
 import psycopg2
 
 
+def split_guard(s):
+    """يقسم شرط «SELECT CASE WHEN a AND b ... THEN» إلى شروطه في المستوى الأعلى (خارج الأقواس والنصوص)."""
+    import re
+    m = re.match(r'^\s*SELECT CASE WHEN (.*) THEN \'ok\' ELSE .* END AS \w+\s*$', s, re.S)
+    if not m:
+        return None
+    body, parts, depth, i, start, q = m.group(1), [], 0, 0, 0, None
+    while i < len(body):
+        if q:
+            if body.startswith(q, i):
+                i += len(q); q = None; continue
+            i += 1; continue
+        if body.startswith('$hk$', i):
+            q = '$hk$'; i += 4; continue
+        if body[i] == "'":
+            q = "'"; i += 1; continue
+        c = body[i]
+        if c == '(':
+            depth += 1
+        elif c == ')':
+            depth -= 1
+        elif depth == 0 and body.startswith(' AND ', i):
+            parts.append(body[start:i]); i += 5; start = i; continue
+        i += 1
+    parts.append(body[start:])
+    return parts
+
+
+def failing_conditions(cur, s):
+    parts = split_guard(s)
+    if not parts:
+        return None
+    bad = []
+    for k, c in enumerate(parts):
+        cur.execute('SAVEPOINT cond')
+        try:
+            cur.execute(f'SELECT ({c})')
+            if not cur.fetchone()[0]:
+                bad.append({'index': k, 'condition': c[:300]})
+        except Exception as e:
+            bad.append({'index': k, 'error': str(e)[:200], 'condition': c[:300]})
+        cur.execute('ROLLBACK TO SAVEPOINT cond')
+    return bad[:20]
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument('--file', required=True)
@@ -62,10 +107,12 @@ def main() -> int:
             rows = 0
             per = []
             for i, s in enumerate(st):
+                cur.execute('SAVEPOINT stmt')
                 try:
                     cur.execute(s)
                 except Exception as e:
-                    raise RuntimeError(f'العبارة {i} فشلت ({e}); صفوف ما قبلها: {per}') from e
+                    cur.execute('ROLLBACK TO SAVEPOINT stmt')
+                    raise RuntimeError(f'العبارة {i} فشلت ({e}); صفوف ما قبلها: {per}; شروط الحارس الفاشلة: {failing_conditions(cur, s)}') from e
                 per.append(max(cur.rowcount, 0))
                 rows += per[-1]
             after = counts()
