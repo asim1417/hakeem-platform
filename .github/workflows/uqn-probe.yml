@@ -1,0 +1,29 @@
+name: UQN Probe (فحص الوصول إلى أم القرى — قراءة فقط)
+
+# يختبر وصول خوادم GitHub إلى موقع أم القرى قبل بناء زاحف له. لا قاعدة ولا أسرار.
+
+on:
+  workflow_dispatch:
+    inputs:
+      urls:
+        description: "روابط مفصولة بمسافة"
+        type: string
+        required: true
+        default: "https://www.uqn.gov.sa/ https://www.uqn.gov.sa/details?p=26919"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: الفحص
+        run: |
+          for u in ${{ inputs.urls }}; do
+            code=$(curl -sS -o body.html -w '%{http_code} %{size_download} %{time_total}' --max-time 40 -A 'Mozilla/5.0 (HakeemResearch)' "$u" || echo "fail")
+            echo "$u => $code"
+            echo "$u => $code" >> "$GITHUB_STEP_SUMMARY"
+            head -c 400 body.html | tr '\n' ' '; echo
+          done
