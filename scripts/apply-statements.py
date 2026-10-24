@@ -12,6 +12,15 @@ import argparse, hashlib, json, os, sys
 
 import psycopg2
 
+# HKM-045: إزالة تذييل موقع أم القرى («تنزيل الملف»، «جميع الحقوق محفوظة…») من آخر المواد المستوردة منه.
+# العبارة مسموحة بنصها هذا فقط؛ والملف الذي يستعملها يثبت المجموعة ونتيجتها ببصمتين في حارسيه.
+UQN_FOOTER_RE = r'(\s*(تنزيل الملف|تم نسخ الرابط))*\s*جميع الحقوق محفوظة لجريدة أم القرى © \d{4}\s*$'
+UQN_FOOTER_STRIP = (
+    f"UPDATE legal_articles SET content = regexp_replace(content, $hk${UQN_FOOTER_RE}$hk$, ''), "
+    f"search_norm = uqn_fix.hkm30_search_norm(\"lawName\", title, regexp_replace(content, $hk${UQN_FOOTER_RE}$hk$, ''), keywords, classification, chapter), "
+    f"\"updatedAt\" = now() WHERE content ~ $hk${UQN_FOOTER_RE}$hk$ AND btrim(regexp_replace(content, $hk${UQN_FOOTER_RE}$hk$, '')) <> '' "
+    f"AND \"articleBis\" < 100 AND NOT EXISTS (SELECT 1 FROM unit_version v WHERE v.unit_id = legal_articles.id)")
+
 
 def split_guard(s):
     """يقسم شرط «SELECT CASE WHEN a AND b ... THEN» إلى شروطه في المستوى الأعلى (خارج الأقواس والنصوص)."""
@@ -85,6 +94,11 @@ def main() -> int:
             return True
         # تصنيف النظام: تعبئة حقل فارغ فقط
         if a.allow_guarded_update and re.match(r"^\s*UPDATE legal_systems SET classification = \$hk\$[^$]+\$hk\$ WHERE id = \$hk\$[^$]+\$hk\$ AND coalesce\(classification, ''\) = ''\s*$", s):
+            return True
+        # تذييل موقع أم القرى الملتصق بآخر مادة (ليس نصًا قانونيًا): العبارة الثابتة وحدها، والحارس يثبت المجموعة ببصمة
+        if a.allow_guarded_update and s.strip() == UQN_FOOTER_STRIP:
+            return True
+        if a.allow_guarded_update and re.match(r'^\s*UPDATE legal_articles SET "articleBis" = 100, "updatedAt" = now\(\) WHERE id = \$hk\$[^$]+\$hk\$ AND content = \$hk\$جميع الحقوق محفوظة لجريدة أم القرى © \d{4}\$hk\$ AND "articleBis" = 0\s*$', s):
             return True
         # عدد مواد نظام كان فارغًا: من المواد نفسها، ولا يستبدل عددًا قائمًا
         m = re.match(r'^\s*UPDATE legal_systems SET "articleCount" = \(SELECT count\(\*\) FROM legal_articles WHERE "legalSystemId" = \$hk\$([^$]+)\$hk\$ AND "articleBis" < 100\) WHERE id = \$hk\$([^$]+)\$hk\$ AND "articleCount" = 0\s*$', s)
