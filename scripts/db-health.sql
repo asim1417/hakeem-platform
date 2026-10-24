@@ -14,7 +14,9 @@ mt AS (SELECT DISTINCT ON (m.hakeem_system_id) m.hakeem_system_id sid, l.id law_
        WHERE m.hakeem_system_id IS NOT NULL ORDER BY m.hakeem_system_id, (l.status_at_source = 'ساري') DESC, l.issued_gregorian DESC NULLS LAST),
 cmp AS (
   SELECT DISTINCT ON (x.id) x.id aid, u.law_id, u.seq,
-         uqn_fix.hkm30_norm(u.body) = uqn_fix.hkm30_norm(coalesce(ev.body, x.content)) AS same,
+         -- منذ 24/10 (البند 4): المادة التي رُوجع فرقها فثبت أنه تنسيقي فقط (أرقام فقرات، عنوان، ترقيم) تُعدّ مطابقة.
+         (uqn_fix.hkm30_norm(u.body) = uqn_fix.hkm30_norm(coalesce(ev.body, x.content))
+          OR EXISTS (SELECT 1 FROM verification fe WHERE fe.object_type = 'unit' AND fe.object_id = x.id AND fe.verified_by IN ('rule-item4-format-equiv-2026-10-24', 'owner-inject-hkm038-item4-2026-10-24'))) AS same,
          ev.unit_id IS NOT NULL AS amended,
          EXISTS (SELECT 1 FROM boe.amendment_note n WHERE n.law_id = u.law_id AND n.unit_seq = u.seq) AS has_note
   FROM mt
