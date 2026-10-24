@@ -18,6 +18,8 @@ def main() -> int:
     ap.add_argument('--file', required=True)
     ap.add_argument('--mode', choices=['preview', 'apply'], required=True)
     ap.add_argument('--expect-md5', required=True)
+    ap.add_argument('--allow-guarded-update', action='store_true',
+                    help='يسمح بـ UPDATE legal_articles SET content المحروس ببصمة النص الحالي (md5(content) = ...) فقط')
     a = ap.parse_args()
     d = json.load(open(a.file, encoding='utf-8'))
     st = d['statements']
@@ -25,7 +27,13 @@ def main() -> int:
     if got != d['md5'] or got != a.expect_md5:
         print(f'::error::بصمة العبارات {got} لا تطابق الملف {d["md5"]} أو المتوقع {a.expect_md5}')
         return 2
-    bad = [i for i, s in enumerate(st) if not s.lstrip().upper().startswith('INSERT')]
+    import re
+    guarded = re.compile(r'^\s*UPDATE legal_articles SET content = .*\s+WHERE id = \$hk\$[^$]+\$hk\$ AND md5\(content\) = \$hk\$[0-9a-f]{32}\$hk\$\s*$', re.S)
+    def ok(s):
+        if s.lstrip().upper().startswith('INSERT'):
+            return True
+        return a.allow_guarded_update and bool(guarded.match(s))
+    bad = [i for i, s in enumerate(st) if not ok(s)]
     if bad:
         print(f'::error::عبارات ليست إضافة: {bad[:10]}')
         return 2
@@ -53,7 +61,12 @@ def main() -> int:
             for t in ('public.legal_articles', 'public.legal_systems'):
                 if before[t] != after[t]:
                     raise RuntimeError(f'تغيّر عدد {t} — أُلغيت')
-            print(json.dumps({'mode': a.mode, 'md5': got, 'statements': len(st), 'rows_inserted': rows, 'before': before, 'after': after,
+            if a.allow_guarded_update:
+                cur.execute("SELECT count(*) FROM legal_text_provenance WHERE source_id = %s", (d.get('by'),))
+                prov = cur.fetchone()[0]
+            else:
+                prov = None
+            print(json.dumps({'mode': a.mode, 'provenance_rows_for_batch': prov, 'md5': got, 'statements': len(st), 'rows_inserted': rows, 'before': before, 'after': after,
                               'delta': {t: after[t] - before[t] for t in tables}}, ensure_ascii=False, indent=1))
             if a.mode == 'apply':
                 con.commit(); print('COMMITTED')
