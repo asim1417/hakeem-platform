@@ -1,0 +1,14 @@
+{
+ "task": "HKM-037",
+ "source_runs": [
+  "40055429402"
+ ],
+ "engine": "tesseract-5 ara psm6 (OMP_THREAD_LIMIT=1)",
+ "attachments": 656,
+ "pages": 3731,
+ "md5": {
+  "attachments.jsonl": "7afbf66d46cc3c22919b68bbff750402",
+  "pages.jsonl": "854352e1f28ed6ada70fbf8214ed6dc3"
+ },
+ "note": "R2 (إعادة 658 بعد إصلاح ترميز عناوين المرفقات العربية في الرابط، #833): مرفقات مواد؛ فشل 2. النص الآلي تقريبي؛ لا يُعتمد نصًّا قانونيًّا إلا بعد مطابقته بالصورة"
+}
