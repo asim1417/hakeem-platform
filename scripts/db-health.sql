@@ -48,7 +48,9 @@ SELECT json_build_object(
   'systems_with_effective', (SELECT count(*) FROM legal_systems WHERE preamble_effective_from IS NOT NULL),
   'articles_with_status', (SELECT count(*) FROM a JOIN lv ON lv.object_id = a.id),
   'articles_repealed', (SELECT count(*) FROM a JOIN lv ON lv.object_id = a.id WHERE lv.verified_status IN ('ملغاة', 'ملغى')),
-  'legacy_repeals_unrecorded', (SELECT count(*) FROM article_amendments aa WHERE aa."changeType" = 'repealed' AND NOT EXISTS (SELECT 1 FROM unit_version u WHERE u.unit_id = aa."articleId") AND NOT EXISTS (SELECT 1 FROM verification v WHERE v.object_id = aa."articleId" AND v.verified_status IN ('ملغاة', 'ملغى'))),
+  -- منذ 24/10 (البند 3): يُعدّ السجل معالجًا إن كانت المادة «مستبدل» (إحلال إصدار كامل)، أو تحقق يقتبس نص السجل نفسه
+  -- (مراجعة صريحة له، كسجل منسوب لمادة غير مادته)، أو نظامها كله مستبدل/ملغى/سجل مخلوط لا يُعرض.
+  'legacy_repeals_unrecorded', (SELECT count(*) FROM article_amendments aa JOIN legal_articles x ON x.id = aa."articleId" LEFT JOIN lw ON lw.object_id = x."legalSystemId" WHERE aa."changeType" = 'repealed' AND NOT EXISTS (SELECT 1 FROM unit_version u WHERE u.unit_id = aa."articleId") AND NOT EXISTS (SELECT 1 FROM verification v WHERE v.object_id = aa."articleId" AND (v.verified_status IN ('ملغاة', 'ملغى', 'مستبدل') OR v.evidence_quote = aa.summary)) AND coalesce(lw.verified_status, '') NOT IN ('مستبدل', 'ملغى', 'ملغاة', 'سجل مخلوط — لا يُعرض')),
   'search_norm_missing', (SELECT count(*) FROM a WHERE coalesce(search_norm, '') = ''),
   'search_norm_stale', (SELECT count(*) FROM a JOIN ev ON ev.unit_id = a.id WHERE a.search_norm IS DISTINCT FROM uqn_fix.hkm30_search_norm((SELECT "lawName" FROM legal_articles x WHERE x.id = a.id), (SELECT title FROM legal_articles x WHERE x.id = a.id), ev.body, (SELECT keywords FROM legal_articles x WHERE x.id = a.id), (SELECT classification FROM legal_articles x WHERE x.id = a.id), (SELECT chapter FROM legal_articles x WHERE x.id = a.id))),
   'embedded_articles', (SELECT count(*) FROM a JOIN emb ON emb.owner_id = a.id),
