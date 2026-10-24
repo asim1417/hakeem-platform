@@ -94,7 +94,6 @@ for key, items in sorted(groups.items()):
     for x, edits in items:
         ops.append(x['op_id'])
         sn = snap(x['source_url'])
-        pre.append(f"strpos({sn}, {lit(x['source_quote'])}) > 0")
         for e in edits:
             for p in e.get('new_parts') or []:
                 if 'src' in p:
@@ -113,7 +112,9 @@ for key, items in sorted(groups.items()):
     vid = 'hk41c-' + hid(aid, tag, *ops)
     vids.append(vid)
     x0 = items[0][0]
-    quote = ' ‖ '.join(dict.fromkeys(x['source_quote'] for x, _ in items))[:3000]
+    # الدليل: أجزاء النص الحرفية من اللقطة (يتحقق الحارس من كل منها)، لا الاقتباس المختصر
+    srcs = [p['src'] for x, ed in items for e in ed for p in (e.get('new_parts') or []) if 'src' in p]
+    quote = (' ‖ '.join(dict.fromkeys(srcs)) or ' ‖ '.join(dict.fromkeys(x['source_quote'] for x, _ in items)))[:3000]
     body_st.append(f"""INSERT INTO unit_version (id, unit_id, body, valid_from, evidence_instrument, evidence_url, evidence_quote, created_at)
 SELECT {lit(vid)}, {lit(aid)}, {expr}, {vf}, {instr(x0['op_id'])}, {lit(x0['source_url'])}, {lit(quote)}, now()
 WHERE NOT EXISTS (SELECT 1 FROM unit_version WHERE id = {lit(vid)})""")
