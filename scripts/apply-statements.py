@@ -5,7 +5,7 @@
 
 - يتحقق أن md5 العبارات المجموعة بسطر جديد يساوي md5 المخزّن في الملف وما مرّره المالك/الوكيل.
 - يرفض أي عبارة لا تبدأ بـ INSERT (إضافة فقط).
-- حارس أعداد: legal_articles وlegal_systems لا يتغيران.
+- حارس أعداد: legal_articles وlegal_systems لا يتغيران إلا بالفرق المعلن في expect_delta.
 - preview يتراجع ويطبع العدّ، apply يثبّت. DATABASE_URL من البيئة ولا يُطبع.
 """
 import argparse, hashlib, json, os, sys
@@ -61,9 +61,11 @@ def main() -> int:
                 cur.execute(s)
                 rows += max(cur.rowcount, 0)
             after = counts()
+            # الأصل: لا يتغير عدد المواد والأنظمة. ملف يضيف إصدارًا جديدًا يعلن الفرق المتوقع بدقة في expect_delta.
+            exp = d.get('expect_delta', {})
             for t in ('public.legal_articles', 'public.legal_systems'):
-                if before[t] != after[t]:
-                    raise RuntimeError(f'تغيّر عدد {t} — أُلغيت')
+                if after[t] - before[t] != exp.get(t, 0):
+                    raise RuntimeError(f'تغيّر عدد {t} بمقدار {after[t] - before[t]} والمتوقع {exp.get(t, 0)} — أُلغيت')
             if a.allow_guarded_update:
                 cur.execute("SELECT count(*) FROM legal_text_provenance WHERE source_id = %s", (d.get('by'),))
                 prov = cur.fetchone()[0]

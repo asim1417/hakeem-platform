@@ -96,5 +96,5 @@ st.append(f"""SELECT CASE WHEN
 THEN 'ok' ELSE {GUARD_FAIL} END AS guard_after""")
 
 md5 = hashlib.md5('\n'.join(st).encode()).hexdigest()
-(D / 'statements-gcc.json').write_text(json.dumps({'by': BY, 'md5': md5, 'count': len(st), 'report': {'new_system': LID, 'articles': N, 'superseded': OLD}, 'statements': st}, ensure_ascii=False, indent=1), encoding='utf-8')
+(D / 'statements-gcc.json').write_text(json.dumps({'by': BY, 'md5': md5, 'count': len(st), 'report': {'new_system': LID, 'articles': N, 'superseded': OLD}, 'expect_delta': {'public.legal_articles': N, 'public.legal_systems': 1}, 'statements': st}, ensure_ascii=False, indent=1), encoding='utf-8')
 print(len(st), md5)
