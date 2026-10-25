@@ -252,6 +252,56 @@ def nezams_candidates(path, corpus):
     return out
 
 
+def moj_candidates(paths, corpus):
+    """W1m/U1m من ملفات بوابة وزارة العدل في المستودع (data/moj-*.json): مصدر رسمي رتبة 3 بنصوص كاملة."""
+    out = []
+    for p in paths:
+        for d in json.load(open(p, encoding='utf-8')):
+            s = d['system']
+            hits = corpus.by_key.get(law_key(s['name'])) or []
+            n_off = s.get('officialArticleCount') or len(d.get('articles') or [])
+            if not hits:
+                out.append(dict(id=gid('W1m', s.get('sourceSerial')), gap='W1m', route='identity', status='open', prio=1, law=s['name'],
+                                ref=s.get('sourceUrl'), detail={'parent': s.get('parentSystem'), 'articles': n_off, 'file': pathlib.Path(p).name},
+                                resolution='غير موجود في حكيم بالاسم؛ نصه الكامل في ملف المستودع'))
+                continue
+            h = max(hits, key=lambda r: r[5])
+            if h[5] < n_off:
+                out.append(dict(id=gid('U1m', s.get('sourceSerial')), gap='U1m', route='reader', status='open', prio=1, law=h[1], system_id=h[0],
+                                ref=s.get('sourceUrl'), detail={'hakeem_articles': h[5], 'moj_articles': n_off, 'file': pathlib.Path(p).name},
+                                resolution=f'حكيم {h[5]} مادة والبوابة {n_off}'))
+    return out
+
+
+def nezams_tables(path, corpus):
+    """T1: جداول وملاحق في nezams لأنظمة موجودة في حكيم (مصدر ثانوي: يكشف فقط)."""
+    c = sqlite3.connect(f'file:{path}?mode=ro', uri=True)
+    q = """SELECT l.law_id, l.official_name, (SELECT count(*) FROM law_tables t WHERE t.law_id = l.law_id), (SELECT count(*) FROM appendices a WHERE a.law_id = l.law_id)
+           FROM laws l WHERE EXISTS (SELECT 1 FROM law_tables t WHERE t.law_id = l.law_id) OR EXISTS (SELECT 1 FROM appendices a WHERE a.law_id = l.law_id)"""
+    out = []
+    # N1: لنظام nezams غير المطابَق بالهيئة وله نظير في حكيم بالاسم: مواد nezams أكثر من مواد حكيم
+    q1 = """SELECT l.law_id, l.official_name, (SELECT count(*) FROM provisions p WHERE p.law_id = l.law_id), m.match_code
+            FROM laws l LEFT JOIN law_official_match m ON m.law_id = l.law_id"""
+    for lid, name, n, mc in c.execute(q1):
+        if mc == 'matched':
+            continue
+        hits = corpus.by_key.get(law_key(name)) or []
+        if hits:
+            h = max(hits, key=lambda r: r[5])
+            if n > h[5] + 1:
+                out.append(dict(id=gid('N1', lid), gap='N1', route='fetch', status='open', prio=2, law=h[1], system_id=h[0],
+                                detail={'nezams_law_id': lid, 'nezams_provisions': n, 'hakeem_articles': h[5]},
+                                resolution=f'nezams {n} مادة وحكيم {h[5]}؛ يُقابل بالمصدر الرسمي قبل أي إضافة'))
+    for lid, name, nt, na in c.execute(q):
+        hits = corpus.by_key.get(law_key(name)) or []
+        if not hits:
+            continue
+        out.append(dict(id=gid('T1', lid), gap='T1', route='fetch', status='open', prio=2, law=hits[0][1], system_id=hits[0][0],
+                        detail={'nezams_law_id': lid, 'tables': nt, 'appendices': na},
+                        resolution='جداول/ملاحق في nezams؛ يُطلب الأصل الرسمي (مرفقات الهيئة) ويُقابل بما في حكيم'))
+    return out
+
+
 def build(a):
     out = pathlib.Path(a.out)
     raw = json.load(open(a.raw, encoding='utf-8'))
@@ -289,8 +339,20 @@ def build(a):
         if e and it['status'] == 'open':
             it.update(status='suppressed', suppressed_by=e['reason'], suppressed_ref=e['ref'])
         items.append(it)
+    if a.raw_sources:  # الجزء الثاني: sql/ledger_sources.sql
+        for gap, route, prio, sid, law, aid, art, ref, detail in json.load(open(a.raw_sources, encoding='utf-8'))['rows']:
+            it = dict(id=gid(gap, sid, aid, art, json.dumps(detail, ensure_ascii=False, sort_keys=True)), gap=gap, route=route, prio=prio,
+                      system_id=sid, law=law or (corpus.sys.get(sid) or [None, None])[1], article_id=aid, article_number=art, ref=ref,
+                      detail=detail, status='open')
+            if gap == 'U5u':
+                d = detail or {}
+                it['subtype'] = 'hakeem_edit' if d.get('hakeem_edit') else ('near' if (d.get('sim') or 0) >= 0.95 else 'different')
+            items.append(it)
+    if a.moj:
+        items += moj_candidates(a.moj, corpus)
     if a.nezams:
         items += nezams_candidates(a.nezams, corpus)
+        items += nezams_tables(a.nezams, corpus)
     # منع الازدواج: المادة المشطوبة (U4a) أو ذات الملاحظة (U3) التي تغطيها دفعة إلغاء بالإحالة (U4b build) تُحسم بها
     u4b = {i['article_id']: i for i in items if i['gap'] == 'U4b' and i['route'] == 'build' and i['status'] == 'open'}
     for i in items:
@@ -360,6 +422,8 @@ def main():
     b.add_argument('--systems', required=True)
     b.add_argument('--articles', required=True)
     b.add_argument('--nezams')
+    b.add_argument('--raw-sources')
+    b.add_argument('--moj', nargs='*')
     b.add_argument('--out', required=True)
     a = ap.parse_args()
     if a.cmd == 'fetch':

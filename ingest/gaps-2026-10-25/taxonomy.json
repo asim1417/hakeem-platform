@@ -17,26 +17,186 @@
   "none": "ليس نقصًا بعد التحليل (موثّق السبب)"
  },
  "gaps": {
-  "W1a": {"name": "نظام ساري في الهيئة بلا سجل في حكيم", "source_rank": 2, "builder": "new_work_from_boe"},
-  "W1b": {"name": "عمل في لقطة أم القرى لم يُدخل حكيم", "source_rank": 1, "builder": "new_work_from_uqn (نمط hkm045c)"},
-  "W1c": {"name": "نظام ساري مرشح من مصدر ثانوي غير موجود في حكيم", "source_rank": 9, "builder": "fetch ثم new_work"},
-  "W2a": {"name": "إصدار ملغى/قديم في الهيئة غير موجود في حكيم (لعرض «كما في تاريخ»)", "source_rank": 2, "builder": "old_edition_from_boe (نمط build_gcc)"},
-  "W2c": {"name": "إصدار ملغى/قديم مرشح من مصدر ثانوي", "source_rank": 9, "builder": "fetch ثم old_edition"},
-  "W3": {"name": "نظام في حكيم بلا مواد", "source_rank": 1, "builder": "نمط hkm045c-empty-systems"},
-  "U1": {"name": "مادة رسمية غائبة من نظام في حكيم", "source_rank": 2, "builder": "add_unit_from_boe"},
-  "U2": {"name": "مادة في حكيم بلا مقابل رسمي (مراجعة لا حذف)", "source_rank": 2, "builder": "قرار قارئ: تكرار/ترقيم/تلوث"},
-  "U3": {"name": "مادة معدلة يعرض حكيم نصها الأصلي (ملاحظة تعديل غير مطبقة)", "source_rank": 2, "builder": "unit_version_from_note بعد قارئين (نمط hkm045g)"},
-  "U4a": {"name": "مادة مشطوبة في الهيئة يعرضها حكيم سارية", "source_rank": 2, "builder": "repeal_by_reference حين تُعرف الأداة، وإلا قارئ"},
-  "U4b": {"name": "مادة ألغتها مادة في نظام لاحق ويعرضها حكيم سارية", "source_rank": 2, "builder": "repeal_by_reference"},
-  "M1": {"name": "نظام بلا حالة نفاذ", "source_rank": 2, "builder": "verification work"},
-  "M2": {"name": "نظام بلا تاريخ نفاذ", "source_rank": 1, "builder": "نمط hkm042-system-effective"},
-  "M2b": {"name": "تاريخ النفاذ المخزن = تاريخ الصدور مع نص نفاذ مؤجل", "source_rank": 1, "builder": "يحتاج عبارة تصحيح محروسة جديدة (code)"},
-  "M3": {"name": "نظام بلا تصنيف", "source_rank": 2, "builder": "نمط hkm044-classification"},
-  "M4": {"name": "نظام مطابَق بالهيئة بلا بطاقة", "source_rank": 2, "builder": "نمط hkm045e-law-cards"},
-  "L1": {"name": "لائحة/قواعد/ضوابط بلا علاقة IMPLEMENTS بنظامها", "source_rank": 2, "builder": "implements_link (PROPOSED ثم VERIFIED)"},
-  "L2": {"name": "مادة نظام بلا ربط بمادة لائحتها (خريطة من مصدر ثانوي)", "source_rank": 9, "builder": "قارئ ثم legal_relations article→article"},
-  "Q1": {"name": "عملية تعديل من أم القرى بلا قرار", "source_rank": 1, "builder": "طابور HKM-030"},
-  "Q2": {"name": "ملاحظة مراقب يومي مفتوحة", "source_rank": 2, "builder": "قرار المالك برقم الملاحظة"}
+  "W1a": {
+   "name": "نظام ساري في الهيئة بلا سجل في حكيم",
+   "source_rank": 2,
+   "builder": "new_work_from_boe"
+  },
+  "W1b": {
+   "name": "عمل في لقطة أم القرى لم يُدخل حكيم",
+   "source_rank": 1,
+   "builder": "new_work_from_uqn (نمط hkm045c)"
+  },
+  "W1c": {
+   "name": "نظام ساري مرشح من مصدر ثانوي غير موجود في حكيم",
+   "source_rank": 9,
+   "builder": "fetch ثم new_work"
+  },
+  "W2a": {
+   "name": "إصدار ملغى/قديم في الهيئة غير موجود في حكيم (لعرض «كما في تاريخ»)",
+   "source_rank": 2,
+   "builder": "old_edition_from_boe (نمط build_gcc)"
+  },
+  "W2c": {
+   "name": "إصدار ملغى/قديم مرشح من مصدر ثانوي",
+   "source_rank": 9,
+   "builder": "fetch ثم old_edition"
+  },
+  "W3": {
+   "name": "نظام في حكيم بلا مواد",
+   "source_rank": 1,
+   "builder": "نمط hkm045c-empty-systems"
+  },
+  "U1": {
+   "name": "مادة رسمية غائبة من نظام في حكيم",
+   "source_rank": 2,
+   "builder": "add_unit_from_boe"
+  },
+  "U2": {
+   "name": "مادة في حكيم بلا مقابل رسمي (مراجعة لا حذف)",
+   "source_rank": 2,
+   "builder": "قرار قارئ: تكرار/ترقيم/تلوث"
+  },
+  "U3": {
+   "name": "مادة معدلة يعرض حكيم نصها الأصلي (ملاحظة تعديل غير مطبقة)",
+   "source_rank": 2,
+   "builder": "unit_version_from_note بعد قارئين (نمط hkm045g)"
+  },
+  "U4a": {
+   "name": "مادة مشطوبة في الهيئة يعرضها حكيم سارية",
+   "source_rank": 2,
+   "builder": "repeal_by_reference حين تُعرف الأداة، وإلا قارئ"
+  },
+  "U4b": {
+   "name": "مادة ألغتها مادة في نظام لاحق ويعرضها حكيم سارية",
+   "source_rank": 2,
+   "builder": "repeal_by_reference"
+  },
+  "M1": {
+   "name": "نظام بلا حالة نفاذ",
+   "source_rank": 2,
+   "builder": "verification work"
+  },
+  "M2": {
+   "name": "نظام بلا تاريخ نفاذ",
+   "source_rank": 1,
+   "builder": "نمط hkm042-system-effective"
+  },
+  "M2b": {
+   "name": "تاريخ النفاذ المخزن = تاريخ الصدور مع نص نفاذ مؤجل",
+   "source_rank": 1,
+   "builder": "يحتاج عبارة تصحيح محروسة جديدة (code)"
+  },
+  "M3": {
+   "name": "نظام بلا تصنيف",
+   "source_rank": 2,
+   "builder": "نمط hkm044-classification"
+  },
+  "M4": {
+   "name": "نظام مطابَق بالهيئة بلا بطاقة",
+   "source_rank": 2,
+   "builder": "نمط hkm045e-law-cards"
+  },
+  "L1": {
+   "name": "لائحة/قواعد/ضوابط بلا علاقة IMPLEMENTS بنظامها",
+   "source_rank": 2,
+   "builder": "implements_link (PROPOSED ثم VERIFIED)"
+  },
+  "L2": {
+   "name": "مادة نظام بلا ربط بمادة لائحتها (خريطة من مصدر ثانوي)",
+   "source_rank": 9,
+   "builder": "قارئ ثم legal_relations article→article"
+  },
+  "Q1": {
+   "name": "عملية تعديل من أم القرى بلا قرار",
+   "source_rank": 1,
+   "builder": "طابور HKM-030"
+  },
+  "Q2": {
+   "name": "ملاحظة مراقب يومي مفتوحة",
+   "source_rank": 2,
+   "builder": "قرار المالك برقم الملاحظة"
+  },
+  "P1": {
+   "name": "ديباجة/أداة إصدار في الهيئة ونظام حكيم بلا ديباجة",
+   "source_rank": 2,
+   "builder": "نمط HKM-023-B (preamble_edition)"
+  },
+  "P1u": {
+   "name": "ديباجة/أداة إصدار في أم القرى ونظام حكيم بلا ديباجة",
+   "source_rank": 1,
+   "builder": "نمط HKM-023-B"
+  },
+  "P2": {
+   "name": "عناوين أبواب وفصول في الهيئة ونظام حكيم بلا تقسيم",
+   "source_rank": 2,
+   "builder": "نمط chapter_set:boe_unit_body"
+  },
+  "P2u": {
+   "name": "عناوين أبواب وفصول في أم القرى ونظام حكيم بلا تقسيم",
+   "source_rank": 1,
+   "builder": "نمط chapter_set"
+  },
+  "U1h": {
+   "name": "مادة في بطاقة هيئة قديمة غائبة من إصدارها في حكيم",
+   "source_rank": 2,
+   "builder": "add_unit_from_boe"
+  },
+  "U1u": {
+   "name": "مادة في أم القرى غائبة من النظام المُدخل منها",
+   "source_rank": 1,
+   "builder": "add_unit_from_uqn (نمط hkm045c)"
+  },
+  "U5u": {
+   "name": "نص مادة في حكيم يخالف نصها في أم القرى بلا نسخة",
+   "source_rank": 1,
+   "builder": "قارئ: ترقيم/إصدار/تعديل"
+  },
+  "U1m": {
+   "name": "مواد في بوابة وزارة العدل أكثر مما في حكيم",
+   "source_rank": 3,
+   "builder": "قارئ ثم add_unit"
+  },
+  "W1m": {
+   "name": "لائحة في بوابة وزارة العدل (ملفات المستودع) غائبة عن حكيم",
+   "source_rank": 3,
+   "builder": "new_work من data/moj-*.json"
+  },
+  "E1": {
+   "name": "أثر تعديل/إلغاء في أم القرى لم يتحول إلى عملية في الطابور",
+   "source_rank": 1,
+   "builder": "طابور HKM-030 ثم unit_version/verification"
+  },
+  "E2": {
+   "name": "إحلال مثبت والنظام القديم في حكيم بلا حالة",
+   "source_rank": 1,
+   "builder": "verification work"
+  },
+  "E3": {
+   "name": "نظام جديد في طابور التصحيح غير موجود في حكيم",
+   "source_rank": 1,
+   "builder": "new_work من uqn_fix.new_law"
+  },
+  "R1": {
+   "name": "وثيقتان مرتبطتان في الهيئة بلا علاقة في حكيم",
+   "source_rank": 2,
+   "builder": "legal_relations PROPOSED"
+  },
+  "A1": {
+   "name": "مرفق في الهيئة لم يُقرأ نصه",
+   "source_rank": 2,
+   "builder": "boe-crawl.yml + OCR ثم قارئ"
+  },
+  "T1": {
+   "name": "جدول أو ملحق في nezams لنظام في حكيم (لم يُقابل بمرفقات حكيم بعد)",
+   "source_rank": 9,
+   "builder": "جلب المرفق الرسمي ثم قارئ"
+  },
+  "N1": {
+   "name": "نظام في حكيم مواده أقل مما في nezams (لغير المطابَق بالهيئة)",
+   "source_rank": 9,
+   "builder": "جلب رسمي ثم قارئ"
+  }
  },
  "priority": {
   "1": "نواة التقاضي (المرافعات، الإجراءات الجزائية، الإثبات، التنفيذ، المحاكم التجارية، ديوان المظالم ومرافعاته، القضاء، المحاماة، التحكيم، التوثيق، الأحوال الشخصية، المعاملات المدنية، العمل، الإفلاس)",

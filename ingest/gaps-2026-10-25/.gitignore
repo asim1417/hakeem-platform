@@ -4,3 +4,4 @@ out/articles_*.json
 tests/last_run.json
 __pycache__/
 out/u3_*.json*
+out/ledger_raw_sources_*.json
