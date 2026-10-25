@@ -122,7 +122,8 @@ def build(a):
             f"(SELECT count(*) FROM boe.unit u JOIN boe.current_match m ON m.hakeem_system_id={lit(g['target_system_id'])} JOIN boe.law l ON l.guid=m.guid AND l.id=u.law_id WHERE u.css_class LIKE '%canceled%' AND u.article_number BETWEEN {lo} AND {hi})>={p['boe_struck']}",
         ]
         if e.get('rule') == 'publication_plus_days':  # اليوم المكتوب مربوط ببيانات المصدر لا بذاكرة القارئ
-            c.append(f"(SELECT (published_gregorian::date + {int(e['days'])}) FROM boe.law WHERE guid={lit(p['rep_guid'])} ORDER BY id LIMIT 1)={lit(e['effective_from'])}::date")
+            c.append(f"(SELECT count(DISTINCT published_gregorian::date) FROM boe.law WHERE guid={lit(p['rep_guid'])})=1")
+            c.append(f"(SELECT min(published_gregorian::date + {int(e['days'])}) FROM boe.law WHERE guid={lit(p['rep_guid'])})={lit(e['effective_from'])}::date")
         if g['kind'] == 'part':  # حدود الباب: أول مادة تحمل عنوانه، والتي بعد آخرها تحمل عنوان الباب التالي، ولا عنوان باب بينهما
             word = PART_WORD[g['part']]
             sid = lit(g['target_system_id'])
@@ -166,7 +167,10 @@ WHERE {pred} ORDER BY x."articleNumber", x."articleBis\"""")
         lines += ['## مؤجل إلى دفعة لاحقة', '']
         lines += [f"- {d['target']} {d['articles']} ({d['n']}) — {d['repealer']}: {d['reason']}." for d in deferred]
         lines += ['']
-    lines += ['الصف كما سيظهر في القاعدة: انظر `sample_rows.md` (يكتبه tests/test_gap001.py من تثبيت محلي).']
+    lines += ['## للتأكيد من المالك', '',
+              '- قاعدة العدّ: «بعد 180 يومًا من النشر» = أول يوم نفاذ هو النشر + 180 (2022-07-06)، كما في HKM-024.',
+              '- تاريخ النشر 1443/06/04هـ (2022-01-07) من بطاقة هيئة الخبراء، لا من عدد أم القرى.', '',
+              'الصف كما سيظهر في القاعدة: انظر `sample_rows.md` (يكتبه tests/test_gap001.py من تثبيت محلي).']
     (out / 'sample.md').write_text('\n'.join(lines), encoding='utf-8')
     print(len(st), md5, total, 'deferred:', [d['group'] for d in deferred])
 

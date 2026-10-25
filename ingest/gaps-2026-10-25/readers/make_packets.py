@@ -26,6 +26,9 @@ def triage(p):
         n = ordinal(head.group(1))
         if n and n != p['article_number']:
             return 'wrong_unit_suspect', f'عنوان الملاحظة «المادة {head.group(1)}» = {n}'
+    nt = norm(p.get('note_new_text') or '')
+    if nt and len(nt) > 20 and nt in norm(p.get('boe_body') or ''):
+        return 'reflected_suspect', 'النص الجديد في الملاحظة موجود في نص الهيئة'
     if re.search(r'من (هذه )?اللايحه', t) and 'لايحه' not in norm(p.get('law') or ''):
         return 'regulation_suspect', 'الملاحظة تذكر اللائحة'
     if re.search(r'اضافه ماده|اضافه مواد|مكررا?\)|مكرر', t) and not re.search(r'عدلت هذه الماده', t):

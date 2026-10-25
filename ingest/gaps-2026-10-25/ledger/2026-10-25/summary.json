@@ -1,7 +1,7 @@
 {
  "taken_at": "2026-10-25T13:55+03:00",
  "source": "Neon misty-base-66693229 production (read-only, MCP run_sql)",
- "total": 1735,
+ "total": 1731,
  "by_gap": {
   "L1": {
    "name": "لائحة/قواعد/ضوابط بلا علاقة IMPLEMENTS بنظامها",
@@ -123,13 +123,13 @@
   },
   "U4b": {
    "name": "مادة ألغتها مادة في نظام لاحق ويعرضها حكيم سارية",
-   "open": 121,
+   "open": 122,
    "routes": {
-    "reader": 5,
-    "identity": 3,
+    "reader": 4,
+    "identity": 5,
     "build": 113
    },
-   "resolved": 8,
+   "resolved": 3,
    "suppressed": 0
   },
   "W1b": {

@@ -187,6 +187,7 @@ def main():
             'نسخة مادة لمستهدفة': "INSERT INTO unit_version (id, unit_id, body, valid_from) VALUES ('uv1','cmpwiaooe01sdnxffzl83r2rd','نص','2020-01-01')",
             'تعديل ديباجة النظام المُلغي': "UPDATE legal_systems SET preamble_royal_decree = preamble_royal_decree || ' ' WHERE id='cmpz5pbv80021cwg2br8calht'",
             'تاريخ نشر مختلف في بطاقة الهيئة': "UPDATE boe.law SET published_gregorian = published_gregorian + interval '1 day' WHERE guid='2716057c-c097-4bad-8e1e-ae1400c678d5'",
+            'صف هيئة ثانٍ بتاريخ نشر آخر': "INSERT INTO boe.law (id, guid, url, name, status_at_source, issued_gregorian, published_gregorian) SELECT id || '-2', guid, url, name, status_at_source, issued_gregorian, '2022-02-01' FROM boe.law WHERE guid='2716057c-c097-4bad-8e1e-ae1400c678d5'",
             'حذف علامة الباب العاشر': "UPDATE legal_articles SET chapter = NULL WHERE \"legalSystemId\"='cmpwi0cw90024nxff1u02k8rn' AND \"articleNumber\"=159",
         }
         for i, (name, sql) in enumerate(attacks.items()):

@@ -19,7 +19,7 @@ from arabic import law_key, masc_ordinal_word, norm, parse_repeal_clause  # noqa
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 # هويات أكدها قارئان (readers/identity_confirmations.jsonl): (المادة المُلغية، النظام المستهدف)
 CONFIRMED = {(c['repealer_article_id'], c['target_system_id']) for c in
-             (json.loads(x) for x in open(ROOT / 'readers' / 'identity_confirmations.jsonl', encoding='utf-8') if x.strip())} \
+             (json.loads(x) for x in open(ROOT / 'readers' / 'identity_confirmations.jsonl', encoding='utf-8') if x.strip()) if len(c.get('readers', [])) >= 2} \
     if (ROOT / 'readers' / 'identity_confirmations.jsonl').exists() else set()
 TAX = json.load(open(ROOT / 'taxonomy.json', encoding='utf-8'))
 REPEALED = {'ملغاة', 'ملغى', 'مستبدل'}
