@@ -62,7 +62,7 @@ g AS (
   UNION ALL
   -- U4b: مادة في حكيم تلغي مواد أو أبوابًا من نظام آخر — يحلّها scripts/ledger.py (الهوية والمدى) ثم تُبنى
   SELECT 'U4b', 'resolve', sys.prio, sys.id, sys.name, x.id, x."articleNumber", NULL,
-         jsonb_build_object('clauses', (SELECT jsonb_agg(m[1]) FROM regexp_matches(x.content, '([^.؛]{0,60}(?:يلغي|يُلغي|يلغى|يُلغى|تلغى|تُلغى|تلغي|تُلغي)[^.؛]{0,250})', 'g') m))
+         jsonb_build_object('clauses', (SELECT jsonb_agg(m[1]) FROM regexp_matches(x.content, '([^.؛]{0,60}(?:يلغي|يُلغي|يلغى|يُلغى|تلغى|تُلغى|تلغي|تُلغي)[^.؛]{0,250}[^.؛]{0,250})', 'g') m))
   FROM legal_articles x JOIN sys ON sys.id = x."legalSystemId"
   WHERE x."articleBis" < 100 AND sys.ws NOT IN ('سجل مخلوط — لا يُعرض')
     AND x.content ~ '(يلغي|يُلغي|يلغى|يُلغى|تلغى|تُلغى|تلغي|تُلغي)'

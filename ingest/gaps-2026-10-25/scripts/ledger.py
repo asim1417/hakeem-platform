@@ -17,6 +17,10 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from arabic import law_key, masc_ordinal_word, norm, parse_repeal_clause  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
+# هويات أكدها قارئان (readers/identity_confirmations.jsonl): (المادة المُلغية، النظام المستهدف)
+CONFIRMED = {(c['repealer_article_id'], c['target_system_id']) for c in
+             (json.loads(x) for x in open(ROOT / 'readers' / 'identity_confirmations.jsonl', encoding='utf-8') if x.strip())} \
+    if (ROOT / 'readers' / 'identity_confirmations.jsonl').exists() else set()
 TAX = json.load(open(ROOT / 'taxonomy.json', encoding='utf-8'))
 REPEALED = {'ملغاة', 'ملغى', 'مستبدل'}
 DEAD_WORK = {'مستبدل', 'ملغى', 'ملغاة', 'سجل مخلوط — لا يُعرض'}
@@ -61,6 +65,8 @@ def suppressed_by(item, ex):
         if 'uqn' in e and e['uqn'] == (item.get('detail') or {}).get('uqn'):
             return e
         if 'repealer_article_id' in e and e['repealer_article_id'] == item.get('repealer_article_id'):
+            if 'target' in e and law_key(e['target']) != law_key(item.get('target_law_as_cited') or ''):
+                continue
             return e
         if 'system_id' in e and e['system_id'] == item.get('system_id'):
             n = item.get('article_number')
@@ -99,8 +105,16 @@ class Corpus:
             years = set(re.findall(r'1[34]\d\d', ev))
             ok_year = bool(year) and year in years
             clash = bool(year) and bool(years) and not ok_year and not ok_no
+            other_no = bool(digits) and not ok_no and bool(re.search(r'رقم\(?\s*(م/)?\d', ev))
             score = 2 * ok_no + ok_year - 3 * clash
-            verdict = 'match' if (ok_no or ok_year) and not clash else ('clash' if clash else 'unknown')
+            if clash:
+                verdict = 'clash'
+            elif ok_no:
+                verdict = 'match'
+            elif ok_year:
+                verdict = 'year_only' if other_no else 'match'
+            else:
+                verdict = 'unknown'
             out.append((score, verdict, r))
         out.sort(key=lambda x: (-x[0], x[2][3] in DEAD_WORK))
         return out
@@ -152,6 +166,10 @@ def resolve_u4b(row, corpus, ex):
                 out.append(dict(base, route='none', status='resolved', target_system_id=tgt[0], target_law=tgt[1],
                                 resolution=f'الاسم يطابق «{tgt[1]}» لكن الأداة والسنة تخالفان ({tgt[2] or tgt[6]}) — الإصدار المُلغى منه ليس الإصدار الذي في حكيم'))
                 continue
+            if cited and verdict == 'year_only' and (rep_aid, tgt[0]) not in CONFIRMED:
+                out.append(dict(base, route='identity', status='open', target_system_id=tgt[0], target_law=tgt[1],
+                                resolution=f'الاسم والسنة يطابقان «{tgt[1]}» لكن أداة الإصدار المخزنة تخالف المذكورة ({tgt[2] or tgt[6]}): قارئ'))
+                continue
             if cited and verdict == 'unknown':
                 out.append(dict(base, route='identity', status='open', target_system_id=tgt[0], target_law=tgt[1],
                                 resolution='الاسم يطابق ولا أداة ولا تاريخ مخزنان للتحقق من الإصدار'))
@@ -186,6 +204,8 @@ def resolve_u4b(row, corpus, ex):
                             article_bis=a[3], basis=basis, current_status=a[5], identity_score=best_score)
                 if a[5] in REPEALED:
                     out.append(dict(item, route='none', status='resolved', resolution=f'مسجلة «{a[5]}» من قبل'))
+                elif a[6]:
+                    out.append(dict(item, route='reader', status='open', resolution='للمادة نسخة في unit_version: يُتحقق من تاريخ الإلغاء مقابل تاريخ النسخة'))
                 else:
                     out.append(dict(item, route='build', status='open', resolution='جاهزة للبناء: إلغاء بالإحالة'))
             if missing:
@@ -244,9 +264,16 @@ def build(a):
         if gap == 'U4b':
             items += resolve_u4b(dict(gap=gap, prio=prio, system_id=sid, law=law, article_id=aid, article_number=art, detail=detail), corpus, ex)
             continue
-        it = dict(id=gid(gap, sid, aid, art, json.dumps(detail, ensure_ascii=False, sort_keys=True) if gap in ('U3', 'W1b', 'W2a', 'Q1', 'Q2') else ''),
+        key = (detail or {}).get('note') if gap == 'U3' else (json.dumps(detail, ensure_ascii=False, sort_keys=True) if gap in ('W1b', 'W2a', 'Q1', 'Q2') else '')
+        it = dict(id=gid(gap, sid, aid, art, key),
                   gap=gap, route=route, prio=prio, system_id=sid,
                   law=law or (corpus.sys.get(sid) or [None, None])[1], article_id=aid, article_number=art, ref=ref, detail=detail, status='open')
+        if gap == 'U3':  # يقبل الإسقاط المضغوط ({note, s, nt}) والكامل (same_as_boe_body, has_new_text)
+            d = detail or {}
+            same = d.get('same_as_boe_body', d.get('s'))
+            it['subtype'] = 'shows_original' if same else 'differs_from_boe'
+            it['resolution'] = ('نص حكيم = نص الهيئة الأصلي والملاحظة تعدّله: يعرض حكيم النص قبل التعديل' if same else
+                                'نص حكيم يخالف نص الهيئة الأصلي: قد يكون التعديل مطبقًا بلا نسخة، أو فرقًا آخر')
         if gap == 'W2a':  # هوية الإصدار القديم: اسم + سنة الصدور
             yr = re.findall(r'1[34]\d\d', (detail or {}).get('issued') or '')
             hits = [r for r in corpus.by_key.get(law_key(law), []) if yr and yr[0] in norm((r[2] or '') + ' ' + (r[6] or '') + ' ' + r[1])]

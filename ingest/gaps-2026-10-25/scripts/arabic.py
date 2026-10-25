@@ -66,7 +66,7 @@ def ordinal(phrase):
 
 
 _TARGET = re.compile(r'من\s+(?P<law>(?:نظام|النظام|لايحه|اللايحه|تنظيم|قواعد)\s[^،]+?)(?=\s*،?\s*الصادر|\s*،|\s*$)')
-_INSTR = re.compile(r'الصادر[^،]*?رقم\s*\(?\s*(?P<no>م\s*/\s*\d+|\d+)\s*\)?[^،]*?وتاريخ\s*(?P<date>[\d\s/]+)')
+_INSTR = re.compile(r'الصادر[^،]*?رقم\s*\(?\s*(?P<no>م\s*/\s*\d+|\d+)\s*\)?[^،]*?(?:وتاريخ|والتاريخ|بتاريخ)\s*(?P<date>[\d\s/]+)')
 
 
 _VERB = re.compile(r'(يلغي|يلغى|تلغي|تلغى)')
@@ -105,6 +105,10 @@ def parse_repeal_clause(clause):
             if not v:
                 return []
             div = div[v.end():]
+            # المُلغى يلي الفعل مباشرة («يلغي هذا النظام الباب…»)، لا «وتلغى المزايدة … المادة (55) من اللائحة»
+            lead = re.sub(r'^\s*(هذا النظام|النظام|هذه اللايحه|هذه القواعد|احكام)?\s*(احكام)?\s*', '', div)
+            if lead and not re.match(r'(الباب|الفصل|المواد|الماده|المادتين|المادتان|الفقره|الفقرات|البند|البنود|حكم)', lead):
+                return []
         tail = c[m.end(): m.end() + 160]
         im = _INSTR.match(tail.lstrip(' ،')) or _INSTR.search(tail[:120])
         no = re.sub(r'\s', '', im.group('no')) if im else None

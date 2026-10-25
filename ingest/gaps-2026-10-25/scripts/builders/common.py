@@ -16,8 +16,13 @@ def h(*p):
 
 
 def guard(name, conditions):
-    body = '\n  AND '.join(conditions)
-    return f"SELECT CASE WHEN\n  {body}\nTHEN 'ok' ELSE {GUARD_FAIL} END AS {name}"
+    """سطر واحد بفاصل « AND » بين الشروط: split_guard في scripts/apply-statements.py لا يقسم إلا هكذا،
+    فيطبع عند الفشل أي شرط سقط (لا «None»)."""
+    for c in conditions:
+        if '\n' in c:
+            raise ValueError('شرط حارس متعدد الأسطر')
+    body = ' AND '.join(conditions)
+    return f"SELECT CASE WHEN {body} THEN 'ok' ELSE {GUARD_FAIL} END AS {name}"
 
 
 def latest_work_status(sid_expr):

@@ -8,7 +8,7 @@
   - الجوار خارج المدى لا يُمس.
   python3 tests/test_gap001.py
 """
-import hashlib, json, os, pathlib, shutil, subprocess, sys, tempfile, time
+import hashlib, json, os, pathlib, re, shutil, subprocess, sys, tempfile, time
 
 import psycopg2
 
@@ -27,9 +27,14 @@ CREATE SCHEMA boe;
 CREATE TABLE legal_systems (id text PRIMARY KEY, name text, classification text, "articleCount" int, preamble_royal_decree text,
   preamble_effective_from timestamp, instrument_kind text);
 CREATE TABLE legal_articles (id text PRIMARY KEY, "legalSystemId" text REFERENCES legal_systems(id), "lawName" text, "articleNumber" int,
-  "articleBis" int DEFAULT 0, title text, content text, chapter text, status text);
-CREATE TABLE verification (id text PRIMARY KEY, object_type text, object_id text, verified_status text, evidence_instrument text,
-  evidence_url text, evidence_quote text, method text, verified_by text, verified_at timestamptz DEFAULT now(), supersedes_verification_id text);
+  "articleBis" int DEFAULT 0, title text, content text, chapter text, status text, CONSTRAINT legal_articles_article_number_positive CHECK ("articleNumber" > 0));
+CREATE TABLE verification (id text PRIMARY KEY, object_type text NOT NULL, object_id text NOT NULL, verified_status text NOT NULL, evidence_instrument text,
+  evidence_url text, evidence_quote text, method text NOT NULL, verified_by text, verified_at timestamptz NOT NULL DEFAULT now(), supersedes_verification_id text,
+  CONSTRAINT verification_method_check CHECK (method = ANY (ARRAY['rule','manual','owner_decision'])),
+  CONSTRAINT verification_object_type_check CHECK (object_type = ANY (ARRAY['work','unit','effect','relation'])),
+  CONSTRAINT verification_verified_status_check CHECK (verified_status = ANY (ARRAY['ساري','صادر لم يسرِ بعد','ملغى','مستبدل','ملغى مع بقاء أحكام محددة مؤقتًا','إلغاء جزئي معلّق على شرط','ملغاة','مضافة','سجل مخلوط — لا يُعرض'])));
+CREATE FUNCTION hakeem_append_only() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'append only'; END $$;
+CREATE TRIGGER verification_append_only BEFORE UPDATE OR DELETE ON verification FOR EACH ROW EXECUTE FUNCTION hakeem_append_only();
 CREATE TABLE unit_version (id text PRIMARY KEY, unit_id text, body text, valid_from timestamptz, evidence_instrument text, evidence_url text,
   evidence_quote text, created_at timestamptz DEFAULT now());
 CREATE TABLE legal_text_provenance (id text PRIMARY KEY, source_id text);
@@ -103,9 +108,23 @@ def scalar(con, q, *a):
     return cur.fetchone()[0]
 
 
+def fresh(cl, name, fx, mutate=None):
+    url, con = cl.db(name)
+    load(con, fx)
+    if mutate:
+        con.cursor().execute(mutate)
+        con.commit()
+    return url, con
+
+
 def main():
     batch = json.load(open(BATCH, encoding='utf-8'))
     fx = json.load(open(FIX, encoding='utf-8'))
+    cfg = json.load(open(BATCH.parent / 'config.json', encoding='utf-8'))
+    built = {r['group'] for r in batch['report']['groups']}
+    N = batch['report']['verification_rows']
+    ids = [a for g in cfg['groups'] if g['key'] in built for a in g['article_ids']]
+    deferred_ids = [a for g in cfg['groups'] if g['key'] not in built for a in g['article_ids']]
     results = []
     def check(name, cond, detail=''):
         results.append((name, bool(cond), detail))
@@ -114,62 +133,67 @@ def main():
     # فحوص ساكنة
     check('md5 الملف = md5 العبارات', hashlib.md5('\n'.join(batch['statements']).encode()).hexdigest() == batch['md5'])
     check('كل العبارات إضافة أو حارس قراءة', all(statement_ok(s) for s in batch['statements']))
+    check('الحارسان سطر واحد (تشخيص split_guard)', all('\n' not in s for s in batch['statements'] if s.startswith('SELECT CASE')))
     check('لا تغيير في عدد المواد والأنظمة', batch['expect_delta'] == {})
-    ids = [a for g in json.load(open(BATCH.parent / 'config.json', encoding='utf-8'))['groups'] for a in g['article_ids']]
-    check('113 مادة بلا تكرار', len(ids) == 113 == len(set(ids)))
+    check(f'{N} مادة بلا تكرار', len(ids) == N == len(set(ids)))
 
+    latest = """SELECT count(*) FROM legal_articles x WHERE x.id = ANY(%s) AND (SELECT verified_status FROM verification v WHERE v.object_type='unit' AND v.object_id=x.id ORDER BY v.verified_at DESC, v.id DESC LIMIT 1)='ملغاة'"""
     cl = Cluster()
     try:
         # 1) معاينة ثم تثبيت ثم تكرار
-        url, con = cl.db('t_main')
-        load(con, fx)
+        url, con = fresh(cl, 't_main', fx)
         v0 = scalar(con, 'SELECT count(*) FROM verification')
         rc, out = apply(url, 'preview', batch)
-        check('preview ينجح ويتراجع (+113 داخل المعاملة)', rc == 0 and 'ROLLED BACK' in out and delta(out) == 113, out[-400:])
+        check(f'preview ينجح ويتراجع (+{N} داخل المعاملة)', rc == 0 and 'ROLLED BACK' in out and delta(out) == N, out[-400:])
         check('preview لم يكتب', scalar(con, 'SELECT count(*) FROM verification') == v0)
         rc, out = apply(url, 'apply', batch)
-        check('apply يثبّت +113', rc == 0 and 'COMMITTED' in out and delta(out) == 113, out[-400:])
-        check('113 صف تحقق للدفعة', scalar(con, 'SELECT count(*) FROM verification WHERE verified_by=%s', batch['by']) == 113)
-        latest = """SELECT count(*) FROM legal_articles x WHERE x.id = ANY(%s) AND (SELECT verified_status FROM verification v WHERE v.object_type='unit' AND v.object_id=x.id ORDER BY v.verified_at DESC, v.id DESC LIMIT 1)='ملغاة'"""
-        check('كل المستهدفة «ملغاة»', scalar(con, latest, ids) == 113)
+        check(f'apply يثبّت +{N}', rc == 0 and 'COMMITTED' in out and delta(out) == N, out[-400:])
+        check('كل المستهدفة «ملغاة»', scalar(con, latest, ids) == N)
+        check('المؤجلة لم تُمس', scalar(con, 'SELECT count(*) FROM verification WHERE object_id = ANY(%s)', deferred_ids) == 0)
         neigh = scalar(con, """SELECT count(*) FROM legal_articles x JOIN verification v ON v.object_id=x.id WHERE
-            (x."legalSystemId"='cmpwi0cw90024nxff1u02k8rn' AND x."articleNumber" IN (100,159)) OR (x."legalSystemId"='cmpwi0ckf0022nxffiy84kp3o' AND x."articleNumber" IN (37,58))
-            OR (x."legalSystemId"='cmpz5piul0031cwg22r65v5gr' AND x."articleNumber" IN (102,138))""")
+            (x."legalSystemId"='cmpwi0cw90024nxff1u02k8rn' AND x."articleNumber" IN (100,159)) OR (x."legalSystemId"='cmpwi0ckf0022nxffiy84kp3o' AND x."articleNumber" IN (37,58))""")
         check('الجوار خارج المدى لم يُمس', neigh == 0)
-        q = scalar(con, "SELECT evidence_quote FROM verification WHERE verified_by=%s AND object_id='cmpwiaooe01sdnxffzl83r2rd'", batch['by'])
-        check('الاقتباس حرفي من المادة 128 ومادة النفاذ', q.startswith('المادة (128) من نظام الإثبات: «يلغي هذا النظام الباب (التاسع)') and 'مادة النفاذ (129)' in q, q[:200])
+        cur = con.cursor()
+        cur.execute("SELECT evidence_instrument, evidence_quote, evidence_url FROM verification WHERE verified_by=%s AND object_id='cmpwiaooe01sdnxffzl83r2rd'", (batch['by'],))
+        ins, q, u = cur.fetchone()
+        m = re.search(r'من\s+(\d{4}-\d{2}-\d{2})', ins)  # effectiveDateFromEvidence في verified-status.ts
+        n = re.search(r'رقم[ \t]*[(]?[ \t]*((?:[مأاإ][ \t]*/[ \t]*)?[0-9]+)', ins)  # parseInstrumentHeading
+        check('تاريخ النفاذ يقرؤه التطبيق (2022-07-06)', m and m.group(1) == '2022-07-06', ins)
+        check('رقم الأداة يقرؤه التطبيق (م/43)', n and n.group(1).replace(' ', '') == 'م/43', ins)
+        check('الأداة تسمّي النظام والمادة', 'المادة (128) من نظام الإثبات' in ins, ins)
+        check('الاقتباس حرفي ثم ذيل المنهج', q.startswith('المادة (128) من نظام الإثبات: «يلغي هذا النظام الباب (التاسع)') and 'المادة (129): «يعمل بهذا النظام' in q and '[منهج HKM-047:' in q, q[:200])
+        rows = []
+        for g in cfg['groups']:
+            if g['key'] not in built:
+                continue
+            cur.execute("SELECT x.\"lawName\", x.\"articleNumber\", v.id, v.verified_status, v.evidence_instrument, v.evidence_url, v.evidence_quote, v.method, v.verified_by FROM verification v JOIN legal_articles x ON x.id=v.object_id WHERE v.verified_by=%s AND v.object_id=%s", (batch['by'], g['article_ids'][0]))
+            rows.append(cur.fetchone())
+        md = ['# الصف كما سيُكتب (من تثبيت محلي بأداة المستودع)', '', f"البصمة `{batch['md5']}`", '']
+        for r in rows:
+            md += [f'## {r[0]} — المادة {r[1]}', '', f'- id: `{r[2]}`', f'- الحالة: {r[3]}', f'- الأداة (evidence_instrument): {r[4]}',
+                   f'- الرابط: {r[5]}', f'- الطريقة: {r[7]} · بواسطة: `{r[8]}`', '', '> ' + r[6].replace('\n', ' '), '']
+        (BATCH.parent / 'sample_rows.md').write_text('\n'.join(md), encoding='utf-8')
         rc, out = apply(url, 'apply', batch)
-        check('التكرار مرفوض بالحارس', rc != 0 and 'شروط الحارس الفاشلة' in out, out[-300:])
-        check('التكرار لم يكتب', scalar(con, 'SELECT count(*) FROM verification WHERE verified_by=%s', batch['by']) == 113)
+        check('التكرار مرفوض بالحارس مع تشخيص الشرط', rc != 0 and 'شروط الحارس الفاشلة: [' in out, out[-300:])
+        check('التكرار لم يكتب', scalar(con, 'SELECT count(*) FROM verification WHERE verified_by=%s', batch['by']) == N)
         con.close()
 
-        # 2) عبث بنص مادة مستهدفة
-        url, con = cl.db('t_tamper')
-        load(con, fx)
-        con.cursor().execute("UPDATE legal_articles SET content = content || ' ' WHERE id='cmpwiaooe01sdnxffzl83r2rd'")
-        con.commit()
-        rc, out = apply(url, 'apply', batch)
-        check('العبث بنص مادة يُفشل المعاملة', rc != 0, out[-300:])
-        check('العبث: لا كتابة', scalar(con, 'SELECT count(*) FROM verification WHERE verified_by=%s', batch['by']) == 0)
-        con.close()
-
-        # 3) حالة إلغاء سابقة لمادة واحدة
-        url, con = cl.db('t_prior')
-        load(con, fx)
-        con.cursor().execute("INSERT INTO verification (id, object_type, object_id, verified_status, verified_by) VALUES ('x1','unit','cmpz67r9h05avcwg282m6tn3z','ملغاة','test')")
-        con.commit()
-        rc, out = apply(url, 'apply', batch)
-        check('حالة سابقة تُفشل المعاملة', rc != 0, out[-300:])
-        con.close()
-
-        # 4) تغيّر حالة النظام المستهدف
-        url, con = cl.db('t_status')
-        load(con, fx)
-        con.cursor().execute("INSERT INTO verification (id, object_type, object_id, verified_status, verified_by, verified_at) VALUES ('x2','work','cmpwi0ckf0022nxffiy84kp3o','مستبدل','test', now()+interval '1 day')")
-        con.commit()
-        rc, out = apply(url, 'apply', batch)
-        check('نظام مستهدف لم يعد ساريًا يُفشل المعاملة', rc != 0, out[-300:])
-        con.close()
+        # 2) محاولات كسر: كل واحدة على قاعدة جديدة، والمتوقع رفض المعاملة كلها بلا كتابة
+        attacks = {
+            'عبث بنص مادة مستهدفة': "UPDATE legal_articles SET content = content || ' ' WHERE id='cmpwiaooe01sdnxffzl83r2rd'",
+            'حالة إلغاء سابقة لمادة': "INSERT INTO verification (id, object_type, object_id, verified_status, method, verified_by) VALUES ('x1','unit','cmpwi92l101ipnxffq4njay6p','ملغاة','manual','test')",
+            'النظام المستهدف لم يعد ساريًا': "INSERT INTO verification (id, object_type, object_id, verified_status, method, verified_by, verified_at) VALUES ('x2','work','cmpwi0ckf0022nxffiy84kp3o','مستبدل','manual','test', now()+interval '1 day')",
+            'مادة مكررة جديدة داخل المدى (120 مكرر)': "INSERT INTO legal_articles (id, \"legalSystemId\", \"lawName\", \"articleNumber\", \"articleBis\", content) VALUES ('bis120','cmpwi0cw90024nxff1u02k8rn','نظام المرافعات الشرعية',120,1,'نص')",
+            'نسخة مادة لمستهدفة': "INSERT INTO unit_version (id, unit_id, body, valid_from) VALUES ('uv1','cmpwiaooe01sdnxffzl83r2rd','نص','2020-01-01')",
+            'تعديل ديباجة النظام المُلغي': "UPDATE legal_systems SET preamble_royal_decree = preamble_royal_decree || ' ' WHERE id='cmpz5pbv80021cwg2br8calht'",
+            'تاريخ نشر مختلف في بطاقة الهيئة': "UPDATE boe.law SET published_gregorian = published_gregorian + interval '1 day' WHERE guid='2716057c-c097-4bad-8e1e-ae1400c678d5'",
+            'حذف علامة الباب العاشر': "UPDATE legal_articles SET chapter = NULL WHERE \"legalSystemId\"='cmpwi0cw90024nxff1u02k8rn' AND \"articleNumber\"=159",
+        }
+        for i, (name, sql) in enumerate(attacks.items()):
+            url, con = fresh(cl, f't_attack{i}', fx, sql)
+            rc, out = apply(url, 'apply', batch)
+            check(f'يُرفض: {name}', rc != 0 and scalar(con, 'SELECT count(*) FROM verification WHERE verified_by=%s', batch['by']) == 0, out[-200:])
+            con.close()
     finally:
         cl.stop()
     ok = all(r[1] for r in results)
