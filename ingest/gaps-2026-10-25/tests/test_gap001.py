@@ -1,0 +1,184 @@
+#!/usr/bin/env python3
+"""اختبار دفعة gap001 على PostgreSQL محلية ببيانات مطابقة لعيّنة من الإنتاج (المدونة عامة، لا بيانات مستخدمين).
+
+يشغّل أداة المستودع نفسها scripts/apply-statements.py (لا نسخة منها) في الوضعين preview وapply، ثم:
+  - التكرار يُرفض (الحارس قبل الكتابة)،
+  - العبث بنص مادة واحدة يُفشل المعاملة كلها ولا يكتب شيئًا،
+  - وجود حالة إلغاء سابقة لمادة يُفشلها،
+  - الجوار خارج المدى لا يُمس.
+  python3 tests/test_gap001.py
+"""
+import hashlib, json, os, pathlib, shutil, subprocess, sys, tempfile, time
+
+import psycopg2
+
+HERE = pathlib.Path(__file__).resolve().parent
+ROOT = HERE.parent
+REPO = ROOT.parent.parent
+BATCH = ROOT / 'batches' / 'gap001-repeal-by-reference' / 'statements.json'
+FIX = HERE / 'fixtures' / 'gap001_prod_subset_2026-10-25.json'
+APPLY = REPO / 'scripts' / 'apply-statements.py'
+PG = pathlib.Path('/usr/lib/postgresql/16/bin')
+sys.path.insert(0, str(ROOT / 'scripts' / 'builders'))
+from common import statement_ok  # noqa: E402
+
+SCHEMA = """
+CREATE SCHEMA boe;
+CREATE TABLE legal_systems (id text PRIMARY KEY, name text, classification text, "articleCount" int, preamble_royal_decree text,
+  preamble_effective_from timestamp, instrument_kind text);
+CREATE TABLE legal_articles (id text PRIMARY KEY, "legalSystemId" text REFERENCES legal_systems(id), "lawName" text, "articleNumber" int,
+  "articleBis" int DEFAULT 0, title text, content text, chapter text, status text);
+CREATE TABLE verification (id text PRIMARY KEY, object_type text, object_id text, verified_status text, evidence_instrument text,
+  evidence_url text, evidence_quote text, method text, verified_by text, verified_at timestamptz DEFAULT now(), supersedes_verification_id text);
+CREATE TABLE unit_version (id text PRIMARY KEY, unit_id text, body text, valid_from timestamptz, evidence_instrument text, evidence_url text,
+  evidence_quote text, created_at timestamptz DEFAULT now());
+CREATE TABLE legal_text_provenance (id text PRIMARY KEY, source_id text);
+CREATE TABLE boe.law (id text PRIMARY KEY, guid text, url text, name text, status_at_source text, issued_gregorian timestamptz, published_gregorian timestamptz);
+CREATE TABLE boe.unit (law_id text, seq int, article_number int, is_bis bool, css_class text, PRIMARY KEY (law_id, seq));
+CREATE TABLE boe.match (id text PRIMARY KEY, guid text, hakeem_system_id text, method text, candidates jsonb, decided_by text, decided_at timestamptz);
+CREATE VIEW boe.current_match AS SELECT DISTINCT ON (guid) id, guid, hakeem_system_id, method, candidates, decided_by, decided_at FROM boe.match ORDER BY guid, decided_at DESC, id DESC;
+CREATE TABLE boe.review_proposal (id text PRIMARY KEY);
+CREATE TABLE boe.owner_decision (id text PRIMARY KEY);
+"""
+
+
+def load(con, fx):
+    cur = con.cursor()
+    cur.execute(SCHEMA)
+    def ins(table, rows, cols):
+        for r in rows or []:
+            cur.execute(f'INSERT INTO {table} ({",".join(chr(34) + c + chr(34) for c in cols)}) VALUES ({",".join(["%s"] * len(cols))})',
+                        [json.dumps(r[c]) if isinstance(r.get(c), (dict, list)) else r.get(c) for c in cols])
+    ins('legal_systems', fx['systems'], ['id', 'name', 'classification', 'articleCount', 'preamble_royal_decree', 'preamble_effective_from', 'instrument_kind'])
+    ins('legal_articles', fx['articles'], ['id', 'legalSystemId', 'lawName', 'articleNumber', 'articleBis', 'title', 'content', 'chapter', 'status'])
+    ins('verification', fx['verification'], ['id', 'object_type', 'object_id', 'verified_status', 'evidence_instrument', 'evidence_url', 'evidence_quote', 'method', 'verified_by', 'verified_at', 'supersedes_verification_id'])
+    ins('boe.law', fx['boe_law'], ['id', 'guid', 'url', 'name', 'status_at_source', 'issued_gregorian', 'published_gregorian'])
+    ins('boe.unit', fx['boe_unit'], ['law_id', 'seq', 'article_number', 'is_bis', 'css_class'])
+    ins('boe.match', fx['boe_match'], ['id', 'guid', 'hakeem_system_id', 'method', 'candidates', 'decided_by', 'decided_at'])
+    con.commit()
+
+
+class Cluster:
+    def __init__(self):
+        self.dir = pathlib.Path(tempfile.mkdtemp(prefix='gap001-pg-'))
+        shutil.chown(self.dir, 'postgres', 'postgres')
+        self.port = 55432 + os.getpid() % 1000
+        run = lambda *c: subprocess.run(['runuser', '-u', 'postgres', '--', *c], check=True, capture_output=True)
+        run(str(PG / 'initdb'), '-D', str(self.dir / 'd'), '-A', 'trust', '-E', 'UTF8', '--locale=C.UTF-8')
+        run(str(PG / 'pg_ctl'), '-D', str(self.dir / 'd'), '-o', f'-p {self.port} -k {self.dir}', '-l', str(self.dir / 'log'), '-w', 'start')
+        self.run = run
+
+    def db(self, name):
+        c = psycopg2.connect(host=str(self.dir), port=self.port, user='postgres', dbname='postgres')
+        c.autocommit = True
+        c.cursor().execute(f'CREATE DATABASE "{name}"')
+        c.close()
+        url = f'postgresql://postgres@/{name}?host={self.dir}&port={self.port}'
+        return url, psycopg2.connect(host=str(self.dir), port=self.port, user='postgres', dbname=name)
+
+    def stop(self):
+        self.run(str(PG / 'pg_ctl'), '-D', str(self.dir / 'd'), '-m', 'fast', 'stop')
+        shutil.rmtree(self.dir, ignore_errors=True)
+
+
+def apply(url, mode, batch):
+    env = dict(os.environ, DATABASE_URL=url)
+    p = subprocess.run([sys.executable, str(APPLY), '--file', str(BATCH), '--mode', mode, '--expect-md5', batch['md5']],
+                       env=env, capture_output=True, text=True)
+    return p.returncode, p.stdout + p.stderr
+
+
+def delta(out):
+    """فرق جدول التحقق كما تطبعه أداة المستودع (لا عدد الصفوف الخام: الحارسان يُعدّان صفين)."""
+    try:
+        doc = json.loads(out[out.index('{'): out.rindex('}') + 1])
+        return doc['delta']['public.verification']
+    except Exception:
+        return None
+
+
+def scalar(con, q, *a):
+    cur = con.cursor()
+    cur.execute(q, a)
+    return cur.fetchone()[0]
+
+
+def main():
+    batch = json.load(open(BATCH, encoding='utf-8'))
+    fx = json.load(open(FIX, encoding='utf-8'))
+    results = []
+    def check(name, cond, detail=''):
+        results.append((name, bool(cond), detail))
+        print(('PASS' if cond else 'FAIL'), name, detail if not cond else '')
+
+    # فحوص ساكنة
+    check('md5 الملف = md5 العبارات', hashlib.md5('\n'.join(batch['statements']).encode()).hexdigest() == batch['md5'])
+    check('كل العبارات إضافة أو حارس قراءة', all(statement_ok(s) for s in batch['statements']))
+    check('لا تغيير في عدد المواد والأنظمة', batch['expect_delta'] == {})
+    ids = [a for g in json.load(open(BATCH.parent / 'config.json', encoding='utf-8'))['groups'] for a in g['article_ids']]
+    check('113 مادة بلا تكرار', len(ids) == 113 == len(set(ids)))
+
+    cl = Cluster()
+    try:
+        # 1) معاينة ثم تثبيت ثم تكرار
+        url, con = cl.db('t_main')
+        load(con, fx)
+        v0 = scalar(con, 'SELECT count(*) FROM verification')
+        rc, out = apply(url, 'preview', batch)
+        check('preview ينجح ويتراجع (+113 داخل المعاملة)', rc == 0 and 'ROLLED BACK' in out and delta(out) == 113, out[-400:])
+        check('preview لم يكتب', scalar(con, 'SELECT count(*) FROM verification') == v0)
+        rc, out = apply(url, 'apply', batch)
+        check('apply يثبّت +113', rc == 0 and 'COMMITTED' in out and delta(out) == 113, out[-400:])
+        check('113 صف تحقق للدفعة', scalar(con, 'SELECT count(*) FROM verification WHERE verified_by=%s', batch['by']) == 113)
+        latest = """SELECT count(*) FROM legal_articles x WHERE x.id = ANY(%s) AND (SELECT verified_status FROM verification v WHERE v.object_type='unit' AND v.object_id=x.id ORDER BY v.verified_at DESC, v.id DESC LIMIT 1)='ملغاة'"""
+        check('كل المستهدفة «ملغاة»', scalar(con, latest, ids) == 113)
+        neigh = scalar(con, """SELECT count(*) FROM legal_articles x JOIN verification v ON v.object_id=x.id WHERE
+            (x."legalSystemId"='cmpwi0cw90024nxff1u02k8rn' AND x."articleNumber" IN (100,159)) OR (x."legalSystemId"='cmpwi0ckf0022nxffiy84kp3o' AND x."articleNumber" IN (37,58))
+            OR (x."legalSystemId"='cmpz5piul0031cwg22r65v5gr' AND x."articleNumber" IN (102,138))""")
+        check('الجوار خارج المدى لم يُمس', neigh == 0)
+        q = scalar(con, "SELECT evidence_quote FROM verification WHERE verified_by=%s AND object_id='cmpwiaooe01sdnxffzl83r2rd'", batch['by'])
+        check('الاقتباس حرفي من المادة 128 ومادة النفاذ', q.startswith('المادة (128) من نظام الإثبات: «يلغي هذا النظام الباب (التاسع)') and 'مادة النفاذ (129)' in q, q[:200])
+        rc, out = apply(url, 'apply', batch)
+        check('التكرار مرفوض بالحارس', rc != 0 and 'شروط الحارس الفاشلة' in out, out[-300:])
+        check('التكرار لم يكتب', scalar(con, 'SELECT count(*) FROM verification WHERE verified_by=%s', batch['by']) == 113)
+        con.close()
+
+        # 2) عبث بنص مادة مستهدفة
+        url, con = cl.db('t_tamper')
+        load(con, fx)
+        con.cursor().execute("UPDATE legal_articles SET content = content || ' ' WHERE id='cmpwiaooe01sdnxffzl83r2rd'")
+        con.commit()
+        rc, out = apply(url, 'apply', batch)
+        check('العبث بنص مادة يُفشل المعاملة', rc != 0, out[-300:])
+        check('العبث: لا كتابة', scalar(con, 'SELECT count(*) FROM verification WHERE verified_by=%s', batch['by']) == 0)
+        con.close()
+
+        # 3) حالة إلغاء سابقة لمادة واحدة
+        url, con = cl.db('t_prior')
+        load(con, fx)
+        con.cursor().execute("INSERT INTO verification (id, object_type, object_id, verified_status, verified_by) VALUES ('x1','unit','cmpz67r9h05avcwg282m6tn3z','ملغاة','test')")
+        con.commit()
+        rc, out = apply(url, 'apply', batch)
+        check('حالة سابقة تُفشل المعاملة', rc != 0, out[-300:])
+        con.close()
+
+        # 4) تغيّر حالة النظام المستهدف
+        url, con = cl.db('t_status')
+        load(con, fx)
+        con.cursor().execute("INSERT INTO verification (id, object_type, object_id, verified_status, verified_by, verified_at) VALUES ('x2','work','cmpwi0ckf0022nxffiy84kp3o','مستبدل','test', now()+interval '1 day')")
+        con.commit()
+        rc, out = apply(url, 'apply', batch)
+        check('نظام مستهدف لم يعد ساريًا يُفشل المعاملة', rc != 0, out[-300:])
+        con.close()
+    finally:
+        cl.stop()
+    ok = all(r[1] for r in results)
+    (HERE / 'last_run.json').write_text(json.dumps({'at': time.strftime('%Y-%m-%dT%H:%M:%S%z'), 'batch_md5': batch['md5'],
+                                                    'passed': sum(r[1] for r in results), 'total': len(results),
+                                                    'results': [{'check': n, 'pass': p} for n, p, _ in results]}, ensure_ascii=False, indent=1), encoding='utf-8')
+    print(f"{sum(r[1] for r in results)}/{len(results)}")
+    sys.exit(0 if ok else 1)
+
+
+if __name__ == '__main__':
+    main()

@@ -1,0 +1,32 @@
+[
+ {
+  "k": "G1",
+  "rep_md5": "d460abe0c1470b7164c953a4bd1405be",
+  "eff_id": "cmpz635w203s7cwg2ncvkkj2n",
+  "eff_md5": "c7468c7c3097824f0407478210c07b20",
+  "set_md5": "2b1e4a0452f98017f91f60f975937bab",
+  "n": 20,
+  "boe_struck": 2,
+  "rep_url": "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/2716057c-c097-4bad-8e1e-ae1400c678d5/1"
+ },
+ {
+  "k": "G2",
+  "rep_md5": "d460abe0c1470b7164c953a4bd1405be",
+  "eff_id": "cmpz635w203s7cwg2ncvkkj2n",
+  "eff_md5": "c7468c7c3097824f0407478210c07b20",
+  "set_md5": "152a66837fa922c1f54e30c2ff509479",
+  "n": 58,
+  "boe_struck": 58,
+  "rep_url": "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/2716057c-c097-4bad-8e1e-ae1400c678d5/1"
+ },
+ {
+  "k": "G3",
+  "rep_md5": "6d53eb8fb23e17ecaa4abf1dc77a0bfc",
+  "eff_id": "cmpz6dlqd079vcwg2diunnii0",
+  "eff_md5": "f2f1bdea307e626444ef219e2f72a280",
+  "set_md5": "0d7a1872c4b9a337efab4a4311314b15",
+  "n": 35,
+  "boe_struck": 0,
+  "rep_url": "https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/68204119-84f1-4789-8fad-a9ec014c3788/1"
+ }
+]
