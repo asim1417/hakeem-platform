@@ -1,5 +1,5 @@
 /**
- * HKM-028: يقارن مواد كل نظام في data/law-fingerprints/*.json بقاعدة البيانات، بقراءة فقط.
+ * HKM-028: يقارن مواد كل نظام في data/law-fingerprints/*.json بقاعدة البيانات، بقراءة فقط (المواد دون الصفوف غير المادية).
  * يطبع أعدادًا وأرقام مواد فقط (لا نصوص). يخرج بـ 1 عند أي اختلاف.
  *   npx tsx scripts/audit/verify-law-fingerprint.ts [ملف.json ...]
  */
@@ -7,6 +7,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { PrismaClient } from "@prisma/client";
 import { compareFingerprint, fingerprintClean, type LawFingerprint } from "../../lib/modules/legal-core/law-fingerprint";
+import { NON_ARTICLE_BIS } from "../../lib/modules/legal-core/article-key";
 
 const DIR = path.join(process.cwd(), "data/law-fingerprints");
 const files = process.argv.slice(2).length
@@ -24,8 +25,10 @@ async function main() {
       const rows = await prisma.$transaction(async (tx) => {
         await tx.$executeRawUnsafe("SET TRANSACTION READ ONLY");
         return tx.$queryRawUnsafe<Array<{ articleNumber: number; title: string; content: string }>>(
-          `SELECT "articleNumber", title, content FROM legal_articles WHERE "lawName" = $1`,
+          // الصفوف غير المادية (درجة «مكرر» ≥ NON_ARTICLE_BIS) ليست مواد: لا بصمة لها ولا تُعدّ زائدة.
+          `SELECT "articleNumber", title, content FROM legal_articles WHERE "lawName" = $1 AND "articleBis" < $2`,
           fp.lawName,
+          NON_ARTICLE_BIS,
         );
       });
       const d = compareFingerprint(fp.articles, rows);
