@@ -136,7 +136,7 @@ async function articleEmbeddingsExist(): Promise<boolean> {
 }
 
 /** المسار الأساسي: استعلام pgvector على جدول `embeddings`. يعيد null إن تعذّر فيُجرَّب الاحتياطي. */
-async function searchViaEmbeddingsTable(vec: number[], limit: number, types?: LegalEntityType[]): Promise<RawResult[] | null> {
+async function searchViaEmbeddingsTable(vec: number[], limit: number, types?: LegalEntityType[], minScore: number = MIN_SEMANTIC_SCORE): Promise<RawResult[] | null> {
   const want = (t: LegalEntityType) => wantsType({ types }, t);
   if (!(await embeddingsTableHasRows())) return null;
   try {
@@ -174,7 +174,7 @@ async function searchViaEmbeddingsTable(vec: number[], limit: number, types?: Le
     const kept = rows.filter((row) => {
       const type = row.owner_type;
       if (type !== "article" && type !== "ruling" && type !== "principle") return false;
-      return Math.max(0, Math.min(1, Number(row.score))) >= MIN_SEMANTIC_SCORE || "segment" in row;
+      return Math.max(0, Math.min(1, Number(row.score))) >= minScore || "segment" in row;
     });
     // حلّ الكيانات بالتوازي (كان تسلسليًّا: حتى 20 رحلة قاعدة متتالية).
     const entities = await Promise.all(kept.map((row) => resolveEntity(row.owner_type as EntityType, row.owner_id)));
@@ -206,7 +206,7 @@ async function searchViaEmbeddingsTable(vec: number[], limit: number, types?: Le
  * نأخذ مجموعة مرشّحين معجمية محدودة (بحث النواة) ثم نحسب cosine في الذاكرة —
  * فلا نحمّل كل المتجهات في كل استعلام (حدّ نقل البيانات).
  */
-async function searchViaArticleEmbeddings(q: string, vec: number[], limit: number): Promise<RawResult[]> {
+async function searchViaArticleEmbeddings(q: string, vec: number[], limit: number, minScore: number = MIN_SEMANTIC_SCORE): Promise<RawResult[]> {
   const lexical = await findRelevantLegalArticles(q, { limit: FALLBACK_CANDIDATE_POOL, semantic: false }).catch(() => []);
   if (!lexical.length) return [];
 
@@ -222,7 +222,7 @@ async function searchViaArticleEmbeddings(q: string, vec: number[], limit: numbe
 
   const results: RawResult[] = [];
   for (const { id, score } of ranked) {
-    if (score < MIN_SEMANTIC_SCORE) continue; // نفس عتبة المسار الأساسي
+    if (score < minScore) continue; // نفس عتبة المسار الأساسي
     const meta = byId.get(id);
     if (!meta) continue;
     results.push({
@@ -257,7 +257,7 @@ export const vectorProvider: SearchProvider = {
     return articleEmbeddingsExist();
   },
 
-  async search({ q, limit = 10, types }: SearchQuery): Promise<RawResult[]> {
+  async search({ q, limit = 10, types, minScore }: SearchQuery): Promise<RawResult[]> {
     if (!semanticSearchEnabled()) return [];
     const query = q.trim();
     if (!query) return [];
@@ -268,11 +268,12 @@ export const vectorProvider: SearchProvider = {
       if (!vec || vec.length === 0) return [];
 
       // 1) جدول pgvector إن كان متاحاً.
-      const fromTable = await searchViaEmbeddingsTable(vec, limit, types);
+      const floor = typeof minScore === "number" && minScore > 0 && minScore <= 1 ? minScore : MIN_SEMANTIC_SCORE;
+      const fromTable = await searchViaEmbeddingsTable(vec, limit, types, floor);
       if (fromTable !== null) return fromTable;
 
       // 2) احتياطي: تضمين المواد المخزَّن (Json) — إعادة ترتيب داخل التطبيق.
-      return await searchViaArticleEmbeddings(query, vec, limit);
+      return await searchViaArticleEmbeddings(query, vec, limit, floor);
     } catch {
       return []; // أي تعذّر (امتداد/تضمين/شبكة) لا يكسر البحث
     }
