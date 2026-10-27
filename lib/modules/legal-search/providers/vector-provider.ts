@@ -6,7 +6,7 @@ import { findRelevantLegalArticles } from "@/lib/modules/legal-core/legal-retrie
 import { latestVectorSource } from "@/lib/modules/legal-search/vector-source";
 import { nearestRulingSegments, rulingSegmentVectorsReady } from "@/lib/modules/legal-core/rulings-search";
 import { resolveEntity, type EntityType } from "@/lib/modules/knowledge-graph/relations";
-import { wantsType, type LegalEntityType, type RawResult, type SearchProvider, type SearchQuery } from "./search-provider";
+import { resolveMinScore, wantsType, type LegalEntityType, type RawResult, type SearchProvider, type SearchQuery } from "./search-provider";
 
 // مزوّد البحث الدلالي (Semantic). مساران بسقوط آمن:
 //   1) جدول pgvector `embeddings` إن كان موجوداً وفيه متجهات (الأسرع، يشمل كل الأنواع).
@@ -268,7 +268,7 @@ export const vectorProvider: SearchProvider = {
       if (!vec || vec.length === 0) return [];
 
       // 1) جدول pgvector إن كان متاحاً.
-      const floor = typeof minScore === "number" && minScore > 0 && minScore <= 1 ? minScore : MIN_SEMANTIC_SCORE;
+      const floor = resolveMinScore(minScore, MIN_SEMANTIC_SCORE);
       const fromTable = await searchViaEmbeddingsTable(vec, limit, types, floor);
       if (fromTable !== null) return fromTable;
 

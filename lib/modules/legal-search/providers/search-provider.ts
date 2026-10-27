@@ -85,3 +85,8 @@ export function openSearchHeaders(cfg: OpenSearchConfig): Record<string, string>
   }
   return headers;
 }
+
+/** الحد الأدنى الفعلي للتشابه: قيمة الاستعلام إن كانت رقمًا صالحًا في (0..1]، وإلا الافتراضي (قيمة معطوبة لا تخفض العتبة خطأً). */
+export function resolveMinScore(minScore: unknown, fallback: number): number {
+  return typeof minScore === "number" && Number.isFinite(minScore) && minScore > 0 && minScore <= 1 ? minScore : fallback;
+}

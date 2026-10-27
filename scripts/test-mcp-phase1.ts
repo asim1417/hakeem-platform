@@ -44,6 +44,8 @@ import {
 } from "../lib/mcp/tools/text-search";
 import { articleRef, handleCheckRef, handleGetCitation, handleGetToc, issuedPhrase, parseRef, textFingerprint } from "../lib/mcp/tools/citation";
 import { handleSemanticSearch, hintedLaws, queryKeywords, rerankScore } from "../lib/mcp/tools/semantic";
+import { resolveMinScore } from "../lib/modules/legal-search/providers/search-provider";
+import { SEMANTIC_TOOL_MIN_SCORE } from "../lib/mcp/tools/semantic";
 import { compileTerm, normalizeAr, normSqlExpr, rawLiteralPattern } from "../lib/mcp/tools/word-match";
 import { resetUnitVersionCache } from "../lib/mcp/tools/enumerate";
 import { textAsOf } from "../lib/modules/legal-core/verified-status";
@@ -181,6 +183,9 @@ const hl = hintedLaws("مكافأة نهاية الخدمة في نظام الع
 ]);
 ok(hl.has("m") && !hl.has("w"), "U النظام المسمّى: الأطول يغلب");
 ok(fuzzyMaxDistance(10) === 2 && fuzzyMaxDistance(24) === 3 && fuzzyMaxDistance(60) === 4, "U حد مسافة التحرير: 2 للقصير و4 أقصى");
+ok(resolveMinScore(0.5, 0.6) === 0.5 && resolveMinScore(1, 0.6) === 1, "U HKM-047 حد صالح يحل محل العتبة العامة");
+ok([undefined, null, Number.NaN, -0.2, 0, 1.5, Infinity, "0.3"].every((v) => resolveMinScore(v, 0.6) === 0.6), "U HKM-047 حد معطوب (NaN/سالب/صفر/>1/نص) يعود إلى العتبة العامة");
+ok(SEMANTIC_TOOL_MIN_SCORE < 0.6 && SEMANTIC_TOOL_MIN_SCORE >= 0.4, "U HKM-047 حد الأداة دون العتبة العامة وفوق حد الضجيج");
 ok(rerankScore(0.8, 1, false) === 0.87 && rerankScore(0.8, 0, true) === 0.6, "U وزن الترتيب 0.65/0.35 و0.08 للنظام المسمّى");
 
 // التسعير مؤجل بقرار المالك (24/10): أدوات المرحلة الأولى غير مدرجة، فتسري القاعدة الآمنة (مدفوعة بخصم بحث).
