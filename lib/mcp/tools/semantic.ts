@@ -37,6 +37,8 @@ export function queryKeywords(q: string): string[] {
   return [...new Set(words)].slice(0, 12);
 }
 
+/** حد التشابه لهذه الأداة (العتبة العامة 0.6 تقطع الأسئلة القصيرة الحوارية: م84 عمل لا تظهر)؛ التحمية بتغطية الألفاظ في الترتيب. */
+export const SEMANTIC_TOOL_MIN_SCORE = 0.5;
 export const W_SIM = 0.65;
 export const W_COVER = 0.35;
 export const LAW_HINT_BOOST = 0.08;
@@ -72,7 +74,7 @@ export async function handleSemanticSearch(db: SqlClient, args: FilterArgs & { q
     deps.vectorSearch ??
     (async (q: string, n: number) => {
       const { vectorProvider } = await import("@/lib/modules/legal-search/providers/vector-provider");
-      const raw = await vectorProvider.search({ q, limit: n, types: ["article"] });
+      const raw = await vectorProvider.search({ q, limit: n, types: ["article"], minScore: SEMANTIC_TOOL_MIN_SCORE });
       return raw.filter((r) => r.type === "article").map((r) => ({ id: r.id, score: r.score }));
     });
   const hits = await vectorSearch(query, 20);

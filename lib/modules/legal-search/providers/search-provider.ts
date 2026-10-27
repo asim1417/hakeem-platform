@@ -18,6 +18,11 @@ export interface SearchQuery {
    * في الموصل تطلبان المواد وحدها، وكانت الأحكام (بنصها الخام وفيه الأسماء) تُنقص عدد المواد المعادة متى ورد الاسم.
    */
   types?: LegalEntityType[];
+  /**
+   * حد أدنى للتشابه الدلالي (0..1) يحل محل العتبة العامة لهذا الاستعلام وحده (HKM-047).
+   * أداة hakeem_semantic_search تخفضه لأن إعادة الترتيب بتغطية الألفاظ تحميها من الضجيج.
+   */
+  minScore?: number;
 }
 
 /** النوع مطلوب في الاستعلام (بلا types فكل الأنواع). */
@@ -79,4 +84,9 @@ export function openSearchHeaders(cfg: OpenSearchConfig): Record<string, string>
     headers.Authorization = "Basic " + Buffer.from(`${cfg.username}:${cfg.password}`).toString("base64");
   }
   return headers;
+}
+
+/** الحد الأدنى الفعلي للتشابه: قيمة الاستعلام إن كانت رقمًا صالحًا في (0..1]، وإلا الافتراضي (قيمة معطوبة لا تخفض العتبة خطأً). */
+export function resolveMinScore(minScore: unknown, fallback: number): number {
+  return typeof minScore === "number" && Number.isFinite(minScore) && minScore > 0 && minScore <= 1 ? minScore : fallback;
 }
