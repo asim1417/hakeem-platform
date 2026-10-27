@@ -43,6 +43,7 @@
     "test:law-fingerprint": "tsx scripts/test-law-fingerprint.ts",
     "test:hkm-029": "node scripts/hkm-029/unit-test.mjs",
     "test:hkm-029-embed": "tsx scripts/hkm-029/embed-unit-test.mjs",
+    "test:shifted-systems": "tsx scripts/test-shifted-systems.ts",
     "test:numbering-audit": "tsx scripts/test-numbering-audit.ts",
     "test:preamble-parser": "tsx scripts/test-preamble-parser.ts",
     "test:preamble-signals": "tsx scripts/test-preamble-signals.ts",
