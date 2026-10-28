@@ -44,6 +44,7 @@ import {
 } from "../lib/mcp/tools/text-search";
 import { articleRef, handleCheckRef, handleGetCitation, handleGetToc, issuedPhrase, parseRef, textFingerprint } from "../lib/mcp/tools/citation";
 import { handleSemanticSearch, hintedLaws, queryKeywords, rerankScore } from "../lib/mcp/tools/semantic";
+import { rankFused, fusionScore } from "../lib/mcp/search-fusion";
 import { resolveMinScore } from "../lib/modules/legal-search/providers/search-provider";
 import { SEMANTIC_TOOL_MIN_SCORE } from "../lib/mcp/tools/semantic";
 import { compileTerm, normalizeAr, normSqlExpr, rawLiteralPattern } from "../lib/mcp/tools/word-match";
@@ -185,6 +186,23 @@ ok(hl.has("m") && !hl.has("w"), "U النظام المسمّى: الأطول ي�
 ok(fuzzyMaxDistance(10) === 2 && fuzzyMaxDistance(24) === 3 && fuzzyMaxDistance(60) === 4, "U حد مسافة التحرير: 2 للقصير و4 أقصى");
 ok(resolveMinScore(0.5, 0.6) === 0.5 && resolveMinScore(1, 0.6) === 1, "U HKM-047 حد صالح يحل محل العتبة العامة");
 ok([undefined, null, Number.NaN, -0.2, 0, 1.5, Infinity, "0.3"].every((v) => resolveMinScore(v, 0.6) === 0.6), "U HKM-047 حد معطوب (NaN/سالب/صفر/>1/نص) يعود إلى العتبة العامة");
+{
+  const C = (id: string, coverage: number, similarity: number, lexicalHit = false, lawNamed = false) => ({ id, coverage, similarity, lexicalHit, lawNamed });
+  // «الغبن»: م69 حصر لفظي بتغطية كاملة، وم1 تشابه ضعيف بلا تغطية ← م69 أولًا.
+  const r1 = rankFused([C("art1", 0, 0.52), C("art69", 1, 0, true), C("art2", 0, 0.5)], 3);
+  ok(r1[0].id === "art69", "U HKM-048 المادة ذات التغطية الكاملة تتقدم على تشابه ضعيف بلا تغطية");
+  // «التغرير في العقد»: م61 تغطية 1 وتشابه عالٍ تتقدم على مادة تغطيها 0.5.
+  const r2 = rankFused([C("a", 0.5, 0.7), C("art61", 1, 0.75), C("b", 0.5, 0.6)], 3);
+  ok(r2[0].id === "art61" && r2.length === 3, "U HKM-048 تغطية الألفاظ والتشابه معًا يرفعان المادة الصحيحة");
+  // التكرار بالمعرّف يُدمج بأعلى قيمة لكل حقل.
+  const r3 = rankFused([C("x", 0.5, 0), C("x", 0, 0.8, true)], 5);
+  ok(r3.length === 1 && r3[0].coverage === 0.5 && r3[0].similarity === 0.8 && r3[0].lexicalHit, "U HKM-048 دمج المرشح المكرر بأعلى قيمة لكل حقل");
+  // الثبات: التعادل الكامل يُحسم بالمعرّف، والحد صفر يعيد فارغًا، وقيم معطوبة لا تكسر.
+  const r4 = rankFused([C("b", 0.5, 0.5), C("a", 0.5, 0.5)], 2);
+  ok(r4[0].id === "a" && rankFused([C("a", 1, 1)], 0).length === 0, "U HKM-048 تعادل ثابت بالمعرّف وحد صفر");
+  ok(fusionScore(C("z", Number.NaN, 5, false, false)) === 0.35 && fusionScore(C("z", -3, -1)) === 0, "U HKM-048 قيم NaN/خارج النطاق تُقيَّد ولا تفسد الدرجة");
+  ok(fusionScore(C("z", 1, 1, true, true)) === 1.08, "U HKM-048 أعلى درجة = مجموع الأوزان");
+}
 ok(SEMANTIC_TOOL_MIN_SCORE < 0.6 && SEMANTIC_TOOL_MIN_SCORE >= 0.4, "U HKM-047 حد الأداة دون العتبة العامة وفوق حد الضجيج");
 ok(rerankScore(0.8, 1, false) === 0.87 && rerankScore(0.8, 0, true) === 0.6, "U وزن الترتيب 0.65/0.35 و0.08 للنظام المسمّى");
 

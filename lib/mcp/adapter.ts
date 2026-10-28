@@ -20,7 +20,12 @@ import { citationFlagsFromVerification } from "@/lib/modules/legal-core/verified
 import { latestVerification } from "@/lib/modules/legal-core/verification-read";
 import { NON_ARTICLE_BIS } from "@/lib/modules/legal-core/article-key";
 import { effectiveArticleTexts } from "@/lib/modules/legal-core/effective-text";
-import { hybridSearch } from "@/lib/modules/legal-search/hybrid-search";
+import { BUDGET_EXCEEDED, filterArticleIdsToSurface, hybridSearch, providerBudgetMs, withBudget } from "@/lib/modules/legal-search/hybrid-search";
+import { rankFused, RARE_TERM_MAX, type FusionCandidate } from "@/lib/mcp/search-fusion";
+import { handleSemanticSearch, hintedLaws, queryKeywords } from "@/lib/mcp/tools/semantic";
+import { handleEnumerate } from "@/lib/mcp/tools/enumerate";
+import { loadLawCatalog } from "@/lib/mcp/tools/catalog";
+import { compileTerm, matchesNormalized, normalizeAr, type CompiledTerm } from "@/lib/mcp/tools/word-match";
 import { matchThesaurusConcepts } from "@/lib/modules/legal-thesaurus/concept-index";
 import { prismaSqlClient } from "@/lib/modules/legal-core/sql-port";
 import { getSiteUrl } from "@/lib/modules/config/site-url";
@@ -69,13 +74,66 @@ export function parseArticleCitation(raw: string): { n: number; bis: number } | 
   return { n, bis: Number.isFinite(bis) ? bis : 1 };
 }
 
-// ١) البحث في المواد — يعيد استخدام محرّك البحث الهجين (BM25/postgres + دلالي + رسم معرفي).
-export async function searchArticles(query: string, lawId?: string, limit = 10) {
+
+/** HKM-048: معرّفات المواد مرتّبة بدمج الحصر اللفظي للألفاظ النادرة والبحث الدلالي. */
+async function fusedArticleIds(query: string, lawId: string | undefined, limit: number, lexicalProbe: boolean): Promise<Array<{ id: string; type: string }>> {
+  const db = prismaSqlClient(prisma);
+  const keywords = queryKeywords(query);
+  const compiled = keywords.map((k) => compileTerm(k, "derivatives")).filter((c): c is CompiledTerm => c !== null);
+  if (!compiled.length) return [];
+  const coverageOf = (text: string) => {
+    const norm = normalizeAr(text);
+    return compiled.filter((c) => matchesNormalized(norm, c)).length / compiled.length;
+  };
+  // الألفاظ الأطول أندر غالبًا؛ حصران كحدٍّ أقصى لضبط الكلفة (كل حصر مسح كامل للمدونة).
+  const probe = lexicalProbe ? [...keywords].sort((a, b) => b.length - a.length).slice(0, 2) : [];
+  // ميزانية زمنية لكل مصدر: البطيء يُسقَط وتبقى نتائج الآخر (كما في المحرك الهجين).
+  const budget = providerBudgetMs();
+  const bounded = async <T>(work: Promise<T>, fallback: T): Promise<T> => {
+    const r = await withBudget(work.catch(() => fallback), budget);
+    return r === BUDGET_EXCEEDED ? fallback : (r as T);
+  };
+  const [semantic, lexicalPages, catalog] = await Promise.all([
+    bounded(handleSemanticSearch(db, { query, limit: 20 }) as Promise<Awaited<ReturnType<typeof handleSemanticSearch>> | null>, null),
+    Promise.all(probe.map((t) => bounded(handleEnumerate({ terms: [t], law_id: lawId, page_size: RARE_TERM_MAX, snippet_len: 2000 }), null))),
+    bounded(loadLawCatalog(db), []),
+  ]);
+  const named = hintedLaws(query, catalog);
+  const cands: FusionCandidate[] = [];
+  const semResults = semantic && "results" in semantic ? (semantic.results as Array<{ article_id: string; law_id: string | null; similarity: number; keyword_coverage: number }>) : [];
+  for (const r of semResults) {
+    if (lawId && r.law_id !== lawId) continue;
+    cands.push({ id: r.article_id, coverage: r.keyword_coverage, similarity: r.similarity, lexicalHit: false, lawNamed: Boolean(r.law_id && named.has(r.law_id)) });
+  }
+  for (const page of lexicalPages) {
+    // لفظ شائع (نتائجه أكثر من الحد) لا يميّز مادة: لا يدخل دليلًا.
+    if (!page || page.total === 0 || page.total > RARE_TERM_MAX) continue;
+    for (const r of page.page) {
+      if (r.repealed) continue;
+      // المقتطف مقصوص عند 2000 حرف؛ والمادة طابقت لفظ الحصر فتغطيتها لا تقل عن لفظ واحد.
+      const cov = Math.max(coverageOf(r.snippet), 1 / compiled.length);
+      cands.push({ id: r.article_id, coverage: cov, similarity: 0, lexicalHit: true, lawNamed: Boolean(r.law_id && named.has(r.law_id)) });
+    }
+  }
+  // مرشح الوجه: لا تُعرض مواد أنظمة ملغاة أو مخفية عن الوجه الحالي (كالمحرك الهجين).
+  const allowed = await filterArticleIdsToSurface([...new Set(cands.map((c) => c.id))]).catch(() => null);
+  const visible = allowed ? cands.filter((c) => allowed.has(c.id)) : cands;
+  return rankFused(visible, limit).map((c) => ({ id: c.id, type: "article" }));
+}
+
+// ١) البحث في المواد — HKM-048: دمج دليلين مستقلين (اللفظ النادر + المعنى) بترتيب تغطية الألفاظ،
+// وعند خلوّهما يرجع إلى المحرّك الهجين القديم (لا تتراجع القدرة).
+export async function searchArticles(query: string, lawId?: string, limit = 10, opts: { lexicalProbe?: boolean } = {}) {
   // حين يُطلب حصرٌ بنظام معيّن نوسّع سقف الجلب ثم نُصفّي (المحرّك لا يقيّد بالنظام).
   const fetchLimit = lawId ? Math.min(limit * 4, 30) : limit;
-  // المواد وحدها: الأحكام لا تأخذ مقاعد في الدمج ثم تُحذف (كانت تكشف بعدد المواد المعادة وجود اسم فرد في الأحكام).
-  const res = await hybridSearch({ q: query, limit: fetchLimit, types: ["article"] }).catch(() => null);
-  const ranked = (res?.results ?? []).filter((r) => r.type === "article");
+  let ranked: Array<{ id: string; type: string }> = await fusedArticleIds(query, lawId, fetchLimit, opts.lexicalProbe ?? true).catch(() => []);
+  if (ranked.length < fetchLimit) {
+    // تكملة من المحرك الهجين حتى الحد (لا يقل الاسترجاع عن السابق)، بلا تكرار.
+    // المواد وحدها: الأحكام لا تأخذ مقاعد في الدمج ثم تُحذف (كانت تكشف بعدد المواد المعادة وجود اسم فرد في الأحكام).
+    const res = await hybridSearch({ q: query, limit: fetchLimit, types: ["article"] }).catch(() => null);
+    const have = new Set(ranked.map((r) => r.id));
+    ranked = [...ranked, ...(res?.results ?? []).filter((r) => r.type === "article" && !have.has(r.id))].slice(0, fetchLimit);
+  }
 
   // ترطيب من القاعدة لضمان حقول العقد الدقيقة (خاصّة law_id = معرّف النظام).
   const ids = ranked.map((r) => r.id);
