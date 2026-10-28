@@ -85,7 +85,7 @@ async function expandFromThesaurus(topic: string): Promise<Thesaurus> {
 
 /** بحث هجين عبر الدالة القائمة خلف hakeem_search — يرجع نفس عقد النتيجة. */
 async function hybridSearch(query: string, limit: number, lawId?: string): Promise<SearchHit[]> {
-  const r = await searchArticles(query, lawId, limit);
+  const r = await searchArticles(query, lawId, limit, { lexicalProbe: false }); // الحصر اللفظي يجريه البحث بنفسه (HKM-048: لا مضاعفة كلفة)
   return r.results;
 }
 
