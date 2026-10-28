@@ -10,7 +10,7 @@
 اصطلاح العرض في التطبيق (lib/modules/legal-core/verified-status.ts):
   evidence_instrument = «<أداة الإصدار> — المادة (ن) من <النظام المُلغي> — من YYYY-MM-DD»
   فيقرأ effectiveDateFromEvidence اليوم، ويقرأ instrumentKey الأداة ليربط بالنظام المُلغي.
-الاقتباس حرفي من القاعدة (نص المادة المُلغية ومادة النفاذ)، وملاحظة المنهج في ذيل موسوم «[منهج HKM-047: …]».
+الاقتباس حرفي من القاعدة (نص المادة المُلغية ومادة النفاذ)، وملاحظة المنهج في ذيل موسوم «[منهج HKM-048: …]».
 """
 import argparse, collections, json, pathlib, sys
 
@@ -137,7 +137,7 @@ def build(a):
             method += f"؛ الهوية: {g['identity_note']}"
         instrument = (f"{INSTR}||' — المادة ('||r.\"articleNumber\"||') من '||s.name||' — من '||{lit(e['effective_from'])}")
         quote = (f"'المادة ('||r.\"articleNumber\"||') من '||s.name||': «'||btrim(r.content)||'» — المادة ('||e.\"articleNumber\"||'): «'||btrim(e.content)||'»'"
-                 f"||' [منهج HKM-047: '||{lit(method)}||']'")
+                 f"||' [منهج HKM-048: '||{lit(method)}||']'")
         st.append(f"""INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, evidence_quote, method, verified_by, supersedes_verification_id)
 SELECT 'vfg1-'||left(encode(sha256(convert_to({lit(BY)}||'|'||x.id||'|ملغاة','UTF8')),'hex'),24), 'unit', x.id, 'ملغاة',
   {instrument}, {lit(p['rep_url'])}, {quote}, 'rule', {lit(BY)}, NULL
