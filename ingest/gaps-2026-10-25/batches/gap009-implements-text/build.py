@@ -41,29 +41,41 @@ E, F = {}, {}
 for k in (1, 2, 3):
     E.update(load(R / f'reader_e_part{k}.jsonl'))
     F.update(load(R / f'reader_f_part{k}.jsonl'))
-G = load(R / 'review_g.jsonl')
+import sys
+STAGE = sys.argv[1] if len(sys.argv) > 1 else 'agreed'   # agreed: المتفق عليه وحده (g9r-)؛ reviewed: ما حسمه المراجع وحده (g9b-)
+G = load(R / 'review_g.jsonl') if STAGE == 'reviewed' else {}
+PFX = 'g9r-' if STAGE == 'agreed' else 'g9b-'
 
 
 def pset(x):
     return tuple(sorted(p['id'] for p in (x.get('parents') or [])))
 
 
-def where_text(it, src):
-    """النص الذي يُحرس به الاقتباس: (عمود، معرّف) في القاعدة."""
-    if src.startswith('article'):
-        m = re.search(r'\(([^)]+)\)', src)
-        return ('article', m.group(1)) if m else (None, None)
-    if src.startswith('preamble'):
-        return ('preamble', it['system_id'])
-    if src.startswith('name'):
+EXTRA = {x['packet']['item']: x['possible_hakeem_parents'] for x in json.loads((D / 'review_input.json').read_text(encoding='utf-8'))
+         if x['task'] == 'possible_match'} if (D / 'review_input.json').exists() else {}
+SRC = {p['id']: p for p in json.loads((D.parents[1] / 'out' / 'l1_packets_2026-10-28.json').read_text(encoding='utf-8'))}
+
+
+def where_text(it, src, q):
+    """موضع الاقتباس في نص حكيم المصدَّر (packets.sql): (عمود، معرّف). يُبحث فيه حرفيًا بصرف النظر عن وسم القارئ."""
+    p = SRC[it['system_id']]
+    m = re.search(r'\(([^)]+)\)', src or '')
+    arts = {a['id']: a['t'] for a in p.get('arts') or []}
+    if m and m.group(1) in arts and q in arts[m.group(1)]:
+        return ('article', m.group(1))
+    if q in (p.get('name') or ''):
         return ('name', it['system_id'])
-    return (None, None)
+    if q in (p.get('preamble') or ''):
+        return ('preamble', it['system_id'])
+    hit = [aid for aid, t in arts.items() if q in t]
+    return ('article', hit[0]) if len(hit) == 1 else (None, None)
 
 
 decisions, links, exc = [], [], []
 for item, it in sorted(packets.items()):
     e, f, g = E.get(item), F.get(item), G.get(item)
     allowed = {m['id']: m for c in it['candidates'] for m in c['hakeem_matches']}
+    allowed.update({m['id']: m for m in EXTRA.get(item, [])})
     route, final, reason = 'owner', None, ''
     if not e or not f:
         route, reason = 'unread', 'قراءة ناقصة'
@@ -85,13 +97,20 @@ for item, it in sorted(packets.items()):
         elif any(allowed[p['id']]['status'] != 'ساري' for p in ps):
             rec.update(route='owner', reason='النظام الأم غير ساري')
         else:
-            col, oid = where_text(it, final.get('evidence_source') or '')
             q = (final.get('evidence_quote') or '').strip()
+            col, oid = where_text(it, final.get('evidence_source') or '', q)
+            if not col and route == 'agreed' and e is not final:
+                pass
+            if not col and route == 'agreed':  # اقتباس القارئ الآخر إن طابق
+                q2 = (f.get('evidence_quote') or '').strip()
+                col, oid = where_text(it, f.get('evidence_source') or '', q2)
+                q = q2 if col else q
             if not col or len(q) < 8:
                 rec.update(route='owner', reason='اقتباس أو موضع ناقص')
             else:
                 for p in ps:
-                    links.append((it, allowed[p['id']], col, oid, q, route))
+                    if (STAGE == 'agreed') == (route == 'agreed'):
+                        links.append((it, allowed[p['id']], col, oid, q, route))
     elif final and final['verdict'] in NO_LINK:
         exc.append({'gap': 'L1', 'system_id': it['system_id'], 'reason': f"{final['verdict']}: {(final.get('notes') or '')[:200]}", 'by': BY})
     decisions.append(rec)
@@ -99,7 +118,7 @@ for item, it in sorted(packets.items()):
 conds, ins = [], []
 for it, par, col, oid, q, route in links:
     src, tgt = it['system_id'], par['id']
-    rid = 'g9r-' + hashlib.sha256(f'{BY}|{src}|{tgt}'.encode()).hexdigest()[:24]
+    rid = PFX + hashlib.sha256(f'{BY}|{src}|{tgt}'.encode()).hexdigest()[:24]
     conds += [f"(SELECT count(*) FROM legal_systems WHERE id={lit(src)} AND name={lit(it['name'])})=1",
               f"(SELECT count(*) FROM legal_systems WHERE id={lit(tgt)} AND name={lit(par['name'])})=1",
               f"(SELECT verified_status FROM verification WHERE object_type='work' AND object_id={lit(tgt)} ORDER BY verified_at DESC, id DESC LIMIT 1)={lit('ساري')}",
@@ -118,12 +137,13 @@ for it, par, col, oid, q, route in links:
                f"WHERE NOT EXISTS (SELECT 1 FROM legal_relations WHERE id={lit(rid)})")
 st = []
 if links:
-    st = [f"SELECT CASE WHEN {' AND '.join(conds)} AND (SELECT count(*) FROM legal_relations WHERE id LIKE 'g9r-%')=0 THEN 'ok' ELSE {FAIL} END AS guard_before"] + ins + [
-        f"SELECT CASE WHEN (SELECT count(*) FROM legal_relations WHERE id LIKE 'g9r-%')={len(links)} THEN 'ok' ELSE {FAIL} END AS guard_after"]
+    st = [f"SELECT CASE WHEN {' AND '.join(conds)} AND (SELECT count(*) FROM legal_relations WHERE id LIKE '{PFX}%')=0 THEN 'ok' ELSE {FAIL} END AS guard_before"] + ins + [
+        f"SELECT CASE WHEN (SELECT count(*) FROM legal_relations WHERE id LIKE '{PFX}%')={len(links)} THEN 'ok' ELSE {FAIL} END AS guard_after"]
 md5 = hashlib.md5('\n'.join(st).encode()).hexdigest()
-(D / 'statements.json').write_text(json.dumps({'by': BY, 'md5': md5, 'count': len(st), 'links': len(links), 'statements': st}, ensure_ascii=False, indent=1), encoding='utf-8')
-(D / 'decisions.jsonl').write_text(''.join(json.dumps(x, ensure_ascii=False) + '\n' for x in decisions), encoding='utf-8')
-(D / 'exceptions_l1.jsonl').write_text(''.join(json.dumps(x, ensure_ascii=False) + '\n' for x in exc), encoding='utf-8')
+OUTF = 'statements.json' if STAGE == 'agreed' else 'statements_reviewed.json'
+(D / OUTF).write_text(json.dumps({'by': BY + ('' if STAGE == 'agreed' else '-reviewed'), 'md5': md5, 'count': len(st), 'links': len(links), 'statements': st}, ensure_ascii=False, indent=1), encoding='utf-8')
+(D / f'decisions_{STAGE}.jsonl').write_text(''.join(json.dumps(x, ensure_ascii=False) + '\n' for x in decisions), encoding='utf-8')
+(D / f'exceptions_l1_{STAGE}.jsonl').write_text(''.join(json.dumps(x, ensure_ascii=False) + '\n' for x in exc), encoding='utf-8')
 from collections import Counter
 print(md5, len(st), 'links', len(links), 'systems', len({l[0]['system_id'] for l in links}))
 print(Counter(d['route'] for d in decisions))
