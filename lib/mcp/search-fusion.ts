@@ -65,3 +65,13 @@ export function acceptFill(coverage: number, keywordCount: number): boolean {
   if (keywordCount <= 0) return true;
   return Number.isFinite(coverage) && coverage >= FILL_MIN_COVERAGE;
 }
+
+/** HKM-051: مرشح بلا دعم دلالي ولا قرب كافٍ بين الألفاظ يُسقَط (لا مقعد لمطابقة لفظية متباعدة في مادة طويلة). */
+export const MIN_WINDOW_COVERAGE = 0.75;
+export const SEMANTIC_SUPPORT_MIN = 0.5;
+
+export function keepCandidate(c: { coverage: number; similarity: number }, keywordCount: number): boolean {
+  if (keywordCount <= 1) return true;
+  if (Number.isFinite(c.similarity) && c.similarity >= SEMANTIC_SUPPORT_MIN) return true;
+  return Number.isFinite(c.coverage) && c.coverage >= MIN_WINDOW_COVERAGE;
+}

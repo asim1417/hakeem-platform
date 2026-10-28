@@ -267,3 +267,41 @@ export function matchModeLabel(mode: MatchMode): string {
       ? "كلمة كاملة بالسوابق واللواحق وحروف المضارعة والاشتقاق والنسبة (سيفسخ، ينفسخ، انفساخ، مفسوخ)؛ لا جزء كلمة. قد تلتقط كلمة من الجذر نفسه بمعنى آخر (المحكمة من حكم)"
       : "جزء كلمة (احتواء حرفي): يلتقط كلمات أخرى تحتوي اللفظ — للاستعمال الصريح فقط";
 }
+
+/** HKM-051: مواضع مطابقة اللفظ في النص المطبَّع (للقرب بين الألفاظ). حد أقصى للمواضع لضبط الكلفة. */
+export function matchPositions(normText: string, t: CompiledTerm, max = 200): number[] {
+  if (!t.regex) {
+    const out: number[] = [];
+    let i = normText.toLowerCase().indexOf(t.literal.toLowerCase());
+    while (i >= 0 && out.length < max) {
+      out.push(i);
+      i = normText.toLowerCase().indexOf(t.literal.toLowerCase(), i + Math.max(1, t.literal.length));
+    }
+    return out;
+  }
+  const out: number[] = [];
+  for (const m of normText.matchAll(new RegExp(t.regex, "giu"))) {
+    out.push(m.index ?? 0);
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
+/**
+ * HKM-051: أعلى نسبة من الألفاظ تقع معًا في نافذة واحدة من النص (بالأحرف).
+ * مادة طويلة تذكر اللفظين متباعدين (م5 لائحة التدريب: «عقد» عند 3488 و«تغرير» عند 17945) تنال نصف التغطية لا كاملها.
+ */
+export function windowCoverage(normText: string, terms: CompiledTerm[], windowChars = 400): number {
+  if (!terms.length) return 0;
+  const perTerm = terms.map((t) => matchPositions(normText, t));
+  const present = perTerm.filter((p) => p.length > 0).length;
+  if (present <= 1) return present / terms.length;
+  let best = 1;
+  const anchors = perTerm.flat();
+  for (const a of anchors) {
+    const inWin = perTerm.filter((ps) => ps.some((x) => x >= a && x <= a + windowChars)).length;
+    if (inWin > best) best = inWin;
+    if (best === terms.length) break;
+  }
+  return best / terms.length;
+}
