@@ -159,13 +159,14 @@ export async function searchArticles(query: string, lawId?: string, limit = 10, 
     : [];
   const byId = new Map(rows.map((r) => [r.id, r]));
 
-  const picked = ranked
+  const inScope = ranked
     .map((r) => byId.get(r.id))
     .filter((r): r is NonNullable<typeof r> => Boolean(r))
-    .filter((r) => (lawId ? r.legalSystemId === lawId || r.legalSystem?.id === lawId : true))
-    // HKM-049: مادة التكملة الهجينة لا تدخل إلا إن غطّت نصف ألفاظ السؤال في نصها (يقطع الضجيج: م5 لائحة التدريب).
-    .filter((r) => fusedIds.has(r.id) || acceptFill(fillCoverage(r.content ?? ""), fillTerms.length))
-    .slice(0, limit);
+    .filter((r) => (lawId ? r.legalSystemId === lawId || r.legalSystem?.id === lawId : true));
+  // HKM-049: مادة التكملة الهجينة لا تدخل إلا إن غطّت نصف ألفاظ السؤال في نصها (يقطع الضجيج: م5 لائحة التدريب).
+  const relevant = inScope.filter((r) => fusedIds.has(r.id) || acceptFill(fillCoverage(r.content ?? ""), fillTerms.length));
+  // لا تراجع في الاسترجاع: إن لم يبقَ شيء (الدمج خلا وكل التكملة دون الحد) تُعاد التكملة كما كانت.
+  const picked = (relevant.length ? relevant : inScope).slice(0, limit);
   // المقتطف من النص الساري (المصدر الواحد)، والملغاة تُرجع سطر الإلغاء.
   const effective = await effectiveArticleTexts(picked);
   const results = picked.map((r) => {
