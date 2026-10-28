@@ -38,6 +38,10 @@ def aliases(name):
         else:
             out.append((law_key(f'{m.group(1)} {m.group(2)} {m.group(4)}'), True))
             out.append((law_key(f'{m.group(1)} {inner}'), True))
+    for k, _ in list(out):  # «المنافسات و المشتريات» في حكيم = «المنافسات والمشتريات» في النصوص (28/10)
+        j = re.sub(r'(^|\s)و\s+', r'\1و', k)
+        if j != k:
+            out.append((j, True))
     for k, _ in list(out):
         for suf in (' بالمملكه العربيه السعوديه', ' في المملكه العربيه السعوديه', ' لدول مجلس التعاون لدول الخليج العربيه', ' السعودي'):
             if k.endswith(suf) and len(k[:-len(suf)].split()) >= 3:
