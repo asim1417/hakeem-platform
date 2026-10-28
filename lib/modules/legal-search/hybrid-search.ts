@@ -100,6 +100,13 @@ async function filterArticlesToSurface(results: MergedResult[], opts: { asOf?: s
   return out.size ? results.filter((r) => !(r.type === "article" && out.has(r.id))) : results;
 }
 
+/** HKM-048: يُبقي من المعرّفات مواد الأنظمة المعروضة فقط (نفس مرشح الوجه الذي يطبّقه البحث الهجين). */
+export async function filterArticleIdsToSurface(ids: string[], opts: { asOf?: string; surface?: "current" | "archive" } = {}): Promise<Set<string>> {
+  const asMerged = ids.map((id) => ({ id, type: "article" }) as unknown as MergedResult);
+  const kept = await filterArticlesToSurface(asMerged, opts);
+  return new Set(kept.map((r) => r.id));
+}
+
 /** منسّق البحث الهجين: يشغّل المزوّدات المتاحة، يدمج ويزيل التكرار ويرتّب. */
 export async function hybridSearch(query: SearchQuery): Promise<HybridSearchResponse> {
   const mode = getSearchMode();
@@ -159,7 +166,7 @@ export async function hybridSearch(query: SearchQuery): Promise<HybridSearchResp
   return { query: query.q, mode, results, providers: providerStatuses, total: results.length };
 }
 
-const BUDGET_EXCEEDED = Symbol("budget-exceeded");
+export const BUDGET_EXCEEDED = Symbol("budget-exceeded");
 
 /** ميزانية المزوّد الواحد (ms). أقل من مهلة أداة MCP (20 ثانية) بهامش للدمج والمطابقة التامة. */
 export function providerBudgetMs(): number {
