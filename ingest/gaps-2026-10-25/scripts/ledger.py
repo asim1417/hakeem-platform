@@ -62,6 +62,10 @@ def suppressed_by(item, ex):
     for e in ex:
         if e['gap'] != item['gap']:
             continue
+        if 'item_id' in e:  # بند بعينه بمعرّفه المستقر (28/10)
+            if e['item_id'] == item.get('id'):
+                return e
+            continue
         if 'uqn' in e and e['uqn'] == (item.get('detail') or {}).get('uqn'):
             return e
         if 'repealer_article_id' in e and e['repealer_article_id'] == item.get('repealer_article_id'):
@@ -347,6 +351,9 @@ def build(a):
             if gap == 'U5u':
                 d = detail or {}
                 it['subtype'] = 'hakeem_edit' if d.get('hakeem_edit') else ('near' if (d.get('sim') or 0) >= 0.95 else 'different')
+            e = suppressed_by(it, ex)  # التسويات تسري على الجزء الثاني أيضًا (28/10)
+            if e:
+                it.update(status='suppressed', suppressed_by=e['reason'], suppressed_ref=e['ref'])
             items.append(it)
     if a.moj:
         items += moj_candidates(a.moj, corpus)
