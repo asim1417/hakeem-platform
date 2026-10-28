@@ -58,9 +58,9 @@ export function rankFused(candidates: FusionCandidate[], limit: number): Array<F
 export const RARE_TERM_MAX = 50;
 
 /** HKM-049: أدنى تغطية لألفاظ السؤال لتُقبل مادة جاءت من تكملة المحرك الهجين (ما دونها ضجيج لا يطابق السؤال). */
-export const FILL_MIN_COVERAGE = 0.5;
+export const FILL_MIN_COVERAGE = 0.75;
 
-/** تُقبل مادة التكملة إن غطّت نصف ألفاظ السؤال فأكثر؛ سؤال بلا ألفاظ يُقبل (لا دليل على الرفض). */
+/** تُقبل مادة التكملة إن غطّت ثلاثة أرباع ألفاظ السؤال فأكثر (سؤال من لفظين يلزمه اللفظان)؛ سؤال بلا ألفاظ يُقبل (لا دليل على الرفض). */
 export function acceptFill(coverage: number, keywordCount: number): boolean {
   if (keywordCount <= 0) return true;
   return Number.isFinite(coverage) && coverage >= FILL_MIN_COVERAGE;

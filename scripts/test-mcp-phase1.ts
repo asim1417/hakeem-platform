@@ -202,7 +202,7 @@ ok([undefined, null, Number.NaN, -0.2, 0, 1.5, Infinity, "0.3"].every((v) => res
   ok(r4[0].id === "a" && rankFused([C("a", 1, 1)], 0).length === 0, "U HKM-048 تعادل ثابت بالمعرّف وحد صفر");
   ok(fusionScore(C("z", Number.NaN, 5, false, false)) === 0.35 && fusionScore(C("z", -3, -1)) === 0, "U HKM-048 قيم NaN/خارج النطاق تُقيَّد ولا تفسد الدرجة");
   ok(fusionScore(C("z", 1, 1, true, true)) === 1.08, "U HKM-048 أعلى درجة = مجموع الأوزان");
-  ok(!acceptFill(0, 3) && !acceptFill(0.33, 3) && acceptFill(0.5, 2) && acceptFill(1, 1), "U HKM-049 مادة التكملة تُقبل بتغطية نصف الألفاظ فأكثر");
+  ok(!acceptFill(0, 3) && !acceptFill(0.33, 3) && !acceptFill(0.5, 2) && acceptFill(0.75, 4) && acceptFill(1, 2) && acceptFill(1, 1), "U HKM-050 مادة التكملة تُقبل بتغطية ثلاثة أرباع الألفاظ فأكثر (لفظان يلزمهما معًا)");
   ok(acceptFill(0, 0) && !acceptFill(Number.NaN, 2), "U HKM-049 سؤال بلا ألفاظ يقبل التكملة، وتغطية معطوبة ترفض");
 }
 ok(SEMANTIC_TOOL_MIN_SCORE < 0.6 && SEMANTIC_TOOL_MIN_SCORE >= 0.4, "U HKM-047 حد الأداة دون العتبة العامة وفوق حد الضجيج");
