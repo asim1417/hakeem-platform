@@ -77,14 +77,14 @@ for item, it in sorted(packets.items()):
     allowed = {m['id']: m for c in it['candidates'] for m in c['hakeem_matches']}
     allowed.update({m['id']: m for m in EXTRA.get(item, [])})
     route, final, reason = 'owner', None, ''
-    if not e or not f:
+    if g:  # المرحلة reviewed وحدها: حكم المراجع يتقدم (الخلاف، والسند المسمّى باسم آخر في حكيم)
+        final, route = g, 'reviewed'
+    elif not e or not f:
         route, reason = 'unread', 'قراءة ناقصة'
     elif e['verdict'] == f['verdict'] == 'implements' and pset(e) == pset(f) and pset(e):
         final, route = e, 'agreed'
     elif e['verdict'] == f['verdict'] and e['verdict'] != 'implements':
         final, route = e, 'agreed'
-    elif g:
-        final, route = g, 'reviewed'
     else:
         route, reason = 'review', f"{e['verdict']}/{f['verdict']} {pset(e)}/{pset(f)}"
     rec = {'item': item, 'system_id': it['system_id'], 'name': it['name'], 'route': route, 'reason': reason,
