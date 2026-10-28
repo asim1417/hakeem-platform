@@ -21,11 +21,11 @@ import { latestVerification } from "@/lib/modules/legal-core/verification-read";
 import { NON_ARTICLE_BIS } from "@/lib/modules/legal-core/article-key";
 import { effectiveArticleTexts } from "@/lib/modules/legal-core/effective-text";
 import { BUDGET_EXCEEDED, filterArticleIdsToSurface, hybridSearch, providerBudgetMs, withBudget } from "@/lib/modules/legal-search/hybrid-search";
-import { acceptFill, rankFused, RARE_TERM_MAX, type FusionCandidate } from "@/lib/mcp/search-fusion";
+import { acceptFill, keepCandidate, rankFused, RARE_TERM_MAX, type FusionCandidate } from "@/lib/mcp/search-fusion";
 import { handleSemanticSearch, hintedLaws, queryKeywords } from "@/lib/mcp/tools/semantic";
 import { handleEnumerate } from "@/lib/mcp/tools/enumerate";
 import { loadLawCatalog } from "@/lib/mcp/tools/catalog";
-import { compileTerm, matchesNormalized, normalizeAr, type CompiledTerm } from "@/lib/mcp/tools/word-match";
+import { compileTerm, matchesNormalized, normalizeAr, windowCoverage, type CompiledTerm } from "@/lib/mcp/tools/word-match";
 import { matchThesaurusConcepts } from "@/lib/modules/legal-thesaurus/concept-index";
 import { prismaSqlClient } from "@/lib/modules/legal-core/sql-port";
 import { getSiteUrl } from "@/lib/modules/config/site-url";
@@ -105,19 +105,21 @@ async function fusedArticleIds(query: string, lawId: string | undefined, limit: 
     if (lawId && r.law_id !== lawId) continue;
     cands.push({ id: r.article_id, coverage: r.keyword_coverage, similarity: r.similarity, lexicalHit: false, lawNamed: Boolean(r.law_id && named.has(r.law_id)) });
   }
-  for (const page of lexicalPages) {
-    // لفظ شائع (نتائجه أكثر من الحد) لا يميّز مادة: لا يدخل دليلًا.
-    if (!page || page.total === 0 || page.total > RARE_TERM_MAX) continue;
-    for (const r of page.page) {
-      if (r.repealed) continue;
-      // المقتطف مقصوص عند 2000 حرف؛ والمادة طابقت لفظ الحصر فتغطيتها لا تقل عن لفظ واحد.
-      const cov = Math.max(coverageOf(r.snippet), 1 / compiled.length);
-      cands.push({ id: r.article_id, coverage: cov, similarity: 0, lexicalHit: true, lawNamed: Boolean(r.law_id && named.has(r.law_id)) });
-    }
+  const lexRows = lexicalPages.flatMap((page) => (!page || page.total === 0 || page.total > RARE_TERM_MAX ? [] : page.page.filter((r) => !r.repealed)));
+  // HKM-051: القرب بين الألفاظ يُقاس على النص الكامل لا المقتطف المقصوص.
+  const fullText = new Map<string, string>();
+  if (lexRows.length) {
+    const rows = await prisma.legalArticle.findMany({ where: { id: { in: [...new Set(lexRows.map((r) => r.article_id))] } }, select: { id: true, content: true } }).catch(() => []);
+    for (const r of rows) fullText.set(r.id, r.content ?? "");
+  }
+  for (const r of lexRows) {
+    const text = fullText.get(r.article_id) ?? r.snippet;
+    // لفظ شائع (نتائجه أكثر من الحد) استُبعدت صفحته أعلاه: لا يميّز مادة.
+    cands.push({ id: r.article_id, coverage: windowCoverage(normalizeAr(text), compiled), similarity: 0, lexicalHit: true, lawNamed: Boolean(r.law_id && named.has(r.law_id)) });
   }
   // مرشح الوجه: لا تُعرض مواد أنظمة ملغاة أو مخفية عن الوجه الحالي (كالمحرك الهجين).
   const allowed = await filterArticleIdsToSurface([...new Set(cands.map((c) => c.id))]).catch(() => null);
-  const visible = allowed ? cands.filter((c) => allowed.has(c.id)) : cands;
+  const visible = (allowed ? cands.filter((c) => allowed.has(c.id)) : cands).filter((c) => keepCandidate(c, compiled.length));
   return rankFused(visible, limit).map((c) => ({ id: c.id, type: "article" }));
 }
 
@@ -139,8 +141,7 @@ export async function searchArticles(query: string, lawId?: string, limit = 10, 
   // ترطيب من القاعدة لضمان حقول العقد الدقيقة (خاصّة law_id = معرّف النظام).
   const fillTerms = queryKeywords(query).map((k) => compileTerm(k, "derivatives")).filter((c): c is CompiledTerm => c !== null);
   const fillCoverage = (text: string) => {
-    const norm = normalizeAr(text);
-    return fillTerms.length ? fillTerms.filter((c) => matchesNormalized(norm, c)).length / fillTerms.length : 0;
+    return fillTerms.length ? windowCoverage(normalizeAr(text), fillTerms) : 0;
   };
   const ids = ranked.map((r) => r.id);
   const rows = ids.length

@@ -44,10 +44,10 @@ import {
 } from "../lib/mcp/tools/text-search";
 import { articleRef, handleCheckRef, handleGetCitation, handleGetToc, issuedPhrase, parseRef, textFingerprint } from "../lib/mcp/tools/citation";
 import { handleSemanticSearch, hintedLaws, queryKeywords, rerankScore } from "../lib/mcp/tools/semantic";
-import { acceptFill, rankFused, fusionScore } from "../lib/mcp/search-fusion";
+import { acceptFill, keepCandidate, rankFused, fusionScore } from "../lib/mcp/search-fusion";
 import { resolveMinScore } from "../lib/modules/legal-search/providers/search-provider";
 import { SEMANTIC_TOOL_MIN_SCORE } from "../lib/mcp/tools/semantic";
-import { compileTerm, normalizeAr, normSqlExpr, rawLiteralPattern } from "../lib/mcp/tools/word-match";
+import { compileTerm, normalizeAr, normSqlExpr, rawLiteralPattern, windowCoverage } from "../lib/mcp/tools/word-match";
 import { resetUnitVersionCache } from "../lib/mcp/tools/enumerate";
 import { textAsOf } from "../lib/modules/legal-core/verified-status";
 import { MCP_TOOL_POLICY, mcpToolPolicy } from "../config/mcp-tools";
@@ -204,6 +204,16 @@ ok([undefined, null, Number.NaN, -0.2, 0, 1.5, Infinity, "0.3"].every((v) => res
   ok(fusionScore(C("z", 1, 1, true, true)) === 1.08, "U HKM-048 أعلى درجة = مجموع الأوزان");
   ok(!acceptFill(0, 3) && !acceptFill(0.33, 3) && !acceptFill(0.5, 2) && acceptFill(0.75, 4) && acceptFill(1, 2) && acceptFill(1, 1), "U HKM-050 مادة التكملة تُقبل بتغطية ثلاثة أرباع الألفاظ فأكثر (لفظان يلزمهما معًا)");
   ok(acceptFill(0, 0) && !acceptFill(Number.NaN, 2), "U HKM-049 سؤال بلا ألفاظ يقبل التكملة، وتغطية معطوبة ترفض");
+  {
+    const terms = ["التغرير", "العقد"].map((t) => compileTerm(t, "derivatives")!);
+    const near = normalizeAr("إذا تضمن عقد البيع أن المشتري عالم بالمبيع فلا حق له إلا إذا أثبت تغرير البائع به");
+    const far = normalizeAr("العقد " + "كلمات أخرى ".repeat(300) + " ثم التغرير");
+    const one = normalizeAr("التغرير فقط هنا");
+    ok(windowCoverage(near, terms) === 1, "U HKM-051 اللفظان متقاربان ← تغطية كاملة");
+    ok(windowCoverage(far, terms) === 0.5, "U HKM-051 اللفظان متباعدان في مادة طويلة ← نصف التغطية");
+    ok(windowCoverage(one, terms) === 0.5 && windowCoverage("", terms) === 0 && windowCoverage(near, []) === 0, "U HKM-051 لفظ واحد حاضر ← نصف، وحالات الفراغ صفر");
+    ok(!keepCandidate({ coverage: 0.5, similarity: 0 }, 2) && keepCandidate({ coverage: 1, similarity: 0 }, 2) && keepCandidate({ coverage: 0.5, similarity: 0.55 }, 2) && keepCandidate({ coverage: 0, similarity: 0 }, 1), "U HKM-051 مرشح متباعد بلا دعم دلالي يسقط، والمدعوم دلاليًا أو الأحادي يبقى");
+  }
 }
 ok(SEMANTIC_TOOL_MIN_SCORE < 0.6 && SEMANTIC_TOOL_MIN_SCORE >= 0.4, "U HKM-047 حد الأداة دون العتبة العامة وفوق حد الضجيج");
 ok(rerankScore(0.8, 1, false) === 0.87 && rerankScore(0.8, 0, true) === 0.6, "U وزن الترتيب 0.65/0.35 و0.08 للنظام المسمّى");
