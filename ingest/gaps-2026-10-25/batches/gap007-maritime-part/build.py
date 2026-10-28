@@ -29,7 +29,8 @@ def last_work(i):
     return f"(SELECT verified_status FROM verification WHERE object_type='work' AND object_id={lit(i)} ORDER BY verified_at DESC, id DESC LIMIT 1)"
 pred = f"x.\"legalSystemId\"={lit(TGT_SYS)} AND x.\"articleBis\"<100 AND x.\"articleNumber\" BETWEEN {LO} AND {HI}"
 method = (f'حدود الباب الثاني (التجارة البحرية) {LO}–{HI} ومعها 169 مكرر: أول الباب أول أحكام السفن وتشطبه الهيئة ولا تشطب 149، '
-          'وحاشية الهيئة على المادة 432: «تم إلغاء هذا الباب الثالث» تجعلها أول الباب الثالث (قارئان مستقلان)؛ '
+          'وحاشية الهيئة على المادة 432: «تم إلغاء هذا الباب الثالث» تجعلها أول الباب الثالث، وعنوانا البابين في النص المقروء من «أصل الوثيقة» في لقطة الهيئة: '
+          '«الباب الثاني في التجارة البحرية» بين 149 و150 و«الباب الثالث» بعد 431، و169 مكرر أُضيفت «على أحكام الفصل الثاني من الباب الثاني» (قارئان مستقلان ومراجع)؛ '
           'تاريخ النفاذ: المادة (391): «بعد مائة وثمانين يوماً من تاريخ نشره في الجريدة الرسمية»، والنشر 1440/04/28هـ (2019-01-04) في بطاقة هيئة الخبراء، '
           f'فالنفاذ {EFF} بالعدّ المعتمد في HKM-024؛ الهوية: نظام المحكمة التجارية (الأمر 32 وتاريخ 15/1/1350هـ) هو هذا السجل بمطابقة بطاقة الهيئة الحالية')
 c = [
@@ -55,6 +56,6 @@ st = [f"SELECT CASE WHEN {' AND '.join(c)} THEN 'ok' ELSE {FAIL} END AS guard_be
 st.append(f"""INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, evidence_quote, method, verified_by, supersedes_verification_id) SELECT 'vfg7-'||left(encode(sha256(convert_to({lit(BY)}||'|'||x.id||'|ملغاة','UTF8')),'hex'),24), 'unit', x.id, 'ملغاة', btrim(substring(s.preamble_royal_decree from '^(.*?هـ)'))||' — المادة ('||r."articleNumber"||') من '||s.name||' — من '||{lit(EFF)}, {lit(REP_URL)}, 'المادة ('||r."articleNumber"||') من '||s.name||': «'||btrim(r.content)||'»'||' [منهج HKM-048: '||{lit(method)}||']', 'rule', {lit(BY)}, {last_unit('id','x.id')} FROM legal_articles x JOIN legal_articles r ON r.id={lit(REP_ART)} JOIN legal_systems s ON s.id=r."legalSystemId" WHERE {pred} ORDER BY x."articleNumber", x."articleBis\"""")
 st.append(f"SELECT CASE WHEN (SELECT count(*) FROM verification WHERE verified_by={lit(BY)})={N} AND (SELECT count(*) FROM legal_articles x WHERE {pred} AND {last_unit('verified_status','x.id')}='ملغاة')={N} THEN 'ok' ELSE {FAIL} END AS guard_after")
 md5 = hashlib.md5('\n'.join(st).encode()).hexdigest()
-json.dump({'by': BY, 'md5': md5, 'count': len(st), 'expect_delta': {}, 'report': {'rows': N, 'articles': f'{LO}–{HI} + 169 مكرر', 'effective_from': EFF, 'method': method}, 'statements': st},
+json.dump({'by': BY, 'md5': md5, 'count': len(st), 'expect_delta': {}, 'runner': 'run_sql_transaction (معاملة واحدة بعد بروفة على فرع ونقطة استرجاع)', 'report': {'rows': N, 'articles': f'{LO}–{HI} + 169 مكرر', 'effective_from': EFF, 'method': method}, 'statements': st},
           open(OUT / 'statements.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 print(md5)
