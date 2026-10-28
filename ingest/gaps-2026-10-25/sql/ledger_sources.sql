@@ -10,12 +10,16 @@ core AS (SELECT unnest(ARRAY['نظام المرافعات الشرعية','نظ�
 sys AS (SELECT s.id, s.name, s.preamble, coalesce(lw.verified_status, '') ws,
           CASE WHEN s.name IN (SELECT name FROM core) THEN 1 WHEN s.instrument_kind = 'نظام' THEN 2 ELSE 3 END prio
         FROM legal_systems s LEFT JOIN lw ON lw.object_id = s.id),
-dead AS (SELECT unnest(ARRAY['مستبدل', 'ملغى', 'ملغاة', 'سجل مخلوط — لا يُعرض']) AS st),
+dead AS (SELECT unnest(ARRAY['مستبدل', 'ملغى', 'ملغاة', 'ملغى مع بقاء أحكام محددة مؤقتًا', 'سجل مخلوط — لا يُعرض']) AS st),
 -- كل بطاقات الهيئة المطابَقة (السارية والقديمة)
 mt AS (SELECT m.hakeem_system_id sid, l.id law_id, l.guid, l.url, l.status_at_source FROM boe.current_match m JOIN boe.law l ON l.guid = m.guid WHERE m.hakeem_system_id IS NOT NULL),
 ha AS (SELECT x.id, x."legalSystemId" sid, x."articleNumber" n, (x."articleBis" > 0) b, x.content, coalesce(x.chapter, '') chapter FROM legal_articles x WHERE x."articleBis" < 100),
 -- أعمال أم القرى المُدخلة: نظام حكيم ← مصدره
-us AS (SELECT DISTINCT p.entity_id sid, p.source_id FROM legal_text_provenance p WHERE p.source = 'uqn' AND p.entity_type = 'system'),
+us0 AS (SELECT DISTINCT p.entity_id sid, p.source_id FROM legal_text_provenance p WHERE p.source = 'uqn' AND p.entity_type = 'system'),
+-- العمل لنظامه فقط: حين يشترك نظامان في عمل واحد (القديم مربوط بالعمل الذي حل محله) يُنسب العمل لمن يطابق عنوانه اسمه
+-- (تصحيح 28/10: 208 من بنود U5u و80 من U1u كانت مقارنة نظام قديم بنص النظام الجديد)
+us AS (SELECT us0.* FROM us0 JOIN legal_systems s ON s.id = us0.sid LEFT JOIN uqn_stage.work w ON w.source_id = us0.source_id
+       WHERE (SELECT count(*) FROM us0 u2 WHERE u2.source_id = us0.source_id) = 1 OR uqn_fix.hkm30_norm(s.name) = uqn_fix.hkm30_norm(w.title)),
 -- نص أم القرى بلا تذييل الموقع (أزاله HKM-045d من حكيم بالعبارة نفسها)
 uu AS (SELECT us.sid, u.source_id, u.seq, u.unit_type, u.number,
               regexp_replace(u.body, '(\s*(تنزيل الملف|تم نسخ الرابط))*\s*جميع الحقوق محفوظة لجريدة أم القرى © \d{4}\s*$', '') body,
@@ -37,7 +41,9 @@ g AS (
   -- P2: عناوين أبواب وفصول في الهيئة ونظام حكيم بلا أي علامة تقسيم
   SELECT 'P2', 'build', sys.prio, sys.id, sys.name, NULL, NULL, mt.url, jsonb_build_object('source', 'boe', 'units_with_headings', count(*))
   FROM mt JOIN sys ON sys.id = mt.sid JOIN boe.unit u ON u.law_id = mt.law_id
-  WHERE u.body_html ~ '(الباب|الفصل)' AND NOT EXISTS (SELECT 1 FROM ha WHERE ha.sid = sys.id AND ha.chapter <> '')
+  -- عنوان حقيقي فقط (وحدة عنوان بلا رقم مادة، أو عنوان يسبق «المادة» في وحدة مرقمة)؛ لا الإشارة داخل النص («هذا الباب»، «الفصل في الدعوى»)
+  WHERE ((u.article_number IS NULL AND btrim(u.heading) ~ '^\(?(الباب|الفصل|القسم|الجزء)\s') OR u.heading ~ '(الباب|الفصل)\s+\S+.*\s+المادة\s')
+    AND NOT EXISTS (SELECT 1 FROM ha WHERE ha.sid = sys.id AND ha.chapter <> '')
   GROUP BY sys.prio, sys.id, sys.name, mt.url
   UNION ALL
   -- P2u: الشيء نفسه من أم القرى
@@ -69,6 +75,9 @@ g AS (
   WHERE uu.unit_type = 'article' AND uqn_fix.hkm30_norm(uu.body) <> uqn_fix.hkm30_norm(ha.content)
     AND NOT EXISTS (SELECT 1 FROM unit_version v WHERE v.unit_id = ha.id)
     AND NOT EXISTS (SELECT 1 FROM legal_text_provenance p WHERE p.entity_id = ha.id AND p.action LIKE 'boe_equiv_reviewed:%')
+    -- الفرق المفسَّر: حكيم أزال عنوان الباب التالي الملتصق بآخر المادة (tail_strip) ونصه بداية نص أم القرى (تصحيح 28/10)
+    AND NOT (position(uqn_fix.hkm30_norm(ha.content) IN uqn_fix.hkm30_norm(uu.body)) = 1
+             AND EXISTS (SELECT 1 FROM legal_text_provenance p WHERE p.entity_id = ha.id AND p.action = 'tail_strip'))
   UNION ALL
   -- E1: أثر تعديل أو إلغاء رصده التقاط أم القرى ولم يتحول إلى عملية في الطابور
   SELECT 'E1', 'reader', 2, e.resolved_work_id, e.target_title_as_cited, NULL, NULL, e.source_url,
