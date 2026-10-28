@@ -1,203 +1,10 @@
 {
  "by": "gap010-effective-dates-2026-10-28",
- "md5": "537a5147b8a472d54b0af8716e85d641",
- "count": 2,
+ "md5": "54df41d49e4fbf6153b9370257929fb6",
+ "count": 66,
  "report": {
-  "updated": 0,
-  "dropped": [
-   [
-    "982c00b085e44062a003ce3d9dc3a791",
-    "الموافقة على قواعد المنشأ الوطنية",
-    "no_review",
-    ""
-   ],
-   [
-    "4b5d91d309134635b465e1430c6fdf04",
-    "تطبيق أحكام اللائحة التنفيذية لجباية الزكاة على السنوات المالية التي تبدأ قبل 2019/01/01م",
-    "no_review",
-    ""
-   ],
-   [
-    "a7a23ba3f0444f53a71a2bcac5634c61",
-    "تخصيص موقع مجمع الرمل جنوب الزلفي (محافظة الزلفي)",
-    "no_review",
-    ""
-   ],
-   [
-    "798bb58932fb4718ada2096795b0cdd4",
-    "تخصيص موقع مجمع خام الرمل بوادي الخير كمجمع تعديني",
-    "no_review",
-    ""
-   ],
-   [
-    "baef209c7c9448998b1def12e47642c0",
-    "تخصيص موقع مجمع خام الرمل بوادي الحمض كمجمع تعديني",
-    "no_review",
-    ""
-   ],
-   [
-    "6cde249d50c44b578c42d2591e5b8571",
-    "تخصيص موقع مجمع خام الرمل بوادي شري (1) كمجمع تعديني",
-    "no_review",
-    ""
-   ],
-   [
-    "ca345a29ede94222adcf1af313cefabd",
-    "تخصيص موقع مجمع خام الرمل جنوب غرب محافظة شرورة كمجمع تعديني",
-    "no_review",
-    ""
-   ],
-   [
-    "d7b63513ae194338b6994233da000b70",
-    "تخصيص موقع مجمع خام الرمل شمال شرق محافظة خباش كمجمع تعديني",
-    "no_review",
-    ""
-   ],
-   [
-    "fd52a1f5bac24b549a2d2f9987119ceb",
-    "تخصيص موقع مجمع البحص غرب الفز كمجمع تعديني",
-    "no_review",
-    ""
-   ],
-   [
-    "fd94edaa06904f82aacb0055c7ba605d",
-    "تخصيص موقع مجمع خام البحص والردميات الواقع بالبرزة كمجمع تعديني",
-    "no_review",
-    ""
-   ],
-   [
-    "22d8dfe4f0314cb78dd555952bd7f295",
-    "تخصيص موقع مجمع خام الرمل بوادي ريحي الواقع بمحافظة خليص كمجمع تعديني",
-    "no_review",
-    ""
-   ],
-   [
-    "819b8add554a40fd86bcc1322066fae2",
-    "تحديد منطقة الردينية لخام الزنك للطرح للمنافسة",
-    "no_review",
-    ""
-   ],
-   [
-    "98b3ee63d2074237be51e977e33ff64e",
-    "تحديد منطقة أم حديد لخام الفضة للطرح للمنافسة",
-    "no_review",
-    ""
-   ],
-   [
-    "d2dbb087f7bd4cb09001b0341ee72dc7",
-    "تحديد منطقة بئر عمق لخام النحاس للطرح للمنافسة",
-    "no_review",
-    ""
-   ],
-   [
-    "b976e5b96f4044099be851b1ebccca95",
-    "تحديد منطقة جبل ادساس لخام الحديد للطرح للمنافسة",
-    "no_review",
-    ""
-   ],
-   [
-    "e14f5bf7b87b454095cddd6f6d6ceb43",
-    "تحديد منطقة جبل صهابية لخام الزنك للطرح للمنافسة",
-    "no_review",
-    ""
-   ],
-   [
-    "fe56f937854947f08d6e6fa0a4e55287",
-    "تخصيص موقع مجمع مواد الردميات جنوب العبيل كمجمع تعديني",
-    "no_review",
-    ""
-   ],
-   [
-    "1de04f124da54de0b66bdedbe207e5ab",
-    "تخصيص موقع مجمع مواد الردميات شرق السميراء كمجمع تعديني",
-    "no_review",
-    ""
-   ],
-   [
-    "cd4a43587aa141b8b41e101edac596ed",
-    "تخصيص موقع مجمع خام الرمل بمحافظة خباش كمجمع تعديني",
-    "no_review",
-    ""
-   ],
-   [
-    "3103ca9154134ec59246a00a7fef5de1",
-    "اعتماد شروط وإجراءات تأهيل واعتماد مراكز التدريب ومراكز الاختبار",
-    "no_review",
-    ""
-   ],
-   [
-    "1f16dcb4b28c43ddaeafa1b7aa46a4a2",
-    "تخصيص موقع خميس مشيط رقم (1) بمنطقة عسير كمجمع تعديني للأنشطة التعدينية",
-    "no_review",
-    ""
-   ],
-   [
-    "e1bdf52ca2c44ea9b98a9e7512895812",
-    "الموافقة على تمديد مهلة الحصول على رخص استخدام مصادر المياه الجوفية",
-    "no_review",
-    ""
-   ],
-   [
-    "559cb9ce30a540a6857f831eb995d938",
-    "تحديد منطقة الدعمة موقعًا لخام النحاس للطرح للمنافسة",
-    "no_review",
-    ""
-   ],
-   [
-    "e1fc732e4d10470baaa6b12deb598a29",
-    "تحديد منطقة أشهب الذياب موقعًا لخام الزنك للطرح للمنافسة",
-    "no_review",
-    ""
-   ],
-   [
-    "44c863899a4e453eba3d809c9b116824",
-    "تحديد منطقة الخشبي موقعًا لخام الذهب للطرح للمنافسة",
-    "no_review",
-    ""
-   ],
-   [
-    "2303b86eb86c4796a73e578bce43e006",
-    "تحديد منطقة أبرق عباب موقعًا لخام الذهب للطرح للمنافسة",
-    "no_review",
-    ""
-   ],
-   [
-    "fda6cfece47f495c8f974ea8652ad70f",
-    "تحديث اللائحة التنفيذية لنظام مكافحة غسل الأموال",
-    "no_review",
-    ""
-   ],
-   [
-    "cmr4rvl67002d1j0ugcjemx5u",
-    "اللائحة التنفيذية لطرق الاعتراض على الأحكام",
-    "no_review",
-    ""
-   ],
-   [
-    "cmr4qm6tq008q9vd1sm15xz4e",
-    "لائحة نظام الأحوال الشخصية",
-    "no_review",
-    ""
-   ],
-   [
-    "cmr4qm6oo007u9vd117jm5enx",
-    "اللائحة التنفيذية لنظام التوثيق",
-    "no_review",
-    ""
-   ],
-   [
-    "ed25-3c30143d0ec387695e66cce3",
-    "نظام السجل التجاري الصادر بالمرسوم الملكي رقم (م/1) وتاريخ 1416/2/21هـ",
-    "no_review",
-    ""
-   ],
-   [
-    "ed25-7010964d153608cdcaa68a48",
-    "نظام الأسماء التجارية الصادر بالمرسوم الملكي رقم (م/15) وتاريخ 1420/8/12هـ",
-    "no_review",
-    ""
-   ]
-  ],
+  "updated": 32,
+  "dropped": [],
   "open": {
    "b683f041174a43688033e6389ebe3af2": "الترتيبات: «يعمل بالترتيبات من تاريخ صدورها» وصفحة أم القرى (p=19658) بلا تاريخ صدور",
    "b9d0077e4e4d45daaff78aa21d795e0c": "التعليمات: «نافذة وفقًا لقرار اعتمادها» وصفحة أم القرى (p=21494) بلا قرار الاعتماد",
@@ -216,7 +23,71 @@
   }
  },
  "statements": [
-  "SELECT CASE WHEN (SELECT count(*) FROM legal_systems WHERE id IN () AND preamble_effective_from IS NULL) = 0 AND (SELECT count(*) FROM legal_text_provenance WHERE id LIKE 'g10p-%') = 0 THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard_before",
-  "SELECT CASE WHEN (SELECT count(*) FROM legal_systems WHERE id IN () AND preamble_effective_from IS NOT NULL) = 0 AND (SELECT count(*) FROM legal_text_provenance WHERE id LIKE 'g10p-%') = 0 THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard_after"
+  "SELECT CASE WHEN (SELECT count(*) FROM legal_systems WHERE id IN ($hk$982c00b085e44062a003ce3d9dc3a791$hk$,$hk$4b5d91d309134635b465e1430c6fdf04$hk$,$hk$a7a23ba3f0444f53a71a2bcac5634c61$hk$,$hk$798bb58932fb4718ada2096795b0cdd4$hk$,$hk$baef209c7c9448998b1def12e47642c0$hk$,$hk$6cde249d50c44b578c42d2591e5b8571$hk$,$hk$ca345a29ede94222adcf1af313cefabd$hk$,$hk$d7b63513ae194338b6994233da000b70$hk$,$hk$fd52a1f5bac24b549a2d2f9987119ceb$hk$,$hk$fd94edaa06904f82aacb0055c7ba605d$hk$,$hk$22d8dfe4f0314cb78dd555952bd7f295$hk$,$hk$819b8add554a40fd86bcc1322066fae2$hk$,$hk$98b3ee63d2074237be51e977e33ff64e$hk$,$hk$d2dbb087f7bd4cb09001b0341ee72dc7$hk$,$hk$b976e5b96f4044099be851b1ebccca95$hk$,$hk$e14f5bf7b87b454095cddd6f6d6ceb43$hk$,$hk$fe56f937854947f08d6e6fa0a4e55287$hk$,$hk$1de04f124da54de0b66bdedbe207e5ab$hk$,$hk$cd4a43587aa141b8b41e101edac596ed$hk$,$hk$3103ca9154134ec59246a00a7fef5de1$hk$,$hk$1f16dcb4b28c43ddaeafa1b7aa46a4a2$hk$,$hk$e1bdf52ca2c44ea9b98a9e7512895812$hk$,$hk$559cb9ce30a540a6857f831eb995d938$hk$,$hk$e1fc732e4d10470baaa6b12deb598a29$hk$,$hk$44c863899a4e453eba3d809c9b116824$hk$,$hk$2303b86eb86c4796a73e578bce43e006$hk$,$hk$fda6cfece47f495c8f974ea8652ad70f$hk$,$hk$cmr4rvl67002d1j0ugcjemx5u$hk$,$hk$cmr4qm6tq008q9vd1sm15xz4e$hk$,$hk$cmr4qm6oo007u9vd117jm5enx$hk$,$hk$ed25-3c30143d0ec387695e66cce3$hk$,$hk$ed25-7010964d153608cdcaa68a48$hk$) AND preamble_effective_from IS NULL) = 32 AND (SELECT count(*) FROM legal_text_provenance WHERE id LIKE 'g10p-%') = 0 THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard_before",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g10p-3a1bc5b0db4f19a42b8527ba$hk$, 'system', $hk$982c00b085e44062a003ce3d9dc3a791$hk$, $hk$الموافقة على قواعد المنشأ الوطنية$hk$, NULL, $hk$uqn$hk$, $hk$gap010-effective-dates-2026-10-28$hk$, $hk$https://www.uqn.gov.sa/details?p=17900$hk$, $hk$7df6fd2bc36f5cbf5bd35d82f87a17e7$hk$, DATE '2026-10-28', $hk$effective_from_set:2021-07-02$hk$, $hk$HKM-051 gap010-effective-dates-2026-10-28: القرار الوزاري رقم (3852) وتاريخ 1442/11/22هـ — عبارة النفاذ: «يسري هذا القرار من تاريخ صدوره إلى حين صدور وسريان قواعد منشأ خليجية موحدة.» — القاعدة: من تاريخ الصدور (1442-11-22هـ) = 2021-07-02$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g10p-3a1bc5b0db4f19a42b8527ba$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g10p-4cf4eb47ff5606e653c55232$hk$, 'system', $hk$4b5d91d309134635b465e1430c6fdf04$hk$, $hk$تطبيق أحكام اللائحة التنفيذية لجباية الزكاة على السنوات المالية التي تبدأ قبل 2019/01/01م$hk$, NULL, $hk$uqn$hk$, $hk$gap010-effective-dates-2026-10-28$hk$, $hk$https://www.uqn.gov.sa/details?p=20770$hk$, $hk$7cc2222708a3be46a68eba646c2b3bdb$hk$, DATE '2026-10-28', $hk$effective_from_set:2022-10-19$hk$, $hk$HKM-051 gap010-effective-dates-2026-10-28: قرار وزير المالية رقم (13957) وتاريخ 23 /03/ 1444هـ — عبارة النفاذ: «يبلغ هذا القرار لمن يلزم لإنفاذه، ويعمل به من تاريخ صدوره.» — القاعدة: من تاريخ الصدور (1444-03-23هـ) = 2022-10-19$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g10p-4cf4eb47ff5606e653c55232$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g10p-2e8ad0edbf32d98306abb02b$hk$, 'system', $hk$a7a23ba3f0444f53a71a2bcac5634c61$hk$, $hk$تخصيص موقع مجمع الرمل جنوب الزلفي (محافظة الزلفي)$hk$, NULL, $hk$uqn$hk$, $hk$gap010-effective-dates-2026-10-28$hk$, $hk$https://www.uqn.gov.sa/details?p=21552$hk$, $hk$dc002bcd47dd49d432b6784deaa4a3d9$hk$, DATE '2026-10-28', $hk$effective_from_set:2022-08-25$hk$, $hk$HKM-051 gap010-effective-dates-2026-10-28: قرار وزير الصناعة والثروة المعدنية رقم (504 /1/ 1444) وتاريخ 27 /01/ 1444هـ — عبارة النفاذ: «ويعمل به من تاريخ صدوره.» — القاعدة: من تاريخ الصدور (1444-01-27هـ) = 2022-08-25$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g10p-2e8ad0edbf32d98306abb02b$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g10p-663111bb411dba885beb76f8$hk$, 'system', $hk$798bb58932fb4718ada2096795b0cdd4$hk$, $hk$تخصيص موقع مجمع خام الرمل بوادي الخير كمجمع تعديني$hk$, NULL, $hk$uqn$hk$, $hk$gap010-effective-dates-2026-10-28$hk$, $hk$https://www.uqn.gov.sa/details?p=23313$hk$, $hk$41a88085ce486ca31e358a348ea0db19$hk$, DATE '2026-10-28', $hk$effective_from_set:2023-05-29$hk$, $hk$HKM-051 gap010-effective-dates-2026-10-28: قرار وزير الصناعة والثروة المعدنية رقم (6458 /1/ 1444) وتاريخ 09 /11/ 1444هـ — عبارة النفاذ: «ويُعمل به من تاريخ صدوره.» — القاعدة: من تاريخ الصدور (1444-11-09هـ) = 2023-05-29$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g10p-663111bb411dba885beb76f8$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g10p-e020df814201ee78c204c9a4$hk$, 'system', $hk$baef209c7c9448998b1def12e47642c0$hk$, $hk$تخصيص موقع مجمع خام الرمل بوادي الحمض كمجمع تعديني$hk$, NULL, $hk$uqn$hk$, $hk$gap010-effective-dates-2026-10-28$hk$, $hk$https://www.uqn.gov.sa/details?p=23314$hk$, $hk$ec6d7655198834f5fe66f25a5090d260$hk$, DATE '2026-10-28', $hk$effective_from_set:2023-05-29$hk$, $hk$HKM-051 gap010-effective-dates-2026-10-28: قرار وزير الصناعة والثروة المعدنية رقم (6457 /1/ 1444) وتاريخ 09 /11/ 1444هـ — عبارة النفاذ: «ويُعمل به من تاريخ صدوره.» — القاعدة: من تاريخ الصدور (1444-11-09هـ) = 2023-05-29$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g10p-e020df814201ee78c204c9a4$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g10p-d9c0b00b516e7a4fe8471276$hk$, 'system', $hk$6cde249d50c44b578c42d2591e5b8571$hk$, $hk$تخصيص موقع مجمع خام الرمل بوادي شري (1) كمجمع تعديني$hk$, NULL, $hk$uqn$hk$, $hk$gap010-effective-dates-2026-10-28$hk$, $hk$https://www.uqn.gov.sa/details?p=23320$hk$, $hk$2d36e742b73c2e5232b0651ce6aca0c4$hk$, DATE '2026-10-28', $hk$effective_from_set:2023-05-29$hk$, $hk$HKM-051 gap010-effective-dates-2026-10-28: قرار وزير الصناعة والثروة المعدنية رقم (6460 /1/ 1444) وتاريخ 09 /11/ 1444هـ — عبارة النفاذ: «ويُعمل به من تاريخ صدوره.» — القاعدة: من تاريخ الصدور (1444-11-09هـ) = 2023-05-29$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g10p-d9c0b00b516e7a4fe8471276$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g10p-1161daa15420857fbcbe0725$hk$, 'system', $hk$ca345a29ede94222adcf1af313cefabd$hk$, $hk$تخصيص موقع مجمع خام الرمل جنوب غرب محافظة شرورة كمجمع تعديني$hk$, NULL, $hk$uqn$hk$, $hk$gap010-effective-dates-2026-10-28$hk$, $hk$https://www.uqn.gov.sa/details?p=23321$hk$, $hk$99e85b4085852b36aae61c4b02968bb8$hk$, DATE '2026-10-28', $hk$effective_from_set:2023-05-29$hk$, $hk$HKM-051 gap010-effective-dates-2026-10-28: قرار وزير الصناعة والثروة المعدنية رقم (6467 /1/ 1444) وتاريخ 09 /11/ 1444هـ — عبارة النفاذ: «ويعمل به من تاريخ صدوره.» — القاعدة: من تاريخ الصدور (1444-11-09هـ) = 2023-05-29$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g10p-1161daa15420857fbcbe0725$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g10p-89e7777abf3839cd58a97a98$hk$, 'system', $hk$d7b63513ae194338b6994233da000b70$hk$, $hk$تخصيص موقع مجمع خام الرمل شمال شرق محافظة خباش كمجمع تعديني$hk$, NULL, $hk$uqn$hk$, $hk$gap010-effective-dates-2026-10-28$hk$, $hk$https://www.uqn.gov.sa/details?p=23322$hk$, $hk$192a2a1b74f22dce7fe9db13583a715a$hk$, DATE '2026-10-28', $hk$effective_from_set:2023-05-29$hk$, $hk$HKM-051 gap010-effective-dates-2026-10-28: قرار وزير الصناعة والثروة المعدنية رقم (6465 /1/ 1444) وتاريخ 09 /11/ 1444هـ — عبارة النفاذ: «ويعمل به من تاريخ صدوره.» — القاعدة: من تاريخ الصدور (1444-11-09هـ) = 2023-05-29$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g10p-89e7777abf3839cd58a97a98$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g10p-8c68a35105b71d0ccd5baa03$hk$, 'system', $hk$fd52a1f5bac24b549a2d2f9987119ceb$hk$, $hk$تخصيص موقع مجمع البحص غرب الفز كمجمع تعديني$hk$, NULL, $hk$uqn$hk$, $hk$gap010-effective-dates-2026-10-28$hk$, $hk$https://www.uqn.gov.sa/details?p=23324$hk$, $hk$c9829827173a171bef275cddd42dae51$hk$, DATE '2026-10-28', $hk$effective_from_set:2022-08-01$hk$, $hk$HKM-051 gap010-effective-dates-2026-10-28: قرار وزير الصناعة والثروة المعدنية رقم (49 /1/ 1444) وتاريخ 03 /01/ 1444هـ — عبارة النفاذ: «ويُعمل به من تاريخ صدوره.» — القاعدة: من تاريخ الصدور (1444-01-03هـ) = 2022-08-01$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g10p-8c68a35105b71d0ccd5baa03$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g10p-59c46c3ff5139b235a70c440$hk$, 'system', $hk$fd94edaa06904f82aacb0055c7ba605d$hk$, $hk$تخصيص موقع مجمع خام البحص والردميات الواقع بالبرزة كمجمع تعديني$hk$, NULL, $hk$uqn$hk$, $hk$gap010-effective-dates-2026-10-28$hk$, $hk$https://www.uqn.gov.sa/details?p=23325$hk$, $hk$6acf997f49cbc8d507d723f148c43485$hk$, DATE '2026-10-28', $hk$effective_from_set:2022-08-01$hk$, $hk$HKM-051 gap010-effective-dates-2026-10-28: قرار وزير الصناعة والثروة المعدنية رقم (46 /1/ 1444) وتاريخ 03 /01/ 1444هـ — عبارة النفاذ: «ويُعمل به من تاريخ صدوره.» — القاعدة: من تاريخ الصدور (1444-01-03هـ) = 2022-08-01$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g10p-59c46c3ff5139b235a70c440$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g10p-19464610623b4a13e3e9ed8f$hk$, 'system', $hk$22d8dfe4f0314cb78dd555952bd7f295$hk$, $hk$تخصيص موقع مجمع خام الرمل بوادي ريحي الواقع بمحافظة خليص كمجمع تعديني$hk$, NULL, $hk$uqn$hk$, $hk$gap010-effective-dates-2026-10-28$hk$, $hk$https://www.uqn.gov.sa/details?p=23326$hk$, $hk$b959e2bb5fcfdd8c45538036ad7e009e$hk$, DATE '2026-10-28', $hk$effective_from_set:2022-08-01$hk$, $hk$HKM-051 gap010-effective-dates-2026-10-28: قرار وزير الصناعة والثروة المعدنية رقم (47 /1/ 1444) وتاريخ 03 /01/ 1444هـ — عبارة النفاذ: «ويُعمل به من تاريخ صدوره.» — القاعدة: من تاريخ الصدور (1444-01-03هـ) = 2022-08-01$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g10p-19464610623b4a13e3e9ed8f$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g10p-b04b6820cb9d71e9aae90e1c$hk$, 'system', $hk$819b8add554a40fd86bcc1322066fae2$hk$, $hk$تحديد منطقة الردينية لخام الزنك للطرح للمنافسة$hk$, NULL, $hk$uqn$hk$, $hk$gap010-effective-dates-2026-10-28$hk$, $hk$https://www.uqn.gov.sa/details?p=23327$hk$, $hk$290e663a5fdea5e042476f0cfbe9b7bf$hk$, DATE '2026-10-28', $hk$effective_from_set:2023-06-01$hk$, $hk$HKM-051 gap010-effective-dates-2026-10-28: قرار وزير الصناعة والثروة المعدنية رقم (6533 /1/ 1444) وتاريخ 12 /11/ 1444هـ — عبارة النفاذ: «يعمل بهذا القرار من تاريخه.» — القاعدة: من تاريخ الصدور (1444-11-12هـ) = 2023-06-01$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g10p-b04b6820cb9d71e9aae90e1c$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g10p-f5a6a4ad168df0b338dfc6d6$hk$, 'system', $hk$98b3ee63d2074237be51e977e33ff64e$hk$, $hk$تحديد منطقة أم حديد لخام الفضة للطرح للمنافسة$hk$, NULL, $hk$uqn$hk$, $hk$gap010-effective-dates-2026-10-28$hk$, $hk$https://www.uqn.gov.sa/details?p=23328$hk$, $hk$727e01bc51f96f057254d15b141c4c60$hk$, DATE '2026-10-28', $hk$effective_from_set:2023-05-29$hk$, $hk$HKM-051 gap010-effective-dates-2026-10-28: قرار وزير الصناعة والثروة المعدنية رقم (6462 /1/ 1444) وتاريخ 09 /11/ 1444هـ — عبارة النفاذ: «يعمل بهذا القرار من تاريخه.» — القاعدة: من تاريخ الصدور (1444-11-09هـ) = 2023-05-29$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g10p-f5a6a4ad168df0b338dfc6d6$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g10p-171b31ec2c7bb39717b374e4$hk$, 'system', $hk$d2dbb087f7bd4cb09001b0341ee72dc7$hk$, $hk$تحديد منطقة بئر عمق لخام النحاس للطرح للمنافسة$hk$, NULL, $hk$uqn$hk$, $hk$gap010-effective-dates-2026-10-28$hk$, $hk$https://www.uqn.gov.sa/details?p=23329$hk$, $hk$d37840fed032da26ae8813e1637c081c$hk$, DATE '2026-10-28', $hk$effective_from_set:2023-05-29$hk$, $hk$HKM-051 gap010-effective-dates-2026-10-28: قرار وزير الصناعة والثروة المعدنية رقم (6464 /1/ 1444) وتاريخ 09 /11/ 1444هـ — عبارة النفاذ: «يعمل بهذا القرار من تاريخه.» — القاعدة: من تاريخ الصدور (1444-11-09هـ) = 2023-05-29$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g10p-171b31ec2c7bb39717b374e4$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g10p-5f5f4a6f2f6816c53c9c163a$hk$, 'system', $hk$b976e5b96f4044099be851b1ebccca95$hk$, $hk$تحديد منطقة جبل ادساس لخام الحديد للطرح للمنافسة$hk$, NULL, $hk$uqn$hk$, $hk$gap010-effective-dates-2026-10-28$hk$, $hk$https://www.uqn.gov.sa/details?p=23330$hk$, $hk$0ea2e4e05d5c489cbaa1ebb6f314afa8$hk$, DATE '2026-10-28', $hk$effective_from_set:2023-05-29$hk$, $hk$HKM-051 gap010-effective-dates-2026-10-28: قرار وزير الصناعة والثروة المعدنية رقم (6463 /1/ 1444) وتاريخ 09 /11/ 1444هـ — عبارة النفاذ: «يعمل بهذا القرار من تاريخه.» — القاعدة: من تاريخ الصدور (1444-11-09هـ) = 2023-05-29$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g10p-5f5f4a6f2f6816c53c9c163a$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g10p-0e94f4f10b3ab834a4395641$hk$, 'system', $hk$e14f5bf7b87b454095cddd6f6d6ceb43$hk$, $hk$تحديد منطقة جبل صهابية لخام الزنك للطرح للمنافسة$hk$, NULL, $hk$uqn$hk$, $hk$gap010-effective-dates-2026-10-28$hk$, $hk$https://www.uqn.gov.sa/details?p=23331$hk$, $hk$4233ce484346cac47bbeef7396e885f3$hk$, DATE '2026-10-28', $hk$effective_from_set:2023-05-29$hk$, $hk$HKM-051 gap010-effective-dates-2026-10-28: قرار وزير الصناعة والثروة المعدنية رقم (6461 /1/ 1444) وتاريخ 09 /11/ 1444هـ — عبارة النفاذ: «يعمل بهذا القرار من تاريخه.» — القاعدة: من تاريخ الصدور (1444-11-09هـ) = 2023-05-29$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g10p-0e94f4f10b3ab834a4395641$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g10p-2176e39cad7c2a013d93e92a$hk$, 'system', $hk$fe56f937854947f08d6e6fa0a4e55287$hk$, $hk$تخصيص موقع مجمع مواد الردميات جنوب العبيل كمجمع تعديني$hk$, NULL, $hk$uqn$hk$, $hk$gap010-effective-dates-2026-10-28$hk$, $hk$https://www.uqn.gov.sa/details?p=23332$hk$, $hk$7d91741575b1c2ab44b357c9d609a3f0$hk$, DATE '2026-10-28', $hk$effective_from_set:2023-03-21$hk$, $hk$HKM-051 gap010-effective-dates-2026-10-28: قرار وزير الصناعة والثروة المعدنية رقم (5032 /1/ 1444) وتاريخ 29 /08/ 1444هـ — عبارة النفاذ: «ويُعمل به من تاريخ صدوره.» — القاعدة: من تاريخ الصدور (1444-08-29هـ) = 2023-03-21$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g10p-2176e39cad7c2a013d93e92a$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g10p-e68b87390cdcd3469458af10$hk$, 'system', $hk$1de04f124da54de0b66bdedbe207e5ab$hk$, $hk$تخصيص موقع مجمع مواد الردميات شرق السميراء كمجمع تعديني$hk$, NULL, $hk$uqn$hk$, $hk$gap010-effective-dates-2026-10-28$hk$, $hk$https://www.uqn.gov.sa/details?p=23333$hk$, $hk$28c44815b82911a37f65b7ae783fca61$hk$, DATE '2026-10-28', $hk$effective_from_set:2023-03-20$hk$, $hk$HKM-051 gap010-effective-dates-2026-10-28: قرار وزير الصناعة والثروة المعدنية رقم (5001 /1/ 1444) وتاريخ 28 /08/ 1444هـ — عبارة النفاذ: «ويُعمل به من تاريخ صدوره.» — القاعدة: من تاريخ الصدور (1444-08-28هـ) = 2023-03-20$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g10p-e68b87390cdcd3469458af10$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g10p-2bcdcc018731a86cd07b2507$hk$, 'system', $hk$cd4a43587aa141b8b41e101edac596ed$hk$, $hk$تخصيص موقع مجمع خام الرمل بمحافظة خباش كمجمع تعديني$hk$, NULL, $hk$uqn$hk$, $hk$gap010-effective-dates-2026-10-28$hk$, $hk$https://www.uqn.gov.sa/details?p=23506$hk$, $hk$8bf3b73da769ebb196bf909c44e7bf8c$hk$, DATE '2026-10-28', $hk$effective_from_set:2023-05-29$hk$, $hk$HKM-051 gap010-effective-dates-2026-10-28: قرار وزير الصناعة والثروة المعدنية رقم (6466 / 1 / 1444) وتاريخ 09 / 11 / 1444هـ — عبارة النفاذ: «ويُعمل به من تاريخ صدوره.» — القاعدة: من تاريخ الصدور (1444-11-09هـ) = 2023-05-29$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g10p-2bcdcc018731a86cd07b2507$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g10p-e9e1dc7a2f64a2f41918c0f0$hk$, 'system', $hk$3103ca9154134ec59246a00a7fef5de1$hk$, $hk$اعتماد شروط وإجراءات تأهيل واعتماد مراكز التدريب ومراكز الاختبار$hk$, NULL, $hk$uqn$hk$, $hk$gap010-effective-dates-2026-10-28$hk$, $hk$https://www.uqn.gov.sa/details?p=26572$hk$, $hk$3b1ff0ba9445d660b9de0864f17cd498$hk$, DATE '2026-10-28', $hk$effective_from_set:2024-09-18$hk$, $hk$HKM-051 gap010-effective-dates-2026-10-28: قرار رئيس الهيئة العامة للنقل المكلف رقم (34 /46 /1) وتاريخ 15 /03/ 1446هـ — عبارة النفاذ: «يعمل بهذا القرار من تاريخ صدوره.» — القاعدة: من تاريخ الصدور (1446-03-15هـ) = 2024-09-18$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g10p-e9e1dc7a2f64a2f41918c0f0$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g10p-542e41fb1577037d1812a5e2$hk$, 'system', $hk$1f16dcb4b28c43ddaeafa1b7aa46a4a2$hk$, $hk$تخصيص موقع خميس مشيط رقم (1) بمنطقة عسير كمجمع تعديني للأنشطة التعدينية$hk$, NULL, $hk$uqn$hk$, $hk$gap010-effective-dates-2026-10-28$hk$, $hk$https://www.uqn.gov.sa/details?p=26892$hk$, $hk$3e2c7463ed6d1d0e8367322d8efcc40b$hk$, DATE '2026-10-28', $hk$effective_from_set:2024-12-31$hk$, $hk$HKM-051 gap010-effective-dates-2026-10-28: قرار وزير الصناعة والثروة المعدنية رقم (4589 /1 /1446) وتاريخ 30 /06 /1446هـ — عبارة النفاذ: «ويُعمل به من تاريخ صدوره.» — القاعدة: من تاريخ الصدور (1446-06-30هـ) = 2024-12-31$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g10p-542e41fb1577037d1812a5e2$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g10p-fe679270c90de0b725d66799$hk$, 'system', $hk$e1bdf52ca2c44ea9b98a9e7512895812$hk$, $hk$الموافقة على تمديد مهلة الحصول على رخص استخدام مصادر المياه الجوفية$hk$, NULL, $hk$uqn$hk$, $hk$gap010-effective-dates-2026-10-28$hk$, $hk$https://www.uqn.gov.sa/details?p=27277$hk$, $hk$43d36a8bb0f7a89bc954ed9919351617$hk$, DATE '2026-10-28', $hk$effective_from_set:2025-07-06$hk$, $hk$HKM-051 gap010-effective-dates-2026-10-28: قرار وزير البيئة والمياه والزراعة رقم (15007853) وتاريخ 11/01/1447هـ — عبارة النفاذ: «يسري العمل بهذا القرار من تاريخه» — القاعدة: من تاريخ الصدور (1447-01-11هـ) = 2025-07-06$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g10p-fe679270c90de0b725d66799$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g10p-57117a68c962be64b2127d63$hk$, 'system', $hk$559cb9ce30a540a6857f831eb995d938$hk$, $hk$تحديد منطقة الدعمة موقعًا لخام النحاس للطرح للمنافسة$hk$, NULL, $hk$uqn$hk$, $hk$gap010-effective-dates-2026-10-28$hk$, $hk$https://www.uqn.gov.sa/decisions-and-regulations/4001037$hk$, $hk$6e661d7230d7634fc7f267cd0fe2d9e2$hk$, DATE '2026-10-28', $hk$effective_from_set:2024-07-10$hk$, $hk$HKM-051 gap010-effective-dates-2026-10-28: قرار وزير الصناعة والثروة المعدنية رقم (138/1/1446) وتاريخ 04/01/1446هـ — عبارة النفاذ: «يُعمل بهذا القرار من تاريخه.» — القاعدة: من تاريخ الصدور (1446-01-04هـ) = 2024-07-10$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g10p-57117a68c962be64b2127d63$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g10p-f433f0797db6e1400e4cb11c$hk$, 'system', $hk$e1fc732e4d10470baaa6b12deb598a29$hk$, $hk$تحديد منطقة أشهب الذياب موقعًا لخام الزنك للطرح للمنافسة$hk$, NULL, $hk$uqn$hk$, $hk$gap010-effective-dates-2026-10-28$hk$, $hk$https://www.uqn.gov.sa/decisions-and-regulations/4001042$hk$, $hk$8d5cb11403745c215b26a750d3967bf6$hk$, DATE '2026-10-28', $hk$effective_from_set:2024-07-10$hk$, $hk$HKM-051 gap010-effective-dates-2026-10-28: قرار وزير الصناعة والثروة المعدنية رقم (1446/1/140) وتاريخ 1446/01/04هـ — عبارة النفاذ: «يعمل بهذا القرار من تاريخه.» — القاعدة: من تاريخ الصدور (1446-01-04هـ) = 2024-07-10$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g10p-f433f0797db6e1400e4cb11c$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g10p-19503a39374a75a904f89d8b$hk$, 'system', $hk$44c863899a4e453eba3d809c9b116824$hk$, $hk$تحديد منطقة الخشبي موقعًا لخام الذهب للطرح للمنافسة$hk$, NULL, $hk$uqn$hk$, $hk$gap010-effective-dates-2026-10-28$hk$, $hk$https://www.uqn.gov.sa/decisions-and-regulations/4001045$hk$, $hk$aaeea7c2504981db1c8e8f495a3b282d$hk$, DATE '2026-10-28', $hk$effective_from_set:2024-07-10$hk$, $hk$HKM-051 gap010-effective-dates-2026-10-28: قرار وزير الصناعة والثروة المعدنية رقم (1446/1/128) وتاريخ 1446/01/04هـ — عبارة النفاذ: «يُعمل بهذا القرار من تاريخه.» — القاعدة: من تاريخ الصدور (1446-01-04هـ) = 2024-07-10$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g10p-19503a39374a75a904f89d8b$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g10p-4edb54f532f3f6b13dcabc1a$hk$, 'system', $hk$2303b86eb86c4796a73e578bce43e006$hk$, $hk$تحديد منطقة أبرق عباب موقعًا لخام الذهب للطرح للمنافسة$hk$, NULL, $hk$uqn$hk$, $hk$gap010-effective-dates-2026-10-28$hk$, $hk$https://www.uqn.gov.sa/decisions-and-regulations/4001047$hk$, $hk$ee97e09b7fda5bc3a5e0301dfb733b18$hk$, DATE '2026-10-28', $hk$effective_from_set:2024-07-10$hk$, $hk$HKM-051 gap010-effective-dates-2026-10-28: قرار وزير الصناعة والثروة المعدنية رقم (141/1/1446) وتاريخ 04/01/1446هـ — عبارة النفاذ: «يعمل بهذا القرار من تاريخه.» — القاعدة: من تاريخ الصدور (1446-01-04هـ) = 2024-07-10$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g10p-4edb54f532f3f6b13dcabc1a$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g10p-18e7c3687e6104328c2d7164$hk$, 'system', $hk$fda6cfece47f495c8f974ea8652ad70f$hk$, $hk$تحديث اللائحة التنفيذية لنظام مكافحة غسل الأموال$hk$, NULL, $hk$uqn$hk$, $hk$gap010-effective-dates-2026-10-28$hk$, $hk$https://www.uqn.gov.sa/decisions-and-regulations/4001242$hk$, $hk$467019860b67dea8562d6426e1085f65$hk$, DATE '2026-10-28', $hk$effective_from_set:2026-05-26$hk$, $hk$HKM-051 gap010-effective-dates-2026-10-28: قرار رئيس أمن الدولة رقم (266507) وتاريخ 1447/12/09هـ — عبارة النفاذ: «يعمل بهذا القرار اعتبارًا من تاريخه.» — القاعدة: من تاريخ الصدور (1447-12-09هـ) = 2026-05-26$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g10p-18e7c3687e6104328c2d7164$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g10p-664462dad07317d3f7d93999$hk$, 'system', $hk$cmr4rvl67002d1j0ugcjemx5u$hk$, $hk$اللائحة التنفيذية لطرق الاعتراض على الأحكام$hk$, NULL, $hk$uqn$hk$, $hk$gap010-effective-dates-2026-10-28$hk$, $hk$https://www.uqn.gov.sa/details?p=23463$hk$, $hk$b43133b1e3a3402b68ec811524b7a263$hk$, DATE '2026-10-28', $hk$effective_from_set:2023-08-11$hk$, $hk$HKM-051 gap010-effective-dates-2026-10-28: منشورة في أم القرى 1445/01/24هـ (قرار وزير العدل رقم (512) وتاريخ 05/01/1445هـ) — عبارة النفاذ: «تـنشر اللائحة في الجريدة الرسمية، ويعمل بها من تاريخ نشرها.» — القاعدة: من تاريخ النشر (1445-01-24هـ) = 2023-08-11$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g10p-664462dad07317d3f7d93999$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g10p-415d8d29c1c7e5589fa4f819$hk$, 'system', $hk$cmr4qm6tq008q9vd1sm15xz4e$hk$, $hk$لائحة نظام الأحوال الشخصية$hk$, NULL, $hk$uqn$hk$, $hk$gap010-effective-dates-2026-10-28$hk$, $hk$https://www.uqn.gov.sa/details?p=27013$hk$, $hk$115be1227759a75a3e12312ec23bc5ad$hk$, DATE '2026-10-28', $hk$effective_from_set:2025-02-21$hk$, $hk$HKM-051 gap010-effective-dates-2026-10-28: منشورة في أم القرى 1446/08/22هـ (برقية تعميمية رقم (59641) وتاريخ 1446/08/17هـ) — عبارة النفاذ: «تنشر هذه اللائحة في الجريدة الرسمية، ويُعمل بها من تاريخ نشرها.» — القاعدة: من تاريخ النشر (1446-08-22هـ) = 2025-02-21$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g10p-415d8d29c1c7e5589fa4f819$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g10p-c05d5ff64e85d7eb64193bcc$hk$, 'system', $hk$cmr4qm6oo007u9vd117jm5enx$hk$, $hk$اللائحة التنفيذية لنظام التوثيق$hk$, NULL, $hk$moj$hk$, $hk$gap010-effective-dates-2026-10-28$hk$, $hk$https://laws.moj.gov.sa/ar/legislation/o7IAhRJFBAF2F4r_7fwXZA$hk$, $hk$ea536986ad1af3cc1a0f0322078eef39$hk$, DATE '2026-10-28', $hk$effective_from_set:2021-01-14$hk$, $hk$HKM-051 gap010-effective-dates-2026-10-28: تاريخ الإصدار في البوابة القانونية لوزارة العدل: 1442-06-01 — عبارة النفاذ: «تنشر اللائحة في الجريدة الرسمية، ويعمل بها من تاريخ صدورها.» — القاعدة: من تاريخ الصدور (1442-06-01هـ) = 2021-01-14$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g10p-c05d5ff64e85d7eb64193bcc$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g10p-9436d9a9b539ac7be61540bf$hk$, 'system', $hk$ed25-3c30143d0ec387695e66cce3$hk$, $hk$نظام السجل التجاري الصادر بالمرسوم الملكي رقم (م/1) وتاريخ 1416/2/21هـ$hk$, NULL, $hk$nezams$hk$, $hk$gap010-effective-dates-2026-10-28$hk$, $hk$https://nezams.com/نظام-السجل-التجاري/$hk$, $hk$03fc152f08149b6f4674d8f628550e2f$hk$, DATE '2026-10-28', $hk$effective_from_set:1995-11-02$hk$, $hk$HKM-051 gap010-effective-dates-2026-10-28: تاريخ النشر في بطاقة نظما: 1416/03/08هـ — عبارة النفاذ: «ينشر هذا النظام في الجريدة الرسمية، ويعمل به بعد تسعين يومًا من تاريخ نشره» — القاعدة: من تاريخ النشر + 90 يومًا (1416-03-08هـ) = 1995-11-02$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g10p-9436d9a9b539ac7be61540bf$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g10p-81494b999a3bd9b08cedd84e$hk$, 'system', $hk$ed25-7010964d153608cdcaa68a48$hk$, $hk$نظام الأسماء التجارية الصادر بالمرسوم الملكي رقم (م/15) وتاريخ 1420/8/12هـ$hk$, NULL, $hk$nezams$hk$, $hk$gap010-effective-dates-2026-10-28$hk$, $hk$https://nezams.com/نظام-الأسماء-التجارية/$hk$, $hk$c8df2cd3fba9dcaa09ab201977c18f0e$hk$, DATE '2026-10-28', $hk$effective_from_set:2000-03-09$hk$, $hk$HKM-051 gap010-effective-dates-2026-10-28: تاريخ النشر في بطاقة نظما: 1420/09/02هـ — عبارة النفاذ: «ينشر هذا النظام في الجريدة الرسمية، ويعمل به بعد تسعين يومًا من تاريخ نشره.» — القاعدة: من تاريخ النشر + 90 يومًا (1420-09-02هـ) = 2000-03-09$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g10p-81494b999a3bd9b08cedd84e$hk$)",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2021-07-02$hk$::timestamptz WHERE id = $hk$982c00b085e44062a003ce3d9dc3a791$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2022-10-19$hk$::timestamptz WHERE id = $hk$4b5d91d309134635b465e1430c6fdf04$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2022-08-25$hk$::timestamptz WHERE id = $hk$a7a23ba3f0444f53a71a2bcac5634c61$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2023-05-29$hk$::timestamptz WHERE id = $hk$798bb58932fb4718ada2096795b0cdd4$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2023-05-29$hk$::timestamptz WHERE id = $hk$baef209c7c9448998b1def12e47642c0$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2023-05-29$hk$::timestamptz WHERE id = $hk$6cde249d50c44b578c42d2591e5b8571$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2023-05-29$hk$::timestamptz WHERE id = $hk$ca345a29ede94222adcf1af313cefabd$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2023-05-29$hk$::timestamptz WHERE id = $hk$d7b63513ae194338b6994233da000b70$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2022-08-01$hk$::timestamptz WHERE id = $hk$fd52a1f5bac24b549a2d2f9987119ceb$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2022-08-01$hk$::timestamptz WHERE id = $hk$fd94edaa06904f82aacb0055c7ba605d$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2022-08-01$hk$::timestamptz WHERE id = $hk$22d8dfe4f0314cb78dd555952bd7f295$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2023-06-01$hk$::timestamptz WHERE id = $hk$819b8add554a40fd86bcc1322066fae2$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2023-05-29$hk$::timestamptz WHERE id = $hk$98b3ee63d2074237be51e977e33ff64e$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2023-05-29$hk$::timestamptz WHERE id = $hk$d2dbb087f7bd4cb09001b0341ee72dc7$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2023-05-29$hk$::timestamptz WHERE id = $hk$b976e5b96f4044099be851b1ebccca95$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2023-05-29$hk$::timestamptz WHERE id = $hk$e14f5bf7b87b454095cddd6f6d6ceb43$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2023-03-21$hk$::timestamptz WHERE id = $hk$fe56f937854947f08d6e6fa0a4e55287$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2023-03-20$hk$::timestamptz WHERE id = $hk$1de04f124da54de0b66bdedbe207e5ab$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2023-05-29$hk$::timestamptz WHERE id = $hk$cd4a43587aa141b8b41e101edac596ed$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2024-09-18$hk$::timestamptz WHERE id = $hk$3103ca9154134ec59246a00a7fef5de1$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2024-12-31$hk$::timestamptz WHERE id = $hk$1f16dcb4b28c43ddaeafa1b7aa46a4a2$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2025-07-06$hk$::timestamptz WHERE id = $hk$e1bdf52ca2c44ea9b98a9e7512895812$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2024-07-10$hk$::timestamptz WHERE id = $hk$559cb9ce30a540a6857f831eb995d938$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2024-07-10$hk$::timestamptz WHERE id = $hk$e1fc732e4d10470baaa6b12deb598a29$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2024-07-10$hk$::timestamptz WHERE id = $hk$44c863899a4e453eba3d809c9b116824$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2024-07-10$hk$::timestamptz WHERE id = $hk$2303b86eb86c4796a73e578bce43e006$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2026-05-26$hk$::timestamptz WHERE id = $hk$fda6cfece47f495c8f974ea8652ad70f$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2023-08-11$hk$::timestamptz WHERE id = $hk$cmr4rvl67002d1j0ugcjemx5u$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2025-02-21$hk$::timestamptz WHERE id = $hk$cmr4qm6tq008q9vd1sm15xz4e$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2021-01-14$hk$::timestamptz WHERE id = $hk$cmr4qm6oo007u9vd117jm5enx$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$1995-11-02$hk$::timestamptz WHERE id = $hk$ed25-3c30143d0ec387695e66cce3$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2000-03-09$hk$::timestamptz WHERE id = $hk$ed25-7010964d153608cdcaa68a48$hk$ AND preamble_effective_from IS NULL",
+  "SELECT CASE WHEN (SELECT count(*) FROM legal_systems WHERE id IN ($hk$982c00b085e44062a003ce3d9dc3a791$hk$,$hk$4b5d91d309134635b465e1430c6fdf04$hk$,$hk$a7a23ba3f0444f53a71a2bcac5634c61$hk$,$hk$798bb58932fb4718ada2096795b0cdd4$hk$,$hk$baef209c7c9448998b1def12e47642c0$hk$,$hk$6cde249d50c44b578c42d2591e5b8571$hk$,$hk$ca345a29ede94222adcf1af313cefabd$hk$,$hk$d7b63513ae194338b6994233da000b70$hk$,$hk$fd52a1f5bac24b549a2d2f9987119ceb$hk$,$hk$fd94edaa06904f82aacb0055c7ba605d$hk$,$hk$22d8dfe4f0314cb78dd555952bd7f295$hk$,$hk$819b8add554a40fd86bcc1322066fae2$hk$,$hk$98b3ee63d2074237be51e977e33ff64e$hk$,$hk$d2dbb087f7bd4cb09001b0341ee72dc7$hk$,$hk$b976e5b96f4044099be851b1ebccca95$hk$,$hk$e14f5bf7b87b454095cddd6f6d6ceb43$hk$,$hk$fe56f937854947f08d6e6fa0a4e55287$hk$,$hk$1de04f124da54de0b66bdedbe207e5ab$hk$,$hk$cd4a43587aa141b8b41e101edac596ed$hk$,$hk$3103ca9154134ec59246a00a7fef5de1$hk$,$hk$1f16dcb4b28c43ddaeafa1b7aa46a4a2$hk$,$hk$e1bdf52ca2c44ea9b98a9e7512895812$hk$,$hk$559cb9ce30a540a6857f831eb995d938$hk$,$hk$e1fc732e4d10470baaa6b12deb598a29$hk$,$hk$44c863899a4e453eba3d809c9b116824$hk$,$hk$2303b86eb86c4796a73e578bce43e006$hk$,$hk$fda6cfece47f495c8f974ea8652ad70f$hk$,$hk$cmr4rvl67002d1j0ugcjemx5u$hk$,$hk$cmr4qm6tq008q9vd1sm15xz4e$hk$,$hk$cmr4qm6oo007u9vd117jm5enx$hk$,$hk$ed25-3c30143d0ec387695e66cce3$hk$,$hk$ed25-7010964d153608cdcaa68a48$hk$) AND preamble_effective_from IS NOT NULL) = 32 AND (SELECT count(*) FROM legal_text_provenance WHERE id LIKE 'g10p-%') = 32 THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard_after"
  ]
 }

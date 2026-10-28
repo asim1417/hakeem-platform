@@ -54,7 +54,7 @@ for r in ok:
     note = f"HKM-051 {BY}: {inst} — عبارة النفاذ: «{clause}» — القاعدة: {rule} ({base}هـ) = {eff(r)}"
     pid = 'g10p-' + hashlib.sha256(f'{BY}|{sid}'.encode()).hexdigest()[:24]
     st.append("INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) "
-              f"SELECT {lit(pid)}, 'system', {lit(sid)}, {lit(name)}, NULL, {lit(src)}, NULL, {lit(url)}, {lit(hashlib.md5(note.encode()).hexdigest())}, DATE '2026-10-28', {lit(action)}, {lit(note)} "
+              f"SELECT {lit(pid)}, 'system', {lit(sid)}, {lit(name)}, NULL, {lit(src)}, {lit(BY)}, {lit(url)}, {lit(hashlib.md5(note.encode()).hexdigest())}, DATE '2026-10-28', {lit(action)}, {lit(note)} "
               f"WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = {lit(pid)})")
 for r in ok:
     st.append(f"UPDATE legal_systems SET preamble_effective_from = {lit(eff(r))}::timestamptz WHERE id = {lit(r[0])} AND preamble_effective_from IS NULL")
