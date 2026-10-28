@@ -21,7 +21,7 @@ import { latestVerification } from "@/lib/modules/legal-core/verification-read";
 import { NON_ARTICLE_BIS } from "@/lib/modules/legal-core/article-key";
 import { effectiveArticleTexts } from "@/lib/modules/legal-core/effective-text";
 import { BUDGET_EXCEEDED, filterArticleIdsToSurface, hybridSearch, providerBudgetMs, withBudget } from "@/lib/modules/legal-search/hybrid-search";
-import { rankFused, RARE_TERM_MAX, type FusionCandidate } from "@/lib/mcp/search-fusion";
+import { acceptFill, rankFused, RARE_TERM_MAX, type FusionCandidate } from "@/lib/mcp/search-fusion";
 import { handleSemanticSearch, hintedLaws, queryKeywords } from "@/lib/mcp/tools/semantic";
 import { handleEnumerate } from "@/lib/mcp/tools/enumerate";
 import { loadLawCatalog } from "@/lib/mcp/tools/catalog";
@@ -127,6 +127,7 @@ export async function searchArticles(query: string, lawId?: string, limit = 10, 
   // حين يُطلب حصرٌ بنظام معيّن نوسّع سقف الجلب ثم نُصفّي (المحرّك لا يقيّد بالنظام).
   const fetchLimit = lawId ? Math.min(limit * 4, 30) : limit;
   let ranked: Array<{ id: string; type: string }> = await fusedArticleIds(query, lawId, fetchLimit, opts.lexicalProbe ?? true).catch(() => []);
+  const fusedIds = new Set(ranked.map((r) => r.id));
   if (ranked.length < fetchLimit) {
     // تكملة من المحرك الهجين حتى الحد (لا يقل الاسترجاع عن السابق)، بلا تكرار.
     // المواد وحدها: الأحكام لا تأخذ مقاعد في الدمج ثم تُحذف (كانت تكشف بعدد المواد المعادة وجود اسم فرد في الأحكام).
@@ -136,6 +137,11 @@ export async function searchArticles(query: string, lawId?: string, limit = 10, 
   }
 
   // ترطيب من القاعدة لضمان حقول العقد الدقيقة (خاصّة law_id = معرّف النظام).
+  const fillTerms = queryKeywords(query).map((k) => compileTerm(k, "derivatives")).filter((c): c is CompiledTerm => c !== null);
+  const fillCoverage = (text: string) => {
+    const norm = normalizeAr(text);
+    return fillTerms.length ? fillTerms.filter((c) => matchesNormalized(norm, c)).length / fillTerms.length : 0;
+  };
   const ids = ranked.map((r) => r.id);
   const rows = ids.length
     ? await prisma.legalArticle.findMany({
@@ -157,6 +163,8 @@ export async function searchArticles(query: string, lawId?: string, limit = 10, 
     .map((r) => byId.get(r.id))
     .filter((r): r is NonNullable<typeof r> => Boolean(r))
     .filter((r) => (lawId ? r.legalSystemId === lawId || r.legalSystem?.id === lawId : true))
+    // HKM-049: مادة التكملة الهجينة لا تدخل إلا إن غطّت نصف ألفاظ السؤال في نصها (يقطع الضجيج: م5 لائحة التدريب).
+    .filter((r) => fusedIds.has(r.id) || acceptFill(fillCoverage(r.content ?? ""), fillTerms.length))
     .slice(0, limit);
   // المقتطف من النص الساري (المصدر الواحد)، والملغاة تُرجع سطر الإلغاء.
   const effective = await effectiveArticleTexts(picked);
