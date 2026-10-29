@@ -377,7 +377,8 @@ async function mcpTests(db: SqlClient) {
   ];
   ok(JSON.stringify(queryYears("نظام التنفيذ ١٤٣٣هـ")) === '["1433"]' && queryYears("نظام التنفيذ").length === 0, "M-13 السنة من المُدخل (هندية أو لاتينية)");
   const y = rankLawNameMatches(tanfidh, "نظام التنفيذ 1433");
-  ok(y.match?.id === "t-1433" && y.matchType === "prefix" && y.alternatives[0].id === "t-1447", "M-13 «نظام التنفيذ 1433» يعيد طبعة 1433 لا الساري، والتامة في البدائل");
+  // HKM-065: اسم الإصدار «نظام التنفيذ الصادر بالمرسوم …» عنوانه «نظام التنفيذ» فصارت مطابقته تامة (كانت «يبدأ بـ»)؛ والسنة تختار إصدارها كما كانت.
+  ok(y.match?.id === "t-1433" && y.matchType === "exact" && y.alternatives[0].id === "t-1447", "M-13 «نظام التنفيذ 1433» يعيد طبعة 1433 لا الساري، والتامة في البدائل");
   ok(rankLawNameMatches(tanfidh, "نظام التنفيذ").match?.id === "t-1447", "M-13 بلا سنة: المطابقة التامة كما هي");
   const ray = [{ id: "r-old", name: "تنظيم المؤسسة العامة للري", articleCount: 12 }, { id: "r-new", name: "تنظيم المؤسسة العامة للري 1447هـ", articleCount: 10 }];
   ok(rankLawNameMatches(ray, "تنظيم المؤسسة العامة للري").match?.id === "r-old" && rankLawNameMatches(ray, "تنظيم المؤسسة العامة للري", { retired: new Set(["r-old"]) }).match?.id === "r-new", "M-13 داخل الدرجة يتأخر المستبدل عن الساري");

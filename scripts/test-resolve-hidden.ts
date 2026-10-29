@@ -5,6 +5,7 @@
  * التشغيل: npx tsx scripts/test-resolve-hidden.ts
  */
 import { handleResolve, HIDDEN_STATUS, lawScopeForFilters, loadLawCatalog, resetCatalogCache } from "../lib/mcp/tools/catalog";
+import { editionTitle, normalizeLawName, rankLawNameMatches } from "../lib/modules/legal-core/law-name-match";
 
 let failed = 0;
 const ok = (c: boolean, m: string) => {
@@ -48,6 +49,20 @@ async function main() {
 
   const scope = await lawScopeForFilters(db, {});
   ok(scope.exclude.includes("mixed") && !scope.exclude.includes("cur"), "نطاق «الساري» يستبعد السجل المخلوط");
+
+  // HKM-065ب: اسم الإصدار «X الصادر بالمرسوم …» يطابق «X» مطابقةً تامة (كان «نظام التنفيذ» ← «نظام التنفيذ أمام ديوان المظالم»).
+  ok(editionTitle(normalizeLawName("نظام التنفيذ الصادر بالمرسوم الملكي رقم (م/237) وتاريخ 1447/11/03هـ")) === "نظام التنفيذ", "عنوان الإصدار بلا لاحقة المرسوم");
+  ok(editionTitle(normalizeLawName("تنظيم هيئة الأفلام الصادر بقرار مجلس الوزراء رقم 1")) === "تنظيم هيئه الافلام", "عنوان الإصدار بلا لاحقة القرار");
+  ok(editionTitle(normalizeLawName("نظام التنفيذ أمام ديوان المظالم")) === "نظام التنفيذ امام ديوان المظالم", "اسم بلا لاحقة إصدار لا يتغير");
+  const enf = [
+    { id: "griev", name: "نظام التنفيذ أمام ديوان المظالم", articleCount: 37 },
+    { id: "cur", name: "نظام التنفيذ الصادر بالمرسوم الملكي رقم (م/237) وتاريخ 1447/11/03هـ", articleCount: 65 },
+    { id: "old", name: "نظام التنفيذ الصادر بالمرسوم الملكي رقم (م/53) وتاريخ 1433/8/13هـ", articleCount: 98 },
+  ];
+  const r1 = rankLawNameMatches(enf, "نظام التنفيذ", { retired: new Set(["old"]) });
+  ok(r1.matchType === "exact" && r1.match?.id === "cur" && r1.alternatives[0]?.id === "old", `«نظام التنفيذ» ← الإصدار الساري (${r1.match?.id}، ${r1.alternatives.map((a) => a.id).join(",")})`);
+  ok(rankLawNameMatches(enf, "نظام التنفيذ 1433", { retired: new Set(["old"]) }).match?.id === "old", "السنة في السؤال ما زالت تختار إصدارها");
+  ok(rankLawNameMatches(enf, "نظام التنفيذ أمام ديوان المظالم").match?.id === "griev", "الاسم الأطول يحسم إلى نظامه");
 
   if (failed) {
     console.error(`\n${failed} فشل`);
