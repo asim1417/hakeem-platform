@@ -254,10 +254,7 @@
     "article": "cmpzcvb5k0bizvtrkz55p4agm",
     "law": "نظام ضريبة الدخل",
     "n": 67,
-    "why": "date_not_agreed",
-    "instr": [
-     "royal_decree م/1 1425/1/15"
-    ]
+    "why": "ضريبة الدخل م67: الأداة في الملاحظة م/113 لعام 1438هـ لا م/1 (خطأ استخراج)، والنص الجديد يتضمن حكمًا انتقاليًا خارج المادة"
    },
    {
     "article": "cmpz5tdhs00ivcwg2znpi7je6",
@@ -533,7 +530,7 @@
     "b": null
    },
    "royal_decree م/1 1425/1/15": {
-    "a": null,
+    "a": "2004-07-29",
     "b": null
    },
    "royal_decree م/21 1425/4/11": {
@@ -565,23 +562,23 @@
     "b": null
    },
    "royal_decree م/46 1436/6/5": {
-    "a": null,
+    "a": "2015-04-24",
     "b": null
    },
    "royal_decree م/17 1437/4/1": {
-    "a": null,
+    "a": "2016-02-05",
     "b": null
    },
    "royal_decree م/52 1437/8/4": {
-    "a": null,
+    "a": "2016-05-20",
     "b": null
    },
    "royal_decree م/5 1440/1/2": {
-    "a": null,
+    "a": "2018-09-28",
     "b": null
    },
    "royal_order ا/141 1440/4/20": {
-    "a": null,
+    "a": "2019-01-04",
     "b": null
    },
    "cabinet_decision 557 1441/8/28": {

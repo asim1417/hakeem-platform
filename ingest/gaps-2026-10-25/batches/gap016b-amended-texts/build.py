@@ -22,7 +22,16 @@ RD = D.parents[1] / 'readers' / 'readings'
 BY = 'gap016b-amended-texts-2026-10-29'
 FAIL = '(1/(SELECT count(*) FROM legal_systems WHERE false))::text'
 KIND = {'royal_decree': 'مرسوم ملكي', 'cabinet_decision': 'قرار مجلس الوزراء', 'royal_order': 'أمر ملكي'}
-EXCLUDE_ARTICLES = {'cmpz9elyo0cf5ybvvndmq2da0': 'الخدمة المدنية م37: ترقيم «37 مكرر» ملتبس'}
+EXCLUDE_ARTICLES = {'cmpz9elyo0cf5ybvvndmq2da0': 'الخدمة المدنية م37: ترقيم «37 مكرر» ملتبس',
+                    'cmpzcvb5k0bizvtrkz55p4agm': 'ضريبة الدخل م67: الأداة في الملاحظة م/113 لعام 1438هـ لا م/1 (خطأ استخراج)، والنص الجديد يتضمن حكمًا انتقاليًا خارج المادة'}
+
+
+def clean(t):
+    """قص ما ليس من نص المادة: علامات التنصيص المحيطة، وذيل «وذلك بموجب …» أو ملاحظة إضافة مادة تالية."""
+    t = re.split(r'["”]\s*\.?\s*(?:وذلك بموجب|-\s*أُ?ضيفت)', t.strip())[0]
+    t = t.strip().strip('"“”').strip()
+    assert not re.search(r'وذلك بموجب (المرسوم|الأمر|قرار)', t) and 'ضيفت مادة يكون ترتيبها' not in t and '•' not in t, t[-200:]
+    return t
 DEAD = "('ملغاة','ملغى','مستبدل')"
 
 
@@ -104,7 +113,7 @@ for a in arts:
         skipped.append({'article': a['article_id'], 'law': a['law'], 'n': a['n'], 'why': 'date_order', 'dates': ds}); continue
     for z in vs:
         d = dates[z['instr']]
-        body = z['new'].strip()
+        body = clean(z['new'])
         assert body and '...' not in body, (a['law'], a['n'])
         kind, no, dh = z['instr'].split(' ', 2)
         no = re.sub(r'^ا/', 'أ/', no)
