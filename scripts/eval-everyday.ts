@@ -113,7 +113,7 @@ function annotate(kind: "notice" | "warning", title: string, body: string) {
   console.log(`::${kind} title=${title}::${enc}`);
 }
 
-function chunks(lines: string[], max = 3500): string[] {
+function chunks(lines: string[], max = 1400): string[] {
   const out: string[] = [];
   let cur = "";
   for (const l of lines) {
