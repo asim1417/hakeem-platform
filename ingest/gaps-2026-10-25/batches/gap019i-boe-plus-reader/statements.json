@@ -1,0 +1,49 @@
+{
+ "by": "gap019i-boe-plus-reader-2026-10-29",
+ "md5": "52ba40545172bc5a9dd83eac2973815b",
+ "count": 10,
+ "expect_delta": {},
+ "report": {
+  "corrected": 4,
+  "new_articles": 0,
+  "changed_text": 0,
+  "plan": [
+   {
+    "item": "EH-01",
+    "name": "نظام المحاكم التجارية",
+    "old": "2020-04-08",
+    "new": "2020-06-16"
+   },
+   {
+    "item": "EH-02",
+    "name": "النظام الأساس لجامعة الملك سعود (مؤسسة أكاديمية مستقلة غير هادفة للربح)",
+    "old": "2022-09-05",
+    "new": "2023-01-07"
+   },
+   {
+    "item": "EH-03",
+    "name": "النظام الأساس لمستشفى الملك فيصل التخصصي ومركز الأبحاث (مؤسسة مستقلة ذات طبيعة خاصة وغير هادفة للربح)",
+    "old": "2021-12-17",
+    "new": "2022-04-23"
+   },
+   {
+    "item": "EH-07",
+    "name": "نظام الجامعات",
+    "old": "2019-10-30",
+    "new": "2020-05-06"
+   }
+  ]
+ },
+ "statements": [
+  "SELECT CASE WHEN (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpwi0ckf0022nxffiy84kp3o$hk$)=$hk$2020-04-08$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pz50005bcwg20yiwxdok$hk$)=$hk$2022-09-05$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5r01l00aicwg2pjwii339$hk$)=$hk$2021-12-17$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pyr20059cwg2flgd4l0f$hk$)=$hk$2019-10-30$hk$::date AND (SELECT count(*) FROM legal_text_provenance WHERE id LIKE 'g19ip-%')=0 THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard_before",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19ip-077632ec996ba86bb38b02f6$hk$, 'system', $hk$cmpwi0ckf0022nxffiy84kp3o$hk$, $hk$نظام المحاكم التجارية$hk$, NULL, 'uqn', $hk$gap019i-boe-plus-reader-2026-10-29$hk$, $hk$https://www.aleqt.com/2020/04/17/article_1807586.html$hk$, $hk$abed53669177ad3f4abcbdfb9de2c9d1$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2020-04-08->2020-06-16$hk$, $hk$HKM-052 gap019i-boe-plus-reader-2026-10-29: عبارة النفاذ: «يعمل بالنظام بعد (ستين) يوماً من تاريخ نشره في الجريدة الرسمية، ويلغي كل ما يتعارض معه من أحكام.» — النشر 1441-08-24هـ (بطاقة هيئة الخبراء، ويطابقها مصدر القارئ) + 60 يومًا = 2020-06-16؛ وكان المخزن 2020-04-08 (تاريخ الصدور) [بطاقة هيئة الخبراء وقارئ مستقل (h1) متفقان على النشر]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19ip-077632ec996ba86bb38b02f6$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19ip-c33216965f2d6313d59f1f3e$hk$, 'system', $hk$cmpz5pz50005bcwg20yiwxdok$hk$, $hk$النظام الأساس لجامعة الملك سعود (مؤسسة أكاديمية مستقلة غير هادفة للربح)$hk$, NULL, 'uqn', $hk$gap019i-boe-plus-reader-2026-10-29$hk$, $hk$https://uqn.gov.sa/details?p=20025$hk$, $hk$348fb5168edbc123cadf16e0d9cf33bd$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2022-09-05->2023-01-07$hk$, $hk$HKM-052 gap019i-boe-plus-reader-2026-10-29: عبارة النفاذ: «ينشر النظام في الجريدة الرسمية، ويعمل به بعد (مائة وعشرين) يوماً من تاريخ نشره.» — النشر 1444-02-13هـ (بطاقة هيئة الخبراء، ويطابقها مصدر القارئ) + 120 يومًا = 2023-01-07؛ وكان المخزن 2022-09-05 (تاريخ الصدور) [بطاقة هيئة الخبراء وقارئ مستقل (h1) متفقان على النشر]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19ip-c33216965f2d6313d59f1f3e$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19ip-8af97b0f4ea6f54ecad2a6ae$hk$, 'system', $hk$cmpz5r01l00aicwg2pjwii339$hk$, $hk$النظام الأساس لمستشفى الملك فيصل التخصصي ومركز الأبحاث (مؤسسة مستقلة ذات طبيعة خاصة وغير هادفة للربح)$hk$, NULL, 'uqn', $hk$gap019i-boe-plus-reader-2026-10-29$hk$, $hk$https://www.argaam.com/ar/article/articledetail/id/1522034$hk$, $hk$c1c90c9615f2fee192d2d4bdfab45d4a$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2021-12-17->2022-04-23$hk$, $hk$HKM-052 gap019i-boe-plus-reader-2026-10-29: عبارة النفاذ: «ينشر النظام في الجريدة الرسمية، ويعمل به بعد (مائة وعشرين) يوماً من تاريخ نشره.» — النشر 1443-05-20هـ (بطاقة هيئة الخبراء، ويطابقها مصدر القارئ) + 120 يومًا = 2022-04-23؛ وكان المخزن 2021-12-17 (تاريخ الصدور) [بطاقة هيئة الخبراء وقارئ مستقل (h1) متفقان على النشر]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19ip-8af97b0f4ea6f54ecad2a6ae$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19ip-32ca78d6b1a2b2c846cd2f2c$hk$, 'system', $hk$cmpz5pyr20059cwg2flgd4l0f$hk$, $hk$نظام الجامعات$hk$, NULL, 'uqn', $hk$gap019i-boe-plus-reader-2026-10-29$hk$, $hk$https://www.aleqt.com/2019/11/08/article_1709456.html$hk$, $hk$6757cbb0c21261333ece82d6dd67e799$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2019-10-30->2020-05-06$hk$, $hk$HKM-052 gap019i-boe-plus-reader-2026-10-29: عبارة النفاذ: «يعمل بالنظام بعد مائة وثمانين يوماً من تاريخ نشره في الجريدة الرسمية.» — النشر 1441-03-11هـ (بطاقة هيئة الخبراء، ويطابقها مصدر القارئ) + 180 يومًا = 2020-05-06؛ وكان المخزن 2019-10-30 (تاريخ الصدور) [بطاقة هيئة الخبراء وقارئ مستقل (h1) متفقان على النشر]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19ip-32ca78d6b1a2b2c846cd2f2c$hk$)",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2020-06-16$hk$::timestamptz WHERE id = $hk$cmpwi0ckf0022nxffiy84kp3o$hk$ AND preamble_effective_from::date = $hk$2020-04-08$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2023-01-07$hk$::timestamptz WHERE id = $hk$cmpz5pz50005bcwg20yiwxdok$hk$ AND preamble_effective_from::date = $hk$2022-09-05$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2022-04-23$hk$::timestamptz WHERE id = $hk$cmpz5r01l00aicwg2pjwii339$hk$ AND preamble_effective_from::date = $hk$2021-12-17$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2020-05-06$hk$::timestamptz WHERE id = $hk$cmpz5pyr20059cwg2flgd4l0f$hk$ AND preamble_effective_from::date = $hk$2019-10-30$hk$::date",
+  "SELECT CASE WHEN (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpwi0ckf0022nxffiy84kp3o$hk$)=$hk$2020-06-16$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pz50005bcwg20yiwxdok$hk$)=$hk$2023-01-07$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5r01l00aicwg2pjwii339$hk$)=$hk$2022-04-23$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pyr20059cwg2flgd4l0f$hk$)=$hk$2020-05-06$hk$::date AND (SELECT count(*) FROM legal_text_provenance WHERE id LIKE 'g19ip-%')=4 THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard_after"
+ ]
+}
