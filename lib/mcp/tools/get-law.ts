@@ -209,17 +209,20 @@ export function toMcpLaw(
   const warnings: string[] = [];
   const ownRepeal = isOwnInstrument(card.repeal?.instrument, ownKeys) || isOwnInstrument(evidenceInstrument, ownKeys);
   const ownArticleRepeals = articles.filter((a) => a.repeal && !a.inheritedFromWork && isOwnInstrument(a.repeal.instrument, ownKeys)).length;
-  // HKM-059: نظام حالته «ساري» تحمل وثيقة تحقق حالته أداة الإصدار عادةً؛ فلا إنذار (الأداة تبقى محجوبة من repeal).
-  if (card.status.boe !== "ساري" && (ownRepeal || ownArticleRepeals)) {
+  // HKM-059: نظام حالته «ساري» تحمل وثيقة تحقق حالته أداة الإصدار عادةً، فلا تحذير على مستوى النظام (الأداة تبقى محجوبة من repeal).
+  // أما مادة ملغاة بأداة إصدار النظام نفسه فإشارة جودة بيانات تبقى ولو كان النظام ساريًا.
+  const inForce = card.status.boe === "ساري";
+  const sysWarn = ownRepeal && !inForce;
+  if (sysWarn || ownArticleRepeals) {
     // يُقتبس ما طابق فعلًا (أداة الإلغاء، أو أداة السند، أو أداة المادة).
     const recorded =
-      (isOwnInstrument(card.repeal?.instrument, ownKeys)
+      (sysWarn && isOwnInstrument(card.repeal?.instrument, ownKeys)
         ? card.repeal?.instrument
-        : isOwnInstrument(evidenceInstrument, ownKeys)
+        : sysWarn && isOwnInstrument(evidenceInstrument, ownKeys)
           ? evidenceInstrument
           : articles.find((a) => a.repeal && !a.inheritedFromWork && isOwnInstrument(a.repeal.instrument, ownKeys))?.repeal?.instrument) ?? "";
     warnings.push(
-      `أداة الإلغاء المسجلة${ownArticleRepeals ? ` (${ownRepeal ? "للنظام و" : "لـ"}${ownArticleRepeals} مادة)` : ""} تطابق أداة إصدار النظام نفسه، فلم تُعرض أداةً للإلغاء: «${recorded.slice(0, 300)}». الحالة والتاريخ باقيان بسندهما (evidence_url) حتى تُصحَّح البيانات.`,
+      `أداة الإلغاء المسجلة${ownArticleRepeals ? ` (${sysWarn ? "للنظام و" : "لـ"}${ownArticleRepeals} مادة)` : ""} تطابق أداة إصدار النظام نفسه، فلم تُعرض أداةً للإلغاء: «${recorded.slice(0, 300)}». الحالة والتاريخ باقيان بسندهما (evidence_url) حتى تُصحَّح البيانات.`,
     );
   }
   return {

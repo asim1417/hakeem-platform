@@ -696,7 +696,8 @@ export async function getLawPageData(db: SqlClient, systemId: string, opts: LawP
         statusSource = "verification";
       }
     } else if (repealedWork) {
-      // HKM-059: النظام «مستبدل» ولا سجل على مستوى المادة → المادة «مستبدل» (باهتة بنصها) لا «ملغى». اشتقاق عرض لا كتابة بيانات.
+      // HKM-059: فرع النظام الملغى/المستبدل (repealedWork) يأتي بعد فرع سجل المادة «ملغى/مستبدل» وقبل بقية السجلات، فيطغى كما كان على سجل «ساري/مضافة»
+      // وعلى unit_version. التغيير الوحيد: نظام «مستبدل» ← المادة «مستبدل» (باهتة بنصها) بدل «ملغى». اشتقاق عرض لا كتابة بيانات.
       status = hakeem === "مستبدل" ? "مستبدل" : "ملغى";
       statusSource = "work_status";
       inherited = true;

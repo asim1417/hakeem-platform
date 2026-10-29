@@ -87,13 +87,18 @@ export type ArticleTone = "amended" | "repealed" | "replaced" | "plain";
 export const articleTone = (s: ArticleStatus | null): ArticleTone =>
   s === "معدّل" ? "amended" : s === "ملغى" ? "repealed" : s === "مستبدل" ? "replaced" : "plain";
 
+/**
+ * HKM-059: المستبدلة غير نافذة كالملغاة في المرشحات: «إخفاء الملغى» يخفيها و«الملغى فقط» يعرضها معها.
+ * عرضها الباهت بنصها وإحالتها «مستبدلة منذ …» (HKM-030) باقيان كما هما، فالنغمة replaced تبقى مستقلة.
+ */
 export function filterCounts(counts: LawPageData["body"]["counts"]): Record<LawFilter, number> {
-  return { all: counts.total, amended: counts.amended, repealed: counts.repealed, live: counts.total - counts.repealed };
+  const notInForce = counts.repealed + counts.replaced;
+  return { all: counts.total, amended: counts.amended, repealed: notInForce, live: counts.total - notInForce };
 }
 export function matchesFilter(tone: ArticleTone, f: LawFilter): boolean {
   if (f === "amended") return tone === "amended";
-  if (f === "repealed") return tone === "repealed";
-  if (f === "live") return tone !== "repealed";
+  if (f === "repealed") return tone === "repealed" || tone === "replaced";
+  if (f === "live") return tone !== "repealed" && tone !== "replaced";
   return true;
 }
 

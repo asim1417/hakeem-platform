@@ -438,7 +438,12 @@ async function mcpTests(db: SqlClient) {
   const inForceCard = JSON.parse(JSON.stringify(clone)) as typeof clone;
   inForceCard.card.status.boe = "ساري";
   const inForceOut = toMcpLaw(inForceCard, { by: "id", query: "sys-murafaat", alternatives: [] }, "", { tocLimit: 300 });
-  ok(inForceOut.data_warnings.length === 0 && inForceOut.repeal?.instrument === null && inForceOut.status_detail.evidence_instrument === null, "HKM-059 نظام ساري بأداة مطابقة للإصدار: لا تحذير، والأداة ما زالت لا تُعرض أداةَ إلغاء");
+  ok(inForceOut.repeal?.instrument === null && inForceOut.status_detail.evidence_instrument === null, "HKM-059 نظام ساري بأداة مطابقة للإصدار: الأداة ما زالت لا تُعرض أداةَ إلغاء");
+  // سلوك التحذير للساري: تحذير النظام مكتوم، وتحذير المادة الملغاة بأداة الإصدار باقٍ (إشارة جودة بيانات) وبلا «للنظام و».
+  ok(inForceOut.data_warnings.length === 1 && /لـ1 مادة/.test(inForceOut.data_warnings[0]) && !/للنظام و/.test(inForceOut.data_warnings[0]), "HKM-059 نظام ساري ومادة ملغاة بأداة الإصدار: تحذير المادة وحده");
+  const inForceNoArt = JSON.parse(JSON.stringify(inForceCard)) as typeof clone;
+  for (const a of inForceNoArt.body.divisions.flatMap((d) => d.articles)) a.repeal = null;
+  ok(toMcpLaw(inForceNoArt, { by: "id", query: "sys-murafaat", alternatives: [] }, "", { tocLimit: 300 }).data_warnings.length === 0, "HKM-059 نظام ساري بلا مواد ملغاة بأداة الإصدار: لا تحذير");
   const repealedCard = JSON.parse(JSON.stringify(clone)) as typeof clone;
   repealedCard.card.status.boe = "لاغي";
   const repealedOut = toMcpLaw(repealedCard, { by: "id", query: "sys-murafaat", alternatives: [] }, "", { tocLimit: 300 });
