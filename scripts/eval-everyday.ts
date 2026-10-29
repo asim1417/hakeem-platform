@@ -34,7 +34,7 @@ type Gate = {
   min?: number;
   law_id_expected?: string;
 };
-type Fixture = { version: number; queries: Query[]; gates: Gate[] };
+type Fixture = { version: number; queries: Query[]; heldout?: Query[]; gates: Gate[] };
 type Variant = { name: string; opts?: Record<string, unknown> };
 type Row = { article_id: string; law: string; law_id: string | null; article_number: number; snippet?: string };
 
@@ -131,42 +131,69 @@ async function main() {
   const fx = loadFixture();
   const report: Record<string, unknown> = { fixture_version: fx.version, limit: LIMIT, variants: [] as unknown[] };
   let gateFailed = false;
+  let first: Map<string, number | null> | null = null;
+  let warnings = 0;
+  const CONCURRENCY = Math.min(Math.max(Number(process.env.EVAL_EVERYDAY_CONCURRENCY) || 1, 1), 4);
   for (const v of variants()) {
-    const per: Array<{ id: string; rank: number | null; ms: number; top3: string; error: string | null }> = [];
-    for (const q of fx.queries) {
-      const { rows, ms, error } = await runSearch(q.query, q.law_id, v.opts);
-      per.push({ id: q.id, rank: error ? null : rankOf(rows, q.expected), ms, top3: top3(rows), error });
-    }
-    const n = per.length;
-    const hitAt = (k: number) => per.filter((p) => p.rank !== null && p.rank <= k).length / n;
-    const mrr = per.reduce((s, p) => s + (p.rank ? 1 / p.rank : 0), 0) / n;
-    const ms = per.map((p) => p.ms).sort((a, b) => a - b);
-    const summary = {
-      n,
-      hit1: +hitAt(1).toFixed(3),
-      hit3: +hitAt(3).toFixed(3),
-      hit10: +hitAt(10).toFixed(3),
-      mrr: +mrr.toFixed(3),
-      errors: per.filter((p) => p.error).length,
-      p50_ms: ms[Math.floor(n / 2)] ?? 0,
-      p95_ms: ms[Math.min(n - 1, Math.floor(n * 0.95))] ?? 0,
+    type Per = { id: string; rank: number | null; ms: number; top3: string; error: string | null; heldout: boolean };
+    // المجموعة المحجوزة (heldout) تُقاس بالمسار نفسه وتُلخَّص منفصلة: كُتبت بعد بناء الجسر، فلا ضبط عليها.
+    const all: Array<Query & { heldout: boolean }> = [...fx.queries.map((q) => ({ ...q, heldout: false })), ...(fx.heldout ?? []).map((q) => ({ ...q, heldout: true }))];
+    const per: Per[] = new Array(all.length);
+    let next = 0;
+    await Promise.all(
+      Array.from({ length: CONCURRENCY }, async () => {
+        for (let i = next++; i < all.length; i = next++) {
+          const q = all[i];
+          const { rows, ms, error } = await runSearch(q.query, q.law_id, v.opts);
+          per[i] = { id: q.heldout ? `H:${q.id}` : q.id, rank: error ? null : rankOf(rows, q.expected), ms, top3: top3(rows), error, heldout: q.heldout };
+        }
+      }),
+    );
+    const summarize = (rows: Per[]) => {
+      const n = rows.length || 1;
+      const hitAt = (k: number) => rows.filter((p) => p.rank !== null && p.rank <= k).length / n;
+      const ms = rows.map((p) => p.ms).sort((a, b) => a - b);
+      return {
+        n: rows.length,
+        hit1: +hitAt(1).toFixed(3),
+        hit3: +hitAt(3).toFixed(3),
+        hit10: +hitAt(10).toFixed(3),
+        mrr: +(rows.reduce((s, p) => s + (p.rank ? 1 / p.rank : 0), 0) / n).toFixed(3),
+        errors: rows.filter((p) => p.error).length,
+        p50_ms: ms[Math.floor(rows.length / 2)] ?? 0,
+        p95_ms: ms[Math.min(rows.length - 1, Math.floor(rows.length * 0.95))] ?? 0,
+      };
     };
+    const summary = summarize(per.filter((p) => !p.heldout));
+    const held = summarize(per.filter((p) => p.heldout));
+    const n = summary.n;
     const gates = [] as Array<{ id: string; pass: boolean; detail: string }>;
     for (const g of fx.gates) gates.push(await evalGate(g, v.opts));
     if (gates.some((g) => !g.pass)) gateFailed = true;
 
     console.log(`\n══ variant=${v.name} opts=${JSON.stringify(v.opts ?? {})}`);
     console.log(`hit@1=${summary.hit1} hit@3=${summary.hit3} hit@10=${summary.hit10} MRR=${summary.mrr} errors=${summary.errors} p50=${summary.p50_ms}ms p95=${summary.p95_ms}ms`);
+    if (held.n) console.log(`heldout n=${held.n}: hit@1=${held.hit1} hit@3=${held.hit3} hit@10=${held.hit10} MRR=${held.mrr}`);
     for (const p of per) console.log(`  ${String(p.rank ?? "—").padStart(2)}  ${p.id}  [${p.top3}]${p.error ? `  ERROR ${p.error}` : ""}`);
     for (const g of gates) console.log(`  gate ${g.pass ? "PASS" : "FAIL"} ${g.id} ${g.detail}`);
 
-    const head = `variant=${v.name} n=${n} hit1=${summary.hit1} hit3=${summary.hit3} hit10=${summary.hit10} mrr=${summary.mrr} errors=${summary.errors} p50=${summary.p50_ms} p95=${summary.p95_ms}`;
+    const head =
+      `variant=${v.name} n=${n} hit1=${summary.hit1} hit3=${summary.hit3} hit10=${summary.hit10} mrr=${summary.mrr} errors=${summary.errors} p50=${summary.p50_ms} p95=${summary.p95_ms}` +
+      (held.n ? `\nheldout n=${held.n} hit1=${held.hit1} hit3=${held.hit3} hit10=${held.hit10} mrr=${held.mrr}` : "");
     const gateLine = gates.map((g) => `${g.id}=${g.pass ? "PASS" : "FAIL"}(${g.detail})`).join("\n");
     annotate("notice", `everyday ${v.name} summary`, `${head}\n${gateLine}`);
-    const lines = per.map((p) => `${p.id}=${p.rank ?? "-"}|${p.ms}|${p.top3}${p.error ? `|ERR ${p.error}` : ""}`);
-    chunks(lines).forEach((c, i) => annotate("warning", `everyday ${v.name} ranks ${i + 1}`, c));
+    // الإعداد الأول: الرتب كلها؛ وما بعده: ما تغيّرت رتبته عن الأول وحده (حد التعليقات 10 لكل خطوة).
+    const lines = first
+      ? per.filter((p) => first!.get(p.id) !== p.rank).map((p) => `${p.id}: ${first!.get(p.id) ?? "-"}→${p.rank ?? "-"} |${p.top3}`)
+      : per.map((p) => `${p.id}=${p.rank ?? "-"}|${p.ms}|${p.top3}${p.error ? `|ERR ${p.error}` : ""}`);
+    if (!first) first = new Map(per.map((p) => [p.id, p.rank]));
+    for (const [i, c] of chunks(lines.length ? lines : ["(لا تغيير عن الإعداد الأول)"]).entries()) {
+      if (warnings >= 10) break;
+      annotate("warning", `everyday ${v.name} ranks ${i + 1}`, c);
+      warnings++;
+    }
 
-    (report.variants as unknown[]).push({ name: v.name, opts: v.opts ?? {}, summary, gates, per });
+    (report.variants as unknown[]).push({ name: v.name, opts: v.opts ?? {}, summary, heldout: held, gates, per });
     if (process.env.GITHUB_STEP_SUMMARY) {
       const md = [`### everyday — ${v.name}`, "", `| hit@1 | hit@3 | hit@10 | MRR | errors | p50 ms | p95 ms |`, `|---|---|---|---|---|---|---|`,
         `| ${summary.hit1} | ${summary.hit3} | ${summary.hit10} | ${summary.mrr} | ${summary.errors} | ${summary.p50_ms} | ${summary.p95_ms} |`, "",

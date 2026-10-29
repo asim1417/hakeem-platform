@@ -1,6 +1,6 @@
 {
-  "_about": "HKM-062: مجموعة ذهبية لأسئلة الناس (فصحى وعامية خليجية) لقياس hakeem_search عبر searchArticles نفسها (lib/mcp/adapter.ts). لكل سؤال المادة أو المواد التي تجيبه بمعرّفها في القاعدة، تحقق منها بقراءة نص المادة (SELECT قراءة فقط على Neon misty-base-66693229، الفرع br-rapid-salad-aq782ea2، 29/10/2026) لا من الذاكرة. expected: أي مادة منها في الترتيب k تُعدّ إصابة (hit@k)، وMRR من رتبة أول مادة متوقعة. gates: بوابات تسليم #943 التي لا يجوز أن تتراجع (لا تدخل في المتوسط العام). لا تُحذف حالة فاشلة؛ تُضاف حالات جديدة بإصدار جديد.",
-  "version": 1,
+  "_about": "HKM-062: مجموعة ذهبية لأسئلة الناس (فصحى وعامية خليجية) لقياس hakeem_search عبر searchArticles نفسها (lib/mcp/adapter.ts). لكل سؤال المادة أو المواد التي تجيبه بمعرّفها في القاعدة، تحقق منها بقراءة نص المادة (SELECT قراءة فقط على Neon misty-base-66693229، الفرع br-rapid-salad-aq782ea2، 29/10/2026) لا من الذاكرة. expected: أي مادة منها في الترتيب k تُعدّ إصابة (hit@k)، وMRR من رتبة أول مادة متوقعة. gates: بوابات تسليم #943 التي لا يجوز أن تتراجع (لا تدخل في المتوسط العام). heldout: 13 سؤالًا كُتبت بعد بناء جسر لغة الناس ولم يُضبط عليها (فحص التعميم)، تُقاس منفصلة. لا تُحذف حالة فاشلة؛ تُضاف حالات جديدة بإصدار جديد. الإصدار 2: أضيفت م65 إجراءات جزائية مقبولة لسؤال المحامي وقت التحقيق، والمجموعة المحجوزة.",
+  "version": 2,
   "verified_at": "2026-10-29",
   "verified_by": "Claude (HKM-062)، قراءة نص المادة من legal_articles.content",
   "queries": [
@@ -116,7 +116,8 @@
       { "article_id": "cmpwi30y600i1nxff2ljz2n7k", "law": "نظام الإجراءات الجزائية", "article": 34, "why": "إرسال المقبوض عليه إلى المحقق خلال 24 ساعة" },
       { "article_id": "cmpwi3poh00m7nxff9ooulkin", "law": "نظام الإجراءات الجزائية", "article": 109, "why": "ألا تزيد مدة الإيداع دون استجواب على 24 ساعة" } ] },
     { "id": "crim-right-to-lawyer", "query": "هل يحق للمتهم يوكل محامي وقت التحقيق", "register": "gulf", "domain": "إجراءات جزائية", "expected": [
-      { "article_id": "cmpwi2qs800gdnxffcd9zven6", "law": "نظام الإجراءات الجزائية", "article": 4, "why": "حق المتهم في الاستعانة بوكيل أو محام" } ] },
+      { "article_id": "cmpwi2qs800gdnxffcd9zven6", "law": "نظام الإجراءات الجزائية", "article": 4, "why": "حق المتهم في الاستعانة بوكيل أو محام" },
+      { "article_id": "cmpwi3b6200jrnxffdr5gtil9", "law": "نظام الإجراءات الجزائية", "article": 65, "why": "للمتهم حق الاستعانة بوكيل أو محام لحضور التحقيق" } ] },
     { "id": "crim-home-search", "query": "هل يحق للشرطة تفتش بيتي بدون إذن", "register": "gulf", "domain": "إجراءات جزائية", "expected": [
       { "article_id": "cmpwi33la00ihnxffdbtvwui7", "law": "نظام الإجراءات الجزائية", "article": 42, "why": "لا دخول لمكان مسكون أو تفتيشه إلا بأمر مسبب" },
       { "article_id": "cmpwi3g9w00klnxffcilmmarr", "law": "نظام الإجراءات الجزائية", "article": 80, "why": "تفتيش المساكن عمل من أعمال التحقيق" } ] },
@@ -158,6 +159,38 @@
       { "article_id": "cmpzcuwl007ckvtrkwtu8g82l", "law": "نظام التحكيم", "article": 50, "why": "أحوال قبول دعوى البطلان" } ] },
     { "id": "arb-annulment-deadline", "query": "كم مدة رفع دعوى بطلان حكم التحكيم", "register": "msa", "domain": "تحكيم", "expected": [
       { "article_id": "cmpzcuwl007clvtrkjfovltt3", "law": "نظام التحكيم", "article": 51, "why": "رفع دعوى البطلان خلال ستين يومًا" } ] }
+  ],
+  "heldout": [
+    { "id": "h-labor-sick-leave", "query": "كم يوم الإجازة المرضية اللي أستحقها", "register": "gulf", "domain": "عمل", "expected": [
+      { "article_id": "cmpzcv89s0aprvtrkc3prxyuw", "law": "نظام العمل", "article": 117, "why": "الإجازة المرضية: 30 بأجر و60 بثلاثة أرباعه و30 بلا أجر" } ] },
+    { "id": "h-labor-late-salary", "query": "صاحب الشغل متأخر في صرف راتبي وش أسوي", "register": "gulf", "domain": "عمل", "expected": [
+      { "article_id": "cmpzcv89s0ap4vtrkexsgf3pu", "law": "نظام العمل", "article": 94, "why": "تأخر صاحب العمل عن أداء الأجر في موعده" },
+      { "article_id": "cmpzcv89s0ap0vtrkf1uyewpp", "law": "نظام العمل", "article": 90, "why": "مواعيد دفع الأجر" } ] },
+    { "id": "h-labor-weekly-rest", "query": "هل يوم الجمعة إجازة للعامل", "register": "msa", "domain": "عمل", "expected": [
+      { "article_id": "cmpzcv89s0apevtrkz46grxcz", "law": "نظام العمل", "article": 104, "why": "الجمعة يوم الراحة الأسبوعية" } ] },
+    { "id": "h-labor-notice-resign", "query": "ابي اعرف كم مدة الإشعار اذا بغيت اترك العمل", "register": "gulf", "domain": "عمل", "expected": [
+      { "article_id": "cmpzcv89s0aolvtrk4sskedrt", "law": "نظام العمل", "article": 75, "why": "إشعار ثلاثين يومًا قبل إنهاء العقد غير المحدد المدة" } ] },
+    { "id": "h-proc-default-judgment", "query": "صدر علي حكم غيابي هل أقدر أعارض عليه", "register": "gulf", "domain": "مرافعات", "expected": [
+      { "article_id": "cmpwiab0f01q3nxffcwvptcms", "law": "نظام المرافعات الشرعية", "article": 60, "why": "المعارضة على الحكم الغيابي" } ] },
+    { "id": "h-family-iddah-maintenance", "query": "طلقني زوجي هل لي نفقة وأنا في العدة", "register": "gulf", "domain": "أحوال شخصية", "expected": [
+      { "article_id": "cmpwi0ve10053nxffpp40fs8i", "law": "نظام الأحوال الشخصية", "article": 53, "why": "نفقة المعتدة من طلاق رجعي" } ] },
+    { "id": "h-family-child-maintenance", "query": "أبوهم ما يصرف على عياله وش الحكم", "register": "gulf", "domain": "أحوال شخصية", "expected": [
+      { "article_id": "cmpwi0wxu005dnxffty0r5n66", "law": "نظام الأحوال الشخصية", "article": 58, "why": "نفقة الولد على الأب" } ] },
+    { "id": "h-civil-guarantor", "query": "كفلت واحد في دين وما سدد هل يطالبوني أنا", "register": "gulf", "domain": "معاملات مدنية", "expected": [
+      { "article_id": "cmpwihg6l02wbnxffu6r3qhv3", "law": "نظام المعاملات المدنية", "article": 578, "why": "الكفالة: الكفيل يفي إذا لم يف المدين" },
+      { "article_id": "cmpwihkr302x1nxffsplat65l", "law": "نظام المعاملات المدنية", "article": 591, "why": "لا رجوع على الكفيل وحده إلا بعد الرجوع على المدين" } ] },
+    { "id": "h-evid-decisive-oath", "query": "وش اليمين الحاسمة", "register": "gulf", "domain": "إثبات", "expected": [
+      { "article_id": "cmpz62zrr03q5cwg207sb8fxn", "law": "نظام الإثبات", "article": 92, "why": "تعريف اليمين الحاسمة" } ] },
+    { "id": "h-data-leak-penalty", "query": "شركة نشرت بياناتي الحساسة وش عقوبتها", "register": "gulf", "domain": "بيانات", "expected": [
+      { "article_id": "cmpz62iw403klcwg20oy07wfs", "law": "نظام حماية البيانات الشخصية", "article": 35, "why": "عقوبة الإفصاح عن البيانات الحساسة أو نشرها" } ] },
+    { "id": "h-com-trademark-register", "query": "كيف أسجل علامة تجارية", "register": "msa", "domain": "تجاري", "expected": [
+      { "article_id": "cmpz63sv003zhcwg2u9sw1401", "law": "نظام العلامات التجارية", "article": 5, "why": "تقديم طلب تسجيل العلامة" } ] },
+    { "id": "h-com-fraud-goods", "query": "التاجر غشني في نوع البضاعة", "register": "gulf", "domain": "تجاري", "expected": [
+      { "article_id": "cmpz6ft590813cwg22t1hqbzo", "law": "نظام مكافحة الغش التجاري", "article": 2, "why": "الخداع في ذاتية المنتج أو نوعه" },
+      { "article_id": "cmpz6fve7081vcwg2dapuxg02", "law": "نظام مكافحة الغش التجاري", "article": 16, "why": "عقوبة مخالفات المادة الثانية" } ] },
+    { "id": "h-crim-lawyer-at-interrogation", "query": "ابي محامي يحضر معي التحقيق", "register": "gulf", "domain": "إجراءات جزائية", "expected": [
+      { "article_id": "cmpwi3b6200jrnxffdr5gtil9", "law": "نظام الإجراءات الجزائية", "article": 65, "why": "حق الاستعانة بوكيل أو محام لحضور التحقيق" },
+      { "article_id": "cmpwi2qs800gdnxffcd9zven6", "law": "نظام الإجراءات الجزائية", "article": 4, "why": "حق المتهم في الاستعانة بمحام" } ] }
   ],
   "gates": [
     { "id": "gate-taghrir", "query": "ما هو التغرير في العقد", "kind": "rank1", "expected": [
