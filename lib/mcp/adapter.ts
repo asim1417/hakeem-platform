@@ -21,7 +21,7 @@ import { latestVerification } from "@/lib/modules/legal-core/verification-read";
 import { NON_ARTICLE_BIS } from "@/lib/modules/legal-core/article-key";
 import { effectiveArticleTexts } from "@/lib/modules/legal-core/effective-text";
 import { BUDGET_EXCEEDED, filterArticleIdsToSurface, hybridSearch, providerBudgetMs, withBudget } from "@/lib/modules/legal-search/hybrid-search";
-import { acceptFill, keepCandidate, rankFused, RARE_TERM_MAX, type FusionCandidate } from "@/lib/mcp/search-fusion";
+import { acceptFill, keepCandidate, lexicalPageUsable, rankFused, RARE_TERM_MAX, type FusionCandidate } from "@/lib/mcp/search-fusion";
 import { handleSemanticSearch, hintedLaws, queryKeywords } from "@/lib/mcp/tools/semantic";
 import { handleEnumerate } from "@/lib/mcp/tools/enumerate";
 import { loadLawCatalog } from "@/lib/mcp/tools/catalog";
@@ -31,6 +31,7 @@ import { prismaSqlClient } from "@/lib/modules/legal-core/sql-port";
 import { getSiteUrl } from "@/lib/modules/config/site-url";
 import { getLawTool } from "@/lib/mcp/tools/get-law";
 import { articleRef } from "@/lib/mcp/tools/citation";
+import { articleIssuance, loadLawCardIssuance } from "@/lib/mcp/tools/article-issuance";
 import type { SqlClient } from "@/lib/modules/legal-core/sql-port";
 import { queryTokens } from "@/lib/modules/legal-core/ruling-excerpts";
 import {
@@ -94,7 +95,8 @@ async function fusedArticleIds(query: string, lawId: string | undefined, limit: 
     return r === BUDGET_EXCEEDED ? fallback : (r as T);
   };
   const [semantic, lexicalPages, catalog] = await Promise.all([
-    bounded(handleSemanticSearch(db, { query, limit: 20 }) as Promise<Awaited<ReturnType<typeof handleSemanticSearch>> | null>, null),
+    // HKM-053: الحصر بالنظام داخل استعلام المتجهات (كان يُجلب أقرب 20 من المدونة ثم يُصفّى فيخلو).
+    bounded(handleSemanticSearch(db, { query, limit: 20, ...(lawId ? { law_id: lawId } : {}) }) as Promise<Awaited<ReturnType<typeof handleSemanticSearch>> | null>, null),
     Promise.all(probe.map((t) => bounded(handleEnumerate({ terms: [t], law_id: lawId, page_size: RARE_TERM_MAX, snippet_len: 2000 }), null))),
     bounded(loadLawCatalog(db), []),
   ]);
@@ -102,10 +104,10 @@ async function fusedArticleIds(query: string, lawId: string | undefined, limit: 
   const cands: FusionCandidate[] = [];
   const semResults = semantic && "results" in semantic ? (semantic.results as Array<{ article_id: string; law_id: string | null; similarity: number; keyword_coverage: number }>) : [];
   for (const r of semResults) {
-    if (lawId && r.law_id !== lawId) continue;
+    if (lawId && r.law_id !== lawId) continue; // صمام أمان: الاستعلام محصور أصلًا
     cands.push({ id: r.article_id, coverage: r.keyword_coverage, similarity: r.similarity, lexicalHit: false, lawNamed: Boolean(r.law_id && named.has(r.law_id)) });
   }
-  const lexRows = lexicalPages.flatMap((page) => (!page || page.total === 0 || page.total > RARE_TERM_MAX ? [] : page.page.filter((r) => !r.repealed)));
+  const lexRows = lexicalPages.flatMap((page) => (!page || !lexicalPageUsable(page.total, Boolean(lawId)) ? [] : page.page.filter((r) => !r.repealed)));
   // HKM-051: القرب بين الألفاظ يُقاس على النص الكامل لا المقتطف المقصوص.
   const fullText = new Map<string, string>();
   if (lexRows.length) {
@@ -126,14 +128,14 @@ async function fusedArticleIds(query: string, lawId: string | undefined, limit: 
 // ١) البحث في المواد — HKM-048: دمج دليلين مستقلين (اللفظ النادر + المعنى) بترتيب تغطية الألفاظ،
 // وعند خلوّهما يرجع إلى المحرّك الهجين القديم (لا تتراجع القدرة).
 export async function searchArticles(query: string, lawId?: string, limit = 10, opts: { lexicalProbe?: boolean } = {}) {
-  // حين يُطلب حصرٌ بنظام معيّن نوسّع سقف الجلب ثم نُصفّي (المحرّك لا يقيّد بالنظام).
-  const fetchLimit = lawId ? Math.min(limit * 4, 30) : limit;
+  // HKM-053: الحصر بالنظام شرط داخل المصادر الثلاثة (الدلالي واللفظي والهجين) قبل الترتيب، والتصفية بعدها صمام أمان.
+  const fetchLimit = limit;
   let ranked: Array<{ id: string; type: string }> = await fusedArticleIds(query, lawId, fetchLimit, opts.lexicalProbe ?? true).catch(() => []);
   const fusedIds = new Set(ranked.map((r) => r.id));
   if (ranked.length < fetchLimit) {
     // تكملة من المحرك الهجين حتى الحد (لا يقل الاسترجاع عن السابق)، بلا تكرار.
     // المواد وحدها: الأحكام لا تأخذ مقاعد في الدمج ثم تُحذف (كانت تكشف بعدد المواد المعادة وجود اسم فرد في الأحكام).
-    const res = await hybridSearch({ q: query, limit: fetchLimit, types: ["article"] }).catch(() => null);
+    const res = await hybridSearch({ q: query, limit: fetchLimit, types: ["article"], ...(lawId ? { lawIds: [lawId] } : {}) }).catch(() => null);
     const have = new Set(ranked.map((r) => r.id));
     ranked = [...ranked, ...(res?.results ?? []).filter((r) => r.type === "article" && !have.has(r.id))].slice(0, fetchLimit);
   }
@@ -163,7 +165,7 @@ export async function searchArticles(query: string, lawId?: string, limit = 10, 
   const inScope = ranked
     .map((r) => byId.get(r.id))
     .filter((r): r is NonNullable<typeof r> => Boolean(r))
-    .filter((r) => (lawId ? r.legalSystemId === lawId || r.legalSystem?.id === lawId : true));
+    .filter((r) => (lawId ? r.legalSystemId === lawId || r.legalSystem?.id === lawId : true)); // صمام أمان
   // HKM-049: مادة التكملة الهجينة لا تدخل إلا إن غطّت نصف ألفاظ السؤال في نصها (يقطع الضجيج: م5 لائحة التدريب).
   const relevant = inScope.filter((r) => fusedIds.has(r.id) || acceptFill(fillCoverage(r.content ?? ""), fillTerms.length));
   // لا تراجع في الاسترجاع: إن لم يبقَ شيء (الدمج خلا وكل التكملة دون الحد) تُعاد التكملة كما كانت.
@@ -193,13 +195,19 @@ export async function getArticle(articleId: string) {
     include: { legalSystem: { select: { id: true, name: true } } },
   });
   if (!a) return { error: "المادة غير موجودة" };
-  const e = (await effectiveArticleTexts([{ id: a.id, content: a.content }])).get(a.id);
+  const [effective, card] = await Promise.all([
+    effectiveArticleTexts([{ id: a.id, content: a.content }]),
+    // HKM-053: أداة الإصدار من بطاقة النظام عند غياب عمود المادة (كان issued_by فارغًا للإفلاس والإثبات).
+    !a.royalDecree?.trim() && a.legalSystemId ? loadLawCardIssuance(prismaSqlClient(prisma), a.legalSystemId).catch(() => null) : Promise.resolve(null),
+  ]);
+  const e = effective.get(a.id);
+  const issuance = articleIssuance(a.royalDecree, card);
   return {
     article_id: a.id,
     law: a.legalSystem?.name ?? a.lawName,
     law_id: a.legalSystem?.id ?? a.legalSystemId,
-    issued_by: a.royalDecree ?? null, // أداة الإصدار على مستوى المادة (المرسوم الملكي)
-    issued_date_h: null, // لا يوجد تاريخ هجري منظّم في المخطط الحالي
+    issued_by: issuance.issuedBy, // أداة المادة إن وُجدت، وإلا أداة إصدار النظام من بطاقته
+    issued_date_h: issuance.issuedDateH, // تاريخ إصدار النظام من بطاقته (null مع أداة على مستوى المادة)
     article_number: a.articleNumber,
     article_bis: a.articleBis ?? 0, // درجة «مكرر» (0 للأصل) — HKM-030
     // status بقيمه المعهودة (سارية/معدّلة/ملغاة)؛ verified_status = حالة سجل التحقق.

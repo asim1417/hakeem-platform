@@ -4,7 +4,8 @@
  *
  * الاسترجاع من متجهات المواد (vectorProvider، أعلى 20)، ثم إعادة ترتيب:
  *   0.65 × التشابه + 0.35 × تغطية ألفاظ السؤال (كلمات كاملة بالاشتقاق في النص الساري) + 0.08 إن سمّى السؤال النظام.
- * المرشحات تُطبَّق بعد الاسترجاع (المتجهات لا تُرشَّح بالنظام)، فقد تقل النتائج: الملاحظة تقول ذلك.
+ * HKM-053: مرشح الأنظمة (law_id/law_ids/التصنيف/النوع/السنة) يُمرَّر إلى استعلام المتجهات فيُحصر قبل الترتيب،
+ * ويبقى الترشيح بعد الاسترجاع صمام أمان (الملاحظة تقول إن أسقط شيئًا).
  * البحث الدلالي معطّل = نتيجة صريحة disabled لا قائمة فارغة توهم النفي. قراءة فقط.
  */
 import type { SqlClient } from "../../modules/legal-core/sql-port";
@@ -18,7 +19,7 @@ export interface SemanticDeps {
   effective?: EffectiveFn;
   enabled?: () => boolean;
   /** أقرب المواد بالمتجه: معرّف المادة والتشابه (0..1). */
-  vectorSearch?: (q: string, limit: number) => Promise<Array<{ id: string; score: number }>>;
+  vectorSearch?: (q: string, limit: number, lawIds?: string[]) => Promise<Array<{ id: string; score: number }>>;
 }
 
 const QUERY_STOP = new Set(
@@ -72,13 +73,13 @@ export async function handleSemanticSearch(db: SqlClient, args: FilterArgs & { q
   if (!query) return { status: "empty_query", query, results: [], note: "السؤال فارغ." };
   const vectorSearch =
     deps.vectorSearch ??
-    (async (q: string, n: number) => {
+    (async (q: string, n: number, lawIds?: string[]) => {
       const { vectorProvider } = await import("@/lib/modules/legal-search/providers/vector-provider");
-      const raw = await vectorProvider.search({ q, limit: n, types: ["article"], minScore: SEMANTIC_TOOL_MIN_SCORE });
+      const raw = await vectorProvider.search({ q, limit: n, types: ["article"], minScore: SEMANTIC_TOOL_MIN_SCORE, lawIds });
       return raw.filter((r) => r.type === "article").map((r) => ({ id: r.id, score: r.score }));
     });
-  const hits = await vectorSearch(query, 20);
   const scope = await lawScopeForFilters(db, filtersFromArgs(args));
+  const hits = await vectorSearch(query, 20, scope.include?.length ? scope.include : undefined);
   if (!hits.length) {
     return { status: "ok", query, results: [], scope: { filters: scope.label }, note: "لا مادة قريبة المعنى فوق عتبة التشابه. جرّب صياغة أخرى أو hakeem_search (لفظي + دلالي)." };
   }

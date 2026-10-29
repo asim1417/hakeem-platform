@@ -57,6 +57,15 @@ export function rankFused(candidates: FusionCandidate[], limit: number): Array<F
 /** أقصى عدد نتائج لفظ نادر يُعدّ دليلًا (ما زاد لفظ شائع لا يميّز مادة). */
 export const RARE_TERM_MAX = 50;
 
+/**
+ * HKM-053: صفحة الحصر اللفظي دليلٌ إن خلت من الشائع. الندرة تُقاس على المدونة؛ داخل نظام واحد اللفظ المتكرر هو موضوع
+ * السؤال («التصفية» في 59 مادة من الإفلاس) فتُقبل صفحته (وهي محصورة في النظام أصلًا).
+ */
+export function lexicalPageUsable(total: number, scopedToLaw: boolean): boolean {
+  if (!Number.isFinite(total) || total <= 0) return false;
+  return scopedToLaw || total <= RARE_TERM_MAX;
+}
+
 /** HKM-049: أدنى تغطية لألفاظ السؤال لتُقبل مادة جاءت من تكملة المحرك الهجين (ما دونها ضجيج لا يطابق السؤال). */
 export const FILL_MIN_COVERAGE = 0.75;
 

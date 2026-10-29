@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { findRelevantLegalArticles } from "@/lib/modules/legal-core/legal-retrieval";
 import { maskPersonalData } from "@/lib/rulings/research/mask";
-import { wantsType, type RawResult, type SearchProvider, type SearchQuery } from "./search-provider";
+import { scopedLawIds, wantsType, type RawResult, type SearchProvider, type SearchQuery } from "./search-provider";
 
 // مزوّد البحث النصّي على PostgreSQL — متاح دائماً (قاعدة المنصّة الأساسية).
 //
@@ -79,7 +79,8 @@ export const postgresProvider: SearchProvider = {
     // المواد النظامية — عبر بحث النواة العربي (تفكيك + مشتقّات + ترتيب بالصلة).
     // semantic:false كي يبقى هذا المزوّد معجمياً صرفاً (الدلالي مسؤولية vector-provider).
     try {
-      const articles = await findRelevantLegalArticles(term, { limit: take, semantic: false });
+      // HKM-053: الحصر بالنظام شرط داخل بحث النواة (systemIds) لا تصفية بعده.
+      const articles = !wantsType(query, "article") ? [] : await findRelevantLegalArticles(term, { limit: take, semantic: false, systemIds: scopedLawIds(query) ?? undefined });
       const maxRel = Math.max(1, ...articles.map((a) => a.relevanceScore));
       for (const a of articles) {
         results.push({
