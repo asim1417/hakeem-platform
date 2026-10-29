@@ -239,6 +239,47 @@ def split_date(raw: str | None):
             f"{g.group(3)}-{int(g.group(2)):02d}-{int(g.group(1)):02d}" if g else None)
 
 
+def is_placeholder_hijri(h: str | None) -> bool:
+    """HKM-056: تاريخ إصدار ينتهي بـ /01/01 وهمي في الهيئة (يوم غير معروف)، فلا يُعتمد."""
+    return bool(h) and h.endswith("/01/01")
+
+
+def instrument_date_hijri(instruments: list[str]) -> str | None:
+    """تاريخ سند الإصدار: أول أداة (مرسوم/قرار/أمر) فيها تاريخ هجري غير وهمي، بصيغة YYYY/MM/DD.
+    الهيئة تكتبه يومًا/شهرًا/سنة («بتاريخ 29 / 3 / 1423») وأحيانًا سنة أولًا («1439/5/28هـ»)."""
+    ordered = sorted(instruments, key=lambda x: 0 if HEAD_RE.match(x) else 1)
+    for x in ordered:
+        t = x.translate(AR_DIGITS)
+        m = re.search(r"(?<!\d)(\d{4})\s*/\s*(\d{1,2})\s*/\s*(\d{1,2})(?!\d)", t)
+        if m:
+            y, mo, d = m.group(1), m.group(2), m.group(3)
+        else:
+            m = re.search(r"(?<!\d)(\d{1,2})\s*/\s*(\d{1,2})\s*/\s*(\d{4})(?!\d)", t)
+            if not m:
+                continue
+            d, mo, y = m.group(1), m.group(2), m.group(3)
+        if not (1 <= int(mo) <= 12 and 1 <= int(d) <= 30):
+            continue
+        h = f"{y}/{int(mo):02d}/{int(d):02d}"
+        if not is_placeholder_hijri(h):
+            return h
+    return None
+
+
+def card_root(doc):
+    """HKM-056: البطاقة من رأس النسخة الحالية (div.system_info)، لا من أول وسم label في الصفحة؛ وبلا رأس فالصفحة كلها."""
+    heads = doc.cssselect("div.system_info")
+    return heads[0] if heads else doc
+
+
+def popup_owner(el):
+    """أقرب div.article_item يحوي العنصر (المواد المتداخلة: الملاحظة لمادتها الداخلية وحدها)."""
+    for p in el.iterancestors():
+        if "article_item" in (p.get("class") or "").split():
+            return p
+    return None
+
+
 def blocks_from_lines(lines: list[str]) -> list[dict]:
     """كتل ما قبل المواد بترتيب المصدر. الأسطر مجتمعة = النص كاملًا (يُفحص)."""
     blocks: list[dict] = []
@@ -300,7 +341,7 @@ def parse_page(rec: dict, cat: dict | None) -> dict:
     crumbs = [c for c in crumbs if c]
     # البطاقة
     card: dict = {}
-    for lab in doc.xpath("//label"):
+    for lab in card_root(doc).xpath(".//label"):
         key = CARD_LABELS.get(lab.text_content().strip())
         if not key or key in card:
             continue
@@ -372,6 +413,8 @@ def parse_page(rec: dict, cat: dict | None) -> dict:
             seen_notes: set[str] = set()
             k = 0
             for pop in a.cssselect(".article_item_popup .HTMLContainer"):
+                if popup_owner(pop) is not a:
+                    continue  # HKM-056: ملاحظة مادة متداخلة داخل هذه؛ تُسند لمادتها حين يأتي دورها لا للمادة الحاوية
                 nt = to_text(pop)
                 if not nt or nt in seen_notes:
                     continue  # الصفحة تكرر الملاحظة نفسها أحيانًا؛ تُدوَّن مرة واحدة
@@ -407,6 +450,11 @@ def parse_page(rec: dict, cat: dict | None) -> dict:
             seen.add((m.group(1), label))
             related.append({"target_guid": m.group(1), "label": label})
     ih, ig = split_date(card.get("issued"))
+    if is_placeholder_hijri(ih):
+        # HKM-056: اليوم والشهر 01/01 وهميان (والميلادي تحويل الوهمي)؛ التاريخ من سند الإصدار، ويبقى issued_raw كما ورد.
+        fixed = instrument_date_hijri(card.get("instruments", []))
+        flags.append(f"issued_placeholder:{'from_instrument' if fixed else 'unresolved'}")
+        ih, ig = fixed, None
     ph, pg = split_date(card.get("published"))
     law_id = sid(rec["guid"], rec["sha256"])
     law = {

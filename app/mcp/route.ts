@@ -21,6 +21,7 @@ import { registerPhase1Tools } from "@/lib/mcp/register-phase1";
 import { mcpAccessMode, mcpClosedResponse } from "@/lib/mcp/policy";
 import { verifyMcpRequest } from "@/lib/mcp/principal";
 import { runMcpTool } from "@/lib/mcp/tool-runner";
+import { withMcpRequestLog } from "@/lib/mcp/request-log";
 
 // Prisma يتطلّب بيئة Node (لا Edge)، والمخرجات ديناميكية دائمًا.
 export const runtime = "nodejs";
@@ -297,6 +298,8 @@ async function gate(req: Request): Promise<Response> {
   return mode === "auth" ? authedHandler(req) : openHandler(req);
 }
 
-export const GET = gate;
-export const POST = gate;
-export const DELETE = gate;
+// HKM-054 (تشخيص): سجل بدء كل طلب وانتهائه ومدته ومرحلة تعلّقه، بلا تغيير السلوك (lib/mcp/request-log.ts).
+const logged = withMcpRequestLog(gate);
+export const GET = logged;
+export const POST = logged;
+export const DELETE = logged;
