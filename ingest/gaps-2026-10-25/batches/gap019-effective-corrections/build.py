@@ -31,7 +31,16 @@ def h(*p):
     return hashlib.sha256('|'.join(p).encode()).hexdigest()[:24]
 
 
+import datetime, re, warnings
+warnings.filterwarnings('ignore')
+from hijri_converter import Hijri
 R = {r['sid']: r for r in json.load(open(D / 'computed.json', encoding='utf-8'))}
+for r in R.values():
+    r['N'] = r['days2'] if r.get('days2') is not None else r.get('days')
+    if r['N'] is not None and r.get('pub_h'):
+        y, mo, da = map(int, re.split(r'[-/]', r['pub_h'])[:3])
+        g = Hijri(y, mo, da).to_gregorian()
+        r['pub_g_calc'], r['eff'] = g.isoformat(), (g + datetime.timedelta(days=r['N'])).isoformat()
 P = {x['item']: x for x in json.load(open(D / 'verify_packet.json', encoding='utf-8'))['items']}
 ver = {}
 for l in open(V, encoding='utf-8'):
