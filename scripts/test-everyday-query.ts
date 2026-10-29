@@ -4,8 +4,7 @@
  */
 import assert from "node:assert/strict";
 import { queryStemVariants } from "../lib/modules/legal-core/arabic-morphology";
-import { isCommonTerm } from "../lib/mcp/common-terms";
-import { groupTerms, pickProbes, planQuery, probeTerms } from "../lib/mcp/query-plan";
+import { groupTerms, planQuery } from "../lib/mcp/query-plan";
 import { dropRequestPhrases, queryKeywords } from "../lib/mcp/query-words";
 import { fusionScore, WEIGHTS_DISTINCTIVE, WEIGHTS_WEAK_LEXICAL } from "../lib/mcp/search-fusion";
 import { compileAny, matchesText, normalizeAr } from "../lib/mcp/tools/word-match";
@@ -129,31 +128,6 @@ check("compileAny: صيغة واحدة = compileTerm، ولا صيغ = null", ()
   assert.equal(compileAny("x", []), null);
   const one = compileAny("الغبن", ["الغبن"])!;
   assert.ok(one.literal.length > 0 && matchesText("بالغبن", one));
-});
-
-// ── اختيار ما يُحصر لفظيًّا ──
-check("الألفاظ الشائعة في المدونة معروفة، والنادرة ليست منها", () => {
-  for (const w of ["العقد", "يعتبر", "تجاري", "مهلة", "عقوبة", "الاستئناف"]) assert.ok(isCommonTerm(n(w)), w);
-  for (const w of ["تستر", "التفحيط", "عربون", "الغبن", "ابتزاز", "مقابل وفاء"]) assert.equal(isCommonTerm(n(w)), false, w);
-});
-check("بلا حصر بنظام: «وش يعتبر تستر تجاري» يحصر «تستر» لا «يعتبر» و«تجاري»", () => {
-  const picked = pickProbes(planQuery("وش يعتبر تستر تجاري").groups, false);
-  assert.deepEqual(picked.map((p) => p.group.term), ["تستر"]);
-});
-check("اللفظ الشائع يُحصر ببديله النادر وحده: «بدون رصيد» ← «مقابل وفاء»، والنادر بصيغه وبديله", () => {
-  const gs = planQuery("عقوبة الشيك بدون رصيد").groups;
-  assert.deepEqual(probeTerms(gs.find((x) => x.term === "بدون")!), [n("مقابل وفاء")]);
-  assert.deepEqual(probeTerms(gs.find((x) => x.term === "رصيد")!), ["رصيد", n("مقابل وفاء")]);
-  assert.deepEqual(probeTerms(gs.find((x) => x.term === n("عقوبة"))!), [], "عقوبة وصيغها وبديلها شائعة");
-});
-check("مع الحصر بنظام كما كان: أطول لفظين بكل صيغهما", () => {
-  const picked = pickProbes(planQuery("التصفية").groups, true);
-  assert.deepEqual(picked.map((p) => p.group.term), [n("التصفية")]);
-  const two = pickProbes(planQuery("مدة الاعتراض على الحكم").groups, true);
-  assert.deepEqual(two.map((p) => p.group.term), [n("الاعتراض"), n("الحكم")]);
-});
-check("سؤال كل ألفاظه شائعة لا يحصر شيئًا بلا نظام (لا مسح مرفوض يقينًا)", () => {
-  assert.deepEqual(pickProbes(planQuery("مدة الاعتراض على الحكم").groups, false), []);
 });
 
 // ── أوزان الدمج ──

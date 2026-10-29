@@ -37,7 +37,7 @@ import {
   type FusionCandidate,
 } from "@/lib/mcp/search-fusion";
 import { handleSemanticSearch, hintedLaws, SEMANTIC_TOOL_MIN_SCORE } from "@/lib/mcp/tools/semantic";
-import { groupTerms, pickProbes, planQuery } from "@/lib/mcp/query-plan";
+import { groupTerms, planQuery } from "@/lib/mcp/query-plan";
 import { handleEnumerate } from "@/lib/mcp/tools/enumerate";
 import { loadLawCatalog } from "@/lib/mcp/tools/catalog";
 import { compileAny, matchPositions, normalizeAr, windowCoverage, type CompiledTerm } from "@/lib/mcp/tools/word-match";
@@ -101,20 +101,16 @@ export interface SearchTuning {
   /** جسر لغة الناس: صيغ اللفظ الصرفية وجمعه وبدائل النظام في التغطية والحصر (lib/mcp/query-plan.ts). */
   bridge?: boolean;
   /**
-   * نص البحث الدلالي: السؤال كما هو، أو بلا عبارة الطلب، أو بلفظ النظام مكان اللفظ الدارج (plan)، أو السؤال بلا حشو
-   * وألفاظ النظام ملحقة في آخره (append، الافتراض: أعلى hit@3 في القياس بنداء تضمين واحد)، أو بحثان دلاليان (both).
+   * نص البحث الدلالي (نداء تضمين واحد في كل حال): السؤال كما هو، أو بلا عبارة الطلب، أو بلفظ النظام مكان اللفظ الدارج
+   * (plan)، أو السؤال بلا حشو وألفاظ النظام ملحقة في آخره (append، الافتراض: أعلى hit@3 في القياس).
    */
-  semanticText?: "original" | "cleaned" | "plan" | "append" | "both";
+  semanticText?: "original" | "cleaned" | "plan" | "append";
   /** تقديم المعنى حين لا يحمل السؤال لفظًا نادرًا مميِّزًا. */
   adaptiveWeights?: boolean;
   /** تشابه المعنى للمرشحين اللفظيين أيضًا (لا لأقرب الجيران وحدهم). */
   lexicalSimilarity?: boolean;
   /** «المادة 55 من نظام العمل»: المادة نفسها أولًا. */
   exactCitation?: boolean;
-  /** الحصر اللفظي بلا حصر بنظام: يُترك اللفظ الشائع يقينًا (common-terms) لما هو أندر، بدل «أطول لفظين». */
-  dfProbes?: boolean;
-  /** ومعه بدائل النظام النادرة («مقابل وفاء») في الحصر، لا ألفاظ السائل وحدها. */
-  probeAlts?: boolean;
 }
 
 const TUNING_DEFAULTS: Required<SearchTuning> = {
@@ -124,8 +120,6 @@ const TUNING_DEFAULTS: Required<SearchTuning> = {
   adaptiveWeights: true,
   lexicalSimilarity: true,
   exactCitation: true,
-  dfProbes: true,
-  probeAlts: true,
 };
 
 /** ألفاظ السؤال مجموعاتٍ مُجمَّعة (كل مجموعة لفظ بصيغه وبدائله، OR). */
@@ -142,12 +136,10 @@ async function fusedArticleIds(query: string, lawId: string | undefined, limit: 
   const { plan, compiled } = compiledGroups(query, tuning.bridge);
   if (!compiled.length) return { ids: [], compiled };
   const semText =
-    tuning.semanticText === "original" ? query : tuning.semanticText === "cleaned" ? plan.cleaned : tuning.semanticText === "append" ? plan.semanticAppend : plan.semanticText;
-  // «both»: بحث ثانٍ بالسؤال المنظف إن غيّره الجسر (للقياس؛ يضاعف نداء التضمين).
-  const semText2 = tuning.semanticText === "both" && plan.cleaned !== semText ? plan.cleaned : null;
-  // حصران كحدٍّ أقصى لضبط الكلفة (كل حصر مسح كامل للمدونة). HKM-062: بلا حصر بنظام لا يُحصر لفظ شائع يقينًا (صفحته
-  // مرفوضة)، فيأخذ مقعده لفظ أندر؛ والحصر بصيغ اللفظ وبدائله النادرة («رصيد» ← «مقابل وفاء»). ومع الحصر بنظام كما كان.
-  const probe = tuning.lexicalProbe ? pickProbes(plan.groups, Boolean(lawId) || !tuning.dfProbes, 2, tuning.probeAlts) : [];
+    tuning.semanticText === "original" ? query : tuning.semanticText === "cleaned" ? plan.cleaned : tuning.semanticText === "plan" ? plan.semanticText : plan.semanticAppend;
+  // الألفاظ الأطول أندر غالبًا؛ حصران كحدٍّ أقصى لضبط الكلفة (كل حصر مسح كامل للمدونة). HKM-062: الحصر بصيغ اللفظ
+  // وبدائله، فاللفظ الدارج النادر («مهلة») لا يجلب وحده ما لا علاقة له (رخص المياه): صفحة «مهلة أو مدة» شائعة فتُرفض.
+  const probe = tuning.lexicalProbe ? [...plan.groups].sort((a, b) => b.term.length - a.term.length).slice(0, 2) : [];
   // ميزانية زمنية لكل مصدر: البطيء يُسقَط وتبقى نتائج الآخر (كما في المحرك الهجين).
   const budget = providerBudgetMs();
   const bounded = async <T>(work: Promise<T>, fallback: T): Promise<T> => {
@@ -162,10 +154,9 @@ async function fusedArticleIds(query: string, lawId: string | undefined, limit: 
   const semFloor = tuning.adaptiveWeights ? WEAK_EVIDENCE_SEMANTIC_MIN : SEMANTIC_TOOL_MIN_SCORE;
   const semanticOf = (text: string) =>
     bounded(handleSemanticSearch(db, { query: text, limit: 20, ...(lawId ? { law_id: lawId } : {}) }, { coverageTerms: compiled, minScore: semFloor }) as Promise<Sem>, null);
-  const [semantic, semantic2, lexicalPages, catalog] = await Promise.all([
+  const [semantic, lexicalPages, catalog] = await Promise.all([
     semanticOf(semText),
-    semText2 ? semanticOf(semText2) : Promise.resolve(null as Sem),
-    Promise.all(probe.map((p) => bounded(handleEnumerate({ terms: p.terms, law_id: lawId, page_size: RARE_TERM_MAX, snippet_len: 2000 }), null))),
+    Promise.all(probe.map((g) => bounded(handleEnumerate({ terms: groupTerms(g), law_id: lawId, page_size: RARE_TERM_MAX, snippet_len: 2000 }), null))),
     bounded(loadLawCatalog(db), []),
   ]);
   const named = hintedLaws(query, catalog);
@@ -174,7 +165,7 @@ async function fusedArticleIds(query: string, lawId: string | undefined, limit: 
   const lexRows = lexicalPages.flatMap((page) => (!page || !lexicalPageUsable(page.total, Boolean(lawId)) ? [] : page.page.filter((r) => !r.repealed)));
   // لا صفحة حصر مقبولة = ألفاظ السؤال كلها شائعة: لا دليل لفظي مميِّز.
   const weakLexical = !lexRows.length;
-  const semResults = [...rowsOf(semantic), ...rowsOf(semantic2)].filter((r) =>
+  const semResults = rowsOf(semantic).filter((r) =>
     r.similarity >= SEMANTIC_TOOL_MIN_SCORE ? true : weakLexical && keepLowSemantic({ coverage: r.keyword_coverage, similarity: r.similarity }),
   );
   // HKM-051: القرب بين الألفاظ يُقاس على النص الكامل لا المقتطف المقصوص.
@@ -184,8 +175,7 @@ async function fusedArticleIds(query: string, lawId: string | undefined, limit: 
     for (const r of rows) fullText.set(r.id, r.content ?? "");
   }
   // HKM-062: تشابه المعنى للمرشح اللفظي (نداء التضمين نفسه، مخزَّن)، فيُرجَّح بين مواد اللفظ الواحد بقربها من السؤال.
-  const similarity = new Map<string, number>();
-  for (const r of semResults) similarity.set(r.article_id, Math.max(similarity.get(r.article_id) ?? 0, r.similarity));
+  const similarity = new Map<string, number>(semResults.map((r) => [r.article_id, r.similarity]));
   if (tuning.lexicalSimilarity) {
     const missing = lexRows.map((r) => r.article_id).filter((id) => !similarity.has(id));
     if (missing.length) for (const [id, sc] of await bounded(articleSimilarities(semText, missing), new Map<string, number>())) similarity.set(id, sc);

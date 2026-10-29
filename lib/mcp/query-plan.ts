@@ -11,7 +11,6 @@
  * والمكنز (legal_thesaurus_*) لا مرادفات فيه اليوم (صيغة واحدة لكل مفهوم)، فالجسر منسّق في everyday-lexicon.ts.
  */
 import { queryStemVariants } from "../modules/legal-core/arabic-morphology";
-import { isCommonTerm } from "./common-terms";
 import { BROKEN_PLURALS, EVERYDAY_ENTRIES, type EverydayEntry } from "./everyday-lexicon";
 import { COLLOQUIAL_STOP, dropRequestPhrases, queryKeywords } from "./query-words";
 import { normalizeAr } from "./tools/word-match";
@@ -41,31 +40,6 @@ export function groupTerms(g: TermGroup, cap = 12): string[] {
   return [...new Set([g.term, ...g.forms, ...g.alts])].slice(0, cap);
 }
 
-/**
- * صيغ الحصر اللفظي لمجموعة في بحث غير محصور بنظام: ما ليس شائعًا منها (common-terms: أكثر من 50 مادة، فصفحته
- * مرفوضة يقينًا). صيغ اللفظ الصرفية تتبعه (إن شاع اللفظ لم تُحصر صوره)، وبدائل النظام المنسّقة تُحصر وحدها إن ندرت
- * («رصيد» شائع، و«مقابل وفاء» نادرة). فارغ = لا يُحصر.
- */
-export function probeTerms(g: TermGroup, cap = 12, withAlts = true): string[] {
-  const rareTerm = !isCommonTerm(g.term);
-  const own = rareTerm ? [g.term, ...g.forms.filter((f) => !isCommonTerm(f))] : [];
-  return [...new Set([...own, ...(withAlts ? g.alts.filter((a) => !isCommonTerm(a)) : [])])].slice(0, cap);
-}
-
-/**
- * HKM-062: المجموعات التي تُحصر (حصران على الأكثر؛ كل حصر مسح كامل للمدونة). في البحث المحصور بنظام كما كان: أطول
- * لفظين بكل صيغهما (الصفحة مقبولة مهما كثرت). وفي غيره: ما له صيغ غير شائعة، اللفظ النادر نفسه أولًا ثم الأطول؛
- * كان «أطول لفظين» يحصر «يعتبر» (210 مادة) و«تجاري» (721) ويترك «تستر» (22).
- */
-export function pickProbes(groups: TermGroup[], scopedToLaw: boolean, max = 2, withAlts = true): Array<{ group: TermGroup; terms: string[] }> {
-  if (scopedToLaw) return [...groups].sort((a, b) => b.term.length - a.term.length).slice(0, max).map((g) => ({ group: g, terms: groupTerms(g) }));
-  return groups
-    .map((g) => ({ group: g, terms: probeTerms(g, 12, withAlts), rare: !isCommonTerm(g.term) }))
-    .filter((p) => p.terms.length > 0)
-    .sort((a, b) => Number(b.rare) - Number(a.rare) || b.group.term.length - a.group.term.length)
-    .slice(0, max)
-    .map(({ group, terms }) => ({ group, terms }));
-}
 
 const normWord = (w: string) => normalizeAr(w).replace(/[^ء-يa-zA-Z0-9]/g, "");
 
