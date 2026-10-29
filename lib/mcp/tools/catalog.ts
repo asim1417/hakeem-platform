@@ -33,7 +33,12 @@ export interface CatalogLaw {
 
 /** الحالات كما تُعرض (قائمة الهيئة) وما لا سجل له. */
 export const UNKNOWN_STATUS = "غير مؤكد";
-const RETIRED = new Set(["لاغي"]);
+/**
+ * HKM-065: سجل نظام مخلوط مستبعد من العرض بقرار المالك (حالة العمل «سجل مخلوط — لا يُعرض»)؛ وجه البحث يحيله إلى
+ * إصداره الصحيح (search_surface)، والموقع لا يعرضه. يظهر بحالته هذه لا «غير مؤكد»، ولا يدخل حسم الاسم ولا نطاق «الساري».
+ */
+export const HIDDEN_STATUS = "سجل مخلوط — لا يُعرض";
+const RETIRED = new Set(["لاغي", HIDDEN_STATUS]);
 
 const toLatin = (s: string) => s.replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660));
 
@@ -99,7 +104,7 @@ export async function loadLawCatalog(db: SqlClient): Promise<CatalogLaw[]> {
       category: r.domain_title ?? r.classification ?? null,
       category_code: r.domain ?? null,
       classification: r.classification ?? null,
-      status: toBoeStatus(r.verified_status) ?? UNKNOWN_STATUS,
+      status: r.verified_status === HIDDEN_STATUS ? HIDDEN_STATUS : (toBoeStatus(r.verified_status) ?? UNKNOWN_STATUS),
       issued_year_h: hijriYearOf(issued) ?? hijriYearOf(r.royal_decree),
       issued_h: issued,
       articles_count: Number(r.article_count) || 0,
@@ -295,7 +300,10 @@ export function editDistance(a: string, b: string, max = 6): number {
 export async function handleResolve(db: SqlClient, args: { q: string; kind?: string; limit?: number }) {
   const all = await loadLawCatalog(db);
   const limit = Math.min(Math.max(Math.floor(args.limit ?? 5), 1), 20);
-  const pool = args.kind ? all.filter((l) => l.kind === args.kind) : all;
+  // HKM-065: السجل المخلوط المستبعد من العرض لا يُرشَّح باسمه (كان «نظام السجل التجاري» يحسم إليه مطابقةً تامة
+  // بحالة «غير مؤكد» قبل الإصدار الساري)؛ يبقى متاحًا بمعرّفه في hakeem_get_law.
+  const visible = all.filter((l) => l.status !== HIDDEN_STATUS);
+  const pool = args.kind ? visible.filter((l) => l.kind === args.kind) : visible;
   // لا أسماء مستعارة مثبتة: «نظام العمل والعمال» نظام قائم (ملغى) لا اسم آخر لنظام العمل، و«المعاملات» تحتمل المدنية
   // والإلكترونية؛ الترتيب والبدائل يحسمان، والملغى يتأخر داخل درجته.
   const q = String(args.q ?? "").trim();
