@@ -87,7 +87,8 @@ for d in dec:
         cguard = f"(SELECT count(*) FROM boe.text_block WHERE law_id={lit(wlid)} AND kind={lit(wkind)} AND position({lit(d['clause_quote'])} in body)>0)>=1"
     ev_instr = f"{succ_instr} — {ref} — من {d['repeal_effective']}"
     succ_url = ((s.get('boe') or [{}])[0] or {}).get('url') or old['url']
-    quote = f"{ref}: «{d['clause_quote']}»؛ يسري الإلغاء بنفاذ الخلف في {d['repeal_effective']} ({d['repeal_basis']})"
+    quote = (f"{ref}: «{d['clause_quote']}»؛ يسري الإلغاء بنفاذ الخلف في {d['repeal_effective']} ({d['repeal_basis']})"
+             + (f"؛ {d['note']}" if d.get('note') else '') + ' [قارئان مستقلان متفقان، HKM-052]')
     pre = (f"أداة الإصدار:\n{instrs}\nتاريخ الإصدار (هجريّ): {issued}"
            + (f"\nتاريخ النشر: {old['published']}هـ ({old['published_g']})" if old.get('published') and not old['published'].endswith('/01/01') else '')
            + f"\nالحالة: {status} — {ref}، من {d['repeal_effective']}\nالمصدر: هيئة الخبراء ({old['url']})")
@@ -155,6 +156,6 @@ st.insert(0, f"SELECT CASE WHEN {' AND '.join(guards)} AND (SELECT count(*) FROM
 st.append(f"SELECT CASE WHEN {' AND '.join(after)} AND (SELECT count(*) FROM verification WHERE verified_by={lit(BY)})={tot_arts + len(plan)} THEN 'ok' ELSE {FAIL} END AS guard_after")
 md5 = hashlib.md5('\n'.join(st).encode()).hexdigest()
 json.dump({'by': BY, 'md5': md5, 'count': len(st), 'expect_delta': {'public.legal_articles': tot_arts, 'public.legal_systems': len(plan)},
-           'report': {'systems': len(plan), 'new_articles': tot_arts, 'changed_text': 0, 'plan': plan}, 'statements': st},
+           'report': {'systems': len(plan), 'new_articles': tot_arts, 'changed_text': 0, 'plan': plan}, 'statements': st, 'diag_guards': guards},
           open(D / 'statements.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 print(md5, len(st), 'systems', len(plan), 'articles', tot_arts)
