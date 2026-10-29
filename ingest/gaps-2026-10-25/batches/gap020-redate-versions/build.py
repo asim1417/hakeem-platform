@@ -30,7 +30,7 @@ def h(*p):
 
 
 V = {v['id']: v for v in json.load(open(D / 'versions.json', encoding='utf-8'))}
-plan = json.load(open(D / 'plan.json', encoding='utf-8'))['plan']
+plan = [p for p in json.load(open(D / 'plan.json', encoding='utf-8'))['plan'] if p.get('url')]
 g = []
 for p in plan:
     v = V[p['id']]
@@ -40,7 +40,7 @@ for p in plan:
     note = (f"HKM-052 {BY}: نسخة المادة ({p['id']}) بأداة «{p['ev']}» كانت مؤرخة بتاريخ صدور الأداة {p['old']}، والأداة ساكتة عن النفاذ "
             f"فتنفذ من نشرها (م71 من النظام الأساسي) = {p['new']} (عملية الطابور uqn_fix.amendment_op من أم القرى)")
     st.append("INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) "
-              f"SELECT {lit('g20p-' + h(BY, p['id']))}, 'article', {lit(p['unit'])}, NULL, NULL, 'uqn', {lit(BY)}, NULL, {lit(V[p['id']]['md5'])}, DATE '2026-10-29', "
+              f"SELECT {lit('g20p-' + h(BY, p['id']))}, 'article', {lit(p['unit'])}, NULL, NULL, 'uqn', {lit(BY)}, {lit(p['url'])}, {lit(V[p['id']]['md5'])}, DATE '2026-10-29', "
               f"{lit('unit_version_redated:' + p['id'] + ':' + p['old'] + '->' + p['new'])}, {lit(note)}")
 for p in plan:
     st.append(f"UPDATE unit_version SET valid_from = {lit(p['new'])}::timestamptz WHERE id = {lit(p['id'])} AND valid_from::date = {lit(p['old'])}::date AND md5(body) = {lit(V[p['id']]['md5'])}")

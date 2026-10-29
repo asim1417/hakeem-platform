@@ -54,7 +54,7 @@ for r in ok:
             f"وكان المخزن {r['stored']} (تاريخ الصدور {r['issued_h']}هـ) [مراجع مستقل متفق]")
     pid = 'g19p-' + h(BY, r['sid'])
     st.append("INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) "
-              f"SELECT {lit(pid)}, 'system', {lit(r['sid'])}, {lit(r['name'])}, NULL, 'boe', {lit(BY)}, NULL, {lit(hashlib.md5(note.encode()).hexdigest())}, DATE '2026-10-29', "
+              f"SELECT {lit(pid)}, 'system', {lit(r['sid'])}, {lit(r['name'])}, NULL, 'boe', {lit(BY)}, {lit('boe:' + str(r['boe']))}, {lit(hashlib.md5(note.encode()).hexdigest())}, DATE '2026-10-29', "
               f"{lit('effective_from_corrected:' + r['stored'] + '->' + r['eff'])}, {lit(note)} WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = {lit(pid)})")
 for r in ok:
     st.append(f"UPDATE legal_systems SET preamble_effective_from = {lit(r['eff'])}::timestamptz WHERE id = {lit(r['sid'])} AND preamble_effective_from::date = {lit(r['stored'])}::date")
