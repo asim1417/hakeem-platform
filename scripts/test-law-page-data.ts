@@ -507,6 +507,10 @@ async function seedHkm063(db: SqlClient) {
   // نشر 1440/03/21 (رفع الهيئة) لنظام صدر 1409.
   await sys("h63-upload", "لائحة اصطناعية برفع الهيئة", "1989-08-17 00:00:00");
   await card("lc63-upload", "h63-upload", "1409/08/20", "1989-03-27", "1440/03/21", "2018-11-29", "2026-10-29T10:00:00Z");
+  // نفاذ مخزّن بلا سند provenance: مع وجه بحث معقول، وبلا وجه.
+  await sys("h63-unbacked", "نظام اصطناعي بنفاذ بلا سند", "2023-06-18 00:00:00");
+  await sys("h63-unbacked-nosurf", "نظام اصطناعي بنفاذ بلا سند ولا وجه", "2023-06-18 00:00:00");
+  await db.query(`INSERT INTO search_surface (id, work_key, surface_system_id, valid_on, reason, created_by) VALUES ('ss63-unbacked', 'we:h63-unbacked', 'h63-unbacked', '2023-12-16', 'اصطناعي', 'test')`);
   // نظام تأديب الموظفين: «ملغى مع بقاء أحكام محددة مؤقتًا»، المادة 47 سجلها «ساري»، ومادة بلا سجل.
   await sys("h63-taadib", "نظام تأديب الموظفين اصطناعي", "1971-04-03 00:00:00");
   await db.query(`INSERT INTO legal_articles (id, "legalSystemId", "lawName", "articleNumber", title, content) VALUES
@@ -517,9 +521,28 @@ async function seedHkm063(db: SqlClient) {
     ('ver63-u47', 'unit', 'a63-taadib-47', 'ساري', 'المرسوم الملكي رقم (م/7) وتاريخ 1391/2/1هـ — باقية بعد إلغاء النظام', 'https://www.uqn.gov.sa/اصطناعي', 'manual', 'test-hkm063')`);
 }
 
+/** سند النفاذ (قرار #961): legal_text_provenance بأعمدة الإنتاج، وسجلات effective_from_* لبعض الأنظمة فقط. */
+async function seedHkm063Provenance(db: SqlClient) {
+  await db.query(`CREATE TABLE IF NOT EXISTS legal_text_provenance (
+    id text PRIMARY KEY, entity_type text NOT NULL, entity_id text NOT NULL, law_name text, article_number integer,
+    source text, source_id text, source_url text, text_sha text, retrieved_on date, action text NOT NULL, previous_text text,
+    created_at timestamptz NOT NULL DEFAULT NOW())`);
+  await db.query(`INSERT INTO legal_text_provenance (id, entity_type, entity_id, source, action) VALUES
+    ('p63-companies', 'system', 'h63-companies', 'official', 'effective_from_corrected:2022-06-30->2023-01-19'),
+    ('p63-pif', 'system', 'h63-pif-old', 'nezams', 'effective_from_filled:null->1971-08-20'),
+    ('p63-taadib', 'system', 'h63-taadib', 'uqn', 'effective_from_set:1971-04-03'),
+    ('p63-pet-other', 'system', 'h63-petroleum', 'boe', 'preamble_issue_date_corrected:1420-01-01->1420-09-27+text:boe.text_block'),
+    ('p63-unbacked-art', 'article', 'h63-unbacked', 'boe', 'effective_from_corrected:x->y'),
+    ('p63-pair', 'system', 'h63-pair', 'boe', 'insert:boe_snapshot')`);
+}
+
 async function hkm063Tests(db: SqlClient) {
   await seedHkm063(db);
   const asOf = "2026-10-29";
+  // قبل جدول السند: سقوط آمن (لا خطأ، ولا يُعرض المخزّن).
+  const noTable = await getLawPageData(db, "h63-companies", { asOf });
+  ok(noTable?.card.dates.effective.gregorian === null && noTable.card.dates.effective.source === null, "HKM-063 بلا جدول legal_text_provenance: لا خطأ، والمخزّن بلا سند لا يُعرض");
+  await seedHkm063Provenance(db);
   const companies = await getLawPageData(db, "h63-companies", { asOf });
   ok(companies?.card.dates.effective.gregorian === "2023-01-19" && companies.card.dates.effective.source === "legal_systems", "HKM-063 الشركات بلا وجه بحث: النفاذ 2023-01-19 من legal_systems (كان فارغًا)");
   ok(companies?.card.dates.issued.hijri === "1443/12/01" && companies.card.dates.published.hijri === "1443/12/23" && companies.card.dates.published.source === "law_card", "HKM-063 الشركات: الإصدار والنشر الحقيقيان كما هما");
@@ -527,7 +550,7 @@ async function hkm063Tests(db: SqlClient) {
   const pet = await getLawPageData(db, "h63-petroleum", { asOf });
   ok(pet?.card.dates.issued.hijri === "1420/09/27" && pet.card.dates.issued.source === "law_card", "HKM-063 البترول: الإصدار المصحّح من آخر بطاقة");
   ok(pet?.card.dates.published.hijri === null && pet.card.dates.published.gregorian === null && pet.card.dates.published.source === null, "HKM-063 البترول: النشر النائب 1420/01/01 (أسبق من الإصدار) مجهول");
-  ok(pet?.card.dates.effective.gregorian === null && pet.card.dates.effective.source === null, "HKM-063 البترول: النفاذ المخزّن 1999-04-17 نسخة النشر النائب ← فارغ");
+  ok(pet?.card.dates.effective.gregorian === null && pet.card.dates.effective.source === null, "HKM-063 البترول: النفاذ المخزّن 1999-04-17 نائب بلا سند (سجله preamble_issue_date_corrected لا يُحتسب) ← فارغ");
 
   const pif = await getLawPageData(db, "h63-pif-old", { asOf });
   ok(pif?.card.dates.effective.gregorian === "1971-08-20" && pif.card.dates.effective.source === "legal_systems", "HKM-063 الصندوق (م/24): النفاذ 1971-08-20 من legal_systems لا 1391-06-25 من وجه البحث");
@@ -537,10 +560,16 @@ async function hkm063Tests(db: SqlClient) {
 
   const pair = await getLawPageData(db, "h63-pair", { asOf });
   ok(pair?.card.dates.issued.hijri === "1372/03/15" && pair.card.dates.issued.source === "legal_system_issuance", "HKM-063 الزوج النائب 1372/01/01: الإصدار يسقط إلى legal_system_issuance");
-  ok(pair?.card.dates.published.hijri === null && pair.card.dates.effective.gregorian === null, "HKM-063 الزوج النائب: النشر مجهول، والنفاذ المخزّن = الإصدار الميلادي النائب ← فارغ");
+  ok(pair?.card.dates.published.hijri === null && pair.card.dates.effective.gregorian === null, "HKM-063 الزوج النائب: النشر مجهول، والنفاذ المخزّن = الإصدار الميلادي النائب بلا سند ← فارغ");
 
   const upload = await getLawPageData(db, "h63-upload", { asOf });
-  ok(upload?.card.dates.published.hijri === null && upload.card.dates.issued.hijri === "1409/08/20" && upload.card.dates.effective.gregorian === "1989-08-17", "HKM-063 نشر 1440/03/21 لنظام 1409: النشر مجهول، والإصدار والنفاذ باقيان");
+  ok(upload?.card.dates.published.hijri === null && upload.card.dates.issued.hijri === "1409/08/20" && upload.card.dates.effective.gregorian === null, "HKM-063 نشر 1440/03/21 لنظام 1409: النشر مجهول والإصدار باقٍ، ونفاذه المخزّن بلا سند لا يُعرض");
+
+  // قرار #961: المخزّن يُعرض بسند provenance (effective_from_*) فقط.
+  const unbacked = await getLawPageData(db, "h63-unbacked", { asOf });
+  ok(unbacked?.card.dates.effective.gregorian === "2023-12-16" && unbacked.card.dates.effective.source === "search_surface", "HKM-063 بلا سند (وسجل effective_from لكيان «article» لا يُحتسب): يسقط إلى وجه البحث المعقول");
+  const unbackedNoSurf = await getLawPageData(db, "h63-unbacked-nosurf", { asOf });
+  ok(unbackedNoSurf?.card.dates.effective.gregorian === null && unbackedNoSurf.card.dates.effective.source === null, "HKM-063 بلا سند ولا وجه: فارغ كالسلوك السابق");
 
   const ith = await getLawPageData(db, "sys-ithbat", { asOf: "2026-10-17" });
   ok(ith?.card.dates.effective.gregorian === "2022-07-08" && ith.card.dates.effective.source === "search_surface", "HKM-063 بلا نفاذ مخزّن: وجه البحث المعقول كما كان");
@@ -553,6 +582,7 @@ async function hkm063Tests(db: SqlClient) {
   ok(a47?.status === "ساري" && a47.statusSource === "verification" && !a47.inheritedFromWork && a47.repeal === null && a47.statusLabel === "ساري", "HKM-063 المادة 47 (سجلها «ساري»): سارية، لا ملغاة بالتبعية");
   ok(a46?.status === "ملغى" && a46.inheritedFromWork && a46.repeal?.type === "express_total", "HKM-063 مادة بلا سجل في النظام نفسه: ملغاة بالتبعية كما كانت");
   ok(taadib?.body.counts.inForce === 1 && taadib.body.counts.repealed === 1 && taadib.body.counts.total === 2, "HKM-063 العدّادات: 1 ساري + 1 ملغى");
+  ok(taadib?.card.dates.effective.gregorian === "1971-04-03" && taadib.card.dates.effective.source === "legal_systems", "HKM-063 تأديب الموظفين: النفاذ المخزّن بسند effective_from_set يُعرض");
 
   const mcpTaadib = await getLawTool(db, { lawId: "h63-taadib" }, { asOf });
   ok("law_id" in mcpTaadib && mcpTaadib.counts.inForce === 1 && mcpTaadib.counts.repealed === 1 && mcpTaadib.toc.find((e) => e.number === 47)?.status === "ساري", "HKM-063 hakeem_get_law: المادة 47 «ساري» وinForce=1");

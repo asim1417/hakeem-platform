@@ -59,16 +59,23 @@ ok(isPlaceholderEffectiveDate("2018-11-29", upload) && !isPlaceholderEffectiveDa
 ok(!isPlaceholderEffectiveDate("1952-09-20", null) && !isPlaceholderEffectiveDate(null, pair), "E-1 بلا بطاقة أو بلا نفاذ: ليس نائبًا");
 
 const eq = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
-ok(eq(pickEffectiveDate({ stored: "2023-01-19", surfaceFrom: null, card: companies }), { gregorian: "2023-01-19", source: "legal_systems" }), "E-2 الشركات بلا وجه بحث: 2023-01-19 من legal_systems");
-ok(eq(pickEffectiveDate({ stored: "2023-01-19", surfaceFrom: "2022-07-08", card: companies }), { gregorian: "2023-01-19", source: "legal_systems" }), "E-2 legal_systems مقدَّم على وجه البحث");
-ok(eq(pickEffectiveDate({ stored: "1971-08-20", surfaceFrom: "1391-06-25", card: pif }), { gregorian: "1971-08-20", source: "legal_systems" }), "E-2 الصندوق (م/24): 1971-08-20 لا 1391-06-25");
-ok(eq(pickEffectiveDate({ stored: null, surfaceFrom: "1422-08-06", card: null }), { gregorian: null, source: null }), "E-3 بلا مخزّن ووجه البحث هجري في عمود ميلادي (1422-08-06): فارغ");
-ok(eq(pickEffectiveDate({ stored: null, surfaceFrom: "2022-07-08", card: null }), { gregorian: "2022-07-08", source: "search_surface" }), "E-3 بلا مخزّن: وجه البحث المعقول كما كان");
-ok(eq(pickEffectiveDate({ stored: "1999-04-17", surfaceFrom: null, card: petroleum }), { gregorian: null, source: null }), "E-4 البترول: النفاذ المخزّن نائب ولا وجه بحث ← فارغ");
-ok(eq(pickEffectiveDate({ stored: "1952-09-20", surfaceFrom: "1990-01-01", card: pair }), { gregorian: "1990-01-01", source: "search_surface" }), "E-4 المخزّن نائب ← وجه البحث المعقول");
-ok(eq(pickEffectiveDate({ stored: "1391-06-25", surfaceFrom: null, card: null }), { gregorian: null, source: null }), "E-4 المخزّن نفسه بسنة < 1900: لا يُعرض");
-ok(eq(pickEffectiveDate({ stored: "2023-01-19 00:00:00", surfaceFrom: null, card: null }), { gregorian: "2023-01-19", source: "legal_systems" }), "E-4 طابع زمني يُقصّ إلى اليوم");
-ok(eq(pickEffectiveDate({ stored: null, surfaceFrom: null, card: null }), { gregorian: null, source: null }), "E-5 لا مصدر: فارغ");
+ok(eq(pickEffectiveDate({ storedBacked: true, stored: "2023-01-19", surfaceFrom: null, card: companies }), { gregorian: "2023-01-19", source: "legal_systems" }), "E-2 الشركات بلا وجه بحث: 2023-01-19 من legal_systems");
+ok(eq(pickEffectiveDate({ storedBacked: true, stored: "2023-01-19", surfaceFrom: "2022-07-08", card: companies }), { gregorian: "2023-01-19", source: "legal_systems" }), "E-2 legal_systems مقدَّم على وجه البحث");
+ok(eq(pickEffectiveDate({ storedBacked: true, stored: "1971-08-20", surfaceFrom: "1391-06-25", card: pif }), { gregorian: "1971-08-20", source: "legal_systems" }), "E-2 الصندوق (م/24): 1971-08-20 لا 1391-06-25");
+ok(eq(pickEffectiveDate({ storedBacked: true, stored: null, surfaceFrom: "1422-08-06", card: null }), { gregorian: null, source: null }), "E-3 بلا مخزّن ووجه البحث هجري في عمود ميلادي (1422-08-06): فارغ");
+ok(eq(pickEffectiveDate({ storedBacked: true, stored: null, surfaceFrom: "2022-07-08", card: null }), { gregorian: "2022-07-08", source: "search_surface" }), "E-3 بلا مخزّن: وجه البحث المعقول كما كان");
+ok(eq(pickEffectiveDate({ storedBacked: true, stored: "1999-04-17", surfaceFrom: null, card: petroleum }), { gregorian: null, source: null }), "E-4 البترول: النفاذ المخزّن نائب ولا وجه بحث ← فارغ");
+ok(eq(pickEffectiveDate({ storedBacked: true, stored: "1952-09-20", surfaceFrom: "1990-01-01", card: pair }), { gregorian: "1990-01-01", source: "search_surface" }), "E-4 المخزّن نائب ← وجه البحث المعقول");
+ok(eq(pickEffectiveDate({ storedBacked: true, stored: "1391-06-25", surfaceFrom: null, card: null }), { gregorian: null, source: null }), "E-4 المخزّن نفسه بسنة < 1900: لا يُعرض");
+ok(eq(pickEffectiveDate({ storedBacked: true, stored: "2023-01-19 00:00:00", surfaceFrom: null, card: null }), { gregorian: "2023-01-19", source: "legal_systems" }), "E-4 طابع زمني يُقصّ إلى اليوم");
+ok(eq(pickEffectiveDate({ storedBacked: true, stored: null, surfaceFrom: null, card: null }), { gregorian: null, source: null }), "E-5 لا مصدر: فارغ");
+// قرار #961: المخزّن لا يُعرض إلا بسند provenance.
+ok(eq(pickEffectiveDate({ storedBacked: true, stored: "2023-01-19", surfaceFrom: "2022-07-08", card: companies }), { gregorian: "2023-01-19", source: "legal_systems" }), "E-6 مخزّن بسند: يُعرض ويُقدَّم على وجه البحث");
+ok(eq(pickEffectiveDate({ storedBacked: false, stored: "2023-01-19", surfaceFrom: "2022-07-08", card: companies }), { gregorian: "2022-07-08", source: "search_surface" }), "E-6 مخزّن بلا سند: لا يُعرض، ويسقط إلى وجه البحث المعقول");
+ok(eq(pickEffectiveDate({ storedBacked: false, stored: "2023-06-18", surfaceFrom: null, card: null }), { gregorian: null, source: null }), "E-6 مخزّن بلا سند ولا وجه: فارغ (كالسلوك السابق)");
+ok(eq(pickEffectiveDate({ storedBacked: false, stored: "2023-06-18", surfaceFrom: "1391-06-25", card: null }), { gregorian: null, source: null }), "E-6 مخزّن بلا سند ووجه هجري: فارغ");
+ok(eq(pickEffectiveDate({ storedBacked: false, stored: "1999-04-17", surfaceFrom: null, card: petroleum }), { gregorian: null, source: null }), "E-6 مخزّن نائب بلا سند (البترول): لا يُعرض");
+ok(eq(pickEffectiveDate({ storedBacked: true, stored: "1999-04-17", surfaceFrom: null, card: petroleum }), { gregorian: null, source: null }), "E-6 مخزّن نائب ولو بسند: لا يُعرض");
 
 // ── الحكم الباقي ──
 ok(isRetainedProvision(RETAINED_PROVISIONS_STATUS, "ساري"), "R-1 «ملغى مع بقاء أحكام محددة مؤقتًا» + سجل المادة «ساري»: سارية");

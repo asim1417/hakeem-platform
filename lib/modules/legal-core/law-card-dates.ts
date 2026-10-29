@@ -10,7 +10,9 @@
  *   الإصدار المجهول يسقط إلى المصدر التالي القائم في law-page-data (وحدات المقدمة ← legal_system_issuance).
  *
  * ── النفاذ ────────────────────────────────────────────────────────────────────────
- *   1) legal_systems.preamble_effective_from إن وُجد، وكان تاريخًا ميلاديًا معقولًا، ولم يكن نائبًا.
+ *   1) legal_systems.preamble_effective_from إن وُجد، وله سجل في legal_text_provenance (entity_type='system'
+ *      وaction LIKE 'effective_from_%'، أي صحّحته أو ملأته دفعة موثّقة — قرار HKM-063 على #961)، وكان تاريخًا
+ *      ميلاديًا معقولًا، ولم يكن نائبًا. المخزّن بلا سجل لا يُعرض (962 من 1183 في 29/10 بلا سجل).
  *      يكون نائبًا إذا ساوى تاريخ الإصدار الميلادي في بطاقة إصدارها الهجري 1 محرم، أو ساوى تاريخ نشر
  *      نائبًا بالصور أعلاه (نُسخ من البطاقة النائبة قبل تصحيحها).
  *   2) وإلا أول يوم صار فيه النظام وجه عمله في search_surface، إن كان ميلاديًا معقولًا (سنة ≥ 1900):
@@ -23,6 +25,11 @@ export const BOE_UPLOAD_DATE_HIJRI = "1440/03/21";
 export const MIN_PLAUSIBLE_GREGORIAN_YEAR = 1900;
 
 export type EffectiveDateSource = "legal_systems" | "search_surface";
+
+/** شرط السند: للنظام ($1) سجل provenance لتاريخ نفاذه (effective_from_corrected/filled/set). */
+export const EFFECTIVE_FROM_PROVENANCE_SQL = `SELECT EXISTS (
+  SELECT 1 FROM legal_text_provenance WHERE entity_type = 'system' AND entity_id = $1 AND action LIKE 'effective_from_%'
+) AS backed`;
 
 export interface CardDates {
   issuedHijri: string | null;
@@ -74,14 +81,15 @@ export function isPlaceholderEffectiveDate(stored: string | null | undefined, ca
   return cardDatePlaceholders(card).published && card.publishedGregorian === stored;
 }
 
-/** تاريخ النفاذ المعروض ومصدره (انظر رأس الملف). */
+/** تاريخ النفاذ المعروض ومصدره (انظر رأس الملف). storedBacked: للمخزّن سجل provenance (EFFECTIVE_FROM_PROVENANCE_SQL). */
 export function pickEffectiveDate(input: {
   stored: string | null | undefined;
+  storedBacked: boolean;
   surfaceFrom: string | null | undefined;
   card: CardDates | null | undefined;
 }): { gregorian: string | null; source: EffectiveDateSource | null } {
   const stored = input.stored ? String(input.stored).slice(0, 10) : null;
-  if (stored && isPlausibleGregorian(stored) && !isPlaceholderEffectiveDate(stored, input.card)) return { gregorian: stored, source: "legal_systems" };
+  if (stored && input.storedBacked && isPlausibleGregorian(stored) && !isPlaceholderEffectiveDate(stored, input.card)) return { gregorian: stored, source: "legal_systems" };
   const surface = input.surfaceFrom ? String(input.surfaceFrom).slice(0, 10) : null;
   if (surface && isPlausibleGregorian(surface)) return { gregorian: surface, source: "search_surface" };
   return { gregorian: null, source: null };

@@ -14,7 +14,8 @@
  *                 التواريخ الأربعة (issued/published/effective/applied، هجري وميلادي ومصدر كلٍّ)، النبذة، المصدر الرسمي،
  *                 ما حلّ محله/ما حلّ محلّه (من وجه البحث)، وبيان إلغاء النظام إن كان ملغى.
  *                 الحقل الفارغ = null، ويعرضه الواجهة NOT_AVAILABLE («غير متوفر») لا يُخفى ولا يُخترع.
- *                 HKM-063 (law-card-dates): النفاذ من legal_systems.preamble_effective_from ثم وجه البحث (ميلادي معقول)؛
+ *                 HKM-063 (law-card-dates): النفاذ من legal_systems.preamble_effective_from إن كان له سجل provenance،
+ *                 ثم وجه البحث (ميلادي معقول)؛
  *                 وتاريخ البطاقة النائب (1 محرم، أو 1440/03/21 رفع الهيئة) مجهول، والإصدار يسقط إلى مصدره التالي.
  *     preamble    PreambleView: kind = units (وحدات مهيكلة من preamble_edition) | source_blocks (كتل law_card من لقطة
  *                 هيئة الخبراء، لم تُفكَّك) | legacy_text (legal_systems.preamble بوسم «مقدمة غير مكتملة») | none
@@ -55,7 +56,7 @@ import {
 import { resolveWorkKind, type WorkKind } from "./work-kind";
 import { resolveSystemSlug } from "./eli";
 import { NON_ARTICLE_BIS, articleKey, articleLabel } from "./article-key";
-import { cardDatePlaceholders, pickEffectiveDate, type CardDates } from "./law-card-dates";
+import { cardDatePlaceholders, EFFECTIVE_FROM_PROVENANCE_SQL, pickEffectiveDate, type CardDates } from "./law-card-dates";
 
 // المعيار الواحد لحالتي الإلغاء والاستبدال ويوم النفاذ في verified-status (HKM-030)؛ يُعاد تصديره لمن استورده من هنا.
 export { effectiveDateFromEvidence } from "./verified-status";
@@ -508,7 +509,7 @@ export async function getLawPageData(db: SqlClient, systemId: string, opts: LawP
   if (!sys) return null;
   const slug = resolveSystemSlug(sys.eli_slug, sys.name);
 
-  const [cardRow, issuance, articles, surfaceState, workVer, preambleUnits] = await Promise.all([
+  const [cardRow, issuance, articles, surfaceState, workVer, preambleUnits, effectiveFromBacked] = await Promise.all([
     safe(
       () =>
         db.query<{
@@ -549,6 +550,8 @@ export async function getLawPageData(db: SqlClient, systemId: string, opts: LawP
     loadSurface(db, asOf),
     latestVerifications(db, "work", [systemId]).then((m) => m.get(systemId) ?? null),
     loadPreambleUnits(db, systemId),
+    // HKM-063: النفاذ المخزّن لا يُعرض إلا بسند provenance (غياب الجدول = بلا سند).
+    safe(() => db.query<{ backed: boolean }>(EFFECTIVE_FROM_PROVENANCE_SQL, [systemId]), [] as Array<{ backed: boolean }>).then((r) => r[0]?.backed === true),
   ]);
 
   // ── الحالة ──
@@ -619,7 +622,7 @@ export async function getLawPageData(db: SqlClient, systemId: string, opts: LawP
   else if (issuance?.issue_date_hijri || issuance?.issue_date_greg) issued = { hijri: issuance.issue_date_hijri, gregorian: day(issuance.issue_date_greg), source: "legal_system_issuance" };
   const published: DateValue =
     !placeholder.published && (cardRow?.published_hijri || cardRow?.published_gregorian) ? { hijri: cardRow.published_hijri, gregorian: day(cardRow.published_gregorian), source: "law_card" } : empty;
-  const eff = pickEffectiveDate({ stored: day(sys.preamble_effective_from), surfaceFrom: ownFaceFrom, card: cardDates });
+  const eff = pickEffectiveDate({ stored: day(sys.preamble_effective_from), storedBacked: effectiveFromBacked, surfaceFrom: ownFaceFrom, card: cardDates });
   const effective: DateValue = eff.gregorian ? { hijri: null, gregorian: eff.gregorian, source: eff.source } : empty;
 
   // ── بيان إلغاء النظام ──
