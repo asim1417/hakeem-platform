@@ -85,6 +85,12 @@ g AS (
   WHERE s.preamble_effective_from::date = l.issued_gregorian::date AND l.published_gregorian::date > l.issued_gregorian::date
     AND EXISTS (SELECT 1 FROM legal_articles x WHERE x."legalSystemId" = cur.sid AND x.content ~ 'يعمل ب[^.]{0,40}بعد[^.]{0,40}(يوم|يومًا|يوماً|سنة)[^.]{0,30}نشر')
   UNION ALL
+  -- M2c: تاريخ النفاذ المخزن منقول من تاريخ نائب في بطاقة الهيئة (أول محرم: yyyy/01/01)، وليس تاريخًا حقيقيًا (gap021)
+  SELECT 'M2c', 'reader', s.prio, s.id, s.name, NULL, NULL, l.url,
+         jsonb_build_object('stored', s.preamble_effective_from::date, 'boe_issued', l.issued_hijri, 'boe_published', l.published_hijri)
+  FROM sys s JOIN boe.match m ON m.hakeem_system_id = s.id JOIN boe.law l ON l.guid = m.guid
+  WHERE l.issued_hijri ~ '/0?1/0?1$' AND s.preamble_effective_from::date = l.issued_gregorian::date
+  UNION ALL
   SELECT 'M3', 'reader', prio, id, name, NULL, NULL, NULL, jsonb_build_object('kind', instrument_kind) FROM sys WHERE coalesce(classification, '') IN ('', 'غير مصنف', 'غير مصنّف')
   UNION ALL
   SELECT 'M4', 'build', cur.prio, cur.sid, cur.name, NULL, NULL, cur.url, jsonb_build_object('guid', cur.guid)
