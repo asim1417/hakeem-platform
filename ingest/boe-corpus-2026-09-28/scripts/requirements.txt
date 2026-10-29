@@ -1,0 +1,3 @@
+# متطلبات اختبارات محلل لقطات الهيئة (parse_snapshots.py) فقط؛ لا علاقة لها بـ package.json
+lxml
+cssselect

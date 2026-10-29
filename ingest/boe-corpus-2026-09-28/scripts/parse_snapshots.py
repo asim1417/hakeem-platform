@@ -244,32 +244,84 @@ def is_placeholder_hijri(h: str | None) -> bool:
     return bool(h) and h.endswith("/01/01")
 
 
+ISSUE_SOURCE_ORDER = ("royal_decree", "royal_order", "cabinet_decision")
+_DATE_AFTER_TARIKH = re.compile(r"تاريخ\s*(.+)", re.S)
+
+
+def _hijri_after_tarikh(text: str) -> str | None:
+    """التاريخ الهجري بعد كلمة «تاريخ» فقط (رقم السند «17 /2 /28 /8634» قبلها لا يُقرأ تاريخًا). yyyy/mm/dd أو None."""
+    m0 = _DATE_AFTER_TARIKH.search(text.translate(AR_DIGITS))
+    if not m0:
+        return None
+    t = re.sub(r"\s*/\s*", "/", m0.group(1))
+    m = re.match(r"\D*?(\d{1,2})/(\d{1,2})/(1[34]\d{2})(?!\d)", t)
+    if m:
+        d, mo, y = m.group(1), m.group(2), m.group(3)
+    else:
+        m = re.match(r"\D*?(1[34]\d{2})/(\d{1,2})/(\d{1,2})(?!\d)", t)
+        if not m:
+            return None
+        y, mo, d = m.group(1), m.group(2), m.group(3)
+    if not (1 <= int(mo) <= 12 and 1 <= int(d) <= 30):
+        return None
+    return f"{y}/{int(mo):02d}/{int(d):02d}"
+
+
 def instrument_date_hijri(instruments: list[str]) -> str | None:
-    """تاريخ سند الإصدار: أول أداة (مرسوم/قرار/أمر) فيها تاريخ هجري غير وهمي، بصيغة YYYY/MM/DD.
-    الهيئة تكتبه يومًا/شهرًا/سنة («بتاريخ 29 / 3 / 1423») وأحيانًا سنة أولًا («1439/5/28هـ»)."""
-    ordered = sorted(instruments, key=lambda x: 0 if HEAD_RE.match(x) else 1)
-    for x in ordered:
-        t = x.translate(AR_DIGITS)
-        m = re.search(r"(?<!\d)(\d{4})\s*/\s*(\d{1,2})\s*/\s*(\d{1,2})(?!\d)", t)
+    """تاريخ سند الإصدار بصيغة YYYY/MM/DD، بأولوية المرسوم ثم الأمر ثم القرار (تاريخ الإصدار المسجّل يطابق المرسوم في 236 من 239 صفحة،
+    ولا يطابق القرار إلا في النصف لأنه أسبق). تاريخ السند 1/1 حقيقي إن كتبه السند نفسه (نظام مكافحة التستر م/4 وتاريخ 1442/1/1هـ)،
+    فلا يُتخطى. أداة بلا «مرسوم/أمر/قرار … رقم» لا تحدد تاريخ الإصدار. (HKM-057)"""
+    by_kind: dict[str, list[str]] = {}
+    for x in instruments:
+        m = HEAD_RE.match(x)
         if m:
-            y, mo, d = m.group(1), m.group(2), m.group(3)
-        else:
-            m = re.search(r"(?<!\d)(\d{1,2})\s*/\s*(\d{1,2})\s*/\s*(\d{4})(?!\d)", t)
-            if not m:
-                continue
-            d, mo, y = m.group(1), m.group(2), m.group(3)
-        if not (1 <= int(mo) <= 12 and 1 <= int(d) <= 30):
-            continue
-        h = f"{y}/{int(mo):02d}/{int(d):02d}"
-        if not is_placeholder_hijri(h):
-            return h
+            by_kind.setdefault(KIND[m.group(1)], []).append(x)
+    for kind in ISSUE_SOURCE_ORDER:
+        for x in by_kind.get(kind, []):
+            d = _hijri_after_tarikh(x)
+            if d:
+                return d
     return None
 
 
+def _label_text(el) -> str:
+    return re.sub(r"\s+", " ", el.text_content()).strip().rstrip(":：").strip()
+
+
 def card_root(doc):
-    """HKM-056: البطاقة من رأس النسخة الحالية (div.system_info)، لا من أول وسم label في الصفحة؛ وبلا رأس فالصفحة كلها."""
-    heads = doc.cssselect("div.system_info")
-    return heads[0] if heads else doc
+    """HKM-057: حاوية بطاقة النظام = أصغر عنصر يضم أكبر عدد من وسوم البطاقة المختلفة (لا أول وسم في الصفحة، ولا اعتماد على اسم صنف).
+    بلا أي وسم بطاقة تُعاد الصفحة كلها."""
+    best, best_score = None, (0, 0)
+    for lab in doc.xpath("//label"):
+        if _label_text(lab) not in CARD_LABELS:
+            continue
+        for anc in lab.iterancestors():
+            keys = {CARD_LABELS.get(_label_text(l)) for l in anc.xpath(".//label")} - {None}
+            score = (len(keys), -sum(1 for _ in anc.iter()))
+            if score > best_score:
+                best, best_score = anc, score
+    return best if best is not None else doc
+
+
+EN_LABELS = ("Law name", "Law description")
+
+
+def read_en(doc) -> dict:
+    """«Law name» و«Law description» عنوانان (h4) يليهما div.HTMLContainer؛ تُقرآن بوسم العنوان. (كانت الحلقة تفحص label/strong/span/div
+    فقط فلا ترى h4، فكان name_en وdescription_en فارغين في كل اللقطات.)"""
+    en: dict = {}
+    for h in doc.xpath("//h1|//h2|//h3|//h4|//h5|//h6|//label|//strong|//b|//dt"):
+        t = _label_text(h)
+        if t not in EN_LABELS or t in en:
+            continue
+        if any("article_item" in (a.get("class") or "").split() for a in h.iterancestors()):
+            continue
+        sib = h.getnext()
+        if sib is not None:
+            val = re.sub(r"\s+", " ", sib.text_content()).strip()
+            if val:
+                en[t] = val
+    return en
 
 
 def popup_owner(el):
@@ -342,7 +394,7 @@ def parse_page(rec: dict, cat: dict | None) -> dict:
     # البطاقة
     card: dict = {}
     for lab in card_root(doc).xpath(".//label"):
-        key = CARD_LABELS.get(lab.text_content().strip())
+        key = CARD_LABELS.get(_label_text(lab))
         if not key or key in card:
             continue
         sib = lab.getnext()
@@ -353,13 +405,7 @@ def parse_page(rec: dict, cat: dict | None) -> dict:
             card[key] = [x for x in items if x]
         else:
             card[key] = to_text(sib)
-    en = {}
-    for lab in doc.xpath("//label|//strong|//span|//div"):
-        t = (lab.text or "").strip()
-        if t in ("Law name", "Law description") and t not in en:
-            sib = lab.getnext()
-            if sib is not None:
-                en[t] = re.sub(r"\s+", " ", sib.text_content()).strip()
+    en = read_en(doc)
     # النبذة
     summary = None
     h4s = [h for h in doc.xpath("//h4") if "نبذة عن النظام" in h.text_content()]
@@ -453,8 +499,11 @@ def parse_page(rec: dict, cat: dict | None) -> dict:
     if is_placeholder_hijri(ih):
         # HKM-056: اليوم والشهر 01/01 وهميان (والميلادي تحويل الوهمي)؛ التاريخ من سند الإصدار، ويبقى issued_raw كما ورد.
         fixed = instrument_date_hijri(card.get("instruments", []))
-        flags.append(f"issued_placeholder:{'from_instrument' if fixed else 'unresolved'}")
-        ih, ig = fixed, None
+        if fixed == ih:
+            flags.append("issued_placeholder:confirmed_by_instrument")  # السند نفسه بتاريخ 1/1 الحقيقي: يبقى التاريخ والميلادي
+        else:
+            flags.append(f"issued_placeholder:{'from_instrument' if fixed else 'unresolved'}")
+            ih, ig = fixed, None
     ph, pg = split_date(card.get("published"))
     law_id = sid(rec["guid"], rec["sha256"])
     law = {
