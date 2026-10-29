@@ -4,7 +4,7 @@
  * كمصدر تشريعي رسمي تقرأ منه نماذج الذكاء الاصطناعي مباشرة.
  *
  * التثبيت: npm i mcp-handler @modelcontextprotocol/sdk zod
- * الرابط بعد النشر: https://hakeem-platform.vercel.app/mcp
+ * الرابط بعد النشر: https://hakeemai.net/mcp (ويبقى hakeem-platform.vercel.app/mcp يعمل؛ lib/mcp/oauth.ts يقبل النطاقين)
  */
 import { createMcpHandler, withMcpAuth } from "mcp-handler";
 // خادم MCP (@modelcontextprotocol/server) يبني مخططاته على Zod v4 ويتطلّب

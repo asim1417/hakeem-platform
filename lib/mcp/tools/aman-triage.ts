@@ -69,8 +69,11 @@ const DEFAULT_CONSULTATION_URL = "https://amanlaws.com/legal-consultation/";
 const DEFAULT_WHATSAPP_URL = "https://wa.me/966575555420";
 const DEFAULT_PHONE = "+966575555420";
 // سياسة وشروط واجهة MCP نفسها مستضافتان مع تطبيق حكيم، لا في رابط خدمة طرف ثالث.
-const DEFAULT_PRIVACY_URL = "https://hakeem-platform.vercel.app/privacy";
-const DEFAULT_TERMS_URL = "https://hakeem-platform.vercel.app/terms";
+// HKM-061: النطاق العام hakeemai.net (لا رابط النشر المؤقت على vercel.app).
+const DEFAULT_PRIVACY_URL = "https://hakeemai.net/privacy";
+const DEFAULT_TERMS_URL = "https://hakeemai.net/terms";
+/** مضيفات تطبيق حكيم المقبولة لروابط السياسة/الشروط (يبقى vercel.app لقيم بيئة قديمة). */
+const HAKEEM_POLICY_HOSTS = new Set(["hakeemai.net", "www.hakeemai.net", "hakeem-platform.vercel.app"]);
 
 const SERVICE_BY_AREA: Record<AmanLegalArea, AmanService> = {
   execution: {
@@ -196,7 +199,7 @@ function safePolicyUrl(raw: string | undefined) {
     const url = new URL(raw.trim());
     const host = url.hostname.toLowerCase();
     const isAmanDomain = host === "amanlaws.com" || host.endsWith(".amanlaws.com");
-    const isHakeemDomain = host === "hakeem-platform.vercel.app";
+    const isHakeemDomain = HAKEEM_POLICY_HOSTS.has(host);
     return url.protocol === "https:" && (isAmanDomain || isHakeemDomain) ? url.toString() : undefined;
   } catch {
     return undefined;
