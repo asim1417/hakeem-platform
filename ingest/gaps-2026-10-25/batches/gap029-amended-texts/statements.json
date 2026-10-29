@@ -1,0 +1,499 @@
+{
+ "by": "gap029-amended-texts-2026-10-30",
+ "md5": "114807ac14d35554ea021ad5d0096b46",
+ "count": 3,
+ "expect_delta": {},
+ "report": {
+  "versions": 4,
+  "articles": 4,
+  "new_articles": 0,
+  "changed_text": 4,
+  "skipped": [
+   {
+    "article": "cmpz5xq2901zncwg2fy790wc5",
+    "law": "النظام الجزائي الخاص بتزييف وتقليد النقود",
+    "n": 2,
+    "why": "تاريخ غير متفق عليه: royal_decree م/48 1426/8/2"
+   },
+   {
+    "article": "cmpz6nq6l0av3cwg2rnn8k94m",
+    "law": "تنظيم الدعم السكني",
+    "n": 3,
+    "why": "تاريخ غير متفق عليه: cabinet_decision 74 1438/1/30"
+   },
+   {
+    "article": "cmpz6ns2w0avrcwg2gotr07xk",
+    "law": "تنظيم الدعم السكني",
+    "n": 15,
+    "why": "تاريخ غير متفق عليه: cabinet_decision 74 1438/1/30"
+   },
+   {
+    "article": "cmpz6nspn0avzcwg25tu9jsck",
+    "law": "تنظيم الدعم السكني",
+    "n": 19,
+    "why": "تاريخ غير متفق عليه: cabinet_decision 74 1438/1/30"
+   },
+   {
+    "article": "cmpzcv6870a42vtrkvudap343",
+    "law": "تنظيم الهيئة الملكية للجبيل وينبع",
+    "n": 9,
+    "why": "تاريخ غير متفق عليه: royal_decree م/23 1442/2/21"
+   },
+   {
+    "article": "cmpzcv4vl09qovtrkdlzyd4tt",
+    "law": "تنظيم صندوق مدينة الملك فهد الطبية",
+    "n": 10,
+    "why": "أداة غير معيّنة"
+   },
+   {
+    "article": "cmpzcv4vl09sevtrkb5ut5wok",
+    "law": "تنظيم نفقات المرضى السعوديين ومرافقيهم المحولين للعلاج خارج مناطق إقامتهم",
+    "n": 3,
+    "why": "تاريخ غير متفق عليه: cabinet_decision 565 1438/9/10"
+   },
+   {
+    "article": "cmpz6a82g064pcwg2369du58i",
+    "law": "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة)",
+    "n": 10,
+    "why": "تاريخ غير متفق عليه: royal_order أ/240 1441/4/1"
+   },
+   {
+    "article": "cmpz6a886064rcwg2rh1eblir",
+    "law": "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة)",
+    "n": 11,
+    "why": "تاريخ غير متفق عليه: royal_order أ/240 1441/4/1"
+   },
+   {
+    "article": "cmpz6a8jl064vcwg280qmm0ik",
+    "law": "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة)",
+    "n": 13,
+    "why": "تاريخ غير متفق عليه: royal_order أ/240 1441/4/1"
+   },
+   {
+    "article": "cmpz6a8pb064xcwg23pzhqykm",
+    "law": "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة)",
+    "n": 14,
+    "why": "تاريخ غير متفق عليه: royal_order أ/240 1441/4/1"
+   },
+   {
+    "article": "cmpz6a9c60655cwg284huio0r",
+    "law": "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة)",
+    "n": 18,
+    "why": "تاريخ غير متفق عليه: royal_order أ/240 1441/4/1"
+   },
+   {
+    "article": "cmpz6a9hw0657cwg2hq61f49r",
+    "law": "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة)",
+    "n": 19,
+    "why": "تاريخ غير متفق عليه: royal_order أ/240 1441/4/1"
+   },
+   {
+    "article": "cmpz6a9nm0659cwg2h6b3vh7k",
+    "law": "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة)",
+    "n": 20,
+    "why": "تاريخ غير متفق عليه: royal_order أ/240 1441/4/1"
+   },
+   {
+    "article": "cmpz6a9tb065bcwg2wkux4f6k",
+    "law": "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة)",
+    "n": 21,
+    "why": "تاريخ غير متفق عليه: royal_order أ/240 1441/4/1"
+   },
+   {
+    "article": "cmpz6a9z1065dcwg2jp7xz0ej",
+    "law": "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة)",
+    "n": 22,
+    "why": "تاريخ غير متفق عليه: royal_order أ/240 1441/4/1"
+   },
+   {
+    "article": "cmpz6k0fb09kbcwg215kha1cw",
+    "law": "تنظيم هيئة تقويم التعليم العام",
+    "n": 7,
+    "why": "تاريخ غير متفق عليه: cabinet_decision 82 1437/3/3"
+   },
+   {
+    "article": "cmpz6k58109m1cwg2ihwsi5yz",
+    "law": "لائحة المدارس الأجنبية",
+    "n": 9,
+    "why": "تاريخ غير متفق عليه: cabinet_decision 141 1439/3/10"
+   },
+   {
+    "article": "cmpz5ypaz02bvcwg2xsc0y3nv",
+    "law": "نظام الأسلحة والذخائر",
+    "n": 50,
+    "why": "تاريخ غير متفق عليه: royal_decree م/17 1437/4/1"
+   },
+   {
+    "article": "cmpzcvbtq0bl0vtrkdtb9m5g6",
+    "law": "نظام البنك السعودي للتسليف والادخار ( بنك التنمية الاجتماعية )",
+    "n": 10,
+    "why": "تاريخ غير متفق عليه: cabinet_decision 75 1438/1/30"
+   },
+   {
+    "article": "cmpz63rk303z1cwg2ee9j9p3n",
+    "law": "نظام البيانات التجارية",
+    "n": 11,
+    "why": "تاريخ غير متفق عليه: royal_decree م/108 1439/10/27"
+   },
+   {
+    "article": "cmpz6ppv90bjxcwg2w0p5ghab",
+    "law": "نظام التسجيل العيني للعقار",
+    "n": 6,
+    "why": "تاريخ غير متفق عليه: royal_decree م/123 1447/6/10"
+   },
+   {
+    "article": "cmpz8058i0cbn7b6wzm6fmq2a",
+    "law": "نظام التقاعد المدني",
+    "n": 18,
+    "why": "تاريخ غير متفق عليه: royal_decree م/48 1403/8/12"
+   },
+   {
+    "article": "cmpz809170cd17b6wicc4enpt",
+    "law": "نظام الخدمة المدنية",
+    "n": 2,
+    "why": "تاريخ غير متفق عليه: royal_decree م/95 1439/9/15"
+   },
+   {
+    "article": "cmpz9ega70cd5ybvvcg8bbbz0",
+    "law": "نظام الخدمة المدنية",
+    "n": 4,
+    "why": "تاريخ غير متفق عليه: royal_decree م/95 1439/9/15"
+   },
+   {
+    "article": "cmpz9eiqk0ce1ybvvw2ds5nrh",
+    "law": "نظام الخدمة المدنية",
+    "n": 19,
+    "why": "تاريخ غير متفق عليه: royal_decree م/95 1439/9/15"
+   },
+   {
+    "article": "cmpz9eiw30ce3ybvvedaiwmtq",
+    "law": "نظام الخدمة المدنية",
+    "n": 20,
+    "why": "تاريخ غير متفق عليه: royal_decree م/23 1435/4/11"
+   },
+   {
+    "article": "cmpz9ej1m0ce5ybvvtkvi57n9",
+    "law": "نظام الخدمة المدنية",
+    "n": 21,
+    "why": "تاريخ غير متفق عليه: royal_decree م/95 1439/9/15"
+   },
+   {
+    "article": "cmpz9eji50cebybvvqtnb4437",
+    "law": "نظام الخدمة المدنية",
+    "n": 24,
+    "why": "تاريخ غير متفق عليه: royal_decree م/95 1439/9/15"
+   },
+   {
+    "article": "cmpz9ejns0cedybvvv8f25d9g",
+    "law": "نظام الخدمة المدنية",
+    "n": 25,
+    "why": "تاريخ غير متفق عليه: royal_decree م/73 1441/5/27, royal_decree م/73 1441/5/27"
+   },
+   {
+    "article": "cmpz9ekfi0cenybvv93wfurbq",
+    "law": "نظام الخدمة المدنية",
+    "n": 29,
+    "why": "أداة غير معيّنة"
+   },
+   {
+    "article": "cmpz9elcm0cezybvvi9ibs4bj",
+    "law": "نظام الخدمة المدنية",
+    "n": 35,
+    "why": "أداة غير معيّنة"
+   },
+   {
+    "article": "cmpz9eli50cf1ybvvkpwn7ryx",
+    "law": "نظام الخدمة المدنية",
+    "n": 36,
+    "why": "أداة غير معيّنة"
+   },
+   {
+    "article": "cmpz9elyo0cf5ybvvndmq2da0",
+    "law": "نظام الخدمة المدنية",
+    "n": 37,
+    "why": "الخدمة المدنية م37: ترقيم «37 مكرر» ملتبس (كما في gap016b)"
+   },
+   {
+    "article": "cmpz9emf70cfbybvv0wrbe70s",
+    "law": "نظام الخدمة المدنية",
+    "n": 39,
+    "why": "أداة غير معيّنة"
+   },
+   {
+    "article": "cmpz5xujw0217cwg27mjvyex4",
+    "law": "نظام الدفاع المدني",
+    "n": 5,
+    "why": "تاريخ غير متفق عليه: royal_decree م/63 1436/9/13"
+   },
+   {
+    "article": "cmpz5xupg0219cwg21seae23s",
+    "law": "نظام الدفاع المدني",
+    "n": 6,
+    "why": "تاريخ غير متفق عليه: royal_decree م/63 1436/9/13"
+   },
+   {
+    "article": "cmpz5xuv0021bcwg2mlnucl1n",
+    "law": "نظام الدفاع المدني",
+    "n": 7,
+    "why": "تاريخ غير متفق عليه: royal_decree م/63 1436/9/13"
+   },
+   {
+    "article": "cmpz5xv0l021dcwg2ubsdyus8",
+    "law": "نظام الدفاع المدني",
+    "n": 8,
+    "why": "تاريخ غير متفق عليه: royal_decree م/63 1436/9/13"
+   },
+   {
+    "article": "cmpz5xv65021fcwg2gwzg6jkv",
+    "law": "نظام الدفاع المدني",
+    "n": 9,
+    "why": "تاريخ غير متفق عليه: royal_decree م/63 1436/9/13"
+   },
+   {
+    "article": "cmpz5w93n01hjcwg2mlwwog7p",
+    "law": "نظام السجن والتوقيف",
+    "n": 4,
+    "why": "تاريخ غير متفق عليه: royal_decree م/28 1435/5/1, cabinet_decision 217 1439/4/29"
+   },
+   {
+    "article": "cmpzcuy3x07tgvtrk728ff44b",
+    "law": "نظام القضاء",
+    "n": 9,
+    "why": "ملاحظات نظام القضاء مسندة لغير موادها (م72 تحت م9 وم73)"
+   },
+   {
+    "article": "cmpzcuy3y07v8vtrk4z6pt0w9",
+    "law": "نظام القضاء",
+    "n": 73,
+    "why": "ملاحظات نظام القضاء مسندة لغير موادها (م72 تحت م9 وم73)"
+   },
+   {
+    "article": "cmpz5xims01wzcwg2qka8cmgf",
+    "law": "نظام المرور",
+    "n": 69,
+    "why": "تاريخ غير متفق عليه: royal_decree م/70 1437/11/6"
+   },
+   {
+    "article": "cmpz5xisd01x1cwg2zpgfqijm",
+    "law": "نظام المرور",
+    "n": 70,
+    "why": "تاريخ غير متفق عليه: royal_decree م/70 1437/11/6"
+   },
+   {
+    "article": "cmpz5xk0w01xhcwg2b87okrqf",
+    "law": "نظام المرور",
+    "n": 78,
+    "why": "تاريخ غير متفق عليه: royal_decree م/70 1437/11/6"
+   },
+   {
+    "article": "cmpz5tola00mhcwg2inzp65un",
+    "law": "نظام المناطق",
+    "n": 13,
+    "why": "تاريخ غير متفق عليه: royal_order أ/21 1414/3/30"
+   },
+   {
+    "article": "cmpz5tsle00nvcwg2zx2jjjtz",
+    "law": "نظام المناطق",
+    "n": 37,
+    "why": "تاريخ غير متفق عليه: royal_order أ/21 1414/3/30"
+   },
+   {
+    "article": "cmpzcuy3w07s8vtrkmvh2pu9z",
+    "law": "نظام الهيئة العامة للولاية على أموال القاصرين ومن فى حكمهم",
+    "n": 6,
+    "why": "أداة غير معيّنة"
+   },
+   {
+    "article": "cmpz6o81j0b1bcwg2281sjhif",
+    "law": "نظام رسوم الأراضي البيضاء",
+    "n": 6,
+    "why": "رسوم الأراضي البيضاء: المرسوم يعلّق العمل بأحكام الرسوم على نفاذ لائحتها (BD-34)"
+   },
+   {
+    "article": "cmpz6o8780b1dcwg2goxksvzs",
+    "law": "نظام رسوم الأراضي البيضاء",
+    "n": 7,
+    "why": "رسوم الأراضي البيضاء: المرسوم يعلّق العمل بأحكام الرسوم على نفاذ لائحتها (BD-34)"
+   },
+   {
+    "article": "cmpz6o8cw0b1fcwg2ihhvnz5r",
+    "law": "نظام رسوم الأراضي البيضاء",
+    "n": 8,
+    "why": "رسوم الأراضي البيضاء: المرسوم يعلّق العمل بأحكام الرسوم على نفاذ لائحتها (BD-34)"
+   },
+   {
+    "article": "cmpz6o95b0b1ncwg2wen8cu62",
+    "law": "نظام رسوم الأراضي البيضاء",
+    "n": 12,
+    "why": "الملاحظة تسمي مادة أخرى"
+   },
+   {
+    "article": "cmpz6o9b00b1pcwg2st4nwfnc",
+    "law": "نظام رسوم الأراضي البيضاء",
+    "n": 13,
+    "why": "الملاحظة تسمي مادة أخرى"
+   },
+   {
+    "article": "cmpzcvb5k0biovtrky288nzr4",
+    "law": "نظام ضريبة الدخل",
+    "n": 56,
+    "why": "تاريخ غير متفق عليه: royal_decree م/113 1438/11/2"
+   },
+   {
+    "article": "cmpzcvb5k0bizvtrkz55p4agm",
+    "law": "نظام ضريبة الدخل",
+    "n": 67,
+    "why": "ضريبة الدخل م67: الأداة في الملاحظة م/113 لعام 1438هـ لا م/1، والنص الجديد يتضمن حكمًا انتقاليًا (كما في gap016b)"
+   },
+   {
+    "article": "cmpz5tdhs00ivcwg2znpi7je6",
+    "law": "نظام مجلس الشورى",
+    "n": 10,
+    "why": "تاريخ غير متفق عليه: royal_order أ/181 1428/12/14"
+   },
+   {
+    "article": "cmpz5teme00j9cwg2i2awsbfe",
+    "law": "نظام مجلس الشورى",
+    "n": 17,
+    "why": "تاريخ غير متفق عليه: royal_order أ/198 1424/10/2"
+   },
+   {
+    "article": "cmpz5tf9e00jhcwg2u4gyvfob",
+    "law": "نظام مجلس الشورى",
+    "n": 21,
+    "why": "تاريخ غير متفق عليه: royal_order أ/181 1428/12/14"
+   },
+   {
+    "article": "cmpz5tfqm00jlcwg2g2u2ol2r",
+    "law": "نظام مجلس الشورى",
+    "n": 23,
+    "why": "تاريخ غير متفق عليه: royal_order أ/198 1424/10/2"
+   },
+   {
+    "article": "cmpz5tgpl00jxcwg22j1npv99",
+    "law": "نظام مجلس الشورى",
+    "n": 29,
+    "why": "تاريخ غير متفق عليه: royal_order أ/181 1428/12/14"
+   },
+   {
+    "article": "cmpz5tm6w00lncwg2uwbny02v",
+    "law": "نظام مجلس الوزراء",
+    "n": 30,
+    "why": "تاريخ غير متفق عليه: royal_order أ/151 1432/9/3"
+   },
+   {
+    "article": "cmpz6jrf409gzcwg2ka6tcpyc",
+    "law": "نظام معهد الإدارة العامة",
+    "n": 15,
+    "why": "الملاحظة تسمي مادة أخرى"
+   },
+   {
+    "article": "cmpz60qpn0301cwg257qwuvj5",
+    "law": "نظام مكافحة جرائم الإرهاب وتمويله",
+    "n": 12,
+    "why": "أداة غير معيّنة"
+   },
+   {
+    "article": "cmpzcvci50bw1vtrk2bp4b8xq",
+    "law": "نظام نقابة السيارات",
+    "n": 5,
+    "why": "تاريخ غير متفق عليه: royal_decree 47 1404/12/22"
+   },
+   {
+    "article": "cmpzcvci50bwavtrkhwq2vtqd",
+    "law": "نظام نقابة السيارات",
+    "n": 14,
+    "why": "تاريخ غير متفق عليه: royal_decree م/21 1425/4/11"
+   },
+   {
+    "article": "cmpzcvci50bwlvtrky29197b9",
+    "law": "نظام نقابة السيارات",
+    "n": 25,
+    "why": "تاريخ غير متفق عليه: royal_decree م/21 1425/4/11"
+   },
+   {
+    "article": "cmpzcvci50bwmvtrk8twccb4p",
+    "law": "نظام نقابة السيارات",
+    "n": 26,
+    "why": "تاريخ غير متفق عليه: royal_decree م/21 1425/4/11"
+   },
+   {
+    "article": "cmpzcvci50bwuvtrkgsdhv4pi",
+    "law": "نظام نقابة السيارات",
+    "n": 34,
+    "why": "تاريخ غير متفق عليه: royal_decree م/21 1425/4/11"
+   },
+   {
+    "article": "cmpzcvci60bwyvtrkz319llro",
+    "law": "نظام نقابة السيارات",
+    "n": 38,
+    "why": "تاريخ غير متفق عليه: royal_decree م/9 1407/4/20"
+   },
+   {
+    "article": "cmpzcvci60bxavtrkwi8daycm",
+    "law": "نظام نقابة السيارات",
+    "n": 50,
+    "why": "تاريخ غير متفق عليه: royal_decree م/21 1425/4/11"
+   },
+   {
+    "article": "cmpzcvci60bxevtrkiywy6v6u",
+    "law": "نظام نقابة السيارات",
+    "n": 54,
+    "why": "تاريخ غير متفق عليه: royal_decree م/9 1407/4/20"
+   }
+  ],
+  "plan": [
+   {
+    "law": "تنظيم هيئة حقوق الإنسان",
+    "n": 18,
+    "valid_from": "2016-04-01",
+    "instr": "قرار مجلس الوزراء رقم (237) وتاريخ 1437/6/5هـ — من 2016-04-01"
+   },
+   {
+    "law": "نظام التأمين ضد التعطل عن العمل",
+    "n": 7,
+    "valid_from": "2020-07-10",
+    "instr": "مرسوم ملكي رقم (م/160) وتاريخ 1441/11/11هـ — من 2020-07-10"
+   },
+   {
+    "law": "نظام الخدمة المدنية",
+    "n": 17,
+    "valid_from": "2020-06-19",
+    "instr": "مرسوم ملكي رقم (م/139) وتاريخ 1441/10/19هـ — من 2020-06-19"
+   },
+   {
+    "law": "نظام ديوان المراقبة العامة",
+    "n": 1,
+    "valid_from": "2020-07-31",
+    "instr": "مرسوم ملكي رقم (م/178) وتاريخ 1441/12/2هـ — من 2020-07-31"
+   }
+  ]
+ },
+ "statements": [
+  "SELECT CASE WHEN (SELECT count(*) FROM legal_articles WHERE id=$hk$cmpzcuysb07wsvtrk13i35zzx$hk$ AND \"legalSystemId\"=$hk$cmpz5qkom008ccwg2xep4aje1$hk$ AND \"articleNumber\"=18 AND \"articleBis\"=0 AND md5(content)=$hk$5182266cbdf675fc32810f0ce353b5d7$hk$)=1 AND (SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpzcuysb07wsvtrk13i35zzx$hk$)=0 AND coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpzcuysb07wsvtrk13i35zzx$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل') AND (SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5qkom008ccwg2xep4aje1$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري' AND (SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-63f58f24daf0a1903d2cd343$hk$ AND position($hk$ترفع الهيئة حسابها الختامي إلى الملك خلال ثلاثة أشهر على الأكثر من تاريخ انتهاء السنة المالية للتوجيه بما يراه في شأنه$hk$ in new_text)>0)=1 AND (SELECT count(*) FROM legal_articles WHERE id=$hk$cmpzcv8z00ax4vtrkbybnpofs$hk$ AND \"legalSystemId\"=$hk$cmpz5rb8g00bmcwg2naszws3s$hk$ AND \"articleNumber\"=7 AND \"articleBis\"=0 AND md5(content)=$hk$9faabf3b7f848535b284d9f1edef64f2$hk$)=1 AND (SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpzcv8z00ax4vtrkbybnpofs$hk$)=0 AND coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpzcv8z00ax4vtrkbybnpofs$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل') AND (SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5rb8g00bmcwg2naszws3s$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري' AND (SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-496382b738a7110e468f6557$hk$ AND position($hk$تحدد الاشتراكات في هذا النظام بقرار من مجلس الشؤون الاقتصادية والتنيمة بناءً على اقتراح من الوزير بعد إبداء مجلس الإدارة رأيه وفق آلية تحددها اللائحة، بنسبة لا تزيد على (2%) من الأجر الخاضع للاشتراكات ولا تقل عن (0.5%)، على أن يدفع صاحب العمل شهرياً نصف الاشتراك المحدد ويدفع المشترك النصف الآخر$hk$ in new_text)>0)=1 AND (SELECT count(*) FROM legal_articles WHERE id=$hk$cmpz9ei9z0cdvybvvasbb8owu$hk$ AND \"legalSystemId\"=$hk$cmpz5qa03006ucwg2p4ns9c4c$hk$ AND \"articleNumber\"=17 AND \"articleBis\"=0 AND md5(content)=$hk$e55954d5a3b51724b061e4aefb24b4a7$hk$)=1 AND (SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpz9ei9z0cdvybvvasbb8owu$hk$)=0 AND coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpz9ei9z0cdvybvvasbb8owu$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل') AND (SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5qa03006ucwg2p4ns9c4c$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري' AND (SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-f11fb43ad0d0ad59a7459918$hk$ AND position($hk$يمنح الموظف العلاوة وفق سلم الرواتب الملحق بهذا النظام، وذلك بمنحه الدرجة التالية المباشرة للدرجة التي يشغلها في المرتبة نفسها. ويتم ذلك ابتداءً من أول يوم في كل سنة مالية$hk$ in new_text)>0)=1 AND (SELECT count(*) FROM legal_articles WHERE id=$hk$cmpzcvahb0bb9vtrkblkysptx$hk$ AND \"legalSystemId\"=$hk$cmpz5rj2u00cacwg2jgopy3av$hk$ AND \"articleNumber\"=1 AND \"articleBis\"=0 AND md5(content)=$hk$2a58525b93eedc0c973fd77122fc0f22$hk$)=1 AND (SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpzcvahb0bb9vtrkblkysptx$hk$)=0 AND coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpzcvahb0bb9vtrkblkysptx$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل') AND (SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5rj2u00cacwg2jgopy3av$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري' AND (SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-a82e9fe5cb267edd97ddc055$hk$ AND position($hk$الديوان العام للمحاسبة جهاز رقابي مستقل، يرتبط مباشرةً بالملك، ويتمتع بالشخصية الاعتبارية وبالاستقلال المالي والإداري$hk$ in new_text)>0)=1 AND (SELECT count(*) FROM unit_version WHERE id LIKE 'g29u-%')=0 THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard_before",
+  "INSERT INTO unit_version (id, unit_id, body, valid_from, evidence_instrument, evidence_url, evidence_quote, created_at) VALUES\n($hk$g29u-3f1522dbe8ff13d2eb5e5f97$hk$, $hk$cmpzcuysb07wsvtrk13i35zzx$hk$, $hk$ترفع الهيئة حسابها الختامي إلى الملك خلال ثلاثة أشهر على الأكثر من تاريخ انتهاء السنة المالية للتوجيه بما يراه في شأنه$hk$, $hk$2016-04-01$hk$::timestamptz, $hk$قرار مجلس الوزراء رقم (237) وتاريخ 1437/6/5هـ — من 2016-04-01$hk$, $hk$boe.amendment_note:boe26-63f58f24daf0a1903d2cd343$hk$, $hk$ملاحظة هيئة الخبراء على المادة: «تم تعديل هذه المادة بموجب قرار مجلس الوزراء رقم: (237) وتاريخ: 5/ 6/ 1437هـ ، لتكون بالنص الآتي:\n\n\"ترفع الهيئة حسابها الختامي إلى الملك خلال ثلاثة أشهر على الأكثر من تاريخ انتهاء السنة المالية للتوجيه بما يراه في شأنه\".»؛ النفاذ: قارئان مستقلان متفقان (c1/c2): النشر 1437/06/23هـ (https://www.uqn.gov.sa/cdn/?url=wp-content/uploads/2022/10/العدد-4612.pdf)، سكتت الأداة: م71 ← 2016-04-01 [HKM-052 gap029-amended-texts-2026-10-30]$hk$, now()),\n($hk$g29u-e97a031003fd77aeacb177c0$hk$, $hk$cmpzcv8z00ax4vtrkbybnpofs$hk$, $hk$تحدد الاشتراكات في هذا النظام بقرار من مجلس الشؤون الاقتصادية والتنيمة بناءً على اقتراح من الوزير بعد إبداء مجلس الإدارة رأيه وفق آلية تحددها اللائحة، بنسبة لا تزيد على (2%) من الأجر الخاضع للاشتراكات ولا تقل عن (0.5%)، على أن يدفع صاحب العمل شهرياً نصف الاشتراك المحدد ويدفع المشترك النصف الآخر$hk$, $hk$2020-07-10$hk$::timestamptz, $hk$مرسوم ملكي رقم (م/160) وتاريخ 1441/11/11هـ — من 2020-07-10$hk$, $hk$boe.amendment_note:boe26-496382b738a7110e468f6557$hk$, $hk$ملاحظة هيئة الخبراء على المادة: «- عٌدلت هذه المادة لتكون بالنص الآتي: \" تحدد الاشتراكات في هذا النظام بقرار من مجلس الشؤون الاقتصادية والتنيمة بناءً على اقتراح من الوزير بعد إبداء مجلس الإدارة رأيه وفق آلية تحددها اللائحة، بنسبة لا تزيد على (2%) من الأجر الخاضع للاشتراكات ولا تقل عن (0.5%)، على أن يدفع صاحب العمل شهرياً نصف الاشتراك المحدد ويدفع المشترك النصف الآخر \". وذلك بموجب المرسوم الملكي رقم (م/160) وتاريخ 1441/11/11هـ.»؛ النفاذ: قارئان مستقلان متفقان (c1/c2): النشر 1441/11/19هـ (https://www.uqn.gov.sa/cdn/?url=wp-content/uploads/2022/10/العدد-4839.pdf (issue page https://www.uqn.gov.sa/details?p=20313))، سكتت الأداة: م71 ← 2020-07-10 [HKM-052 gap029-amended-texts-2026-10-30]$hk$, now()),\n($hk$g29u-f85aa7bcb79f255a9bdffcc2$hk$, $hk$cmpz9ei9z0cdvybvvasbb8owu$hk$, $hk$يمنح الموظف العلاوة وفق سلم الرواتب الملحق بهذا النظام، وذلك بمنحه الدرجة التالية المباشرة للدرجة التي يشغلها في المرتبة نفسها. ويتم ذلك ابتداءً من أول يوم في كل سنة مالية$hk$, $hk$2020-06-19$hk$::timestamptz, $hk$مرسوم ملكي رقم (م/139) وتاريخ 1441/10/19هـ — من 2020-06-19$hk$, $hk$boe.amendment_note:boe26-f11fb43ad0d0ad59a7459918$hk$, $hk$ملاحظة هيئة الخبراء على المادة: «تعديل المادة لتكون بالنص الآتي: \"يمنح الموظف العلاوة وفق سلم الرواتب الملحق بهذا النظام، وذلك بمنحه الدرجة التالية المباشرة للدرجة التي يشغلها في المرتبة نفسها. ويتم ذلك ابتداءً من أول يوم في كل سنة مالية\".»؛ النفاذ: قارئان متفقان سابقًا (gap016/gap016b) ← 2020-06-19 [HKM-052 gap029-amended-texts-2026-10-30]$hk$, now()),\n($hk$g29u-ec5ce28749bdaea875d52856$hk$, $hk$cmpzcvahb0bb9vtrkblkysptx$hk$, $hk$الديوان العام للمحاسبة جهاز رقابي مستقل، يرتبط مباشرةً بالملك، ويتمتع بالشخصية الاعتبارية وبالاستقلال المالي والإداري$hk$, $hk$2020-07-31$hk$::timestamptz, $hk$مرسوم ملكي رقم (م/178) وتاريخ 1441/12/2هـ — من 2020-07-31$hk$, $hk$boe.amendment_note:boe26-a82e9fe5cb267edd97ddc055$hk$, $hk$ملاحظة هيئة الخبراء على المادة: «- عُدلت هذه المادة لتصبح بالنص الآتي: \"الديوان العام للمحاسبة جهاز رقابي مستقل، يرتبط مباشرةً بالملك، ويتمتع بالشخصية الاعتبارية وبالاستقلال المالي والإداري\". وذلك بموجب المرسوم الملكي رقم (م / 178) وتاريخ 2 / 12 / 1441هـ.»؛ النفاذ: قارئان مستقلان متفقان (c1/c2): النشر 1441/12/10هـ (https://www.uqn.gov.sa/cdn/?url=wp-content/uploads/2022/10/العدد-4842.pdf)، سكتت الأداة: م71 ← 2020-07-31 [HKM-052 gap029-amended-texts-2026-10-30]$hk$, now())",
+  "SELECT CASE WHEN (SELECT count(*) FROM unit_version WHERE id LIKE 'g29u-%')=4 AND (SELECT md5(string_agg(unit_id||':'||valid_from::date||':'||encode(sha256(convert_to(body,'UTF8')),'hex'), '|' ORDER BY unit_id, valid_from)) FROM unit_version WHERE id LIKE 'g29u-%')=$hk$93e67150ea0c24fbb317b996d30b14a6$hk$ THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard_after"
+ ],
+ "diag_guards": [
+  "(SELECT count(*) FROM legal_articles WHERE id=$hk$cmpzcuysb07wsvtrk13i35zzx$hk$ AND \"legalSystemId\"=$hk$cmpz5qkom008ccwg2xep4aje1$hk$ AND \"articleNumber\"=18 AND \"articleBis\"=0 AND md5(content)=$hk$5182266cbdf675fc32810f0ce353b5d7$hk$)=1",
+  "(SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpzcuysb07wsvtrk13i35zzx$hk$)=0",
+  "coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpzcuysb07wsvtrk13i35zzx$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل')",
+  "(SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5qkom008ccwg2xep4aje1$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري'",
+  "(SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-63f58f24daf0a1903d2cd343$hk$ AND position($hk$ترفع الهيئة حسابها الختامي إلى الملك خلال ثلاثة أشهر على الأكثر من تاريخ انتهاء السنة المالية للتوجيه بما يراه في شأنه$hk$ in new_text)>0)=1",
+  "(SELECT count(*) FROM legal_articles WHERE id=$hk$cmpzcv8z00ax4vtrkbybnpofs$hk$ AND \"legalSystemId\"=$hk$cmpz5rb8g00bmcwg2naszws3s$hk$ AND \"articleNumber\"=7 AND \"articleBis\"=0 AND md5(content)=$hk$9faabf3b7f848535b284d9f1edef64f2$hk$)=1",
+  "(SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpzcv8z00ax4vtrkbybnpofs$hk$)=0",
+  "coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpzcv8z00ax4vtrkbybnpofs$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل')",
+  "(SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5rb8g00bmcwg2naszws3s$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري'",
+  "(SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-496382b738a7110e468f6557$hk$ AND position($hk$تحدد الاشتراكات في هذا النظام بقرار من مجلس الشؤون الاقتصادية والتنيمة بناءً على اقتراح من الوزير بعد إبداء مجلس الإدارة رأيه وفق آلية تحددها اللائحة، بنسبة لا تزيد على (2%) من الأجر الخاضع للاشتراكات ولا تقل عن (0.5%)، على أن يدفع صاحب العمل شهرياً نصف الاشتراك المحدد ويدفع المشترك النصف الآخر$hk$ in new_text)>0)=1",
+  "(SELECT count(*) FROM legal_articles WHERE id=$hk$cmpz9ei9z0cdvybvvasbb8owu$hk$ AND \"legalSystemId\"=$hk$cmpz5qa03006ucwg2p4ns9c4c$hk$ AND \"articleNumber\"=17 AND \"articleBis\"=0 AND md5(content)=$hk$e55954d5a3b51724b061e4aefb24b4a7$hk$)=1",
+  "(SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpz9ei9z0cdvybvvasbb8owu$hk$)=0",
+  "coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpz9ei9z0cdvybvvasbb8owu$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل')",
+  "(SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5qa03006ucwg2p4ns9c4c$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري'",
+  "(SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-f11fb43ad0d0ad59a7459918$hk$ AND position($hk$يمنح الموظف العلاوة وفق سلم الرواتب الملحق بهذا النظام، وذلك بمنحه الدرجة التالية المباشرة للدرجة التي يشغلها في المرتبة نفسها. ويتم ذلك ابتداءً من أول يوم في كل سنة مالية$hk$ in new_text)>0)=1",
+  "(SELECT count(*) FROM legal_articles WHERE id=$hk$cmpzcvahb0bb9vtrkblkysptx$hk$ AND \"legalSystemId\"=$hk$cmpz5rj2u00cacwg2jgopy3av$hk$ AND \"articleNumber\"=1 AND \"articleBis\"=0 AND md5(content)=$hk$2a58525b93eedc0c973fd77122fc0f22$hk$)=1",
+  "(SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpzcvahb0bb9vtrkblkysptx$hk$)=0",
+  "coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpzcvahb0bb9vtrkblkysptx$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل')",
+  "(SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5rj2u00cacwg2jgopy3av$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري'",
+  "(SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-a82e9fe5cb267edd97ddc055$hk$ AND position($hk$الديوان العام للمحاسبة جهاز رقابي مستقل، يرتبط مباشرةً بالملك، ويتمتع بالشخصية الاعتبارية وبالاستقلال المالي والإداري$hk$ in new_text)>0)=1"
+ ]
+}

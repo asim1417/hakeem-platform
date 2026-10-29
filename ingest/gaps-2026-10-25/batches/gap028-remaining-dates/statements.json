@@ -1,0 +1,380 @@
+{
+ "by": "gap028-remaining-dates-2026-10-30",
+ "md5": "5b2b31c0b2cd5718662c2c5da2f065ad",
+ "count": 52,
+ "expect_delta": {},
+ "report": {
+  "documented": 60,
+  "confirmed": 11,
+  "corrected": 49,
+  "held": [
+   {
+    "item": "R-010",
+    "name": "تنظيم الهيئة الوطنية لإدارة الطوارئ",
+    "why": "تعارض: بطاقة الهيئة 1446/08/15 (= المخزن 2025-02-14) وأم القرى نشرت التنظيم نفسه 1446/04/24 (2024-10-27) — قرار للمالك"
+   },
+   {
+    "item": "R-035",
+    "name": "نظام الإقامة المميزة",
+    "why": "تعارض: بطاقة الهيئة 1440/09/13 (سبت) ونظما 1440/09/19 (جمعة)"
+   },
+   {
+    "item": "R-145",
+    "name": "تنظيم المجمع الفقهي في المملكة العربية السعودية",
+    "why": "نشر نظما خميس 1433/11/25؛ الأرجح العدد التالي"
+   }
+  ],
+  "new_articles": 0,
+  "changed_text": 0,
+  "plan": [
+   {
+    "item": "R-005",
+    "name": "نظام ضريبة التصرفات العقارية",
+    "old": "2024-10-11",
+    "new": "2025-04-09"
+   },
+   {
+    "item": "R-017",
+    "name": "تنظيم مركز الملك عبد الله بن عبد العزيز الدولي لخدمة اللغة العربية",
+    "old": "2010-03-22",
+    "new": "2010-04-30"
+   },
+   {
+    "item": "R-020",
+    "name": "تنظيم مجمع الملك سلمان العالمي للغة العربية",
+    "old": "2020-09-01",
+    "new": "2023-11-24"
+   },
+   {
+    "item": "R-021",
+    "name": "تنظيم وكالة الأنباء السعودية",
+    "old": "2023-02-14",
+    "new": "2023-06-16"
+   },
+   {
+    "item": "R-022",
+    "name": "نظام مكافحة غسل الأموال",
+    "old": "2017-10-25",
+    "new": "2017-11-04"
+   },
+   {
+    "item": "R-023",
+    "name": "نظام المرور",
+    "old": "2007-11-07",
+    "new": "2008-05-21"
+   },
+   {
+    "item": "R-024",
+    "name": "نظام الجنسية العربية السعودية",
+    "old": "1954-09-22",
+    "new": "1954-11-12"
+   },
+   {
+    "item": "R-026",
+    "name": "نظام الدفاع المدني",
+    "old": "1986-01-20",
+    "new": "1986-08-04"
+   },
+   {
+    "item": "R-031",
+    "name": "اللائحة التنفيذية لنظام مكافحة جرائم الإرهاب وتمويله",
+    "old": "2019-01-08",
+    "new": "2019-01-26"
+   },
+   {
+    "item": "R-038",
+    "name": "تنظيم المركز السعودي للشراكات الاستراتيجية الدولية",
+    "old": "2017-11-21",
+    "new": "2017-12-15"
+   },
+   {
+    "item": "R-039",
+    "name": "نظام السوق المالية",
+    "old": "2003-07-31",
+    "new": "2004-02-25"
+   },
+   {
+    "item": "R-041",
+    "name": "نظام القياس والمعايرة",
+    "old": "2013-09-19",
+    "new": "2014-06-11"
+   },
+   {
+    "item": "R-042",
+    "name": "نظام الأوراق التجارية",
+    "old": "1964-02-24",
+    "new": "1964-02-28"
+   },
+   {
+    "item": "R-043",
+    "name": "نظام الصندوق السعودي للتنمية",
+    "old": "1974-08-31",
+    "new": "1974-09-14"
+   },
+   {
+    "item": "R-050",
+    "name": "تنظيم الهيئة السعودية للمواصفات والمقاييس والجودة",
+    "old": "2010-05-31",
+    "new": "2010-08-20"
+   },
+   {
+    "item": "R-052",
+    "name": "قانون (نظام) العلامات التجارية لدول مجلس التعاون لدول الخليج العربية",
+    "old": "2014-05-25",
+    "new": "2016-09-29"
+   },
+   {
+    "item": "R-053",
+    "name": "تنظيم المركز الوطني للدراسات الاستراتيجية التنموية",
+    "old": "2016-06-06",
+    "new": "2016-06-24"
+   },
+   {
+    "item": "R-055",
+    "name": "تنظيم الهيئة العامة للزكاة والدخل",
+    "old": "2017-04-17",
+    "new": "2017-04-28"
+   },
+   {
+    "item": "R-057",
+    "name": "تنظيم صندوق التنمية الوطني",
+    "old": "2017-11-21",
+    "new": "2018-03-08"
+   },
+   {
+    "item": "R-062",
+    "name": "تنظيم المؤسسة العامة للتدريب التقني والمهني",
+    "old": "2007-08-28",
+    "new": "2007-10-07"
+   },
+   {
+    "item": "R-065",
+    "name": "تنظيم هيئة تقويم التعليم والتدريب",
+    "old": "2018-10-23",
+    "new": "2018-11-16"
+   },
+   {
+    "item": "R-066",
+    "name": "تنظيم معاملة القادمين للمملكة بتأشيرات دخول للحج أو العمرة وغيرها",
+    "old": "1984-07-17",
+    "new": "1984-08-03"
+   },
+   {
+    "item": "R-072",
+    "name": "نظام خدمة الضباط",
+    "old": "1973-09-25",
+    "new": "1973-09-27"
+   },
+   {
+    "item": "R-074",
+    "name": "تنظيم هيئة توليد الوظائف ومكافحة البطالة",
+    "old": "2015-10-12",
+    "new": "2015-11-06"
+   },
+   {
+    "item": "R-075",
+    "name": "نظام توزيع الأراضي البور",
+    "old": "1968-03-29",
+    "new": "1968-10-04"
+   },
+   {
+    "item": "R-077",
+    "name": "نظام (قانون) الحجر الزراعي لدول مجلس التعاون لدول الخليج العربية",
+    "old": "2005-04-06",
+    "new": "2005-08-11"
+   },
+   {
+    "item": "R-079",
+    "name": "قانون (نظام) الأسمدة ومحسنات التربة الزراعية في دول مجلس التعاون لدول الخليج العربية",
+    "old": "2006-08-09",
+    "new": "2006-12-07"
+   },
+   {
+    "item": "R-080",
+    "name": "قانون (نظام) المبيدات في دول مجلس التعاون لدول الخليج العربية",
+    "old": "2006-12-05",
+    "new": "2007-03-29"
+   },
+   {
+    "item": "R-082",
+    "name": "تنظيم المؤسسة العامة للحبوب",
+    "old": "2016-05-09",
+    "new": "2016-08-25"
+   },
+   {
+    "item": "R-084",
+    "name": "تنظيم المؤسسة العامة للري",
+    "old": "2018-01-02",
+    "new": "2018-04-10"
+   },
+   {
+    "item": "R-085",
+    "name": "الترتيبات التنظيمية للمركز الوطني للنخيل والتمور",
+    "old": "2022-01-11",
+    "new": "2022-12-23"
+   },
+   {
+    "item": "R-086",
+    "name": "نظام تركيز مسؤوليات القضاء الشرعي",
+    "old": "1952-09-20",
+    "new": "1952-11-01"
+   },
+   {
+    "item": "R-088",
+    "name": "تنظيم صندوق النفقة",
+    "old": "2017-08-07",
+    "new": "2017-11-23"
+   },
+   {
+    "item": "R-091",
+    "name": "اللائحة التنفيذية لنظام التكاليف القضائية",
+    "old": "2022-04-12",
+    "new": "2022-04-22"
+   },
+   {
+    "item": "R-095",
+    "name": "تنظيم الهيئة العامة للترفيه",
+    "old": "2019-01-08",
+    "new": "2019-01-25"
+   },
+   {
+    "item": "R-098",
+    "name": "نظام المختبرات الخاصة",
+    "old": "2002-04-21",
+    "new": "2002-11-13"
+   },
+   {
+    "item": "R-099",
+    "name": "النظام الصحي",
+    "old": "2002-06-04",
+    "new": "2002-09-26"
+   },
+   {
+    "item": "R-104",
+    "name": "نظام صندوق التنمية الصناعية السعودي",
+    "old": "1974-03-20",
+    "new": "1974-03-29"
+   },
+   {
+    "item": "R-112",
+    "name": "تـنظيم هيـئـة الرقابة النوويـة والإشعـاعـية",
+    "old": "2018-03-13",
+    "new": "2018-03-30"
+   },
+   {
+    "item": "R-114",
+    "name": "تنظيم صندوق تنمية الموارد البشرية",
+    "old": "2000-07-31",
+    "new": "2000-11-23"
+   },
+   {
+    "item": "R-116",
+    "name": "اللائحة التنظيمية لمراكز التنمية الاجتماعية",
+    "old": "2007-05-28",
+    "new": "2007-09-20"
+   },
+   {
+    "item": "R-121",
+    "name": "اللائحة التنفيذية لضبط أعمال تفتيش العمل وتنظيمها",
+    "old": "2007-08-27",
+    "new": "2007-09-14"
+   },
+   {
+    "item": "R-123",
+    "name": "اللائحة التنظيمية لعمل الأسر المنتجة",
+    "old": "2018-10-16",
+    "new": "2019-01-23"
+   },
+   {
+    "item": "R-125",
+    "name": "تنظيم هيئة رعاية الأشخاص ذوي الإعاقة",
+    "old": "2018-02-13",
+    "new": "2018-06-26"
+   },
+   {
+    "item": "R-126",
+    "name": "نظام العمل التطوعي",
+    "old": "2020-01-22",
+    "new": "2020-04-30"
+   },
+   {
+    "item": "R-128",
+    "name": "نظام (قانون) الجمارك الموحد لدول مجلس التعاون لدول الخليج العربية",
+    "old": "2003-01-06",
+    "new": "2003-02-28"
+   },
+   {
+    "item": "R-132",
+    "name": "نظام المؤسسة العامة للخطوط الجوية العربية السعودية",
+    "old": "1965-05-02",
+    "new": "1965-11-12"
+   },
+   {
+    "item": "R-133",
+    "name": "تنظيم الهيئة العامة للطيران المدني",
+    "old": "2005-03-21",
+    "new": "2005-10-26"
+   },
+   {
+    "item": "R-147",
+    "name": "نظام إدارة المواد الكيميائية",
+    "old": "2006-08-18",
+    "new": "2007-02-14"
+   }
+  ]
+ },
+ "statements": [
+  "SELECT CASE WHEN (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$52a0a73628b542c389a28570a97c251a$hk$)=$hk$2026-05-23$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$7f918177e0df4578ae205fd94c1d3d72$hk$)=$hk$2024-10-11$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$boe26-4695aab79b5d07133858cf8c$hk$)=$hk$2002-10-30$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$boe26-7611a95fe8dd6dacf15de4d5$hk$)=$hk$2006-05-16$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p0m0000gcwg2min5afgo$hk$)=$hk$2010-03-22$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p25y000ocwg28szc3z7q$hk$)=$hk$2020-09-01$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p2xv000scwg2nhz32vnx$hk$)=$hk$2023-02-14$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p4oq0011cwg2nunz3axq$hk$)=$hk$2017-10-25$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p59o0014cwg27ifjrxzm$hk$)=$hk$2007-11-07$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p5gn0015cwg2aousown8$hk$)=$hk$1954-09-22$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p68j0019cwg2ojpqtac8$hk$)=$hk$1986-01-20$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p95c001ncwg258cmwkzh$hk$)=$hk$2019-01-08$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p9ja001pcwg2w40w4xpk$hk$)=$hk$2022-09-06$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pe70002dcwg2wt96qcrt$hk$)=$hk$2017-11-21$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5peky002fcwg2autte6ea$hk$)=$hk$2003-07-31$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pfqt002lcwg2y1viv8vw$hk$)=$hk$2013-09-19$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pfxt002mcwg2mcuo6lnh$hk$)=$hk$1964-02-24$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pg4s002ncwg2dra7uf14$hk$)=$hk$1974-08-31$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pj1k0032cwg262ocrzeh$hk$)=$hk$2010-02-24$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pj8j0033cwg2vxtyp6py$hk$)=$hk$2010-05-31$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pk7g0038cwg2visy7ew5$hk$)=$hk$2014-05-25$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pldh003dcwg2v7xek640$hk$)=$hk$2016-06-06$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pm5e003hcwg2a8m6f8q4$hk$)=$hk$2017-04-17$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pmqb003kcwg2stifg8u7$hk$)=$hk$2017-11-21$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5px780051cwg2tec3xgy6$hk$)=$hk$2007-08-28$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pyk30058cwg2bw2l9das$hk$)=$hk$2018-10-23$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q0b4005hcwg20afpbskh$hk$)=$hk$1984-07-17$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q9f5006rcwg2n3a8rdob$hk$)=$hk$1973-09-25$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qayz006zcwg22wiv9coh$hk$)=$hk$2015-10-12$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qbjy0072cwg2kw8cu4w9$hk$)=$hk$1968-03-29$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qcx60079cwg2xeiju3hi$hk$)=$hk$2005-04-06$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qdb6007bcwg27tsq4xk1$hk$)=$hk$2006-08-09$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qdi5007ccwg26c4cvdfy$hk$)=$hk$2006-12-05$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qf2d007kcwg218jokbhs$hk$)=$hk$2016-05-09$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qfgb007mcwg2msul8acv$hk$)=$hk$2018-01-02$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qhs0007ycwg2ulplc0vn$hk$)=$hk$2022-01-11$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qijx0082cwg2i3piouc5$hk$)=$hk$1952-09-20$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qluh008icwg2pzqde7x1$hk$)=$hk$2017-08-07$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qn0c008ocwg2t9sbyimx$hk$)=$hk$2022-04-12$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qro6009ccwg2dnowpx26$hk$)=$hk$2019-01-08$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qu80009pcwg2w4ty4zyr$hk$)=$hk$2002-04-21$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5quez009qcwg2hjijwsme$hk$)=$hk$2002-06-04$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qwcu009zcwg2ztpdd7u0$hk$)=$hk$2006-08-21$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5r0fk00akcwg2h1bj5pgk$hk$)=$hk$1974-03-20$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5r35a00aycwg2ta5t19xe$hk$)=$hk$2018-03-13$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5r5z200bacwg2yei47rqv$hk$)=$hk$2000-07-31$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5r9gt00bfcwg2lq2cgbbq$hk$)=$hk$2007-05-28$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rdze00bvcwg2jq22ysxn$hk$)=$hk$2007-08-27$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5reky00bxcwg2q27q6e2t$hk$)=$hk$2018-10-16$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rf7g00bzcwg2gn8fvro1$hk$)=$hk$2018-02-13$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rfsu00c1cwg2ikpubqxa$hk$)=$hk$2020-01-22$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rjp100cccwg2ooufbnk2$hk$)=$hk$2003-01-06$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rqw600cycwg2fzpck8kc$hk$)=$hk$1965-05-02$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rt6500d5cwg25ey9d89j$hk$)=$hk$2005-03-21$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5ry5a00dicwg2n9o8pnoa$hk$)=$hk$2019-05-28$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmr4rvo1300az1j0u2jrawb8o$hk$)=$hk$2021-04-09$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$nz26-328d5e295076ca5713767ee8$hk$)=$hk$2013-07-11$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$nz26-572270a48d5e94462c03c359$hk$)=$hk$2005-09-10$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$nz26-a1d891c206a6b6dfa421b6c6$hk$)=$hk$2021-10-24$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$own26-28f0823babb9af4c35614dcd$hk$)=$hk$2006-08-18$hk$::date AND (SELECT count(*) FROM legal_text_provenance WHERE id LIKE 'g28p-%')=0 THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard_before",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) VALUES\n($hk$g28p-1a744987b9bd0a13f2f7bc8e$hk$, 'system', $hk$52a0a73628b542c389a28570a97c251a$hk$, $hk$نظام الحرف والصناعات اليدوية$hk$, NULL, $hk$uqn$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://uqn.gov.sa/decisions-and-regulations/4000207$hk$, $hk$67e2743836296827f6e0f20b6acea1d9$hk$, DATE '2026-10-30', $hk$effective_from_confirmed:2026-05-23$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: النشر + 120 يومًا — «م18: يعمل بالنظام بعد مضي (مائة وعشرين) يوماً من تاريخ نشره في الجريدة الرسمية»؛ النشر 1447/08/04هـ من صفحة أم القرى؛ النفاذ = 2026-05-23؛ وهو المخزن نفسه [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-7ec340ee7d34e4997b92d20c$hk$, 'system', $hk$7f918177e0df4578ae205fd94c1d3d72$hk$, $hk$نظام ضريبة التصرفات العقارية$hk$, NULL, $hk$uqn$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://uqn.gov.sa/details?p=26600$hk$, $hk$d24a0309311ca001795f2e34d75e52d7$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2024-10-11->2025-04-09$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: النشر + 180 يومًا — «المادة 20/2: يُعمل بالنظام بعد (مائة وثمانين) يوماً من تاريخ نشره في الجريدة الرسمية، ويلغي كل ما يتعارض معه من أحكام.»؛ النشر 1446/04/08هـ من صفحة أم القرى؛ النفاذ = 2025-04-09؛ وكان المخزن 2024-10-11 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-bcf4a2095ae8e73182c8dc99$hk$, 'system', $hk$boe26-4695aab79b5d07133858cf8c$hk$, $hk$النظام العام للبيئة الصادر بالمرسوم الملكي رقم (م/34) وتاريخ 1422/7/28هـ$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/النظام-العام-للبيئة/$hk$, $hk$db2d6e9ab22054f58a6abe52edc57c21$hk$, DATE '2026-10-30', $hk$effective_from_confirmed:2002-10-30$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: النشر + 1 سنة هجرية — «م24: ينشر هذا النظام في الجريدة الرسمية، ويعمل به بعد سنة من تاريخ نشره»؛ النشر 1422/08/24هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2002-10-30؛ وهو المخزن نفسه [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-b75278aa921d375828b302cd$hk$, 'system', $hk$boe26-7611a95fe8dd6dacf15de4d5$hk$, $hk$تنظيم الهيئة العامة للمساحة الصادر بقرار مجلس الوزراء رقم (8) وتاريخ 1427/1/14هـ$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/تنظيم-الهيئة-العامة-للمساحة/$hk$, $hk$1da4d561fcf0496bbdc95860a16bfd4d$hk$, DATE '2026-10-30', $hk$effective_from_confirmed:2006-05-16$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: النشر + 60 يومًا — «المادة 13: ينشر هـذا التنظيم في الجريدة الرسمية ويعمل به بعد ستين يومًا من تاريخ نشره.»؛ النشر 1427/02/17هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2006-05-16؛ وهو المخزن نفسه [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-1ee0985f7437b3c0766a91ff$hk$, 'system', $hk$cmpz5p0m0000gcwg2min5afgo$hk$, $hk$تنظيم مركز الملك عبد الله بن عبد العزيز الدولي لخدمة اللغة العربية$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/تنظيم-مركز-الملك-عبد-الله-بن-عبد-العزيز/$hk$, $hk$0509bf9a58e6787f30620dc5cf90a4bb$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2010-03-22->2010-04-30$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: من تاريخ النشر — «المادة 15: يُنشر هذا التنظيم في الجريدة الرسمية لدولة المقر، ويعمل به من تاريخ نشره.»؛ النشر 1431/05/16هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2010-04-30؛ وكان المخزن 2010-03-22 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-85247cb3ba3a269f468b529b$hk$, 'system', $hk$cmpz5p25y000ocwg28szc3z7q$hk$, $hk$تنظيم مجمع الملك سلمان العالمي للغة العربية$hk$, NULL, $hk$uqn$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/0a8d8ccf-dfc2-49a2-9881-ac3200aec3a0/1$hk$, $hk$fd63c8ac195976fc334940ea8a2d46b9$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2020-09-01->2023-11-24$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: بطاقة هيئة الخبراء: النشر 1445/05/10هـ = 2023-11-24 (قُرئت حيّة 30/10)، وأكدها المراجع: صفحة أم القرى p=24103 نُشرت مع p=24104 في 1445/5/10، وخبر الاقتصادية 24/11/2023؛ «يعمل به من تاريخ نشره»؛ النشر 1442/01/20هـ من صفحة أم القرى؛ النفاذ = 2023-11-24؛ وكان المخزن 2020-09-01 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-bb855d236922a443abdcdd79$hk$, 'system', $hk$cmpz5p2xv000scwg2nhz32vnx$hk$, $hk$تنظيم وكالة الأنباء السعودية$hk$, NULL, $hk$uqn$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://uqn.gov.sa/details?p=23102$hk$, $hk$edc64a31a85a634b9d4b4ee01cc2aaeb$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2023-02-14->2023-06-16$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: من تاريخ النشر — «م16: ينشر التنظيم في الجريدة الرسمية، ويعمل به من تاريخ نشره، ويحل محل تنظيم وكالة الأنباء السعودية الصادر بقرار مجلس الوزراء رقم (303) وتاريخ 11 /9 /1433هـ، ويلغي كل ما يتعارض معه من أحكام»؛ النشر 1444/11/27هـ من صفحة أم القرى؛ النفاذ = 2023-06-16؛ وكان المخزن 2023-02-14 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-5bd08df973cec15529179f32$hk$, 'system', $hk$cmpz5p4oq0011cwg2nunz3axq$hk$, $hk$نظام مكافحة غسل الأموال$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/نظام-مكافحة-غسل-الأموال/$hk$, $hk$2c5aeb665c16bd3718c607535277f84c$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2017-10-25->2017-11-04$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: النشر + 1 يومًا — «المادة الحادية والخمسون: 2- يعمل بهذا النظام من اليوم التالي لتاريخ نشره في الجريدة الرسمية»؛ النشر 1439/02/14هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2017-11-04؛ وكان المخزن 2017-10-25 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-3539ce5573364eaf136076a6$hk$, 'system', $hk$cmpz5p59o0014cwg27ifjrxzm$hk$, $hk$نظام المرور$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/نظام-المرور/$hk$, $hk$43aa6ba8d0eb55b2a7096af382626f80$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2007-11-07->2008-05-21$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: النشر + 180 يومًا — «المادة 85: ينشر هذا النظام في الجريدة الرسمية ، ويعمل به بعد مائة وثمانين يوما من تاريخ نشره.»؛ النشر 1428/11/13هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2008-05-21؛ وكان المخزن 2007-11-07 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-02bf02dda463d97b1faaf491$hk$, 'system', $hk$cmpz5p5gn0015cwg2aousown8$hk$, $hk$نظام الجنسية العربية السعودية$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/نظام-الجنسية-العربية-السعودية/$hk$, $hk$0908dfcc3479761024e65393e6e4acec$hk$, DATE '2026-10-30', $hk$effective_from_corrected:1954-09-22->1954-11-12$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: من تاريخ النشر — «م30: يعتبر هذا النظام نافذا المفعول من تاريخ تصديقة ونشرة في الجريدة الرسمية»؛ النشر 1374/03/16هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 1954-11-12؛ وكان المخزن 1954-09-22 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-6eef184ab467cb0faa8a8684$hk$, 'system', $hk$cmpz5p68j0019cwg2ojpqtac8$hk$, $hk$نظام الدفاع المدني$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/نظام-الدفاع-المدني/$hk$, $hk$fb19af6e0a72e8c75ca59fa51e287bb6$hk$, DATE '2026-10-30', $hk$effective_from_corrected:1986-01-20->1986-08-04$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: النشر + 6 أشهر هجرية — «المادة 36: ينشر هذا النظام في الجريدة الرسمية ويعمل به بعد ستة أشهر من تاريخ نشره.»؛ النشر 1406/05/28هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 1986-08-04؛ وكان المخزن 1986-01-20 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-8b05bda740dfe5f08bd1b10a$hk$, 'system', $hk$cmpz5p95c001ncwg258cmwkzh$hk$, $hk$اللائحة التنفيذية لنظام مكافحة جرائم الإرهاب وتمويله$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/اللائحة-التنفيذية-لنظام-مكافحة-جرائم/$hk$, $hk$11db811bd1ee9af850d8ee84a894c54c$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2019-01-08->2019-01-26$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: النشر + 1 يومًا — «المادة السادسة والعشرون: يعمل بهذه اللائحة من اليوم التالي من تاريخ نشرها في الجريدة الرسمية»؛ النشر 1440/05/19هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2019-01-26؛ وكان المخزن 2019-01-08 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-572e5290dd8964b502016bbe$hk$, 'system', $hk$cmpz5p9ja001pcwg2w40w4xpk$hk$, $hk$اللائحة التنظيمية للجان إصلاح ذات البين في إمارات المناطق$hk$, NULL, $hk$uqn$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://uqn.gov.sa/details?p=20079$hk$, $hk$2b5f088759919c601df4d144b67ca4fe$hk$, DATE '2026-10-30', $hk$effective_from_confirmed:2022-09-06$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: من تاريخ الصدور/الموافقة — «م16: يعمل بهذه اللائحة من تاريخ الموافقة عليها»؛ النشر 1444/02/20هـ من صفحة أم القرى؛ النفاذ = 2022-09-06؛ وهو المخزن نفسه [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-0e6c4582656628313b103c9d$hk$, 'system', $hk$cmpz5pe70002dcwg2wt96qcrt$hk$, $hk$تنظيم المركز السعودي للشراكات الاستراتيجية الدولية$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/تنظيم-المركز-السعودي-للشراكات-الاستر/$hk$, $hk$2adb5a3530c7d2b324955c403ea78c2b$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2017-11-21->2017-12-15$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: من تاريخ النشر — «المادة 13: ينشر التنظيم بالجريدة الرسمية، ويعمل به من تاريخ نشره.»؛ النشر 1439/03/27هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2017-12-15؛ وكان المخزن 2017-11-21 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-e2b3064570e5159fcb1fa2d9$hk$, 'system', $hk$cmpz5peky002fcwg2autte6ea$hk$, $hk$نظام السوق المالية$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/نظام-السوق-المالية/$hk$, $hk$9bbd252b3226e799eeed8910823ce3e1$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2003-07-31->2004-02-25$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: النشر + 180 يومًا — «م67: ينشر هذا النظام في الجريدة الرسمية ويعمل به بعد مضي مئة وثمانين يوما من تاريخ نشره»؛ النشر 1424/07/01هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2004-02-25؛ وكان المخزن 2003-07-31 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-7ed11dcbd742c35a2c3c32d4$hk$, 'system', $hk$cmpz5pfqt002lcwg2y1viv8vw$hk$, $hk$نظام القياس والمعايرة$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/نظام-القياس-والمعايرة-القديم/$hk$, $hk$3f9b87348e4ecc98cd1027ca32d90da9$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2013-09-19->2014-06-11$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: النشر + 180 يومًا — «المادة 18: يعمل بهذا النظام بعد (مائة وثمانين) يوماً من تاريخ نشره في الجريدة الرسمية.»؛ النشر 1435/02/10هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2014-06-11؛ وكان المخزن 2013-09-19 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-431fd2b2b13c33a461240603$hk$, 'system', $hk$cmpz5pfxt002mcwg2mcuo6lnh$hk$, $hk$نظام الأوراق التجارية$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/نظام-الأوراق-التجارية/$hk$, $hk$0117350b2e8fcbb37fd5c89afc92cf20$hk$, DATE '2026-10-30', $hk$effective_from_corrected:1964-02-24->1964-02-28$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: سكت النص: من النشر (م71 من النظام الأساسي)؛ النشر 1383/10/15هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 1964-02-28؛ وكان المخزن 1964-02-24 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-1ec4877303eebecfba89345a$hk$, 'system', $hk$cmpz5pg4s002ncwg2dra7uf14$hk$, $hk$نظام الصندوق السعودي للتنمية$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/نظام-الصندوق-السعودي-للتنمية/$hk$, $hk$c9b0ef89a318f4d0a69e385f7ff46bf5$hk$, DATE '2026-10-30', $hk$effective_from_corrected:1974-08-31->1974-09-14$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: سكت النص: من النشر (م71 من النظام الأساسي) — «لا عبارة نشر ولا نفاذ في المرسوم الملكي م/48 ولا في المواد الاثنتي عشرة؛ البند ثانياً من المرسوم: «على كل من نائب رئيس مجلس الوزراء، ووزير المالية والاقتصاد الوطني تنفيذ مرسومنا هذا»»؛ النشر 1394/08/27هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 1974-09-14؛ وكان المخزن 1974-08-31 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-d80c07bb94452217a8daefdf$hk$, 'system', $hk$cmpz5pj1k0032cwg262ocrzeh$hk$, $hk$تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة)$hk$, NULL, $hk$official$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/تنظيم-هيئة-المدن-الاقتصادية/$hk$, $hk$6d030d864e197e08e72416fb73a2d801$hk$, DATE '2026-10-30', $hk$effective_from_confirmed:2010-02-24$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: من تاريخ الصدور/الموافقة — «المادة الثامنة والعشرون: يعمل بهذا التنظيم من تاريخ اعتماده»؛ النشر هـ من نسخة رسمية؛ النفاذ = 2010-02-24؛ وهو المخزن نفسه [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-cbb800d3f64fbc8edd7f429b$hk$, 'system', $hk$cmpz5pj8j0033cwg2vxtyp6py$hk$, $hk$تنظيم الهيئة السعودية للمواصفات والمقاييس والجودة$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/تنظيم-الهيئة-السعودية-للمواصفات-والم/$hk$, $hk$274fe921fc92e4de2aaa30556a943f69$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2010-05-31->2010-08-20$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: من تاريخ النشر — «المادة 16: يحل هذا التنظيم محل نظام الهيئة العربية السعودية للمواصفات والمقاييس ... ويعمل به من تاريخ نشره في الجريدة الرسمية .»؛ النشر 1431/09/10هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2010-08-20؛ وكان المخزن 2010-05-31 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-825dd30db4019154384197ff$hk$, 'system', $hk$cmpz5pk7g0038cwg2visy7ew5$hk$, $hk$قانون (نظام) العلامات التجارية لدول مجلس التعاون لدول الخليج العربية$hk$, NULL, $hk$official$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://misa.gov.sa/app/uploads/2024/01/GULF-COOPERATION-COUNCIL-TRADEMARK-LAW.pdf$hk$, $hk$902ad70ac3282a1bd45e0de07c1229da$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2014-05-25->2016-09-29$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: النشر + 90 يومًا — «المرسوم الملكي م/51 (من نص الهيئة في الحزمة): ينشر القانون (النظام) في الجريدة الرسمية خلال (ثلاثين) يوما من إقرار لجنة التعاون التجاري للائحته التنفيذية، ويعمل به بعد (تسعين) يوما من تاريخ نشره»؛ النشر 1437/09/26هـ من نسخة رسمية؛ النفاذ = 2016-09-29؛ وكان المخزن 2014-05-25 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-320254f83300fb18e680128d$hk$, 'system', $hk$cmpz5pldh003dcwg2v7xek640$hk$, $hk$تنظيم المركز الوطني للدراسات الاستراتيجية التنموية$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/تنظيم-المركز-الوطني-للدراسات-الاسترا/$hk$, $hk$3f4d01a3e1e9004be8a4bd83d6a8011e$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2016-06-06->2016-06-24$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: من تاريخ النشر — «المادة 15: ينشر هذا التنظيم في الجريدة الرسمية، ويعمل به من تاريخ نشره.»؛ النشر 1437/09/19هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2016-06-24؛ وكان المخزن 2016-06-06 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-d7a9bba1766330323a300feb$hk$, 'system', $hk$cmpz5pm5e003hcwg2a8m6f8q4$hk$, $hk$تنظيم الهيئة العامة للزكاة والدخل$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/تنظيم-الهيئة-العامة-للزكاة-والدخل/$hk$, $hk$a47ef193f6a87a4914506565c9d31d23$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2017-04-17->2017-04-28$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: من تاريخ النشر — «المادة السابعة عشرة: ينشر هذا التنظيم في الجريدة الرسمية، ويعمل به من تاريخ نشره، ويلغي كل ما يتعارض معه من أحكام»؛ النشر 1438/08/02هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2017-04-28؛ وكان المخزن 2017-04-17 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-a676f06793a1ba5fa9bbc75b$hk$, 'system', $hk$cmpz5pmqb003kcwg2stifg8u7$hk$, $hk$تنظيم صندوق التنمية الوطني$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/تنظيم-صندوق-التنمية-الوطني/$hk$, $hk$f09dbb85c2cca5999488c0f8f075986a$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2017-11-21->2018-03-08$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: النشر + 90 يومًا — «م15: ينشر التنظيم في الجريدة الرسمية، ويعمل به بعد تسعين يوما من تاريخ نشره»؛ النشر 1439/03/20هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2018-03-08؛ وكان المخزن 2017-11-21 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-0fb21a4a2de19d21f7eb66bc$hk$, 'system', $hk$cmpz5px780051cwg2tec3xgy6$hk$, $hk$تنظيم المؤسسة العامة للتدريب التقني والمهني$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/تنظيم-المؤسسة-العامة-للتدريب-التقني-و/$hk$, $hk$66da33c604a21264548ca4184932fd93$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2007-08-28->2007-10-07$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: النشر + 30 يومًا — «المادة 13: ينشر هذا التنظيم في الجريدة الرسمية، ويعمل به بعد مضي ثلاثين يومًا من تاريخ نشره.»؛ النشر 1428/08/25هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2007-10-07؛ وكان المخزن 2007-08-28 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-8c66942367a0941647ea55a9$hk$, 'system', $hk$cmpz5pyk30058cwg2bw2l9das$hk$, $hk$تنظيم هيئة تقويم التعليم والتدريب$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/تنظيم-هيئة-تقويم-التعليم-والتدريب/$hk$, $hk$400e8c0bdb049188c0ccaf39e38495c6$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2018-10-23->2018-11-16$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: من تاريخ النشر — «المادة 18: ينشر هذا التنظيم في الجريدة الرسمية، ويعمل به من تاريخ نشره.»؛ النشر 1440/03/08هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2018-11-16؛ وكان المخزن 2018-10-23 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-0291fc58e886b38bb1e68578$hk$, 'system', $hk$cmpz5q0b4005hcwg20afpbskh$hk$, $hk$تنظيم معاملة القادمين للمملكة بتأشيرات دخول للحج أو العمرة وغيرها$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/تنظيم-معاملة-القادمين-للمملكة-بتأشير/$hk$, $hk$f0258d5989be37c14b7579fe892348d6$hk$, DATE '2026-10-30', $hk$effective_from_corrected:1984-07-17->1984-08-03$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: سكت النص: من النشر (م71 من النظام الأساسي)؛ النشر 1404/11/06هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 1984-08-03؛ وكان المخزن 1984-07-17 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-f4b955bac209f44bfa7be99b$hk$, 'system', $hk$cmpz5q9f5006rcwg2n3a8rdob$hk$, $hk$نظام خدمة الضباط$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/نظام-خدمة-الضباط/$hk$, $hk$c5bdb529d56f006ca25ce632f43a503b$hk$, DATE '2026-10-30', $hk$effective_from_corrected:1973-09-25->1973-09-27$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: تاريخ منصوص — «المرسوم الملكي م/43: ثالثًا – يعتبر هذا النظام ساري المفعول اعتبارًا من ١/ ٩/ ١٣٩٣هــ»؛ النشر 1393/09/09هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 1973-09-27؛ وكان المخزن 1973-09-25 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-d2f9d9cd52eb28b1640215da$hk$, 'system', $hk$cmpz5qayz006zcwg22wiv9coh$hk$, $hk$تنظيم هيئة توليد الوظائف ومكافحة البطالة$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/تنظيم-هيئة-توليد-الوظائف-ومكافحة-البط/$hk$, $hk$357cc33f9745f0b0e0a54ed70b4bb8c8$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2015-10-12->2015-11-06$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: من تاريخ النشر — «المادة 16: ينشر هذا التنظيم في الجريدة الرسمية، ويعمل به من تاريخ نشره.»؛ النشر 1437/01/24هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2015-11-06؛ وكان المخزن 2015-10-12 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-bb375d6dc759b5a9d5e02b41$hk$, 'system', $hk$cmpz5qbjy0072cwg2kw8cu4w9$hk$, $hk$نظام توزيع الأراضي البور$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/نظام-توزيع-الأراضي-البور/$hk$, $hk$3baefe173acd91b33914865cfa507ae3$hk$, DATE '2026-10-30', $hk$effective_from_corrected:1968-03-29->1968-10-04$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: سكت النص: من النشر (م71 من النظام الأساسي)؛ النشر 1388/07/12هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 1968-10-04؛ وكان المخزن 1968-03-29 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-1b002bd4860f06ca0e6f9910$hk$, 'system', $hk$cmpz5qcx60079cwg2xeiju3hi$hk$, $hk$نظام (قانون) الحجر الزراعي لدول مجلس التعاون لدول الخليج العربية$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/نظام-قانون-الحجر-الزراعي-لدول-مجلس-الت/$hk$, $hk$7f2795f4572532609b19db7998623c8d$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2005-04-06->2005-08-11$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: النشر + 90 يومًا — «المرسوم الملكي م/9، ثالثا: يعمل بالنظام والعقوبات المرافقة له بعد مضي تسعين يوما من تاريخ نشرهما في الجريدة الرسمية.»؛ النشر 1426/04/05هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2005-08-11؛ وكان المخزن 2005-04-06 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-4192cdb5f4b909bc3049706f$hk$, 'system', $hk$cmpz5qdb6007bcwg27tsq4xk1$hk$, $hk$قانون (نظام) الأسمدة ومحسنات التربة الزراعية في دول مجلس التعاون لدول الخليج العربية$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/قانون-نظام-الأسمدة-ومحسنات-التربة-الز/$hk$, $hk$267964e8321de44ecf8e3744b2e96448$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2006-08-09->2006-12-07$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: النشر + 90 يومًا — «المرسوم الملكي م/47، ثالثا: ينشر هذا النظام وقائمة العقوبات الخاصة بمخالفات أحكامه في الجريدة الرسمية ويعمل بهما بعد تسعين يوما من تاريخ النشر، ويلغى بنفاذهما نظام الاتجار بالأسمدة والمخصبات الزراعية الصادر بالمرسوم المل»؛ النشر 1427/08/15هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2006-12-07؛ وكان المخزن 2006-08-09 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-4bc4c2d8d1b330e453f314e2$hk$, 'system', $hk$cmpz5qdi5007ccwg26c4cvdfy$hk$, $hk$قانون (نظام) المبيدات في دول مجلس التعاون لدول الخليج العربية$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/قانون-نظام-المبيدات-في-دول-مجلس-التعاو/$hk$, $hk$ba024904cc1c962293853e4545838e89$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2006-12-05->2007-03-29$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: النشر + 90 يومًا — «المرسوم الملكي م/67، ثالثا: ينشر هذا النظام والعقوبات الملحقة بالنظام وتطبيقها والتظلم منها في الجريدة الرسمية ويعمل بهما بعد تسعين يوما من تاريخ النشر.»؛ النشر 1427/12/08هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2007-03-29؛ وكان المخزن 2006-12-05 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-c933d0f48e87cf6ebc4be000$hk$, 'system', $hk$cmpz5qf2d007kcwg218jokbhs$hk$, $hk$تنظيم المؤسسة العامة للحبوب$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/تنظيم-المؤسسة-العامة-للحبوب/$hk$, $hk$5ba3007a76e6d0de8aed01829de8e00d$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2016-05-09->2016-08-25$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: النشر + 90 يومًا — «المادة السابعة عشرة: يُعمل بهذا التنظيم بعد تسعين يوماً من تاريخ نشره في الجريدة الرسمية.»؛ النشر 1437/08/20هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2016-08-25؛ وكان المخزن 2016-05-09 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-3344219aec3a640e427baea5$hk$, 'system', $hk$cmpz5qfgb007mcwg2msul8acv$hk$, $hk$تنظيم المؤسسة العامة للري$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/تنظيم-المؤسسة-العامة-للري/$hk$, $hk$48eac5b218163a73bb470a1ca4ed9bbf$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2018-01-02->2018-04-10$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: النشر + 60 يومًا — «م17: يعمل بالتنظيم بعد مضي (ستين) يوما من تاريخ نشره في الجريدة الرسمية»؛ النشر 1439/05/23هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2018-04-10؛ وكان المخزن 2018-01-02 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-60d5b93260108cb39d46ad0e$hk$, 'system', $hk$cmpz5qhs0007ycwg2ulplc0vn$hk$, $hk$الترتيبات التنظيمية للمركز الوطني للنخيل والتمور$hk$, NULL, $hk$uqn$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/df2f2e83-ba65-4564-8c6f-ae2900cd879a/1$hk$, $hk$41015099e182a3fe81234c3866dcaf18$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2022-01-11->2022-12-23$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: بطاقة هيئة الخبراء: النشر 1444/05/29هـ = 2022-12-23، العدد 4962 (قُرئت حيّة 30/10)؛ ونشرته أم القرى إلكترونيًا 1444/05/26؛ يُقدَّم تاريخ الهيئة بترتيب المالك للمصادر؛ «من تاريخ النشر»؛ النشر 1444/05/26هـ من صفحة أم القرى؛ النفاذ = 2022-12-23؛ وكان المخزن 2022-01-11 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-c07d219239841d9170dd4e2b$hk$, 'system', $hk$cmpz5qijx0082cwg2i3piouc5$hk$, $hk$نظام تركيز مسؤوليات القضاء الشرعي$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/نظام-تركيز-مسؤوليات-القضاء-الشرعي/$hk$, $hk$5f15443a552a29c1167e669100a4ffef$hk$, DATE '2026-10-30', $hk$effective_from_corrected:1952-09-20->1952-11-01$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: من تاريخ النشر — «المادة 257: يسري مفعول هذا النظام من تاريخ تصديقه ونشره.»؛ النشر 1372/02/13هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 1952-11-01؛ وكان المخزن 1952-09-20 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-1e7a4f285ff0080981a509e3$hk$, 'system', $hk$cmpz5qluh008icwg2pzqde7x1$hk$, $hk$تنظيم صندوق النفقة$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/تنظيم-صندوق-النفقة/$hk$, $hk$5d52fb2d34f7e0b9e07afa6460616368$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2017-08-07->2017-11-23$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: النشر + 90 يومًا — «المادة السابعة عشرة: يعمل بهذا التنظيم بعد تسعين يوماً من تاريخ نشره في الجريدة الرسمية.»؛ النشر 1438/12/03هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2017-11-23؛ وكان المخزن 2017-08-07 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-83a0d39a53d8e7ba7e438841$hk$, 'system', $hk$cmpz5qn0c008ocwg2t9sbyimx$hk$, $hk$اللائحة التنفيذية لنظام التكاليف القضائية$hk$, NULL, $hk$uqn$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://uqn.gov.sa/details?p=19341$hk$, $hk$0ec30225db2f444954f2596af4392555$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2022-04-12->2022-04-22$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: من تاريخ نفاذ نظام التكاليف القضائية (2022-03-16)، وقد نُشر بعده فمن تاريخ نشره — «المادة السابعة عشرة: تنشر اللائحة في الجريدة الرسمية، ويعمل بها من تاريخ العمل بالنظام.»؛ النشر 1443/09/21هـ من صفحة أم القرى؛ النفاذ = 2022-04-22؛ وكان المخزن 2022-04-12 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-714f4da81bb1ef51ff672bdc$hk$, 'system', $hk$cmpz5qro6009ccwg2dnowpx26$hk$, $hk$تنظيم الهيئة العامة للترفيه$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/تنظيم-الهيئة-العامة-للترفيه/$hk$, $hk$12d0ef57c1b3935f307f294f1545c754$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2019-01-08->2019-01-25$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: من تاريخ النشر — «المادة 16: ينشر التنظيم في الجريدة الرسمية، ويعمل به من تاريخ نشره، ويلغي كل ما يتعارض معه من أحكام.»؛ النشر 1440/05/19هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2019-01-25؛ وكان المخزن 2019-01-08 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-c459489a203002425a09aece$hk$, 'system', $hk$cmpz5qu80009pcwg2w4ty4zyr$hk$, $hk$نظام المختبرات الخاصة$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/نظام-المختبرات-الخاصة/$hk$, $hk$5769bc31c797b74216eae3a36cdc341c$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2002-04-21->2002-11-13$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: النشر + 180 يومًا — «المادة 17: يُنشر هذا النظام في الجريدة الرسمية ، ويُعمل بِه بعد مائة وثمانين يومًا من تاريخ نشره.»؛ النشر 1423/03/05هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2002-11-13؛ وكان المخزن 2002-04-21 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-cff87a756c7888d285ab394b$hk$, 'system', $hk$cmpz5quez009qcwg2hjijwsme$hk$, $hk$النظام الصحي$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/النظام-الصحي/$hk$, $hk$7489605b955f8afff4818b112f6d2e13$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2002-06-04->2002-09-26$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: النشر + 90 يومًا — «م19: ينشر هذا النظام في الجريدة الرسمية، ويعمل به بعد تسعين يوما من تاريخ نشره، ويلغي كل ما يتعارض معه من أحكام»؛ النشر 1423/04/17هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2002-09-26؛ وكان المخزن 2002-06-04 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-bd80dbef7cf24f43a337c26c$hk$, 'system', $hk$cmpz5qwcu009zcwg2ztpdd7u0$hk$, $hk$تنظيم صندوق مدينة الملك فهد الطبية$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/تنظيم-صندوق-مدينة-الملك-فهد-الطبية/$hk$, $hk$0b97b858b22d606f230aa85ef2911b7e$hk$, DATE '2026-10-30', $hk$effective_from_confirmed:2006-08-21$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: من تاريخ الصدور/الموافقة — «المادة الخامسة عشرة: يبدأ العمل بهذا التنظيم من تاريخ الموافقة عليه.»؛ النشر 1427/08/22هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2006-08-21؛ وهو المخزن نفسه [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-49b0441e6c16333a2bdffc74$hk$, 'system', $hk$cmpz5r0fk00akcwg2h1bj5pgk$hk$, $hk$نظام صندوق التنمية الصناعية السعودي$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/نظام-صندوق-التنمية-الصناعية-السعودي/$hk$, $hk$d504fe96fd0922fd133fbf4c52a042a6$hk$, DATE '2026-10-30', $hk$effective_from_corrected:1974-03-20->1974-03-29$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: سكت النص: من النشر (م71 من النظام الأساسي)؛ النشر 1394/03/06هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 1974-03-29؛ وكان المخزن 1974-03-20 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-3a2a22ea3b2cb931778fbdf8$hk$, 'system', $hk$cmpz5r35a00aycwg2ta5t19xe$hk$, $hk$تـنظيم هيـئـة الرقابة النوويـة والإشعـاعـية$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/تـنظيم-هيـئـة-الرقابة-النوويـة-والإش/$hk$, $hk$90836a4c0971f06e4ef13cddfaeb9e52$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2018-03-13->2018-03-30$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: من تاريخ النشر — «المادة الخامسة عشرة: ينشر هذا التنظيم في الجريدة الرسمية، ويعمل به من تاريخ نشره»؛ النشر 1439/07/13هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2018-03-30؛ وكان المخزن 2018-03-13 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-cb106b5c86e6b4c4c7e85d8c$hk$, 'system', $hk$cmpz5r5z200bacwg2yei47rqv$hk$, $hk$تنظيم صندوق تنمية الموارد البشرية$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/تنظيم-صندوق-تنمية-الموارد-البشرية/$hk$, $hk$26e6491d2b17dfc18db409e48e4443a5$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2000-07-31->2000-11-23$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: النشر + 90 يومًا — «م9: ينشر هذا التنظيم في الجريدة الرسمية ، ويعمل به بعد تسعين يوما من تاريخ نشره»؛ النشر 1421/05/25هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2000-11-23؛ وكان المخزن 2000-07-31 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-f0c67d8d96a2feadd1051f25$hk$, 'system', $hk$cmpz5r9gt00bfcwg2lq2cgbbq$hk$, $hk$اللائحة التنظيمية لمراكز التنمية الاجتماعية$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/اللائحة-التنظيمية-لمراكز-التنمية-الا/$hk$, $hk$48568e0a5f7b3eb7c196d92746f739ec$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2007-05-28->2007-09-20$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: النشر + 90 يومًا — «المادة 20: تنشر هذه اللائحة في الجريدة الرسمية ، ويعمل بها بعد تسعين يومًا من تاريخ نشرها.»؛ النشر 1428/06/07هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2007-09-20؛ وكان المخزن 2007-05-28 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-f193337f95e40d92f803bfef$hk$, 'system', $hk$cmpz5rdze00bvcwg2jq22ysxn$hk$, $hk$اللائحة التنفيذية لضبط أعمال تفتيش العمل وتنظيمها$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/اللائحة-التنفيذية-لضبط-أعمال-تفتيش-ال/$hk$, $hk$12621e2d223a887303f7530618504261$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2007-08-27->2007-09-14$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: من تاريخ النشر — «المادة الرابعة والعشرون: تنشر هذه اللائحة في الجريدة الرسمية، ويعمل بها من تاريخ نشرها»؛ النشر 1428/09/02هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2007-09-14؛ وكان المخزن 2007-08-27 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-5db870821f38f7e12641c9b5$hk$, 'system', $hk$cmpz5reky00bxcwg2q27q6e2t$hk$, $hk$اللائحة التنظيمية لعمل الأسر المنتجة$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/اللائحة-التنظيمية-لعمل-الأسر-المنتجة/$hk$, $hk$90668617c31699f21cf47e537b0143a9$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2018-10-16->2019-01-23$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: النشر + 3 أشهر هجرية — «م17/2: تنشر اللائحة في الجريدة الرسمية، ويعمل بها بعد ثلاثة أشهر من تاريخ نشرها»؛ النشر 1440/02/17هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2019-01-23؛ وكان المخزن 2018-10-16 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-de8e57ebef8db35f5bea5616$hk$, 'system', $hk$cmpz5rf7g00bzcwg2gn8fvro1$hk$, $hk$تنظيم هيئة رعاية الأشخاص ذوي الإعاقة$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/تنظيم-هيئة-رعاية-الأشخاص-ذوي-الإعاقة/$hk$, $hk$a4ec7d700a83a6335e60869874a1d627$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2018-02-13->2018-06-26$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: النشر + 60 يومًا — «المادة 17: ينشر هذا التنظيم في الجريدة الرسمية، ويعمل به بعد ستين يوما من تاريخ نشره.»؛ النشر 1439/08/11هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2018-06-26؛ وكان المخزن 2018-02-13 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-35678fbd377c2e2316e39998$hk$, 'system', $hk$cmpz5rfsu00c1cwg2ikpubqxa$hk$, $hk$نظام العمل التطوعي$hk$, NULL, $hk$uqn$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://uqn.gov.sa/details?p=17150$hk$, $hk$f82eebdf0d097afcac2bc319e7d23957$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2020-01-22->2020-04-30$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: النشر + 90 يومًا — «م18: يعمل بالنظام بعد (تسعين) يوما من تاريخ نشره في الجريدة الرسمية»؛ النشر 1441/06/06هـ من صفحة أم القرى؛ النفاذ = 2020-04-30؛ وكان المخزن 2020-01-22 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-1f59c4ee6ca0084d4491811e$hk$, 'system', $hk$cmpz5rjp100cccwg2ooufbnk2$hk$, $hk$نظام (قانون) الجمارك الموحد لدول مجلس التعاون لدول الخليج العربية$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/نظام-قانون-الجمارك-الموحد-لدول-مجلس-ال/$hk$, $hk$e6d89c89841ab908f9a48139a0c56e13$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2003-01-06->2003-02-28$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: سكت النص: من النشر (م71 من النظام الأساسي)؛ النشر 1423/12/27هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2003-02-28؛ وكان المخزن 2003-01-06 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-99dce4b5acd6811f599a5d8c$hk$, 'system', $hk$cmpz5rqw600cycwg2fzpck8kc$hk$, $hk$نظام المؤسسة العامة للخطوط الجوية العربية السعودية$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/نظام-المؤسسة-العامة-للخطوط-الجوية-الع/$hk$, $hk$903efdd8c6b3b03897c214d6b30c9b6a$hk$, DATE '2026-10-30', $hk$effective_from_corrected:1965-05-02->1965-11-12$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: من تاريخ النشر — «م13: ... وينشر هذا النظام في الجريدة الرسمية، ويعمل به من تاريخ نشره»؛ النشر 1385/07/19هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 1965-11-12؛ وكان المخزن 1965-05-02 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-0fc1b31b38e722263457111e$hk$, 'system', $hk$cmpz5rt6500d5cwg25ey9d89j$hk$, $hk$تنظيم الهيئة العامة للطيران المدني$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/تنظيم-الهيئة-العامة-للطيران-المدني/$hk$, $hk$cc22070b1995cebccab5f997a9523714$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2005-03-21->2005-10-26$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: النشر + 180 يومًا — «المادة الرابعة عشرة: ينشر هذا التنظيم في الجريدة الرسمية، ويعمل به بعد (مائة وثمانين) يوما من تاريخ نشره»؛ النشر 1426/03/20هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2005-10-26؛ وكان المخزن 2005-03-21 [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-6802a1140b9b6461dc3cf13c$hk$, 'system', $hk$cmpz5ry5a00dicwg2n9o8pnoa$hk$, $hk$ضوابط استخدام تقنيات المعلومات والاتصالات في الجهات الحكومية$hk$, NULL, $hk$official$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$nezams$hk$, $hk$7f262555951e03fa2c71fbe76d2e016a$hk$, DATE '2026-10-30', $hk$effective_from_confirmed:2019-05-28$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: من تاريخ الصدور/الموافقة — «م9/8: يُعمل بهذه الضوابط من تاريخ الموافقة عليها»؛ النشر هـ من نسخة رسمية؛ النفاذ = 2019-05-28؛ وهو المخزن نفسه [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-658f347e4f3323d7cc6e4531$hk$, 'system', $hk$cmr4rvo1300az1j0u2jrawb8o$hk$, $hk$قواعد تحديد أتعاب الخبراء والأمناء في نظام الإفلاس$hk$, NULL, $hk$uqn$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://uqn.gov.sa/details?p=17438$hk$, $hk$b9bf9c6dbccccabd9a8b831408ff5688$hk$, DATE '2026-10-30', $hk$effective_from_confirmed:2021-04-09$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: من تاريخ النشر — «المادة السابعة عشرة: تنشر هذه القواعد في الجريدة الرسمية، ويعمل بها من تاريخ نشرها.»؛ النشر 1442/08/27هـ من صفحة أم القرى؛ النفاذ = 2021-04-09؛ وهو المخزن نفسه [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-7eb4293b1be3546df6abb8dc$hk$, 'system', $hk$nz26-328d5e295076ca5713767ee8$hk$, $hk$تنظيم مركز المصالحة$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/تنظيم-مركز-المصالحة/$hk$, $hk$a8071705636414ff04e0334f32612042$hk$, DATE '2026-10-30', $hk$effective_from_confirmed:2013-07-11$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: النشر + 90 يومًا — «المادة العاشرة: يعمل بهذا التنظيم بعد مضي (تسعين) يوماً من تاريخ نشره في الجريدة الرسمية، ويلغي كل ما يتعارض معه من أحكام.»؛ النشر 1434/06/02هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2013-07-11؛ وهو المخزن نفسه [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-818ad04a51dcc2c36aeb6dc8$hk$, 'system', $hk$nz26-572270a48d5e94462c03c359$hk$, $hk$نظام البيع بالتقسيط$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/نظام-البيع-بالتقسيط/$hk$, $hk$b7412e2acc797865ed3699d0c0e7f9d2$hk$, DATE '2026-10-30', $hk$effective_from_confirmed:2005-09-10$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: النشر + 120 يومًا — «المادة 17: ينشر هذا النظام في الجريدة الرسمية ، ويعمل به بعد مائة وعشرين يومًا من تاريخ نشره.»؛ النشر 1426/04/05هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2005-09-10؛ وهو المخزن نفسه [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-4fd8fe8bf4de861f0cf75e04$hk$, 'system', $hk$nz26-a1d891c206a6b6dfa421b6c6$hk$, $hk$الدليل الاسترشادي لاقتراح سن أحكام المخالفة الإدارية وجزائها$hk$, NULL, $hk$uqn$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://uqn.gov.sa/details?p=18348$hk$, $hk$1b21beab13485418580cf6755c185b5d$hk$, DATE '2026-10-30', $hk$effective_from_confirmed:2021-10-24$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: النشر + 30 يومًا — «المادة 6: ينشر هذا الدليل في الجريدة الرسمية، ويعمل به بعد (ثلاثين) يوماً من تاريخ نشره.»؛ النشر 1443/02/17هـ من صفحة أم القرى؛ النفاذ = 2021-10-24؛ وهو المخزن نفسه [قارئ مستقل + مراجع مستقل]$hk$),\n($hk$g28p-61d0328c08ad0af81744aae8$hk$, 'system', $hk$own26-28f0823babb9af4c35614dcd$hk$, $hk$نظام إدارة المواد الكيميائية$hk$, NULL, $hk$nezams$hk$, $hk$gap028-remaining-dates-2026-10-30$hk$, $hk$https://nezams.com/?p=1244$hk$, $hk$7b8ec7f87134545aedd0670065755dad$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2006-08-18->2007-02-14$hk$, $hk$HKM-052 gap028-remaining-dates-2026-10-30: النشر + 180 يومًا — «م18: يعمل بهذا النظام بعد مائة وثمانين يومًا من تاريخ نشره في الجريدة الرسمية»؛ النشر 1427/07/24هـ من نظما (مصدر معتمد ما لم يخالفه الأعلى)؛ النفاذ = 2007-02-14؛ وكان المخزن 2006-08-18 [قارئ مستقل + مراجع مستقل]$hk$)",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2025-04-09$hk$::timestamptz WHERE id = $hk$7f918177e0df4578ae205fd94c1d3d72$hk$ AND preamble_effective_from::date = $hk$2024-10-11$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2010-04-30$hk$::timestamptz WHERE id = $hk$cmpz5p0m0000gcwg2min5afgo$hk$ AND preamble_effective_from::date = $hk$2010-03-22$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2023-11-24$hk$::timestamptz WHERE id = $hk$cmpz5p25y000ocwg28szc3z7q$hk$ AND preamble_effective_from::date = $hk$2020-09-01$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2023-06-16$hk$::timestamptz WHERE id = $hk$cmpz5p2xv000scwg2nhz32vnx$hk$ AND preamble_effective_from::date = $hk$2023-02-14$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2017-11-04$hk$::timestamptz WHERE id = $hk$cmpz5p4oq0011cwg2nunz3axq$hk$ AND preamble_effective_from::date = $hk$2017-10-25$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2008-05-21$hk$::timestamptz WHERE id = $hk$cmpz5p59o0014cwg27ifjrxzm$hk$ AND preamble_effective_from::date = $hk$2007-11-07$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$1954-11-12$hk$::timestamptz WHERE id = $hk$cmpz5p5gn0015cwg2aousown8$hk$ AND preamble_effective_from::date = $hk$1954-09-22$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$1986-08-04$hk$::timestamptz WHERE id = $hk$cmpz5p68j0019cwg2ojpqtac8$hk$ AND preamble_effective_from::date = $hk$1986-01-20$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2019-01-26$hk$::timestamptz WHERE id = $hk$cmpz5p95c001ncwg258cmwkzh$hk$ AND preamble_effective_from::date = $hk$2019-01-08$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2017-12-15$hk$::timestamptz WHERE id = $hk$cmpz5pe70002dcwg2wt96qcrt$hk$ AND preamble_effective_from::date = $hk$2017-11-21$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2004-02-25$hk$::timestamptz WHERE id = $hk$cmpz5peky002fcwg2autte6ea$hk$ AND preamble_effective_from::date = $hk$2003-07-31$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2014-06-11$hk$::timestamptz WHERE id = $hk$cmpz5pfqt002lcwg2y1viv8vw$hk$ AND preamble_effective_from::date = $hk$2013-09-19$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$1964-02-28$hk$::timestamptz WHERE id = $hk$cmpz5pfxt002mcwg2mcuo6lnh$hk$ AND preamble_effective_from::date = $hk$1964-02-24$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$1974-09-14$hk$::timestamptz WHERE id = $hk$cmpz5pg4s002ncwg2dra7uf14$hk$ AND preamble_effective_from::date = $hk$1974-08-31$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2010-08-20$hk$::timestamptz WHERE id = $hk$cmpz5pj8j0033cwg2vxtyp6py$hk$ AND preamble_effective_from::date = $hk$2010-05-31$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2016-09-29$hk$::timestamptz WHERE id = $hk$cmpz5pk7g0038cwg2visy7ew5$hk$ AND preamble_effective_from::date = $hk$2014-05-25$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2016-06-24$hk$::timestamptz WHERE id = $hk$cmpz5pldh003dcwg2v7xek640$hk$ AND preamble_effective_from::date = $hk$2016-06-06$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2017-04-28$hk$::timestamptz WHERE id = $hk$cmpz5pm5e003hcwg2a8m6f8q4$hk$ AND preamble_effective_from::date = $hk$2017-04-17$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2018-03-08$hk$::timestamptz WHERE id = $hk$cmpz5pmqb003kcwg2stifg8u7$hk$ AND preamble_effective_from::date = $hk$2017-11-21$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2007-10-07$hk$::timestamptz WHERE id = $hk$cmpz5px780051cwg2tec3xgy6$hk$ AND preamble_effective_from::date = $hk$2007-08-28$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2018-11-16$hk$::timestamptz WHERE id = $hk$cmpz5pyk30058cwg2bw2l9das$hk$ AND preamble_effective_from::date = $hk$2018-10-23$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$1984-08-03$hk$::timestamptz WHERE id = $hk$cmpz5q0b4005hcwg20afpbskh$hk$ AND preamble_effective_from::date = $hk$1984-07-17$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$1973-09-27$hk$::timestamptz WHERE id = $hk$cmpz5q9f5006rcwg2n3a8rdob$hk$ AND preamble_effective_from::date = $hk$1973-09-25$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2015-11-06$hk$::timestamptz WHERE id = $hk$cmpz5qayz006zcwg22wiv9coh$hk$ AND preamble_effective_from::date = $hk$2015-10-12$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$1968-10-04$hk$::timestamptz WHERE id = $hk$cmpz5qbjy0072cwg2kw8cu4w9$hk$ AND preamble_effective_from::date = $hk$1968-03-29$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2005-08-11$hk$::timestamptz WHERE id = $hk$cmpz5qcx60079cwg2xeiju3hi$hk$ AND preamble_effective_from::date = $hk$2005-04-06$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2006-12-07$hk$::timestamptz WHERE id = $hk$cmpz5qdb6007bcwg27tsq4xk1$hk$ AND preamble_effective_from::date = $hk$2006-08-09$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2007-03-29$hk$::timestamptz WHERE id = $hk$cmpz5qdi5007ccwg26c4cvdfy$hk$ AND preamble_effective_from::date = $hk$2006-12-05$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2016-08-25$hk$::timestamptz WHERE id = $hk$cmpz5qf2d007kcwg218jokbhs$hk$ AND preamble_effective_from::date = $hk$2016-05-09$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2018-04-10$hk$::timestamptz WHERE id = $hk$cmpz5qfgb007mcwg2msul8acv$hk$ AND preamble_effective_from::date = $hk$2018-01-02$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2022-12-23$hk$::timestamptz WHERE id = $hk$cmpz5qhs0007ycwg2ulplc0vn$hk$ AND preamble_effective_from::date = $hk$2022-01-11$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$1952-11-01$hk$::timestamptz WHERE id = $hk$cmpz5qijx0082cwg2i3piouc5$hk$ AND preamble_effective_from::date = $hk$1952-09-20$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2017-11-23$hk$::timestamptz WHERE id = $hk$cmpz5qluh008icwg2pzqde7x1$hk$ AND preamble_effective_from::date = $hk$2017-08-07$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2022-04-22$hk$::timestamptz WHERE id = $hk$cmpz5qn0c008ocwg2t9sbyimx$hk$ AND preamble_effective_from::date = $hk$2022-04-12$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2019-01-25$hk$::timestamptz WHERE id = $hk$cmpz5qro6009ccwg2dnowpx26$hk$ AND preamble_effective_from::date = $hk$2019-01-08$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2002-11-13$hk$::timestamptz WHERE id = $hk$cmpz5qu80009pcwg2w4ty4zyr$hk$ AND preamble_effective_from::date = $hk$2002-04-21$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2002-09-26$hk$::timestamptz WHERE id = $hk$cmpz5quez009qcwg2hjijwsme$hk$ AND preamble_effective_from::date = $hk$2002-06-04$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$1974-03-29$hk$::timestamptz WHERE id = $hk$cmpz5r0fk00akcwg2h1bj5pgk$hk$ AND preamble_effective_from::date = $hk$1974-03-20$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2018-03-30$hk$::timestamptz WHERE id = $hk$cmpz5r35a00aycwg2ta5t19xe$hk$ AND preamble_effective_from::date = $hk$2018-03-13$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2000-11-23$hk$::timestamptz WHERE id = $hk$cmpz5r5z200bacwg2yei47rqv$hk$ AND preamble_effective_from::date = $hk$2000-07-31$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2007-09-20$hk$::timestamptz WHERE id = $hk$cmpz5r9gt00bfcwg2lq2cgbbq$hk$ AND preamble_effective_from::date = $hk$2007-05-28$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2007-09-14$hk$::timestamptz WHERE id = $hk$cmpz5rdze00bvcwg2jq22ysxn$hk$ AND preamble_effective_from::date = $hk$2007-08-27$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2019-01-23$hk$::timestamptz WHERE id = $hk$cmpz5reky00bxcwg2q27q6e2t$hk$ AND preamble_effective_from::date = $hk$2018-10-16$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2018-06-26$hk$::timestamptz WHERE id = $hk$cmpz5rf7g00bzcwg2gn8fvro1$hk$ AND preamble_effective_from::date = $hk$2018-02-13$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2020-04-30$hk$::timestamptz WHERE id = $hk$cmpz5rfsu00c1cwg2ikpubqxa$hk$ AND preamble_effective_from::date = $hk$2020-01-22$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2003-02-28$hk$::timestamptz WHERE id = $hk$cmpz5rjp100cccwg2ooufbnk2$hk$ AND preamble_effective_from::date = $hk$2003-01-06$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$1965-11-12$hk$::timestamptz WHERE id = $hk$cmpz5rqw600cycwg2fzpck8kc$hk$ AND preamble_effective_from::date = $hk$1965-05-02$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2005-10-26$hk$::timestamptz WHERE id = $hk$cmpz5rt6500d5cwg25ey9d89j$hk$ AND preamble_effective_from::date = $hk$2005-03-21$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2007-02-14$hk$::timestamptz WHERE id = $hk$own26-28f0823babb9af4c35614dcd$hk$ AND preamble_effective_from::date = $hk$2006-08-18$hk$::date",
+  "SELECT CASE WHEN (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$52a0a73628b542c389a28570a97c251a$hk$)=$hk$2026-05-23$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$7f918177e0df4578ae205fd94c1d3d72$hk$)=$hk$2025-04-09$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$boe26-4695aab79b5d07133858cf8c$hk$)=$hk$2002-10-30$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$boe26-7611a95fe8dd6dacf15de4d5$hk$)=$hk$2006-05-16$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p0m0000gcwg2min5afgo$hk$)=$hk$2010-04-30$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p25y000ocwg28szc3z7q$hk$)=$hk$2023-11-24$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p2xv000scwg2nhz32vnx$hk$)=$hk$2023-06-16$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p4oq0011cwg2nunz3axq$hk$)=$hk$2017-11-04$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p59o0014cwg27ifjrxzm$hk$)=$hk$2008-05-21$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p5gn0015cwg2aousown8$hk$)=$hk$1954-11-12$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p68j0019cwg2ojpqtac8$hk$)=$hk$1986-08-04$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p95c001ncwg258cmwkzh$hk$)=$hk$2019-01-26$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p9ja001pcwg2w40w4xpk$hk$)=$hk$2022-09-06$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pe70002dcwg2wt96qcrt$hk$)=$hk$2017-12-15$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5peky002fcwg2autte6ea$hk$)=$hk$2004-02-25$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pfqt002lcwg2y1viv8vw$hk$)=$hk$2014-06-11$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pfxt002mcwg2mcuo6lnh$hk$)=$hk$1964-02-28$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pg4s002ncwg2dra7uf14$hk$)=$hk$1974-09-14$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pj1k0032cwg262ocrzeh$hk$)=$hk$2010-02-24$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pj8j0033cwg2vxtyp6py$hk$)=$hk$2010-08-20$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pk7g0038cwg2visy7ew5$hk$)=$hk$2016-09-29$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pldh003dcwg2v7xek640$hk$)=$hk$2016-06-24$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pm5e003hcwg2a8m6f8q4$hk$)=$hk$2017-04-28$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pmqb003kcwg2stifg8u7$hk$)=$hk$2018-03-08$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5px780051cwg2tec3xgy6$hk$)=$hk$2007-10-07$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pyk30058cwg2bw2l9das$hk$)=$hk$2018-11-16$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q0b4005hcwg20afpbskh$hk$)=$hk$1984-08-03$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q9f5006rcwg2n3a8rdob$hk$)=$hk$1973-09-27$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qayz006zcwg22wiv9coh$hk$)=$hk$2015-11-06$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qbjy0072cwg2kw8cu4w9$hk$)=$hk$1968-10-04$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qcx60079cwg2xeiju3hi$hk$)=$hk$2005-08-11$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qdb6007bcwg27tsq4xk1$hk$)=$hk$2006-12-07$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qdi5007ccwg26c4cvdfy$hk$)=$hk$2007-03-29$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qf2d007kcwg218jokbhs$hk$)=$hk$2016-08-25$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qfgb007mcwg2msul8acv$hk$)=$hk$2018-04-10$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qhs0007ycwg2ulplc0vn$hk$)=$hk$2022-12-23$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qijx0082cwg2i3piouc5$hk$)=$hk$1952-11-01$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qluh008icwg2pzqde7x1$hk$)=$hk$2017-11-23$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qn0c008ocwg2t9sbyimx$hk$)=$hk$2022-04-22$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qro6009ccwg2dnowpx26$hk$)=$hk$2019-01-25$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qu80009pcwg2w4ty4zyr$hk$)=$hk$2002-11-13$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5quez009qcwg2hjijwsme$hk$)=$hk$2002-09-26$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qwcu009zcwg2ztpdd7u0$hk$)=$hk$2006-08-21$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5r0fk00akcwg2h1bj5pgk$hk$)=$hk$1974-03-29$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5r35a00aycwg2ta5t19xe$hk$)=$hk$2018-03-30$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5r5z200bacwg2yei47rqv$hk$)=$hk$2000-11-23$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5r9gt00bfcwg2lq2cgbbq$hk$)=$hk$2007-09-20$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rdze00bvcwg2jq22ysxn$hk$)=$hk$2007-09-14$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5reky00bxcwg2q27q6e2t$hk$)=$hk$2019-01-23$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rf7g00bzcwg2gn8fvro1$hk$)=$hk$2018-06-26$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rfsu00c1cwg2ikpubqxa$hk$)=$hk$2020-04-30$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rjp100cccwg2ooufbnk2$hk$)=$hk$2003-02-28$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rqw600cycwg2fzpck8kc$hk$)=$hk$1965-11-12$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rt6500d5cwg25ey9d89j$hk$)=$hk$2005-10-26$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5ry5a00dicwg2n9o8pnoa$hk$)=$hk$2019-05-28$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmr4rvo1300az1j0u2jrawb8o$hk$)=$hk$2021-04-09$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$nz26-328d5e295076ca5713767ee8$hk$)=$hk$2013-07-11$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$nz26-572270a48d5e94462c03c359$hk$)=$hk$2005-09-10$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$nz26-a1d891c206a6b6dfa421b6c6$hk$)=$hk$2021-10-24$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$own26-28f0823babb9af4c35614dcd$hk$)=$hk$2007-02-14$hk$::date AND (SELECT count(*) FROM legal_text_provenance WHERE id LIKE 'g28p-%')=60 THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard_after"
+ ]
+}
