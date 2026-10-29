@@ -209,7 +209,8 @@ export function toMcpLaw(
   const warnings: string[] = [];
   const ownRepeal = isOwnInstrument(card.repeal?.instrument, ownKeys) || isOwnInstrument(evidenceInstrument, ownKeys);
   const ownArticleRepeals = articles.filter((a) => a.repeal && !a.inheritedFromWork && isOwnInstrument(a.repeal.instrument, ownKeys)).length;
-  if (ownRepeal || ownArticleRepeals) {
+  // HKM-059: نظام حالته «ساري» تحمل وثيقة تحقق حالته أداة الإصدار عادةً؛ فلا إنذار (الأداة تبقى محجوبة من repeal).
+  if (card.status.boe !== "ساري" && (ownRepeal || ownArticleRepeals)) {
     // يُقتبس ما طابق فعلًا (أداة الإلغاء، أو أداة السند، أو أداة المادة).
     const recorded =
       (isOwnInstrument(card.repeal?.instrument, ownKeys)

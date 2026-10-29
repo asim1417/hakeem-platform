@@ -290,7 +290,8 @@ async function pageTests(db: SqlClient) {
   const old = await getLawPageData(db, "sys-ss-old", { asOf: "2026-10-17" });
   ok(old?.card.status.boe === "لاغي" && old.card.status.hakeem === "مستبدل", "U-7b النظام المستبدل: «لاغي» من القائمة الست");
   ok(old?.card.replacedBy?.id === "sys-ss-new" && old.card.repeal?.type === "replacement" && old.card.repeal.effectiveDate === "2021-06-01" && old.card.repeal.effectiveDateSource === "search_surface", "U-7b شريط الإلغاء: البديل ونوع الإحلال وتاريخه من وجه البحث");
-  ok(old?.body.divisions[0].articles.every((a) => a.status === "ملغى" && a.inheritedFromWork) === true && old.body.divisions[0].allRepealed === false, "U-7b مواده موسومة ملغاة بالتبعية، دون وسم الباب");
+  ok(old?.body.divisions[0].articles.every((a) => a.status === "مستبدل" && a.statusSource === "work_status" && a.inheritedFromWork) === true && old.body.divisions[0].allRepealed === false, "HKM-059 U-7b نظام «مستبدل» بلا سجل على المادة: مواده «مستبدل» (لا «ملغى») بالتبعية، دون وسم الباب");
+  ok(old?.body.counts.replaced === old?.body.counts.total && old?.body.counts.repealed === 0, "HKM-059 العدّادات: المواد في replaced لا repealed");
   const neu = await getLawPageData(db, "sys-ss-new", { asOf: "2026-10-17" });
   ok(neu?.card.replaces.map((r) => r.id).join() === "sys-ss-old", "U-7b البديل يعرض «حلّ محل» برابط القديم");
 
@@ -350,7 +351,7 @@ async function mcpTests(db: SqlClient) {
   ok(!("status" in tb[2]) && r2.counts.unverified === 1, "M-13 غير المؤكدة بلا status، وعدّادها في counts");
   ok(!r2.toc.some((t) => t.article_id === "a-mur-103x"), "BIS في MCP: الصف غير المادي غائب عن الفهرس");
   const ss = await getLawTool(db, { lawId: "sys-ss-old" }, { asOf: "2026-10-17" });
-  ok("law_id" in ss && ss.toc.every((t) => t.status === "ملغى" && !("repealed_by" in t)) && ss.repeal?.type === "replacement", "M-13 الملغاة تبعًا لإلغاء النظام: الحالة فقط، وبيان الإلغاء مرة واحدة في repeal");
+  ok("law_id" in ss && ss.toc.every((t) => t.status === "مستبدل" && !("repealed_by" in t)) && ss.repeal?.type === "replacement", "HKM-059 M-13 المستبدلة تبعًا لاستبدال النظام (لا «ملغى»): الحالة فقط، وبيان الإلغاء مرة واحدة في repeal");
   const lk = await getLawTool(db, { lawId: "sys-leak" }, { includePreamble: true });
   ok("law_id" in lk && "body_leak" in lk.preamble && lk.preamble.body_leak === true && "text" in lk.preamble && (lk.preamble.text?.length ?? 0) === MCP_BODY_LEAK_MAX_CHARS && lk.preamble.truncated === true, "M-13 حقل مقدمة فيه متن: body_leak ونص مقتطع إلى 1000 حرف");
 
@@ -433,6 +434,15 @@ async function mcpTests(db: SqlClient) {
   const ve = guarded.toc.find((t) => t.article_id === victim.id);
   ok(guarded.repeal?.instrument === null && guarded.status_detail.evidence_instrument === null && guarded.repeal?.effective_date === "2025-02-07" && guarded.status_detail.evidence_url === ownRepeal.url, "HKM-044 أداة إلغاء = أداة الإصدار: لا تُعرض، والتاريخ والسند باقيان");
   ok(Boolean(ve) && !("repealed_by" in (ve as object)) && guarded.data_warnings.length === 1 && /أداة إصدار النظام نفسه/.test(guarded.data_warnings[0]) && /1 مادة/.test(guarded.data_warnings[0]), "HKM-044 والمادة كذلك، مع تحذير واحد في data_warnings");
+  // HKM-059: نظام «ساري» تحمل وثيقة تحقق حالته أداة الإصدار عادةً — لا تحذير؛ والأداة تبقى محجوبة. «لاغٍ» بأداة مطابقة يبقى التحذير.
+  const inForceCard = JSON.parse(JSON.stringify(clone)) as typeof clone;
+  inForceCard.card.status.boe = "ساري";
+  const inForceOut = toMcpLaw(inForceCard, { by: "id", query: "sys-murafaat", alternatives: [] }, "", { tocLimit: 300 });
+  ok(inForceOut.data_warnings.length === 0 && inForceOut.repeal?.instrument === null && inForceOut.status_detail.evidence_instrument === null, "HKM-059 نظام ساري بأداة مطابقة للإصدار: لا تحذير، والأداة ما زالت لا تُعرض أداةَ إلغاء");
+  const repealedCard = JSON.parse(JSON.stringify(clone)) as typeof clone;
+  repealedCard.card.status.boe = "لاغي";
+  const repealedOut = toMcpLaw(repealedCard, { by: "id", query: "sys-murafaat", alternatives: [] }, "", { tocLimit: 300 });
+  ok(repealedOut.data_warnings.length === 1 && /أداة إصدار النظام نفسه/.test(repealedOut.data_warnings[0]), "HKM-059 نظام لاغٍ بأداة مطابقة للإصدار: التحذير باقٍ");
   // صيغ الإنتاج كما ظهرت في فحص 24/10/2026 لنظام الاستثمار الأجنبي.
   const fdiOwn = ["مرسوم ملكي رقم م/1 بتاريخ 5 / 1 / 1421", "قرار مجلس الوزراء رقم 1 بتاريخ 5 / 1 / 1421"].map(looseInstrumentKey);
   ok(fdiOwn.includes(looseInstrumentKey("م/1 وتاريخ 1421/1/5هـ — من 2025-02-07")), "HKM-044 الصيغة المختصرة في سجل التحقق تطابق مرسوم الإصدار (م/1 لعام 1421)");

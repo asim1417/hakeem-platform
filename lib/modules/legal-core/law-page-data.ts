@@ -696,7 +696,8 @@ export async function getLawPageData(db: SqlClient, systemId: string, opts: LawP
         statusSource = "verification";
       }
     } else if (repealedWork) {
-      status = "ملغى";
+      // HKM-059: النظام «مستبدل» ولا سجل على مستوى المادة → المادة «مستبدل» (باهتة بنصها) لا «ملغى». اشتقاق عرض لا كتابة بيانات.
+      status = hakeem === "مستبدل" ? "مستبدل" : "ملغى";
       statusSource = "work_status";
       inherited = true;
       statusLabel = hakeem ?? statusLabel;

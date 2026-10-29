@@ -82,10 +82,53 @@ const defaultDeps = (): RequestLogDeps => ({
   slowMs: MCP_SLOW_MS,
 });
 
+/** HKM-059: سقف قراءة الجسم للسجل. المسار يُلفّ قبل المصادقة، فلا يُقرأ ما فوق هذا (يُتجاهل دون فشل الطلب). */
+export const MCP_LOG_BODY_MAX_BYTES = 64 * 1024;
+
+/**
+ * يقرأ نسخة من الجسم بسقف حجم: يُهمل فورًا إن أعلن Content-Length أكبر من السقف، ويُقطع القارئ عند تجاوز السقف
+ * في الجسم غير المعلن الطول. الطلب الأصلي لا يُمسّ (clone)، ويرجع null عند التجاوز أو الفساد.
+ */
+export async function readCappedJson(req: Request, maxBytes = MCP_LOG_BODY_MAX_BYTES): Promise<unknown> {
+  const declared = Number(req.headers.get("content-length"));
+  if (Number.isFinite(declared) && declared > maxBytes) return null;
+  const copy = req.clone();
+  if (!copy.body) return null;
+  const reader = copy.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        // بلا await: إلغاء فرع من tee لا يكتمل حتى يُلغى الفرع الآخر (جسم الطلب الأصلي) فيعلّق الطلب.
+        void reader.cancel().catch(() => undefined);
+        return null;
+      }
+      chunks.push(value);
+    }
+  } catch {
+    return null;
+  }
+  const buf = new Uint8Array(total);
+  let off = 0;
+  for (const c of chunks) {
+    buf.set(c, off);
+    off += c.byteLength;
+  }
+  try {
+    return JSON.parse(new TextDecoder().decode(buf));
+  } catch {
+    return null;
+  }
+}
+
 async function readInfo(req: Request): Promise<McpRequestInfo> {
   const session = req.headers.get("mcp-session-id");
   const isJson = req.method === "POST" && (req.headers.get("content-type") || "").includes("application/json");
-  const body = isJson ? await req.clone().json().catch(() => null) : null;
+  const body = isJson ? await readCappedJson(req) : null;
   return describeMcpRequest(req.method, session, body);
 }
 

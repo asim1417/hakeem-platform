@@ -27,6 +27,8 @@ import { withListenRefused } from "@/lib/mcp/listen-guard";
 // Prisma يتطلّب بيئة Node (لا Edge)، والمخرجات ديناميكية دائمًا.
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+// HKM-059: سقف صريح للدالة (الافتراضي 300 ث). الأداة محدودة بـ MCP_TOOL_TIMEOUT_MS (20 ث)، وlisten يُرفض فورًا (HKM-054).
+export const maxDuration = 60;
 
 const handler = createMcpHandler(
   (server) => {
