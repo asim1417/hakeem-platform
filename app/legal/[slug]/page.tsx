@@ -14,6 +14,9 @@ import { resolveWorkKind } from "@/lib/modules/legal-core/work-kind";
 import { AsOfForm } from "@/components/legal/ArticlePresentation";
 import { ARTICLE_ROWS, articleKey, articleLabel } from "@/lib/modules/legal-core/article-key";
 import { parseAsOfParam } from "@/lib/modules/legal-core/law-page-view";
+import { prismaSqlClient } from "@/lib/modules/legal-core/sql-port";
+import { systemPageRobots } from "@/lib/modules/seo/indexability";
+import { loadSystemContentSignal } from "@/lib/modules/seo/sitemap-data";
 
 export const revalidate = 3600;
 
@@ -33,10 +36,14 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const system = await resolveSystem(decodeURIComponent(params.slug));
   if (!system) return { title: "نظام غير موجود — حكيم" };
   const canonical = `${getSiteUrl()}/legal/${encodeURIComponent(resolveSystemSlug(system.eliSlug, system.name))}`;
+  // HKM-061: نظام بلا مواد ونصّه المعروض أقصر من الحد = صفحة رقيقة: noindex, follow (تبقى 200، وخارج sitemap).
+  const signal = await loadSystemContentSignal(prismaSqlClient(prisma), { id: system.id, name: system.name, preamble: system.preamble ?? null });
+  const robots = systemPageRobots(signal);
   return {
     title: `${system.name} — الأنظمة القانونية السعودية | حكيم`,
     description: `نصّ نظام ${system.name} وموادّه كاملة مع الإسناد الرسمي في منصّة حكيم.`,
     alternates: { canonical },
+    ...(robots ? { robots } : {}),
   };
 }
 

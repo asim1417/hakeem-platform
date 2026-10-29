@@ -50,6 +50,8 @@
     "test:preamble-parser": "tsx scripts/test-preamble-parser.ts",
     "test:preamble-signals": "tsx scripts/test-preamble-signals.ts",
     "test:law-page-data": "tsx scripts/test-law-page-data.ts",
+    "test:site-url": "tsx scripts/test-site-url.ts",
+    "test:seo-sitemap": "tsx scripts/test-seo-sitemap.ts",
     "test:mcp-word-match": "tsx scripts/test-mcp-word-match.ts",
     "test:mcp-phase1": "tsx scripts/test-mcp-phase1.ts",
     "test:article-key": "tsx scripts/test-article-key.ts",
