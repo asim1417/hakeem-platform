@@ -37,7 +37,7 @@ import {
   type FusionCandidate,
 } from "@/lib/mcp/search-fusion";
 import { handleSemanticSearch, hintedLaws, SEMANTIC_TOOL_MIN_SCORE } from "@/lib/mcp/tools/semantic";
-import { groupTerms, planQuery } from "@/lib/mcp/query-plan";
+import { groupTerms, pickProbes, planQuery } from "@/lib/mcp/query-plan";
 import { handleEnumerate } from "@/lib/mcp/tools/enumerate";
 import { loadLawCatalog } from "@/lib/mcp/tools/catalog";
 import { compileAny, matchPositions, normalizeAr, windowCoverage, type CompiledTerm } from "@/lib/mcp/tools/word-match";
@@ -101,8 +101,8 @@ export interface SearchTuning {
   /** جسر لغة الناس: صيغ اللفظ الصرفية وجمعه وبدائل النظام في التغطية والحصر (lib/mcp/query-plan.ts). */
   bridge?: boolean;
   /**
-   * نص البحث الدلالي: السؤال كما هو، أو بلا عبارة الطلب، أو بلفظ النظام مكان اللفظ الدارج (plan)، أو السؤال وألفاظ
-   * النظام ملحقة (append)، أو بحثان دلاليان (السؤال المنظف ولفظ النظام) يُدمجان بأعلى تشابه (both: نداءا تضمين).
+   * نص البحث الدلالي: السؤال كما هو، أو بلا عبارة الطلب، أو بلفظ النظام مكان اللفظ الدارج (plan)، أو السؤال بلا حشو
+   * وألفاظ النظام ملحقة في آخره (append، الافتراض: أعلى hit@3 في القياس بنداء تضمين واحد)، أو بحثان دلاليان (both).
    */
   semanticText?: "original" | "cleaned" | "plan" | "append" | "both";
   /** تقديم المعنى حين لا يحمل السؤال لفظًا نادرًا مميِّزًا. */
@@ -111,15 +111,18 @@ export interface SearchTuning {
   lexicalSimilarity?: boolean;
   /** «المادة 55 من نظام العمل»: المادة نفسها أولًا. */
   exactCitation?: boolean;
+  /** الحصر اللفظي بلا حصر بنظام: يُترك اللفظ الشائع يقينًا (common-terms) لما هو أندر، بدل «أطول لفظين». */
+  dfProbes?: boolean;
 }
 
 const TUNING_DEFAULTS: Required<SearchTuning> = {
   lexicalProbe: true,
   bridge: true,
-  semanticText: "plan",
+  semanticText: "append",
   adaptiveWeights: true,
   lexicalSimilarity: true,
   exactCitation: true,
+  dfProbes: true,
 };
 
 /** ألفاظ السؤال مجموعاتٍ مُجمَّعة (كل مجموعة لفظ بصيغه وبدائله، OR). */
@@ -139,9 +142,9 @@ async function fusedArticleIds(query: string, lawId: string | undefined, limit: 
     tuning.semanticText === "original" ? query : tuning.semanticText === "cleaned" ? plan.cleaned : tuning.semanticText === "append" ? plan.semanticAppend : plan.semanticText;
   // «both»: بحث ثانٍ بالسؤال المنظف إن غيّره الجسر (للقياس؛ يضاعف نداء التضمين).
   const semText2 = tuning.semanticText === "both" && plan.cleaned !== semText ? plan.cleaned : null;
-  // الألفاظ الأطول أندر غالبًا؛ حصران كحدٍّ أقصى لضبط الكلفة (كل حصر مسح كامل للمدونة). الحصر بصيغ اللفظ وبدائله:
-  // لفظ دارج نادر («مهلة») لا يجلب وحده ما لا علاقة له (رخص المياه)، والبديل النادر («مقابل وفاء») يجلب موضعه.
-  const probe = tuning.lexicalProbe ? [...plan.groups].sort((a, b) => b.term.length - a.term.length).slice(0, 2) : [];
+  // حصران كحدٍّ أقصى لضبط الكلفة (كل حصر مسح كامل للمدونة). HKM-062: بلا حصر بنظام لا يُحصر لفظ شائع يقينًا (صفحته
+  // مرفوضة)، فيأخذ مقعده لفظ أندر؛ والحصر بصيغ اللفظ وبدائله النادرة («رصيد» ← «مقابل وفاء»). ومع الحصر بنظام كما كان.
+  const probe = tuning.lexicalProbe ? pickProbes(plan.groups, Boolean(lawId) || !tuning.dfProbes) : [];
   // ميزانية زمنية لكل مصدر: البطيء يُسقَط وتبقى نتائج الآخر (كما في المحرك الهجين).
   const budget = providerBudgetMs();
   const bounded = async <T>(work: Promise<T>, fallback: T): Promise<T> => {
@@ -159,7 +162,7 @@ async function fusedArticleIds(query: string, lawId: string | undefined, limit: 
   const [semantic, semantic2, lexicalPages, catalog] = await Promise.all([
     semanticOf(semText),
     semText2 ? semanticOf(semText2) : Promise.resolve(null as Sem),
-    Promise.all(probe.map((g) => bounded(handleEnumerate({ terms: groupTerms(g), law_id: lawId, page_size: RARE_TERM_MAX, snippet_len: 2000 }), null))),
+    Promise.all(probe.map((p) => bounded(handleEnumerate({ terms: p.terms, law_id: lawId, page_size: RARE_TERM_MAX, snippet_len: 2000 }), null))),
     bounded(loadLawCatalog(db), []),
   ]);
   const named = hintedLaws(query, catalog);

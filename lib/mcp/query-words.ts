@@ -23,6 +23,7 @@ export const COLLOQUIAL_STOP = new Set(
     "اعرف", "أعرف", "يعني", "طيب", "بس", "مثلا", "كذا", "شي", "شيء", "واحد", "وحده", "صار", "صارت", "عندي", "عنده", "عندها",
     "لازم", "يصير", "يطلع", "طلع", "طلعت", "اسوي", "أسوي", "نسوي", "يسوي", "تسوي", "سوى", "سوا", "مني", "منه", "ايه", "هذي",
     "ذي", "ممكن", "لو", "سمحت", "فضلك", "تكفى", "سؤال", "استفسار", "حكيم", "يا", "ياخي", "اخوي", "الحين", "توني", "تكون", "يكون",
+    "فيها", "فيهم", "عليها", "عليهم", "لها", "لهم", "منها", "عنها", "بها", "بهم", "لكن",
   ].map(normalizeAr),
 );
 
@@ -52,10 +53,18 @@ export function dropRequestPhrases(words: string[]): string[] {
   return out;
 }
 
+/** أداة أو حشو، ومعه واو العطف («وهي»، «وعندي»، «وطلع»). */
+export function isStopWord(w: string): boolean {
+  if (QUERY_STOP.has(w) || COLLOQUIAL_STOP.has(w)) return true;
+  if (w.startsWith("و") && w.length > 2) {
+    const rest = w.slice(1);
+    return QUERY_STOP.has(rest) || COLLOQUIAL_STOP.has(rest);
+  }
+  return false;
+}
+
 /** ألفاظ السؤال ذات المعنى (بلا أدوات الاستفهام والحروف، ولا عبارات الطلب والحوار الدارجة — HKM-062). */
 export function queryKeywords(q: string): string[] {
-  const words = dropRequestPhrases(normalizeAr(q).split(WORD_SPLIT).filter(Boolean)).filter(
-    (w) => w.length >= 2 && !QUERY_STOP.has(w) && !COLLOQUIAL_STOP.has(w),
-  );
+  const words = dropRequestPhrases(normalizeAr(q).split(WORD_SPLIT).filter(Boolean)).filter((w) => w.length >= 2 && !isStopWord(w));
   return [...new Set(words)].slice(0, 12);
 }

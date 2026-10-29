@@ -122,12 +122,13 @@ export function buildArabicSearchVariants(query: string, searchType: ArabicSearc
  *   • سابقة الجر والعطف مع «ال»: بالتقسيط ← تقسيط.
  *   • ضمير متصل في آخر الفعل أو الاسم: فصلوه ← فصل، يطالبني ← يطالب، زوجته ← زوجه (التاء المربوطة).
  *   • حرف المضارعة (أ، ي، ت، ن) في فعل من أربعة أحرف (يفعل): تخصم ← خصم، أفسخ ← فسخ؛ لا في الأطول («تجاري» اسم لا فعل).
- *   • الجمع السالم: إجازات ← إجازه، الموظفين ← موظف.
+ *   • الجمع السالم: إجازات ← إجازه، الموظفين ← موظف؛ ومؤنث النسبة: نهائي ← نهائية.
+ *   • ضمير الفاعل في الماضي (ت، تم، وا): تركت ← ترك، نفذوا ← نفذ؛ وحرف العطف أو الجر المتصل: وتراجعت ← تراجعت، بصوري ← صوري.
  * لا يبقى أقل من ثلاثة أحرف، ولا تُمسّ الكلمة المعرّفة إلا بتجريد «ال». الدخل والخرج مطبَّعان (normalizeAr في word-match):
  * الهمزات ألف، والتاء المربوطة هاء. صورة لا ترد في المدونة لا تضر (لا تطابق شيئًا).
  */
 const STEM_MIN = 3;
-const OBJECT_SUFFIXES = ["وهم", "وها", "وني", "وكم", "هما", "وه", "ني", "ها", "هم", "كم", "ه", "ك", "ي"];
+const OBJECT_SUFFIXES = ["وهم", "وها", "وني", "وكم", "هما", "وه", "ني", "ها", "هم", "كم", "تم", "وا", "ه", "ك", "ي", "ت"];
 
 export function queryStemVariants(normalizedWord: string): string[] {
   const w = (normalizedWord ?? "").trim();
@@ -151,17 +152,27 @@ export function queryStemVariants(normalizedWord: string): string[] {
     plural(core);
     return [...out];
   }
-  // ٢) ضمير متصل: «ته/تها/تي/تك/تهم» على اسم مؤنث ← التاء المربوطة.
-  const ta = w.match(/^(.{2,})ت(?:هما|هم|ها|ه|ي|ك|كم)$/);
-  if (ta && ta[1].length + 1 >= STEM_MIN) add(`${ta[1]}ه`);
-  // كل ضمير محتمل يُجرَّد (لا الأطول وحده): «قانوني» ← قانون (ي) وقان (وني)؛ الصورة الزائدة لا تطابق شيئًا غالبًا.
-  const bases = [w, ...OBJECT_SUFFIXES.filter((suf) => w.endsWith(suf) && w.length - suf.length >= STEM_MIN).map((suf) => w.slice(0, -suf.length))];
-  // ٣) حرف المضارعة على الأصل وعلى ما جُرّد ضميره: وزن «يفعل» وحده (أربعة أحرف)، فلا تتولد «جار» من «تجاري».
-  for (const b of bases) {
-    add(b);
-    if (b.length === STEM_MIN + 1 && /^[ايتن]/.test(b)) add(b.slice(1));
-  }
-  // ٤) الجمع السالم.
-  plural(w);
+  const inflections = (x: string, verbPrefix: boolean) => {
+    add(x);
+    // ٢) ضمير متصل: «ته/تها/تي/تك/تهم» على اسم مؤنث ← التاء المربوطة.
+    const ta = x.match(/^(.{2,})ت(?:هما|هم|ها|ه|ي|ك|كم)$/);
+    if (ta && ta[1].length + 1 >= STEM_MIN) add(`${ta[1]}ه`);
+    // كل ضمير محتمل يُجرَّد (لا الأطول وحده): «قانوني» ← قانون (ي) وقان (وني)؛ الصورة الزائدة لا تطابق شيئًا غالبًا.
+    for (const suf of OBJECT_SUFFIXES) {
+      if (!x.endsWith(suf) || x.length - suf.length < STEM_MIN) continue;
+      const b = x.slice(0, -suf.length);
+      add(b);
+      // ٣) حرف المضارعة: وزن «يفعل» وحده، وبعد ضمير لا يلتبس بالنسبة أو التاء («تجاري» ← لا «جار»).
+      if (verbPrefix && suf !== "ي" && suf !== "ت" && b.length === STEM_MIN + 1 && /^[ايتن]/.test(b)) add(b.slice(1));
+    }
+    if (verbPrefix && x.length === STEM_MIN + 1 && /^[ايتن]/.test(x)) add(x.slice(1));
+    // ٤) الجمع السالم، ومؤنث النسبة (نهائي ← نهائيه).
+    plural(x);
+    if (x.endsWith("ي") && x.length >= STEM_MIN + 1) add(`${x}ه`);
+  };
+  inflections(w, true);
+  // ١-ب) واو العطف أو باء الجر المتصلة (ولام الجر قبل مصدر بالألف: لاستخراج)، وما بعدها أربعة أحرف فأكثر.
+  const clitic = w.match(/^(?:[وب](.{4,})|ل(ا.{3,}))$/);
+  if (clitic) inflections(clitic[1] ?? clitic[2], false);
   return [...out];
 }

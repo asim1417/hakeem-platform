@@ -11,6 +11,7 @@
  * والمكنز (legal_thesaurus_*) لا مرادفات فيه اليوم (صيغة واحدة لكل مفهوم)، فالجسر منسّق في everyday-lexicon.ts.
  */
 import { queryStemVariants } from "../modules/legal-core/arabic-morphology";
+import { isCommonTerm } from "./common-terms";
 import { BROKEN_PLURALS, EVERYDAY_ENTRIES, type EverydayEntry } from "./everyday-lexicon";
 import { COLLOQUIAL_STOP, dropRequestPhrases, queryKeywords } from "./query-words";
 import { normalizeAr } from "./tools/word-match";
@@ -38,6 +39,32 @@ export interface QueryPlan {
 /** كل صيغ المجموعة بلا تكرار، اللفظ أولًا. */
 export function groupTerms(g: TermGroup, cap = 12): string[] {
   return [...new Set([g.term, ...g.forms, ...g.alts])].slice(0, cap);
+}
+
+/**
+ * صيغ الحصر اللفظي لمجموعة في بحث غير محصور بنظام: ما ليس شائعًا منها (common-terms: أكثر من 50 مادة، فصفحته
+ * مرفوضة يقينًا). صيغ اللفظ الصرفية تتبعه (إن شاع اللفظ لم تُحصر صوره)، وبدائل النظام المنسّقة تُحصر وحدها إن ندرت
+ * («رصيد» شائع، و«مقابل وفاء» نادرة). فارغ = لا يُحصر.
+ */
+export function probeTerms(g: TermGroup, cap = 12): string[] {
+  const rareTerm = !isCommonTerm(g.term);
+  const own = rareTerm ? [g.term, ...g.forms.filter((f) => !isCommonTerm(f))] : [];
+  return [...new Set([...own, ...g.alts.filter((a) => !isCommonTerm(a))])].slice(0, cap);
+}
+
+/**
+ * HKM-062: المجموعات التي تُحصر (حصران على الأكثر؛ كل حصر مسح كامل للمدونة). في البحث المحصور بنظام كما كان: أطول
+ * لفظين بكل صيغهما (الصفحة مقبولة مهما كثرت). وفي غيره: ما له صيغ غير شائعة، اللفظ النادر نفسه أولًا ثم الأطول؛
+ * كان «أطول لفظين» يحصر «يعتبر» (210 مادة) و«تجاري» (721) ويترك «تستر» (22).
+ */
+export function pickProbes(groups: TermGroup[], scopedToLaw: boolean, max = 2): Array<{ group: TermGroup; terms: string[] }> {
+  if (scopedToLaw) return [...groups].sort((a, b) => b.term.length - a.term.length).slice(0, max).map((g) => ({ group: g, terms: groupTerms(g) }));
+  return groups
+    .map((g) => ({ group: g, terms: probeTerms(g), rare: !isCommonTerm(g.term) }))
+    .filter((p) => p.terms.length > 0)
+    .sort((a, b) => Number(b.rare) - Number(a.rare) || b.group.term.length - a.group.term.length)
+    .slice(0, max)
+    .map(({ group, terms }) => ({ group, terms }));
 }
 
 const normWord = (w: string) => normalizeAr(w).replace(/[^ء-يa-zA-Z0-9]/g, "");
@@ -75,22 +102,43 @@ function pluralForms(word: string): string[] {
   return plural.get(word) ?? plural.get(bare) ?? [];
 }
 
-/** يطابق مداخل الجسر في كلمات السؤال: العبارة (الأطول أولًا) ثم الكلمة. يعيد لكل موضع المدخل وطوله. */
-function matchEntries(words: string[]): Array<{ at: number; len: number; entries: EverydayEntry[] }> {
-  const { phrases, single } = index();
-  const out: Array<{ at: number; len: number; entries: EverydayEntry[] }> = [];
+/** مداخل الكلمة المفردة: بصورتها، وإلا بإحدى صورها الصرفية («وتراجعت» ← تراجعت، «بصوري» ← صوري). */
+function singleEntries(word: string): EverydayEntry[] {
+  const { single } = index();
+  const direct = single.get(word);
+  if (direct) return direct;
+  for (const v of queryStemVariants(word)) {
+    const e = single.get(v);
+    if (e) return e;
+  }
+  return [];
+}
+
+/**
+ * يطابق مداخل الجسر في كلمات السؤال: العبارة (الأطول أولًا) ثم الكلمة. يعيد لكل موضع المدخل وطوله.
+ * العبارة تحل محل كلماتها في النص الدلالي، ومداخل كلماتها المفردة تبقى للبدائل («تنشطب القضية»: شطب والدعوى معًا).
+ */
+function matchEntries(words: string[]): { spans: Array<{ at: number; len: number; entries: EverydayEntry[] }>; alts: Array<{ at: number; entries: EverydayEntry[] }> } {
+  const { phrases } = index();
+  const spans: Array<{ at: number; len: number; entries: EverydayEntry[] }> = [];
+  const alts: Array<{ at: number; entries: EverydayEntry[] }> = [];
+  for (let i = 0; i < words.length; i++) {
+    const s = singleEntries(words[i]);
+    if (s.length) alts.push({ at: i, entries: s });
+  }
   for (let i = 0; i < words.length; ) {
     const ph = phrases.find((p) => p.words.every((w, j) => words[i + j] === w));
     if (ph) {
-      out.push({ at: i, len: ph.words.length, entries: [ph.entry] });
+      spans.push({ at: i, len: ph.words.length, entries: [ph.entry] });
+      for (let j = i; j < i + ph.words.length; j++) alts.push({ at: j, entries: [ph.entry] });
       i += ph.words.length;
       continue;
     }
-    const s = single.get(words[i]);
-    if (s) out.push({ at: i, len: 1, entries: s });
+    const s = singleEntries(words[i]);
+    if (s.length) spans.push({ at: i, len: 1, entries: s });
     i++;
   }
-  return out;
+  return { spans, alts };
 }
 
 export function planQuery(query: string, opts: { bridge?: boolean } = {}): QueryPlan {
@@ -116,16 +164,14 @@ export function planQuery(query: string, opts: { bridge?: boolean } = {}): Query
   const cleaned = cleanedRaw.join(" ");
   const keywords = queryKeywords(cleaned);
 
-  const matches = bridge ? matchEntries(cleanedNorm) : [];
-  // البدائل لكل كلمة: مدخل العبارة يُلحق بكل كلمة منها.
+  const { spans: matches, alts: altMatches } = bridge ? matchEntries(cleanedNorm) : { spans: [], alts: [] };
+  // البدائل لكل كلمة: مدخلها المفرد، ومدخل العبارة التي هي منها.
   const altsByWord = new Map<string, Set<string>>();
-  for (const m of matches) {
-    for (let j = m.at; j < m.at + m.len; j++) {
-      const w = cleanedNorm[j];
-      const set = altsByWord.get(w) ?? new Set<string>();
-      for (const e of m.entries) for (const a of e.alts) set.add(normalizeAr(a));
-      altsByWord.set(w, set);
-    }
+  for (const m of altMatches) {
+    const w = cleanedNorm[m.at];
+    const set = altsByWord.get(w) ?? new Set<string>();
+    for (const e of m.entries) for (const a of e.alts) set.add(normalizeAr(a));
+    altsByWord.set(w, set);
   }
 
   const groups: TermGroup[] = keywords.map((term) => {
