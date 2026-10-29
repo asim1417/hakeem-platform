@@ -1,0 +1,307 @@
+[
+ {
+  "item": "L1-064",
+  "system_id": "d40c3f234cc94e3c8bad4ef3b98ac3ea",
+  "name": "الإجراءات التنفيذية لتطبيق ضوابط بقاء المركبات المسجلة في إحدى دول مجلس التعاون لدول الخليج العربية في المملكة",
+  "route": "reviewed",
+  "reason": "",
+  "e": "needs_owner",
+  "f": "parent_not_in_hakeem",
+  "g": "needs_owner",
+  "final": "needs_owner",
+  "parents": [],
+  "named_parent": "ضوابط بقاء المركبات المسجلة في إحدى دول مجلس التعاون لدول الخليج العربية"
+ },
+ {
+  "item": "L1-079",
+  "system_id": "69208cbea9fc4df2a56b29e7d1820dfe",
+  "name": "القواعد المنظمة للمشاركة في الدخل",
+  "route": "agreed",
+  "reason": "",
+  "e": "parent_dead",
+  "f": "parent_dead",
+  "g": null,
+  "final": "parent_dead",
+  "parents": [
+   {
+    "id": "cmpz5rlje00chcwg2afi55268",
+    "name": "نظام المنافسات والمشتريات الحكومية"
+   }
+  ],
+  "named_parent": ""
+ },
+ {
+  "item": "L1-081",
+  "system_id": "bcf12c6093914392806c81b35b5758dd",
+  "name": "القواعد والإجراءات التنفيذية اللازمة لتطبيق تعريفة استهلاك الكهرباء لنشاط الحوسبة السحابية",
+  "route": "agreed",
+  "reason": "",
+  "e": "needs_owner",
+  "f": "needs_owner",
+  "g": null,
+  "final": "needs_owner",
+  "parents": [],
+  "named_parent": "نظام الكهرباء الصادر بقرار مجلس الوزراء ذي الرقم (م/ 56) والتاريخ (20/ 10/ 1426هـ)"
+ },
+ {
+  "item": "L1-101",
+  "system_id": "022d4c389c6c4e14a3fd8ea5bf872a96",
+  "name": "اللائحة التنفيذية لجباية الزكاة 1445هـ",
+  "route": "reviewed",
+  "reason": "",
+  "e": "mention_only",
+  "f": "needs_owner",
+  "g": "needs_owner",
+  "final": "needs_owner",
+  "parents": [],
+  "named_parent": ""
+ },
+ {
+  "item": "L1-105",
+  "system_id": "08b0637d4a7e4f90ac9b6755660ae688",
+  "name": "اللائحة التنفيذية لرسوم الأراضي البيضاء",
+  "route": "reviewed",
+  "reason": "",
+  "e": "parent_not_in_hakeem",
+  "f": "needs_owner",
+  "g": "needs_owner",
+  "final": "needs_owner",
+  "parents": [],
+  "named_parent": ""
+ },
+ {
+  "item": "L1-106",
+  "system_id": "fb4e9923c8c84d76b52fbceddcf35144",
+  "name": "اللائحة التنفيذية لرسوم العقارات الشاغرة",
+  "route": "agreed",
+  "reason": "",
+  "e": "needs_owner",
+  "f": "needs_owner",
+  "g": null,
+  "final": "needs_owner",
+  "parents": [],
+  "named_parent": ""
+ },
+ {
+  "item": "L1-147",
+  "system_id": "8d9a08e55c294036825a21a507d74a02",
+  "name": "دليل الخطوط الحديدية - أنظمة إدارة السلامة",
+  "route": "agreed",
+  "reason": "",
+  "e": "parent_dead",
+  "f": "parent_dead",
+  "g": null,
+  "final": "parent_dead",
+  "parents": [
+   {
+    "id": "cmpz5rv8f00dacwg26fvks6h2",
+    "name": "نظام النقل بالخطوط الحديدية"
+   }
+  ],
+  "named_parent": ""
+ },
+ {
+  "item": "L1-149",
+  "system_id": "3400122aa9804c7caff8fd74b81f252a",
+  "name": "دليل الخطوط الحديدية - الابلاغ عن الحوادث والتحقيق فيها",
+  "route": "reviewed",
+  "reason": "",
+  "e": "parent_dead",
+  "f": "mention_only",
+  "g": "parent_dead",
+  "final": "parent_dead",
+  "parents": [
+   {
+    "id": "cmpz5rv8f00dacwg26fvks6h2",
+    "name": "نظام النقل بالخطوط الحديدية"
+   }
+  ],
+  "named_parent": ""
+ },
+ {
+  "item": "L1-150",
+  "system_id": "8649876aa6504e9f9223dade0f9d89ed",
+  "name": "دليل الخطوط الحديدية - الوثيقة الرئيسية وتشمل التعريفات",
+  "route": "agreed",
+  "reason": "",
+  "e": "parent_dead",
+  "f": "parent_dead",
+  "g": null,
+  "final": "parent_dead",
+  "parents": [
+   {
+    "id": "cmpz5rv8f00dacwg26fvks6h2",
+    "name": "نظام النقل بالخطوط الحديدية"
+   }
+  ],
+  "named_parent": ""
+ },
+ {
+  "item": "L1-162",
+  "system_id": "3b0b4639b6a0485e8863a0e43ab802fe",
+  "name": "ضوابط استخدام اسم السعودية وأسماء المدن والمناطق والأماكن العامة في الاسم التجاري",
+  "route": "agreed",
+  "reason": "",
+  "e": "needs_owner",
+  "f": "needs_owner",
+  "g": null,
+  "final": "needs_owner",
+  "parents": [],
+  "named_parent": "نظام الأسماء التجارية"
+ },
+ {
+  "item": "L1-196",
+  "system_id": "97fda75088404bbdb425da3b3c24ebd7",
+  "name": "قواعد عمل لجنة النظر في مخالفات المتنافسين والمتعاقد معهم لأحكام نظام المنافسات والمشتريات الحكومية والعقود المبرمة معهم",
+  "route": "agreed",
+  "reason": "",
+  "e": "parent_dead",
+  "f": "parent_dead",
+  "g": null,
+  "final": "parent_dead",
+  "parents": [
+   {
+    "id": "cmpz5rlje00chcwg2afi55268",
+    "name": "نظام المنافسات والمشتريات الحكومية"
+   }
+  ],
+  "named_parent": ""
+ },
+ {
+  "item": "L1-197",
+  "system_id": "5b87ea49aa604350b0dac6030676c285",
+  "name": "قواعد عمل لجنة النظر في مخالفات نظام النقل بالخطوط الحديدية ولائحته",
+  "route": "agreed",
+  "reason": "",
+  "e": "parent_dead",
+  "f": "parent_dead",
+  "g": null,
+  "final": "parent_dead",
+  "parents": [
+   {
+    "id": "cmpz5rv8f00dacwg26fvks6h2",
+    "name": "نظام النقل بالخطوط الحديدية"
+   }
+  ],
+  "named_parent": ""
+ },
+ {
+  "item": "L1-225",
+  "system_id": "cmpz5plye003gcwg2p9ivycp0",
+  "name": "لائحة تفضيل المحتوى المحلي والمنشآت الصغيرة والمتوسطة المحلية والشركات المدرجة في السوق المالية في الأعمال والمشتريات",
+  "route": "agreed",
+  "reason": "",
+  "e": "parent_dead",
+  "f": "parent_dead",
+  "g": null,
+  "final": "parent_dead",
+  "parents": [
+   {
+    "id": "cmpz5rlje00chcwg2afi55268",
+    "name": "نظام المنافسات والمشتريات الحكومية"
+   }
+  ],
+  "named_parent": ""
+ },
+ {
+  "item": "L1-228",
+  "system_id": "cmpz5pn49003mcwg21vgmtqly",
+  "name": "لائحة تنظيم تعارض المصالح في تطبيق نظام المنافسات والمشتريات الحكومية ولائحته التنفيذية",
+  "route": "agreed",
+  "reason": "",
+  "e": "parent_dead",
+  "f": "parent_dead",
+  "g": null,
+  "final": "parent_dead",
+  "parents": [
+   {
+    "id": "cmpz5rlje00chcwg2afi55268",
+    "name": "نظام المنافسات والمشتريات الحكومية"
+   }
+  ],
+  "named_parent": ""
+ },
+ {
+  "item": "L1-229",
+  "system_id": "cmpz5pmjc003jcwg2d8p289ly",
+  "name": "لائحة تنظيم سلوكيات وأخلاقيات القائمين على تطبيق نظام المنافسات والمشتريات الحكومية ولائحته التنفيذية",
+  "route": "agreed",
+  "reason": "",
+  "e": "parent_dead",
+  "f": "parent_dead",
+  "g": null,
+  "final": "parent_dead",
+  "parents": [
+   {
+    "id": "cmpz5rlje00chcwg2afi55268",
+    "name": "نظام المنافسات والمشتريات الحكومية"
+   }
+  ],
+  "named_parent": ""
+ },
+ {
+  "item": "L1-259",
+  "system_id": "ac12c181f6434d3d8479faacc424d159",
+  "name": "القواعد الضريبية للمقرات الإقليمية",
+  "route": "reviewed",
+  "reason": "",
+  "e": "needs_owner",
+  "f": "no_parent_stated",
+  "g": "needs_owner",
+  "final": "needs_owner",
+  "parents": [],
+  "named_parent": ""
+ },
+ {
+  "item": "L1-288",
+  "system_id": "688a12b63e20429bb7150319503172a8",
+  "name": "اللائحة التنفيذية للمتاحف",
+  "route": "reviewed",
+  "reason": "",
+  "e": "no_parent_stated",
+  "f": "needs_owner",
+  "g": "needs_owner",
+  "final": "needs_owner",
+  "parents": [],
+  "named_parent": ""
+ },
+ {
+  "item": "L1-307",
+  "system_id": "8beea182ebfb41d58b86d1582f0999a5",
+  "name": "دليل جودة وسلامة المنتجات الزراعية",
+  "route": "reviewed",
+  "reason": "",
+  "e": "mention_only",
+  "f": "no_parent_stated",
+  "g": "needs_owner",
+  "final": "needs_owner",
+  "parents": [],
+  "named_parent": ""
+ },
+ {
+  "item": "L1-336",
+  "system_id": "a79c582f421f4d0d89afa9b15a3ba431",
+  "name": "قواعد جباية الزكاة من المستثمرين في الصناديق الاستثمارية",
+  "route": "reviewed",
+  "reason": "",
+  "e": "parent_not_in_hakeem",
+  "f": "parent_not_in_hakeem",
+  "g": "needs_owner",
+  "final": "needs_owner",
+  "parents": [],
+  "named_parent": "اللائحة التنفيذية لجباية الزكاة الصادرة بالقرار الوزاري رقم (2216) وتاريخ 7/7/ 1440هـ"
+ },
+ {
+  "item": "L1-337",
+  "system_id": "ae1b6200b77945619886c10a5cab2f26",
+  "name": "قواعد حساب زكاة مكلفي التقديري",
+  "route": "reviewed",
+  "reason": "",
+  "e": "parent_not_in_hakeem",
+  "f": "parent_not_in_hakeem",
+  "g": "needs_owner",
+  "final": "needs_owner",
+  "parents": [],
+  "named_parent": "اللائحة التنفيذية لجباية الزكاة الصادرة بقرار وزير المالية رقم (2216) وتاريخ 7/7 /1440هـ"
+ }
+]

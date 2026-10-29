@@ -1,0 +1,678 @@
+{
+ "by": "gap016b-amended-texts-2026-10-29",
+ "md5": "c7455d65f288599b4d2fd7beb2ec7847",
+ "count": 3,
+ "expect_delta": {},
+ "report": {
+  "versions": 15,
+  "articles": 14,
+  "new_articles": 0,
+  "changed_text": 14,
+  "skipped": [
+   {
+    "article": "cmpzcv8yy0at6vtrkwl4tgt4z",
+    "law": "نظام العمل",
+    "n": 231,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/46 1436/6/5"
+    ]
+   },
+   {
+    "article": "cmpz5xq2901zncwg2fy790wc5",
+    "law": "النظام الجزائي الخاص بتزييف وتقليد النقود",
+    "n": 2,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/48 1426/8/2"
+    ]
+   },
+   {
+    "article": "cmpzcv47a09irvtrk2jsso4qc",
+    "law": "النظام الصحي",
+    "n": 4,
+    "why": "partial_note",
+    "instr": [
+     "royal_decree م/52 1437/8/4"
+    ]
+   },
+   {
+    "article": "cmpzcv47a09isvtrkk4m1jso2",
+    "law": "النظام الصحي",
+    "n": 5,
+    "why": "partial_note",
+    "instr": [
+     "royal_decree م/52 1437/8/4"
+    ]
+   },
+   {
+    "article": "cmpz5ypaz02bvcwg2xsc0y3nv",
+    "law": "نظام الأسلحة والذخائر",
+    "n": 50,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/17 1437/4/1"
+    ]
+   },
+   {
+    "article": "cmpz5ypsl02c1cwg2qz3b7rru",
+    "law": "نظام الأسلحة والذخائر",
+    "n": 53,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/17 1437/4/1"
+    ]
+   },
+   {
+    "article": "cmpzcv8z00ax4vtrkbybnpofs",
+    "law": "نظام التأمين ضد التعطل عن العمل",
+    "n": 7,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/160 1441/11/11"
+    ]
+   },
+   {
+    "article": "cmpz6qlhd0buvcwg2i2qt17if",
+    "law": "نظام التقاعد العسكري",
+    "n": 7,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/48 1403/8/12"
+    ]
+   },
+   {
+    "article": "cmpz8058i0cbn7b6wzm6fmq2a",
+    "law": "نظام التقاعد المدني",
+    "n": 18,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/48 1403/8/12"
+    ]
+   },
+   {
+    "article": "cmpz9elyo0cf5ybvvndmq2da0",
+    "law": "نظام الخدمة المدنية",
+    "n": 37,
+    "why": "الخدمة المدنية م37: ترقيم «37 مكرر» ملتبس"
+   },
+   {
+    "article": "cmpz5wbol01ifcwg27e2c520r",
+    "law": "نظام السجن والتوقيف",
+    "n": 20,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/75 1428/9/14"
+    ]
+   },
+   {
+    "article": "cmpz5tola00mhcwg2inzp65un",
+    "law": "نظام المناطق",
+    "n": 13,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_order ا/21 1414/3/30"
+    ]
+   },
+   {
+    "article": "cmpz5tsle00nvcwg2zx2jjjtz",
+    "law": "نظام المناطق",
+    "n": 37,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_order ا/21 1414/3/30"
+    ]
+   },
+   {
+    "article": "cmpz61tox03cncwg2aage259n",
+    "law": "نظام خدمة الأفراد",
+    "n": 5,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/4 1420/2/7"
+    ]
+   },
+   {
+    "article": "cmpz6220p03ezcwg217k4ytyq",
+    "law": "نظام خدمة الأفراد",
+    "n": 46,
+    "why": "partial_note",
+    "instr": [
+     "royal_decree م/11 1424/3/10"
+    ]
+   },
+   {
+    "article": "cmpz6o7q20b17cwg2z8f8g9tz",
+    "law": "نظام رسوم الأراضي البيضاء",
+    "n": 4,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/244 1446/11/7"
+    ]
+   },
+   {
+    "article": "cmpz6o7vs0b19cwg2qx63rktr",
+    "law": "نظام رسوم الأراضي البيضاء",
+    "n": 5,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/244 1446/11/7"
+    ]
+   },
+   {
+    "article": "cmpz6o81j0b1bcwg2281sjhif",
+    "law": "نظام رسوم الأراضي البيضاء",
+    "n": 6,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/244 1446/11/7"
+    ]
+   },
+   {
+    "article": "cmpz6o8780b1dcwg2goxksvzs",
+    "law": "نظام رسوم الأراضي البيضاء",
+    "n": 7,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/244 1446/11/7"
+    ]
+   },
+   {
+    "article": "cmpz6o8cw0b1fcwg2ihhvnz5r",
+    "law": "نظام رسوم الأراضي البيضاء",
+    "n": 8,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/244 1446/11/7"
+    ]
+   },
+   {
+    "article": "cmpz6o95b0b1ncwg2wen8cu62",
+    "law": "نظام رسوم الأراضي البيضاء",
+    "n": 12,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/244 1446/11/7"
+    ]
+   },
+   {
+    "article": "cmpz6o9b00b1pcwg2st4nwfnc",
+    "law": "نظام رسوم الأراضي البيضاء",
+    "n": 13,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/244 1446/11/7"
+    ]
+   },
+   {
+    "article": "cmpzcvb5k0bizvtrkz55p4agm",
+    "law": "نظام ضريبة الدخل",
+    "n": 67,
+    "why": "ضريبة الدخل م67: الأداة في الملاحظة م/113 لعام 1438هـ لا م/1 (خطأ استخراج)، والنص الجديد يتضمن حكمًا انتقاليًا خارج المادة"
+   },
+   {
+    "article": "cmpz5tdhs00ivcwg2znpi7je6",
+    "law": "نظام مجلس الشورى",
+    "n": 10,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_order ا/181 1428/12/14"
+    ]
+   },
+   {
+    "article": "cmpz5tf9e00jhcwg2u4gyvfob",
+    "law": "نظام مجلس الشورى",
+    "n": 21,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_order ا/181 1428/12/14"
+    ]
+   },
+   {
+    "article": "cmpz5tfqm00jlcwg2g2u2ol2r",
+    "law": "نظام مجلس الشورى",
+    "n": 23,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_order ا/198 1424/10/2"
+    ]
+   },
+   {
+    "article": "cmpz5tgpl00jxcwg22j1npv99",
+    "law": "نظام مجلس الشورى",
+    "n": 29,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_order ا/181 1428/12/14"
+    ]
+   },
+   {
+    "article": "cmpz5tm6w00lncwg2uwbny02v",
+    "law": "نظام مجلس الوزراء",
+    "n": 30,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_order ا/151 1432/9/3"
+    ]
+   },
+   {
+    "article": "cmpzcvci50bwavtrkhwq2vtqd",
+    "law": "نظام نقابة السيارات",
+    "n": 14,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/21 1425/4/11"
+    ]
+   },
+   {
+    "article": "cmpzcvci50bwlvtrky29197b9",
+    "law": "نظام نقابة السيارات",
+    "n": 25,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/21 1425/4/11"
+    ]
+   },
+   {
+    "article": "cmpzcvci50bwmvtrk8twccb4p",
+    "law": "نظام نقابة السيارات",
+    "n": 26,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/21 1425/4/11"
+    ]
+   },
+   {
+    "article": "cmpzcvci50bwuvtrkgsdhv4pi",
+    "law": "نظام نقابة السيارات",
+    "n": 34,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/21 1425/4/11"
+    ]
+   },
+   {
+    "article": "cmpzcvci60bwyvtrkz319llro",
+    "law": "نظام نقابة السيارات",
+    "n": 38,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/9 1407/4/20"
+    ]
+   },
+   {
+    "article": "cmpzcvci60bxavtrkwi8daycm",
+    "law": "نظام نقابة السيارات",
+    "n": 50,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/21 1425/4/11"
+    ]
+   },
+   {
+    "article": "cmpzcvci60bxevtrkiywy6v6u",
+    "law": "نظام نقابة السيارات",
+    "n": 54,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/9 1407/4/20"
+    ]
+   },
+   {
+    "article": "cmpzcuwl007ctvtrkhax7qngh",
+    "law": "نظام هيئة التحقيق والادعاء العام ( نظام النيابة العامة )",
+    "n": 1,
+    "why": "partial_note",
+    "instr": [
+     "royal_decree م/4 1433/1/5"
+    ]
+   },
+   {
+    "article": "cmpzcv4vl09sdvtrkmd1nml1o",
+    "law": "تنظيم نفقات المرضى السعوديين ومرافقيهم المحولين للعلاج خارج مناطق إقامتهم",
+    "n": 2,
+    "why": "date_not_agreed",
+    "instr": [
+     "cabinet_decision 111 1434/4/15",
+     "cabinet_decision 557 1441/8/28"
+    ]
+   },
+   {
+    "article": "cmpz6a82g064pcwg2369du58i",
+    "law": "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة)",
+    "n": 10,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_order ا/240 1441/4/1"
+    ]
+   },
+   {
+    "article": "cmpz6a886064rcwg2rh1eblir",
+    "law": "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة)",
+    "n": 11,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_order ا/240 1441/4/1"
+    ]
+   },
+   {
+    "article": "cmpz6a8jl064vcwg280qmm0ik",
+    "law": "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة)",
+    "n": 13,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_order ا/240 1441/4/1"
+    ]
+   },
+   {
+    "article": "cmpz6a8pb064xcwg23pzhqykm",
+    "law": "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة)",
+    "n": 14,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_order ا/240 1441/4/1"
+    ]
+   },
+   {
+    "article": "cmpz6a9c60655cwg284huio0r",
+    "law": "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة)",
+    "n": 18,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_order ا/240 1441/4/1"
+    ]
+   },
+   {
+    "article": "cmpz6a9hw0657cwg2hq61f49r",
+    "law": "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة)",
+    "n": 19,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_order ا/240 1441/4/1"
+    ]
+   },
+   {
+    "article": "cmpz6a9nm0659cwg2h6b3vh7k",
+    "law": "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة)",
+    "n": 20,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_order ا/240 1441/4/1"
+    ]
+   },
+   {
+    "article": "cmpz6a9tb065bcwg2wkux4f6k",
+    "law": "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة)",
+    "n": 21,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_order ا/240 1441/4/1"
+    ]
+   },
+   {
+    "article": "cmpz6a9z1065dcwg2jp7xz0ej",
+    "law": "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة)",
+    "n": 22,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_order ا/240 1441/4/1"
+    ]
+   }
+  ],
+  "open_dates": {
+   "royal_decree م/48 1403/8/12": {
+    "a": null,
+    "b": "1974-11-21"
+   },
+   "royal_decree م/9 1407/4/20": {
+    "a": null,
+    "b": null
+   },
+   "royal_order ا/21 1414/3/30": {
+    "a": null,
+    "b": "1993-09-16"
+   },
+   "royal_decree م/4 1420/2/7": {
+    "a": null,
+    "b": null
+   },
+   "royal_decree م/11 1424/3/10": {
+    "a": null,
+    "b": null
+   },
+   "royal_order ا/198 1424/10/2": {
+    "a": null,
+    "b": null
+   },
+   "royal_decree م/21 1425/4/11": {
+    "a": null,
+    "b": null
+   },
+   "royal_decree م/48 1426/8/2": {
+    "a": null,
+    "b": null
+   },
+   "royal_decree م/75 1428/9/14": {
+    "a": null,
+    "b": null
+   },
+   "royal_order ا/181 1428/12/14": {
+    "a": null,
+    "b": null
+   },
+   "royal_order ا/151 1432/9/3": {
+    "a": null,
+    "b": null
+   },
+   "royal_decree م/4 1433/1/5": {
+    "a": null,
+    "b": null
+   },
+   "cabinet_decision 111 1434/4/15": {
+    "a": null,
+    "b": null
+   },
+   "royal_decree م/46 1436/6/5": {
+    "a": "2015-04-24",
+    "b": "2015-04-24",
+    "held": "نظام العمل م231 (م/46 لعام 1436): نقلت واس بدء تطبيق التعديلات 1437/1/5 أي بعد النشر بستة أشهر، فيُحتمل بند نفاذ فات القارئين"
+   },
+   "royal_decree م/17 1437/4/1": {
+    "a": "2016-02-05",
+    "b": null
+   },
+   "cabinet_decision 557 1441/8/28": {
+    "a": null,
+    "b": null
+   },
+   "royal_decree م/160 1441/11/11": {
+    "a": null,
+    "b": "2020-07-10"
+   },
+   "royal_order ا/240 1441/4/1": {
+    "a": "2019-12-13",
+    "b": "2019-12-13",
+    "held": "ثقة دنيا عند أحد القارئين"
+   },
+   "royal_decree م/28 1442/3/26": {
+    "a": null,
+    "b": "2020-11-20"
+   },
+   "royal_decree م/244 1446/11/7": {
+    "a": "2025-05-12",
+    "b": "2025-05-12",
+    "held": "رسوم الأراضي البيضاء (م/244 لعام 1446): المرسوم يعلّق العمل بأحكام الرسوم على نفاذ لائحتها، فلا يكفي تاريخ النشر"
+   }
+  },
+  "plan": [
+   {
+    "law": "نظام المحاماة",
+    "n": 29,
+    "valid_from": "2022-03-04",
+    "instr": "مرسوم ملكي رقم (م/66) وتاريخ 1443/7/15هـ — من 2022-03-04"
+   },
+   {
+    "law": "نظام المحاماة",
+    "n": 30,
+    "valid_from": "2022-03-04",
+    "instr": "مرسوم ملكي رقم (م/66) وتاريخ 1443/7/15هـ — من 2022-03-04"
+   },
+   {
+    "law": "نظام المحاماة",
+    "n": 41,
+    "valid_from": "2022-03-04",
+    "instr": "مرسوم ملكي رقم (م/66) وتاريخ 1443/7/15هـ — من 2022-03-04"
+   },
+   {
+    "law": "نظام (قانون) الجمارك الموحد لدول مجلس التعاون لدول الخليج العربية",
+    "n": 61,
+    "valid_from": "2023-01-06",
+    "instr": "مرسوم ملكي رقم (م/81) وتاريخ 1444/6/4هـ — من 2023-01-06"
+   },
+   {
+    "law": "نظام إيرادات الدولة",
+    "n": 25,
+    "valid_from": "2018-09-28",
+    "instr": "مرسوم ملكي رقم (م/5) وتاريخ 1440/1/2هـ — من 2018-09-28"
+   },
+   {
+    "law": "نظام توزيع الغاز الجاف وغاز البترول السائل للأغراض السكنية والتجارية",
+    "n": 13,
+    "valid_from": "2022-11-19",
+    "instr": "مرسوم ملكي رقم (م/112) وتاريخ 1443/11/9هـ — من 2022-11-19"
+   },
+   {
+    "law": "نظام حماية البيانات الشخصية",
+    "n": 29,
+    "valid_from": "2023-09-14",
+    "instr": "مرسوم ملكي رقم (م/148) وتاريخ 1444/9/5هـ — من 2023-09-14"
+   },
+   {
+    "law": "نظام مكافحة الرشوة",
+    "n": 14,
+    "valid_from": "2020-10-09",
+    "instr": "مرسوم ملكي رقم (م/21) وتاريخ 1442/2/14هـ — من 2020-10-09"
+   },
+   {
+    "law": "تنظيم اللجنة الوطنية لمكافحة المخدرات",
+    "n": 11,
+    "valid_from": "2022-01-01",
+    "instr": "قرار مجلس الوزراء رقم (211) وتاريخ 1443/4/11هـ — من 2022-01-01"
+   },
+   {
+    "law": "تنظيم اللجنة الوطنية لمكافحة المخدرات",
+    "n": 11,
+    "valid_from": "2025-01-17",
+    "instr": "قرار مجلس الوزراء رقم (471) وتاريخ 1446/7/7هـ — من 2025-01-17"
+   },
+   {
+    "law": "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة)",
+    "n": 24,
+    "valid_from": "2021-11-19",
+    "instr": "أمر ملكي رقم (أ/186) وتاريخ 1443/4/5هـ — من 2021-11-19"
+   },
+   {
+    "law": "نــظام الاستــثمار التعديني.",
+    "n": 27,
+    "valid_from": "2026-09-26",
+    "instr": "مرسوم ملكي رقم (م/220) وتاريخ 1447/9/27هـ — من 2026-09-26"
+   },
+   {
+    "law": "نظام المطبوعات والنشر",
+    "n": 38,
+    "valid_from": "2012-04-06",
+    "instr": "مرسوم ملكي رقم (م/20) وتاريخ 1433/4/11هـ — من 2012-04-06"
+   },
+   {
+    "law": "نظام ديوان المراقبة العامة",
+    "n": 3,
+    "valid_from": "2020-07-31",
+    "instr": "مرسوم ملكي رقم (م/178) وتاريخ 1441/12/2هـ — من 2020-07-31"
+   },
+   {
+    "law": "تنظيم الهيئة العامة للعقار",
+    "n": 13,
+    "valid_from": "2022-03-18",
+    "instr": "قرار مجلس الوزراء رقم (426) وتاريخ 1443/8/5هـ — من 2022-03-18"
+   }
+  ]
+ },
+ "statements": [
+  "SELECT CASE WHEN (SELECT count(*) FROM legal_articles WHERE id=$hk$cmpzcuxfd07l6vtrk7b6kp3dm$hk$ AND \"legalSystemId\"=$hk$cmpz5qjiu0087cwg2yhgd8twm$hk$ AND \"articleNumber\"=29 AND \"articleBis\"=0 AND md5(content)=$hk$a2bb310f509c5c5b43f54c18f5db94d7$hk$)=1 AND (SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpzcuxfd07l6vtrk7b6kp3dm$hk$)=0 AND coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpzcuxfd07l6vtrk7b6kp3dm$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل') AND (SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5qjiu0087cwg2yhgd8twm$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري' AND (SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-01f82f1eb67afb1ae0168b82$hk$ AND position($hk$1- يشطب اسم المحامي المرخص له من الجدول ويلغى ترخيصه إذا حكم عليه بعقوبة في جريمة مخلة بالشرف أو الأمانة.\n\n2- يشطب مكتب المحاماة الأجنبي المرخص له من سجل مكاتب المحاماة الأجنبية، ويلغى ترخيصه؛ إذا حكم على أحد شركاء المكتب المقيمين في المملكة أو مديره أو أحد منسوبيه بعقوبة في جريمة مخلة بالشرف أو الأمانة إذا ثبت أن الجريمة قد ارتكبت لمصلحة المكتب وبعلم منه.\n\n3- مع عدم الإخلال بدعوى التعويض لمن لحقه ضرر أو أي دعوى أخرى، يعاقب كل مرخص له بمزاولة مهنة المحاماة يخالف أي من أحكام هذا النظام، أو لائحته التنفيذية، أو يخل بواجباته المهنية، أو يرتكب عملًا ينال من شرف المهنة؛ بواحدة (أو أكثر) من العـقوبات الآتية:\n\nأ- الإنذار.   \n\nب- الإيقاف عن مزاولة مهنة المحاماة لمدة لا تتجاوز (ثلاث) سنوات.\n\nج- الشطب وإلغاء الترخيص.\n\nد- غرامة مالية لا تزيد على (ثلاثمائة) ألف ريال عن كل مخالفة$hk$ in new_text)>0)=1 AND (SELECT count(*) FROM legal_articles WHERE id=$hk$cmpzcuxfd07l7vtrksnuyipgk$hk$ AND \"legalSystemId\"=$hk$cmpz5qjiu0087cwg2yhgd8twm$hk$ AND \"articleNumber\"=30 AND \"articleBis\"=0 AND md5(content)=$hk$7aa5bf331f9a3945ff995cb7371df31a$hk$)=1 AND (SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpzcuxfd07l7vtrksnuyipgk$hk$)=0 AND coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpzcuxfd07l7vtrksnuyipgk$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل') AND (SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5qjiu0087cwg2yhgd8twm$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري' AND (SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-0d13ea5f46732c708af73820$hk$ AND position($hk$يصدر وزير العدل قواعد وإجراءات الضبط ورفع الدعوى التأديبية ونظرها بما يتناسب مع طبيعتها$hk$ in new_text)>0)=1 AND (SELECT count(*) FROM legal_articles WHERE id=$hk$cmpzcuxfe07livtrk80uqxn0o$hk$ AND \"legalSystemId\"=$hk$cmpz5qjiu0087cwg2yhgd8twm$hk$ AND \"articleNumber\"=41 AND \"articleBis\"=0 AND md5(content)=$hk$d9775bf6527f9bd15cad654847ea5dad$hk$)=1 AND (SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpzcuxfe07livtrk80uqxn0o$hk$)=0 AND coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpzcuxfe07livtrk80uqxn0o$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل') AND (SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5qjiu0087cwg2yhgd8twm$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري' AND (SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-029bea00a47e08f75f4d8b0a$hk$ AND position($hk$1- مع مراعاة ما تقضي به الأنظمة ذات العلاقة والاتفاقيات الدولية التي تكون المملكة طرفاً فيها، للمرخص له بمزاولة مهنة المحاماة أن يستعين بمستشار (أو أكثر) نظامي أو شرعي غير سعودي للعمل لديه؛ بناءً على عقد عمل تحت مسؤوليته وإشرافه؛ بالشروط الآتية:\n\nأ- أن تتوافر في غير السعودي شروط القيد في جدول المحامين عدا شرط الجنسية، أو أن يكون مرخصاً له بمزاولة مهنة المحاماة وفق أحكام أي نظام أجنبي آخر ينظم مزاولة مهنة المحاماة وفق المعايير والضوابط التي تبينها اللائحة التنفيذية لهذا النظام في هذا الشأن.\n\nب- أن تتوافر لديه خبرة عملية في مزاولة مهنة المحاماة لا تقل عن (خمس) سنوات.\n\nج- التسجيل في عضوية الهيئة السعودية للمحامين وفق الأحكام المنظمة لذلك.\n\nد- ألا يتولى الترافع أمام الجهات المشار إليها في المادة (الأولى) من هذا النظام.\n\n2- يُنشأ في وزارة العدل سجل خاص للمستشارين النظاميين أو الشرعيين غير السعوديين، بحيث تقيد فيه أسماؤهم بعد تحقق الجهة المختصة في الوزارة من استيفائهم للشروط المنصوص عليها في الفقرة (1) من هذه المادة. وتحدد اللائحة التنفيذية لهذا النظام البيانات الواجب توافرها في هذا السجل$hk$ in new_text)>0)=1 AND (SELECT count(*) FROM legal_articles WHERE id=$hk$cmpzcvb5h0bduvtrktivkin7d$hk$ AND \"legalSystemId\"=$hk$cmpz5rjp100cccwg2ooufbnk2$hk$ AND \"articleNumber\"=61 AND \"articleBis\"=0 AND md5(content)=$hk$52fa022f453f101ba4fdc848ec07a61a$hk$)=1 AND (SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpzcvb5h0bduvtrktivkin7d$hk$)=0 AND coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpzcvb5h0bduvtrktivkin7d$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل') AND (SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5rjp100cccwg2ooufbnk2$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري' AND (SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-7551a4cb262c01b47939efa1$hk$ AND position($hk$تشكل لجنة للفصل في القيمة من موظفي الإدارة بموجب قرار من المدير العام أو من يفوضه، وتكون مهمتها حل الخلافات التي تنشأ بين الدائرة الجمركية وأصحاب العلاقة حول قيمة البضائع المستوردة، ولها الاستعانة بمن تراه من ذوي الخبرة. ودون الإخلال بحق المستورد باللجوء إلى القضاء، يحق للمستورد أن يتظلم من قرارات زيادة قيمة البضاعة أمام لجنة القيمة، وذلك خلال خمسة عشر يوماً من تاريخ تسجيل البيان الجمركي أو من تاريخ إعلامه بالقيمة التي قدرتها الإدارة للبضاعة بكتاب مسجل بعلم الوصول. وتكون قرارات هذه اللجنة بالأغلبية ونافذة بعد تصديق المدير العام عليها أو من يفوضه. ويجب إبلاغ المستورد كتابة بالقرار الذي أصدرته اللجنة في تظلمه، ويكون قرارها مسبباً$hk$ in new_text)>0)=1 AND (SELECT count(*) FROM legal_articles WHERE id=$hk$cmpzcvbtt0bplvtrk52xc9vve$hk$ AND \"legalSystemId\"=$hk$cmpz5rn3900cmcwg2t70wevmi$hk$ AND \"articleNumber\"=25 AND \"articleBis\"=0 AND md5(content)=$hk$c0d058edf9186c4ce29a9535e17c8a28$hk$)=1 AND (SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpzcvbtt0bplvtrk52xc9vve$hk$)=0 AND coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpzcvbtt0bplvtrk52xc9vve$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل') AND (SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5rn3900cmcwg2t70wevmi$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري' AND (SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-22d2ed9330cabc77be765d81$hk$ AND position($hk$لاينظر في إعفاء المدينين من الديون المترتبة من ارتكاب جرائم اختلاس أو تزوير أو تحايل$hk$ in new_text)>0)=1 AND (SELECT count(*) FROM legal_articles WHERE id=$hk$cmpzcv6wo0aazvtrkdmb77xs3$hk$ AND \"legalSystemId\"=$hk$cmpz5r2rc00awcwg2qgdtqq1u$hk$ AND \"articleNumber\"=13 AND \"articleBis\"=0 AND md5(content)=$hk$a3b3fe5aec6d3f82f8f983dd035f8be3$hk$)=1 AND (SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpzcv6wo0aazvtrkdmb77xs3$hk$)=0 AND coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpzcv6wo0aazvtrkdmb77xs3$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل') AND (SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5r2rc00awcwg2qgdtqq1u$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري' AND (SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-278e1d65d10bfb71488cf270$hk$ AND position($hk$1- إذا رغب المرخص له في التنازل عن رخصته أو جزء من أوجه النشاط المرخص به، أو في منحها لغيره، أو تأجيرها أو مبادلتها، أو نقل ملكية الأصول الأساسية بأي طريق كان، أو رغب في الاندماج مع غيره، أو أن يستحوذ غيره على معظم حصصه أو موجوداته، أو نقل ملكية الحصص والأسهم التي تمثل نسبة مؤثرة؛ فعليه التقدم بطلب للوزارة للحصول على موافقتها المسبقة بحسب الشروط التي تضعها. ويجب على الوزارة أن تبت في الطلب خلال مدة لا تتجاوز (تسعين) يوماً من تاريخ اكتماله. ويُعد مضي المدة دون البت في الطلب إذناً له بالتصرف. فإن رُفض الطلب فيجب أن يكون ذلك مسبباً.\n\n2- يُقصد بالأصول الأساسية -المذكورة في الفقرة (1) من هذه المادة- جميع الأصول التي يترتب على نقل ملكيتها إخلال بأداء النشاط المرخص به، ومنها: شبكة توزيع الغاز الجاف، وشبكة توزيع الغاز المستقلة، ومرافق غاز البترول السائل، وغيرها مما تحدده اللوائح.$hk$ in new_text)>0)=1 AND (SELECT count(*) FROM legal_articles WHERE id=$hk$cmpz62hwc03k9cwg2815msgbm$hk$ AND \"legalSystemId\"=$hk$cmpz5pbo80020cwg2n615nhji$hk$ AND \"articleNumber\"=29 AND \"articleBis\"=0 AND md5(content)=$hk$35a2eb7e7034c769755a4627236ece07$hk$)=1 AND (SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpz62hwc03k9cwg2815msgbm$hk$)=0 AND coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpz62hwc03k9cwg2815msgbm$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل') AND (SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5pbo80020cwg2n615nhji$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري' AND (SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-06a8429ffe18c849124eeca9$hk$ AND position($hk$1- مع مراعاة ما ورد في الفقرة (2) من هذه المادة، يجوز لجهة التحكم نقل البيانات الشخصية إلى خارج المملكة أو الإفصاح عنها لجهة خارج المملكة، وذلك لتحقيق أيٍّ من الأغراض الآتية:\n\nأ- إذا كان ذلك تنفيذاً لالتزام بموجب اتفاقية تكون المملكة طرفاً فيه.\n\nب- إذا كان ذلك لخدمة مصالح المملكة.\n\nج- إذا كان ذلك تنفيذاً لالتزام يكون صاحب البيانات الشخصية طرفاً فيه.\n\nد- إذا كان ذلك تنفيذاً لأغراض أخرى وفق ما تحدده اللوائح.\n\n2- تكون الشروط الواجب توافرها عند نقل البيانات الشخصية أو الإفصاح عنها -وفق ما ورد في الفقرة (1) من هذه المادة- على النحو الآتي:\n\nأ- ألا يترتب على النقل أو الإفصاح مساس بالأمن الوطني أو بمصالح المملكة الحيوية.\n\nب- أن يتوافر مستوى مناسب لحماية البيانات الشخصية في خارج المملكة؛ بما لا يقل عن مستوى الحماية المقرر في النظام واللوائح، وفقاً لنتائج تقويم تجريه الجهة المختصة في هذا الشأن بالتنسيق مع من تراه من الجهات المعنية.\n\nج- أن يقتصر النقل أو الإفصاح على الحد الأدنى من البيانات الشخصية الذي تدعو الحاجة إليه.\n\n3- لا يسري ما ورد في الفقرة (2) من هذه المادة على حالات الضرورة القصوى للمحافظة على حياة صاحب البيانات الشخصية أو مصالحه الحيوية أو الوقاية من عدوى مرضية أو فحصها أو معالجتها.\n\n4- تحدد اللوائح الأحكام والمعايير والإجراءات المتعلقة بتطبيق ما ورد في هذه المادة، بما في ذلك تحديد حالات إعفاء جهات التحكم من الالتزام بأي من الشروط المشار إليها في الفقرتين الفرعيتين (ب) و(ج) من الفقرة (2) من هذه المادة، وكذلك ضوابط وإجراءات ذلك الإعفاء والعدول عنه$hk$ in new_text)>0)=1 AND (SELECT count(*) FROM legal_articles WHERE id=$hk$cmpz5wgu901k5cwg2agtrrufa$hk$ AND \"legalSystemId\"=$hk$cmpz5p4as000zcwg2nx3yo0cj$hk$ AND \"articleNumber\"=14 AND \"articleBis\"=0 AND md5(content)=$hk$7f9c87a6d50e8a78a5b1bf1c947b49f2$hk$)=1 AND (SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpz5wgu901k5cwg2agtrrufa$hk$)=0 AND coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpz5wgu901k5cwg2agtrrufa$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل') AND (SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5p4as000zcwg2nx3yo0cj$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري' AND (SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-b0db3d476ff7cbfbc2b0a8f7$hk$ AND position($hk$يُصدر وزير الداخلية -بناءً على توصية لجنة تكون من (وزارة الداخلية، ووزارة الموارد البشرية والتنمية الاجتماعية، وهيئة الرقابة ومكافحة الفساد) -قراراً بإعادة النظر في العقبات التبعية بعد مضي خمس سنوات من تاريخ انتهاء تنفيذ العقوبة الأصلية، ويعتمد وزير الداخلية آلية وقواعد عمل اللجنة$hk$ in new_text)>0)=1 AND (SELECT count(*) FROM legal_articles WHERE id=$hk$cmpz5ywbl02e5cwg24mzbft0s$hk$ AND \"legalSystemId\"=$hk$cmpz5p77f001ecwg2be4uvmg9$hk$ AND \"articleNumber\"=11 AND \"articleBis\"=0 AND md5(content)=$hk$846e927556d80a4c4ff36d5b740af258$hk$)=1 AND (SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpz5ywbl02e5cwg24mzbft0s$hk$)=0 AND coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpz5ywbl02e5cwg24mzbft0s$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل') AND (SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5p77f001ecwg2be4uvmg9$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري' AND (SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-7aefef2a520268917efa68b4$hk$ AND position($hk$1- تكوّن لجنة تحضيرية للجنة تضم في عضويتها عدداً من المختصين والخبراء ذوي الكفاية والتأهيل في مجال التوعية والتعيم الوقائي ومجال العلاج والتأهيل، يرشحون بناءً على خبراتهم، إضافة إلى عضوية أمين عام اللجنة. ويسمى أعضاء اللجنة التحضيرية ويختار رئيسها بقرار من رئيس اللجنة الوطنية لمدة (ثلاث) سنوات قابلة للتجديد مرتين فقط.\n\n2- تعقد اللجنة التحضيرية اجتماعاتها بصفة دورية أربع مرات في السنة، أو كلما دعت الحاجة إلى ذلك بحسب ما يقدره رئيسها$hk$ in new_text)>0)=1 AND (SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-cc49a8c63c111264cb7113bc$hk$ AND position($hk$1- تكوّن لجنة تحضيرية للجنة تضم في عضويتها:\n\nأ- أعضاء من اللجنة.\n\nب- ذوي اختصاص يرشحون بناء على خبراتهم.\n\nج- الامين العام.\n\n2- تشكل اللجنة التحضيرية ويسمى رئيسها بأمر من رئيس مجلس الوزراء، بناء على اقتراح من رئيس اللجنة.\n\n3- تكون مدة عضوية الأعضاء المشار إليهم في الفقرتين الفرعيتين (أ) و(ب) من الفقرة (1) من هذه المادة (ثلاث) سنوات قابلة للتجديد.\n\n4- تعقد اللجنة التحضيرية اجتماعاتها بصفة دورية (أربع) مرات في السنة، وكلما دعت الحاجة إلى ذلك بحسب ما يقدره رئيسها$hk$ in new_text)>0)=1 AND (SELECT count(*) FROM legal_articles WHERE id=$hk$cmpz6aaah065hcwg2m59rycep$hk$ AND \"legalSystemId\"=$hk$cmpz5pj1k0032cwg262ocrzeh$hk$ AND \"articleNumber\"=24 AND \"articleBis\"=0 AND md5(content)=$hk$dcd10d348aa8ffd471520211d20d59ff$hk$)=1 AND (SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpz6aaah065hcwg2m59rycep$hk$)=0 AND coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpz6aaah065hcwg2m59rycep$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل') AND (SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5pj1k0032cwg262ocrzeh$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري' AND (SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-29a467501062d9e5de0042cf$hk$ AND position($hk$1- تكون للهيئة ميزانية سنوية مستقلة.\n\n2- السنة المالية للهيئة هي السنة المالية للدولة$hk$ in new_text)>0)=1 AND (SELECT count(*) FROM legal_articles WHERE id=$hk$cmpzcv7lh0afvvtrkil04iy64$hk$ AND \"legalSystemId\"=$hk$cmpz5r44600b3cwg2p3j5jwbt$hk$ AND \"articleNumber\"=27 AND \"articleBis\"=0 AND md5(content)=$hk$bdc8a596b2115e816d80e737a714ce15$hk$)=1 AND (SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpzcv7lh0afvvtrkil04iy64$hk$)=0 AND coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpzcv7lh0afvvtrkil04iy64$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل') AND (SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5r44600b3cwg2p3j5jwbt$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري' AND (SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-db8b0844d2a0ed652aed9dc0$hk$ AND position($hk$1- يكون لممثلي الوزارة المختصين صفة الضبط الإداري، ولهم دخول مواقع الرخص التعدينية بموجب النظام، للتفتيش، والمراقبة، وضبط المخالفات، والتأكد من تقيد المرخص له بأحكام النظام واللوائح وشروط الرخصة، وعلى المرخص له أن يتعاون مع ممثلي الوزارة بما يمكنهم من أداء مهماتهم على أكمل وجه.\n\n2- يكون لممثلي الوزارة المختصين - المشار إليهم في الفقرة (1) من هذه المادة - ورجال السلطة العامة من موظفي الوزارات والأجهزة الحكومية الأخرى وكذلك الجهات الأمنية - الذين يمارسون أعمالاً وفق الأنظمة الخاصة بهم لضبط المخالفات أو الجرائم المتصلة بها - صفة الضبط الجنائي عند اكتشافهم لأي من الجرائم المنصوص عليها في المادة (السادسة والخمسين مكرر) من النظام أثناء جولاتهم الميدانية في نطاق اختصاصهم المكاني، ولهم كذلك تلقي البلاغات لضبط تلك الجرائم.\n\n3- تقوم وزارة الداخلية بتوفير المساندة الأمنية لضبط الجرائم المشار إليها في هذه المادة، عند طلب ذلك من أي من الجهات المشار إليها في الفقرة (2) من هذه المادة.\n\n4- لرجال الضبط الجنائي - المشار إليهم في هذه المادة - التحفظ على ما يتعلق بالجريمة من سجلات ووثائق وأدوات ومعدات وغير ذلك، ويكون ذلك على نفقة مرتكبها، ويتخذ المحقق ما يلزم نظاماً حيالها$hk$ in new_text)>0)=1 AND (SELECT count(*) FROM legal_articles WHERE id=$hk$cmpz5ufsi00vpcwg2pvty3sqs$hk$ AND \"legalSystemId\"=$hk$cmpz5ozg4000acwg2i8ksehlg$hk$ AND \"articleNumber\"=38 AND \"articleBis\"=0 AND md5(content)=$hk$7625c1ee279b34ec8a9c693f4e9d18dc$hk$)=1 AND (SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpz5ufsi00vpcwg2pvty3sqs$hk$)=0 AND coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpz5ufsi00vpcwg2pvty3sqs$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل') AND (SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5ozg4000acwg2i8ksehlg$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري' AND (SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-e312dcf771e514c6266d691d$hk$ AND position($hk$مع عدم الإخلال بأي عقوبة أشد ينص عليها نظام آخر، يعاقب كل من يخالف أحكام هذا النظام بواحدة أو أكثر من العقوبات التالية :\n\n1 - غرامة لا تزيد على (500) خمسمائة ألف ريال، وتضاعف الغرامة إذا تكررت المخالفة.\n\n2 - إيقاف المخالف عن الكتابة في جميع الصحف والمطبوعات، أو عن المشاركة الإعلامية من خلال القنوات الفضائية، أو عنهما معًا.\n\n3 - إغلاق أو حجب محل المخالفة مؤقتًا أو نهائيًا، فإن كان محل المخالفة صحيفة فيكون تنفيذ قرار الإغلاق بموافقة رئيس مجلس الوزراء، وإن كان محلها صحيفة إلكترونية أو موقعًا ونحو ذلك فيكون تنفيذ قرار الإغلاق أو الحجب من صلاحية الوزير.\n\n4 - نشر إعتذار من المخالف في المطبوعة - إذا كانت مخالفته نشر معلومات مغلوطة أو اتهامات تجاه المذكورين في الفقرة (3) من المادة (التاسعة) من هذا النظام - وفق الصيغة التي تراها اللجنة وعلى نفقته الخاصة وفي المكان نفسه الذي نشرت فيه المخالفة.\n\nوإذا كانت المخالفة تمثل إساءة إلى الدين الإسلامي، أو المساس بمصالح الدولة العليا أو بعقوبات يختص بنظرها القضاء، فعلى اللجنة إحالتها - بقرار مسبب - إلى الوزير لرفعها إلى الملك للنظر في اتخاذ الإجراءات النظامية لإقامة الدعوى أمام المحكمة المختصة، أو اتخاذ ما يراه محققًا للمصلحة العامة$hk$ in new_text)>0)=1 AND (SELECT count(*) FROM legal_articles WHERE id=$hk$cmpzcvahb0bbbvtrk5nslenyq$hk$ AND \"legalSystemId\"=$hk$cmpz5rj2u00cacwg2jgopy3av$hk$ AND \"articleNumber\"=3 AND \"articleBis\"=0 AND md5(content)=$hk$92c9166ed07e9735c25c1739e029bd11$hk$)=1 AND (SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpzcvahb0bbbvtrk5nslenyq$hk$)=0 AND coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpzcvahb0bbbvtrk5nslenyq$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل') AND (SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5rj2u00cacwg2jgopy3av$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري' AND (SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-d67cbebbc0ca612c90f34c13$hk$ AND position($hk$يعيّن رئيس الديوان بأمر ملكي .\n\nفيما عدا رئيس الديوان، يسري على منسوبي الديوان لوائح الديوان الإدارية والمالية.\n\nيعد الرئيس مشروع هيكل الديوان التنظيمي، ومشروع ميزانيته، ومشروع اللوائح الإدارية والمالية المشار إليها في الفقرة (2) من هذه المادة، وترفع إلى الملك للنظر في اعتمادها.$hk$ in new_text)>0)=1 AND (SELECT count(*) FROM legal_articles WHERE id=$hk$cmpz6oit30b51cwg2g5qjmlf1$hk$ AND \"legalSystemId\"=$hk$cmpz5q5jn0068cwg2yjxi0ots$hk$ AND \"articleNumber\"=13 AND \"articleBis\"=1 AND md5(content)=$hk$90b5bb1c08bb5365813f2405c4bbe632$hk$)=1 AND (SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpz6oit30b51cwg2g5qjmlf1$hk$)=0 AND coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpz6oit30b51cwg2g5qjmlf1$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل') AND (SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5q5jn0068cwg2yjxi0ots$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري' AND (SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-32d183b0a150082a21e0a0a8$hk$ AND position($hk$يخضع منسوبو الهيئة لأحكام نظام العمل ونظام التأمينات الاجتماعية$hk$ in new_text)>0)=1 AND (SELECT count(*) FROM unit_version WHERE id LIKE 'g16bu-%')=0 THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard_before",
+  "INSERT INTO unit_version (id, unit_id, body, valid_from, evidence_instrument, evidence_url, evidence_quote, created_at) VALUES\n($hk$g16bu-2374d9ed67ed2bc844d5b6d3$hk$, $hk$cmpzcuxfd07l6vtrk7b6kp3dm$hk$, $hk$1- يشطب اسم المحامي المرخص له من الجدول ويلغى ترخيصه إذا حكم عليه بعقوبة في جريمة مخلة بالشرف أو الأمانة.\n\n2- يشطب مكتب المحاماة الأجنبي المرخص له من سجل مكاتب المحاماة الأجنبية، ويلغى ترخيصه؛ إذا حكم على أحد شركاء المكتب المقيمين في المملكة أو مديره أو أحد منسوبيه بعقوبة في جريمة مخلة بالشرف أو الأمانة إذا ثبت أن الجريمة قد ارتكبت لمصلحة المكتب وبعلم منه.\n\n3- مع عدم الإخلال بدعوى التعويض لمن لحقه ضرر أو أي دعوى أخرى، يعاقب كل مرخص له بمزاولة مهنة المحاماة يخالف أي من أحكام هذا النظام، أو لائحته التنفيذية، أو يخل بواجباته المهنية، أو يرتكب عملًا ينال من شرف المهنة؛ بواحدة (أو أكثر) من العـقوبات الآتية:\n\nأ- الإنذار.   \n\nب- الإيقاف عن مزاولة مهنة المحاماة لمدة لا تتجاوز (ثلاث) سنوات.\n\nج- الشطب وإلغاء الترخيص.\n\nد- غرامة مالية لا تزيد على (ثلاثمائة) ألف ريال عن كل مخالفة$hk$, $hk$2022-03-04$hk$::timestamptz, $hk$مرسوم ملكي رقم (م/66) وتاريخ 1443/7/15هـ — من 2022-03-04$hk$, $hk$https://www.uqn.gov.sa/details?p=19050$hk$, $hk$ملاحظة هيئة الخبراء على المادة: «- عُدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/66) وتاريخ 1443/7/15هـ، لتكون بالنص الآتي:\n\n\"1- يشطب اسم المحامي المرخص له من الجدول ويلغى ترخيصه إذا حكم عليه بعقوبة في جريمة مخلة بالشرف أو الأمانة.\n\n2- يشطب مكتب المحاماة الأجنبي المرخص له من سجل مكاتب المحاماة الأجنبية، ويلغى ترخيصه؛ إذا حكم على أحد شركاء المكتب المقيمين في المملكة أو مديره أو أحد منسوبيه بعقوبة في جريمة مخلة بالشرف أو الأمانة إذا ثبت أن الجريمة قد ارتكبت لمصلحة المكتب وبعلم منه.\n\n3- مع عدم الإخلال بدعوى التعويض لمن لحقه ضرر أو أي دعوى أخرى، يعاقب كل مرخص له بمزاولة مهنة المحاماة يخالف أي من أحكام هذا النظام، أو لائحته التنفيذية، أو يخل بواجباته المهنية، أو يرتكب عملًا ينال من شرف المهنة؛ بواحدة (أو أكثر) من العـقوبات الآتية:\n\nأ- الإنذار.   \n\nب- الإيقاف عن مزاولة مهنة المحاماة لمدة لا تتجاوز (ثلاث) سنوات.\n\nج- الشطب وإلغاء الترخيص.\n\nد- غرامة مالية لا تزيد على (ثلاثمائة) ألف ريال عن كل مخالفة\".»؛ النفاذ: سكتت الأداة: م71 من النظام الأساسي (النشر 1443-08-01هـ، https://www.uqn.gov.sa/details?p=19050) ← 2022-03-04 [قارئان مستقلان متفقان (t/u)، HKM-052]$hk$, now()),\n($hk$g16bu-a7dab4d68dafb4ea294e029d$hk$, $hk$cmpzcuxfd07l7vtrksnuyipgk$hk$, $hk$يصدر وزير العدل قواعد وإجراءات الضبط ورفع الدعوى التأديبية ونظرها بما يتناسب مع طبيعتها$hk$, $hk$2022-03-04$hk$::timestamptz, $hk$مرسوم ملكي رقم (م/66) وتاريخ 1443/7/15هـ — من 2022-03-04$hk$, $hk$https://www.uqn.gov.sa/details?p=19050$hk$, $hk$ملاحظة هيئة الخبراء على المادة: «- عُدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/66) وتاريخ 1443/7/15هـ، لتكون بالنص الآتي:\n\n\" يصدر وزير العدل قواعد وإجراءات الضبط ورفع الدعوى التأديبية ونظرها بما يتناسب مع طبيعتها\".»؛ النفاذ: سكتت الأداة: م71 من النظام الأساسي (النشر 1443-08-01هـ، https://www.uqn.gov.sa/details?p=19050) ← 2022-03-04 [قارئان مستقلان متفقان (t/u)، HKM-052]$hk$, now()),\n($hk$g16bu-d33c380b22936f22dcba3d61$hk$, $hk$cmpzcuxfe07livtrk80uqxn0o$hk$, $hk$1- مع مراعاة ما تقضي به الأنظمة ذات العلاقة والاتفاقيات الدولية التي تكون المملكة طرفاً فيها، للمرخص له بمزاولة مهنة المحاماة أن يستعين بمستشار (أو أكثر) نظامي أو شرعي غير سعودي للعمل لديه؛ بناءً على عقد عمل تحت مسؤوليته وإشرافه؛ بالشروط الآتية:\n\nأ- أن تتوافر في غير السعودي شروط القيد في جدول المحامين عدا شرط الجنسية، أو أن يكون مرخصاً له بمزاولة مهنة المحاماة وفق أحكام أي نظام أجنبي آخر ينظم مزاولة مهنة المحاماة وفق المعايير والضوابط التي تبينها اللائحة التنفيذية لهذا النظام في هذا الشأن.\n\nب- أن تتوافر لديه خبرة عملية في مزاولة مهنة المحاماة لا تقل عن (خمس) سنوات.\n\nج- التسجيل في عضوية الهيئة السعودية للمحامين وفق الأحكام المنظمة لذلك.\n\nد- ألا يتولى الترافع أمام الجهات المشار إليها في المادة (الأولى) من هذا النظام.\n\n2- يُنشأ في وزارة العدل سجل خاص للمستشارين النظاميين أو الشرعيين غير السعوديين، بحيث تقيد فيه أسماؤهم بعد تحقق الجهة المختصة في الوزارة من استيفائهم للشروط المنصوص عليها في الفقرة (1) من هذه المادة. وتحدد اللائحة التنفيذية لهذا النظام البيانات الواجب توافرها في هذا السجل$hk$, $hk$2022-03-04$hk$::timestamptz, $hk$مرسوم ملكي رقم (م/66) وتاريخ 1443/7/15هـ — من 2022-03-04$hk$, $hk$https://www.uqn.gov.sa/details?p=19050$hk$, $hk$ملاحظة هيئة الخبراء على المادة: «- عُدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/66) وتاريخ 1443/7/15هـ، لتكون بالنص الآتي:\n\n\"1- مع مراعاة ما تقضي به الأنظمة ذات العلاقة والاتفاقيات الدولية التي تكون المملكة طرفاً فيها، للمرخص له بمزاولة مهنة المحاماة أن يستعين بمستشار (أو أكثر) نظامي أو شرعي غير سعودي للعمل لديه؛ بناءً على عقد عمل تحت مسؤوليته وإشرافه؛ بالشروط الآتية:\n\nأ- أن تتوافر في غير السعودي شروط القيد في جدول المحامين عدا شرط الجنسية، أو أن يكون مرخصاً له بمزاولة مهنة المحاماة وفق أحكام أي نظام أجنبي آخر ينظم مزاولة مهنة المحاماة وفق المعايير والضوابط التي تبينها اللائحة التنفيذية لهذا النظام في هذا الشأن.\n\nب- أن تتوافر لديه خبرة عملية في مزاولة مهنة المحاماة لا تقل عن (خمس) سنوات.\n\nج- التسجيل في عضوية الهيئة السعودية للمحامين وفق الأحكام المنظمة لذلك.\n\nد- ألا يتولى الترافع أمام الجهات المشار إليها في المادة (الأولى) من هذا النظام.\n\n2- يُنشأ في وزارة العدل سجل خاص للمستشارين النظاميين أو الشرعيين غير السعوديين، بحيث تقيد فيه أسماؤهم بعد تحقق الجهة المختصة في الوزارة من استيفائهم للشروط المنصوص عليها في الفقرة (1) من هذه المادة. وتحدد اللائحة التنفيذية لهذا النظام البيانات الواجب توافرها في هذا السجل\".»؛ النفاذ: سكتت الأداة: م71 من النظام الأساسي (النشر 1443-08-01هـ، https://www.uqn.gov.sa/details?p=19050) ← 2022-03-04 [قارئان مستقلان متفقان (t/u)، HKM-052]$hk$, now()),\n($hk$g16bu-cf876f3dcfb5ca745c0fa611$hk$, $hk$cmpzcvb5h0bduvtrktivkin7d$hk$, $hk$تشكل لجنة للفصل في القيمة من موظفي الإدارة بموجب قرار من المدير العام أو من يفوضه، وتكون مهمتها حل الخلافات التي تنشأ بين الدائرة الجمركية وأصحاب العلاقة حول قيمة البضائع المستوردة، ولها الاستعانة بمن تراه من ذوي الخبرة. ودون الإخلال بحق المستورد باللجوء إلى القضاء، يحق للمستورد أن يتظلم من قرارات زيادة قيمة البضاعة أمام لجنة القيمة، وذلك خلال خمسة عشر يوماً من تاريخ تسجيل البيان الجمركي أو من تاريخ إعلامه بالقيمة التي قدرتها الإدارة للبضاعة بكتاب مسجل بعلم الوصول. وتكون قرارات هذه اللجنة بالأغلبية ونافذة بعد تصديق المدير العام عليها أو من يفوضه. ويجب إبلاغ المستورد كتابة بالقرار الذي أصدرته اللجنة في تظلمه، ويكون قرارها مسبباً$hk$, $hk$2023-01-06$hk$::timestamptz, $hk$مرسوم ملكي رقم (م/81) وتاريخ 1444/6/4هـ — من 2023-01-06$hk$, $hk$https://www.uqn.gov.sa/details?p=21201$hk$, $hk$ملاحظة هيئة الخبراء على المادة: «- عُدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/81) وتاريخ 1444/6/4هـ، لتصبح بالنص الآتي:\n\n\" تشكل لجنة للفصل في القيمة من موظفي الإدارة بموجب قرار من المدير العام أو من يفوضه، وتكون مهمتها حل الخلافات التي تنشأ بين الدائرة الجمركية وأصحاب العلاقة حول قيمة البضائع المستوردة، ولها الاستعانة بمن تراه من ذوي الخبرة. ودون الإخلال بحق المستورد باللجوء إلى القضاء، يحق للمستورد أن يتظلم من قرارات زيادة قيمة البضاعة أمام لجنة القيمة، وذلك خلال خمسة عشر يوماً من تاريخ تسجيل البيان الجمركي أو من تاريخ إعلامه بالقيمة التي قدرتها الإدارة للبضاعة بكتاب مسجل بعلم الوصول. وتكون قرارات هذه اللجنة بالأغلبية ونافذة بعد تصديق المدير العام عليها أو من يفوضه. ويجب إبلاغ المستورد كتابة بالقرار الذي أصدرته اللجنة في تظلمه، ويكون قرارها مسبباً\".»؛ النفاذ: سكتت الأداة: م71 من النظام الأساسي (النشر 1444-06-13هـ، https://www.uqn.gov.sa/details?p=21201) ← 2023-01-06 [قارئان مستقلان متفقان (t/u)، HKM-052]$hk$, now()),\n($hk$g16bu-b6057284de311d28e2bfc209$hk$, $hk$cmpzcvbtt0bplvtrk52xc9vve$hk$, $hk$لاينظر في إعفاء المدينين من الديون المترتبة من ارتكاب جرائم اختلاس أو تزوير أو تحايل$hk$, $hk$2018-09-28$hk$::timestamptz, $hk$مرسوم ملكي رقم (م/5) وتاريخ 1440/1/2هـ — من 2018-09-28$hk$, $hk$https://www.uqn.gov.sa/cdn/?url=wp-content/uploads/2022/10/العدد-4746.pdf$hk$, $hk$ملاحظة هيئة الخبراء على المادة: «•المادة الخامسة والعشرين \n\n-عُدلت هذه المادة بموجب المرسوم الملكي رقم (م/5) وتاريخ 2 /1 /1440 هـ، وذلك بحذف عبارة (أو تقسيط) منها، وإعادة صياغتها، لتكون بالنص الآتي: \"لاينظر في إعفاء المدينين من الديون المترتبة من ارتكاب جرائم اختلاس أو تزوير أو تحايل\".»؛ النفاذ: سكتت الأداة: م71 من النظام الأساسي (النشر 1440-01-18هـ، https://www.uqn.gov.sa/cdn/?url=wp-content/uploads/2022/10/العدد-4746.pdf) ← 2018-09-28 [قارئان مستقلان متفقان (t/u)، HKM-052]$hk$, now()),\n($hk$g16bu-fd2df8f84412e5d105eea5af$hk$, $hk$cmpzcv6wo0aazvtrkdmb77xs3$hk$, $hk$1- إذا رغب المرخص له في التنازل عن رخصته أو جزء من أوجه النشاط المرخص به، أو في منحها لغيره، أو تأجيرها أو مبادلتها، أو نقل ملكية الأصول الأساسية بأي طريق كان، أو رغب في الاندماج مع غيره، أو أن يستحوذ غيره على معظم حصصه أو موجوداته، أو نقل ملكية الحصص والأسهم التي تمثل نسبة مؤثرة؛ فعليه التقدم بطلب للوزارة للحصول على موافقتها المسبقة بحسب الشروط التي تضعها. ويجب على الوزارة أن تبت في الطلب خلال مدة لا تتجاوز (تسعين) يوماً من تاريخ اكتماله. ويُعد مضي المدة دون البت في الطلب إذناً له بالتصرف. فإن رُفض الطلب فيجب أن يكون ذلك مسبباً.\n\n2- يُقصد بالأصول الأساسية -المذكورة في الفقرة (1) من هذه المادة- جميع الأصول التي يترتب على نقل ملكيتها إخلال بأداء النشاط المرخص به، ومنها: شبكة توزيع الغاز الجاف، وشبكة توزيع الغاز المستقلة، ومرافق غاز البترول السائل، وغيرها مما تحدده اللوائح.$hk$, $hk$2022-11-19$hk$::timestamptz, $hk$مرسوم ملكي رقم (م/112) وتاريخ 1443/11/9هـ — من 2022-11-19$hk$, $hk$https://www.uqn.gov.sa/details?p=19761$hk$, $hk$ملاحظة هيئة الخبراء على المادة: «- عدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/112) وتاريخ 1443/11/9هـ، لتكون بالنص الآتي:\n\n1- إذا رغب المرخص له في التنازل عن رخصته أو جزء من أوجه النشاط المرخص به، أو في منحها لغيره، أو تأجيرها أو مبادلتها، أو نقل ملكية الأصول الأساسية بأي طريق كان، أو رغب في الاندماج مع غيره، أو أن يستحوذ غيره على معظم حصصه أو موجوداته، أو نقل ملكية الحصص والأسهم التي تمثل نسبة مؤثرة؛ فعليه التقدم بطلب للوزارة للحصول على موافقتها المسبقة بحسب الشروط التي تضعها. ويجب على الوزارة أن تبت في الطلب خلال مدة لا تتجاوز (تسعين) يوماً من تاريخ اكتماله. ويُعد مضي المدة دون البت في الطلب إذناً له بالتصرف. فإن رُفض الطلب فيجب أن يكون ذلك مسبباً.\n\n2- يُقصد بالأصول الأساسية -المذكورة في الفقرة (1) من هذه المادة- جميع الأصول التي يترتب على نقل ملكيتها إخلال بأداء النشاط المرخص به، ومنها: شبكة توزيع الغاز الجاف، وشبكة توزيع الغاز المستقلة، ومرافق غاز البترول السائل، وغيرها مما تحدده اللوائح.»؛ النفاذ: رابعاً: يعمل بما جاء في البنود (أولاً) و(ثانياً) و(ثالثاً) من هذا المرسوم بعد (مائة وعشرين) يوماً من تاريخ نشره في الجريدة الرسمية. (النشر 1443-12-23هـ، https://www.uqn.gov.sa/details?p=19761) ← 2022-11-19 [قارئان مستقلان متفقان (m/n/o)، HKM-052]$hk$, now()),\n($hk$g16bu-f93967449db9f418f3e9faab$hk$, $hk$cmpz62hwc03k9cwg2815msgbm$hk$, $hk$1- مع مراعاة ما ورد في الفقرة (2) من هذه المادة، يجوز لجهة التحكم نقل البيانات الشخصية إلى خارج المملكة أو الإفصاح عنها لجهة خارج المملكة، وذلك لتحقيق أيٍّ من الأغراض الآتية:\n\nأ- إذا كان ذلك تنفيذاً لالتزام بموجب اتفاقية تكون المملكة طرفاً فيه.\n\nب- إذا كان ذلك لخدمة مصالح المملكة.\n\nج- إذا كان ذلك تنفيذاً لالتزام يكون صاحب البيانات الشخصية طرفاً فيه.\n\nد- إذا كان ذلك تنفيذاً لأغراض أخرى وفق ما تحدده اللوائح.\n\n2- تكون الشروط الواجب توافرها عند نقل البيانات الشخصية أو الإفصاح عنها -وفق ما ورد في الفقرة (1) من هذه المادة- على النحو الآتي:\n\nأ- ألا يترتب على النقل أو الإفصاح مساس بالأمن الوطني أو بمصالح المملكة الحيوية.\n\nب- أن يتوافر مستوى مناسب لحماية البيانات الشخصية في خارج المملكة؛ بما لا يقل عن مستوى الحماية المقرر في النظام واللوائح، وفقاً لنتائج تقويم تجريه الجهة المختصة في هذا الشأن بالتنسيق مع من تراه من الجهات المعنية.\n\nج- أن يقتصر النقل أو الإفصاح على الحد الأدنى من البيانات الشخصية الذي تدعو الحاجة إليه.\n\n3- لا يسري ما ورد في الفقرة (2) من هذه المادة على حالات الضرورة القصوى للمحافظة على حياة صاحب البيانات الشخصية أو مصالحه الحيوية أو الوقاية من عدوى مرضية أو فحصها أو معالجتها.\n\n4- تحدد اللوائح الأحكام والمعايير والإجراءات المتعلقة بتطبيق ما ورد في هذه المادة، بما في ذلك تحديد حالات إعفاء جهات التحكم من الالتزام بأي من الشروط المشار إليها في الفقرتين الفرعيتين (ب) و(ج) من الفقرة (2) من هذه المادة، وكذلك ضوابط وإجراءات ذلك الإعفاء والعدول عنه$hk$, $hk$2023-09-14$hk$::timestamptz, $hk$مرسوم ملكي رقم (م/148) وتاريخ 1444/9/5هـ — من 2023-09-14$hk$, $hk$https://www.uqn.gov.sa/details?p=21671$hk$, $hk$ملاحظة هيئة الخبراء على المادة: «- عُدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/148) وتاريخ 1444/9/5هـ، لتكون بالنص الآتي:\n\n\"1- مع مراعاة ما ورد في الفقرة (2) من هذه المادة، يجوز لجهة التحكم نقل البيانات الشخصية إلى خارج المملكة أو الإفصاح عنها لجهة خارج المملكة، وذلك لتحقيق أيٍّ من الأغراض الآتية:\n\nأ- إذا كان ذلك تنفيذاً لالتزام بموجب اتفاقية تكون المملكة طرفاً فيه.\n\nب- إذا كان ذلك لخدمة مصالح المملكة.\n\nج- إذا كان ذلك تنفيذاً لالتزام يكون صاحب البيانات الشخصية طرفاً فيه.\n\nد- إذا كان ذلك تنفيذاً لأغراض أخرى وفق ما تحدده اللوائح.\n\n2- تكون الشروط الواجب توافرها عند نقل البيانات الشخصية أو الإفصاح عنها -وفق ما ورد في الفقرة (1) من هذه المادة- على النحو الآتي:\n\nأ- ألا يترتب على النقل أو الإفصاح مساس بالأمن الوطني أو بمصالح المملكة الحيوية.\n\nب- أن يتوافر مستوى مناسب لحماية البيانات الشخصية في خارج المملكة؛ بما لا يقل عن مستوى الحماية المقرر في النظام واللوائح، وفقاً لنتائج تقويم تجريه الجهة المختصة في هذا الشأن بالتنسيق مع من تراه من الجهات المعنية.\n\nج- أن يقتصر النقل أو الإفصاح على الحد الأدنى من البيانات الشخصية الذي تدعو الحاجة إليه.\n\n3- لا يسري ما ورد في الفقرة (2) من هذه المادة على حالات الضرورة القصوى للمحافظة على حياة صاحب البيانات الشخصية أو مصالحه الحيوية أو الوقاية من عدوى مرضية أو فحصها أو معالجتها.\n\n4- تحدد اللوائح الأحكام والمعايير والإجراءات المتعلقة بتطبيق ما ورد في هذه المادة، بما في ذلك تحديد حالات إعفاء جهات التحكم من الالتزام بأي من الشروط المشار إليها في الفقرتين الفرعيتين (ب) و(ج) من الفقرة (2) من هذه المادة، وكذلك ضوابط وإجراءات ذلك الإعفاء والعدول عنه\".»؛ النفاذ: ثالثاً: تسري تعديلات النظام -المشار إليها في البند (أولاً) من هذا المرسوم- اعتباراً من تاريخ نفاذه. + المادة 43 المعدلة: «يُعمل بالنظام بعد (سبعمائة وعشرين) يوماً من التاريخ الذي نشر به في الجريدة الرسمية». (النشر 1444-09-16هـ، https://www.uqn.gov.sa/details?p=21671) ← 2023-09-14 [قارئان مستقلان متفقان (m/n/o)، HKM-052]$hk$, now()),\n($hk$g16bu-6fe9825780ec7db72940792f$hk$, $hk$cmpz5wgu901k5cwg2agtrrufa$hk$, $hk$يُصدر وزير الداخلية -بناءً على توصية لجنة تكون من (وزارة الداخلية، ووزارة الموارد البشرية والتنمية الاجتماعية، وهيئة الرقابة ومكافحة الفساد) -قراراً بإعادة النظر في العقبات التبعية بعد مضي خمس سنوات من تاريخ انتهاء تنفيذ العقوبة الأصلية، ويعتمد وزير الداخلية آلية وقواعد عمل اللجنة$hk$, $hk$2020-10-09$hk$::timestamptz, $hk$مرسوم ملكي رقم (م/21) وتاريخ 1442/2/14هـ — من 2020-10-09$hk$, $hk$https://www.uqn.gov.sa/cdn/?url=wp-content/uploads/2022/10/UM-ALQRA-4852.pdf$hk$, $hk$ملاحظة هيئة الخبراء على المادة: «- عُّدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/21) وتاريخ 1442/2/14هـ، لتكون بالنص الآتي: \"يُصدر وزير الداخلية -بناءً على توصية لجنة تكون من (وزارة الداخلية، ووزارة الموارد البشرية والتنمية الاجتماعية، وهيئة الرقابة ومكافحة الفساد) -قراراً بإعادة النظر في العقبات التبعية بعد مضي خمس سنوات من تاريخ انتهاء تنفيذ العقوبة الأصلية، ويعتمد وزير الداخلية آلية وقواعد عمل اللجنة\"»؛ النفاذ: سكتت الأداة: م71 من النظام الأساسي (النشر 1442-02-22هـ، https://www.uqn.gov.sa/cdn/?url=wp-content/uploads/2022/10/UM-ALQRA-4852.pdf) ← 2020-10-09 [قارئان مستقلان متفقان (t/u)، HKM-052]$hk$, now()),\n($hk$g16bu-a352c235e6859c23e00b3a6d$hk$, $hk$cmpz5ywbl02e5cwg24mzbft0s$hk$, $hk$1- تكوّن لجنة تحضيرية للجنة تضم في عضويتها عدداً من المختصين والخبراء ذوي الكفاية والتأهيل في مجال التوعية والتعيم الوقائي ومجال العلاج والتأهيل، يرشحون بناءً على خبراتهم، إضافة إلى عضوية أمين عام اللجنة. ويسمى أعضاء اللجنة التحضيرية ويختار رئيسها بقرار من رئيس اللجنة الوطنية لمدة (ثلاث) سنوات قابلة للتجديد مرتين فقط.\n\n2- تعقد اللجنة التحضيرية اجتماعاتها بصفة دورية أربع مرات في السنة، أو كلما دعت الحاجة إلى ذلك بحسب ما يقدره رئيسها$hk$, $hk$2022-01-01$hk$::timestamptz, $hk$قرار مجلس الوزراء رقم (211) وتاريخ 1443/4/11هـ — من 2022-01-01$hk$, $hk$https://www.uqn.gov.sa/details?p=18624$hk$, $hk$ملاحظة هيئة الخبراء على المادة: «- عُدلت هذه المادة وذلك بموجب قرار مجلس الوزراء رقم (211) وتاريخ 1443/4/11هـ، لتكون بالنص الآتي:\n\n\" 1- تكوّن لجنة تحضيرية للجنة تضم في عضويتها عدداً من المختصين والخبراء ذوي الكفاية والتأهيل في مجال التوعية والتعيم الوقائي ومجال العلاج والتأهيل، يرشحون بناءً على خبراتهم، إضافة إلى عضوية أمين عام اللجنة. ويسمى أعضاء اللجنة التحضيرية ويختار رئيسها بقرار من رئيس اللجنة الوطنية لمدة (ثلاث) سنوات قابلة للتجديد مرتين فقط.\n\n2- تعقد اللجنة التحضيرية اجتماعاتها بصفة دورية أربع مرات في السنة، أو كلما دعت الحاجة إلى ذلك بحسب ما يقدره رئيسها\".»؛ النفاذ: رابعاً: يسري العمل بما ورد في البنود (أولاً، وثانياً، وثالثاً) من هذا القرار من تاريخ 28/ 5/ 1443هـ. (النشر 1443-04-21هـ، https://www.uqn.gov.sa/details?p=18624) ← 2022-01-01 [قارئان مستقلان متفقان (t/u)، HKM-052]$hk$, now()),\n($hk$g16bu-60fbc2164d45c737357f0fc4$hk$, $hk$cmpz5ywbl02e5cwg24mzbft0s$hk$, $hk$1- تكوّن لجنة تحضيرية للجنة تضم في عضويتها:\n\nأ- أعضاء من اللجنة.\n\nب- ذوي اختصاص يرشحون بناء على خبراتهم.\n\nج- الامين العام.\n\n2- تشكل اللجنة التحضيرية ويسمى رئيسها بأمر من رئيس مجلس الوزراء، بناء على اقتراح من رئيس اللجنة.\n\n3- تكون مدة عضوية الأعضاء المشار إليهم في الفقرتين الفرعيتين (أ) و(ب) من الفقرة (1) من هذه المادة (ثلاث) سنوات قابلة للتجديد.\n\n4- تعقد اللجنة التحضيرية اجتماعاتها بصفة دورية (أربع) مرات في السنة، وكلما دعت الحاجة إلى ذلك بحسب ما يقدره رئيسها$hk$, $hk$2025-01-17$hk$::timestamptz, $hk$قرار مجلس الوزراء رقم (471) وتاريخ 1446/7/7هـ — من 2025-01-17$hk$, $hk$https://www.uqn.gov.sa/details?p=26923$hk$, $hk$ملاحظة هيئة الخبراء على المادة: «- عُدلت هذه المادة وذلك بموجب قرار مجلس الوزراء رقم (471) وتاريخ 1446/7/7هـ، لتكون بالنص الآتي:\n\n\"1- تكوّن لجنة تحضيرية للجنة تضم في عضويتها:\n\nأ- أعضاء من اللجنة.\n\nب- ذوي اختصاص يرشحون بناء على خبراتهم.\n\nج- الامين العام.\n\n2- تشكل اللجنة التحضيرية ويسمى رئيسها بأمر من رئيس مجلس الوزراء، بناء على اقتراح من رئيس اللجنة.\n\n3- تكون مدة عضوية الأعضاء المشار إليهم في الفقرتين الفرعيتين (أ) و(ب) من الفقرة (1) من هذه المادة (ثلاث) سنوات قابلة للتجديد.\n\n4- تعقد اللجنة التحضيرية اجتماعاتها بصفة دورية (أربع) مرات في السنة، وكلما دعت الحاجة إلى ذلك بحسب ما يقدره رئيسها\".»؛ النفاذ: سكتت الأداة: م71 من النظام الأساسي (النشر 1446-07-17هـ، https://www.uqn.gov.sa/details?p=26923) ← 2025-01-17 [قارئان مستقلان متفقان (t/u)، HKM-052]$hk$, now()),\n($hk$g16bu-856bca0ba3b409c96ccc10cc$hk$, $hk$cmpz6aaah065hcwg2m59rycep$hk$, $hk$1- تكون للهيئة ميزانية سنوية مستقلة.\n\n2- السنة المالية للهيئة هي السنة المالية للدولة$hk$, $hk$2021-11-19$hk$::timestamptz, $hk$أمر ملكي رقم (أ/186) وتاريخ 1443/4/5هـ — من 2021-11-19$hk$, $hk$https://www.uqn.gov.sa/details?p=18591$hk$, $hk$ملاحظة هيئة الخبراء على المادة: «- عُدلت هذه المادة وذلك بموجب الأمر الملكي رقم (أ/186) وتاريخ 1443/4/5هـ، لتكون بالنص الآتي:\n\n\" 1- تكون للهيئة ميزانية سنوية مستقلة.\n\n2- السنة المالية للهيئة هي السنة المالية للدولة\".»؛ النفاذ: سكتت الأداة: م71 من النظام الأساسي (النشر 1443-04-14هـ، https://www.uqn.gov.sa/details?p=18591) ← 2021-11-19 [قارئان مستقلان متفقان (t/u)، HKM-052]$hk$, now()),\n($hk$g16bu-16d15f94b55f3ad7285aae68$hk$, $hk$cmpzcv7lh0afvvtrkil04iy64$hk$, $hk$1- يكون لممثلي الوزارة المختصين صفة الضبط الإداري، ولهم دخول مواقع الرخص التعدينية بموجب النظام، للتفتيش، والمراقبة، وضبط المخالفات، والتأكد من تقيد المرخص له بأحكام النظام واللوائح وشروط الرخصة، وعلى المرخص له أن يتعاون مع ممثلي الوزارة بما يمكنهم من أداء مهماتهم على أكمل وجه.\n\n2- يكون لممثلي الوزارة المختصين - المشار إليهم في الفقرة (1) من هذه المادة - ورجال السلطة العامة من موظفي الوزارات والأجهزة الحكومية الأخرى وكذلك الجهات الأمنية - الذين يمارسون أعمالاً وفق الأنظمة الخاصة بهم لضبط المخالفات أو الجرائم المتصلة بها - صفة الضبط الجنائي عند اكتشافهم لأي من الجرائم المنصوص عليها في المادة (السادسة والخمسين مكرر) من النظام أثناء جولاتهم الميدانية في نطاق اختصاصهم المكاني، ولهم كذلك تلقي البلاغات لضبط تلك الجرائم.\n\n3- تقوم وزارة الداخلية بتوفير المساندة الأمنية لضبط الجرائم المشار إليها في هذه المادة، عند طلب ذلك من أي من الجهات المشار إليها في الفقرة (2) من هذه المادة.\n\n4- لرجال الضبط الجنائي - المشار إليهم في هذه المادة - التحفظ على ما يتعلق بالجريمة من سجلات ووثائق وأدوات ومعدات وغير ذلك، ويكون ذلك على نفقة مرتكبها، ويتخذ المحقق ما يلزم نظاماً حيالها$hk$, $hk$2026-09-26$hk$::timestamptz, $hk$مرسوم ملكي رقم (م/220) وتاريخ 1447/9/27هـ — من 2026-09-26$hk$, $hk$https://www.uqn.gov.sa/cdn/?url=uploads/pdf/2026/03/30/ummalqura_pdf-20260330-1.pdf&ts=213422$hk$, $hk$ملاحظة هيئة الخبراء على المادة: «- عدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/220) وتاريخ 1447/9/27هـ، (ويعمل به بعد (180) يوم من تاريخ نشره في الجريدة الرسمية 1447/10/11هـ)\n\n  لتكون بالنص الآتي:\n\n\"1- يكون لممثلي الوزارة المختصين صفة الضبط الإداري، ولهم دخول مواقع الرخص التعدينية بموجب النظام، للتفتيش، والمراقبة، وضبط المخالفات، والتأكد من تقيد المرخص له بأحكام النظام واللوائح وشروط الرخصة، وعلى المرخص له أن يتعاون مع ممثلي الوزارة بما يمكنهم من أداء مهماتهم على أكمل وجه.\n\n2- يكون لممثلي الوزارة المختصين - المشار إليهم في الفقرة (1) من هذه المادة - ورجال السلطة العامة من موظفي الوزارات والأجهزة الحكومية الأخرى وكذلك الجهات الأمنية - الذين يمارسون أعمالاً وفق الأنظمة الخاصة بهم لضبط المخالفات أو الجرائم المتصلة بها - صفة الضبط الجنائي عند اكتشافهم لأي من الجرائم المنصوص عليها في المادة (السادسة والخمسين مكرر) من النظام أثناء جولاتهم الميدانية في نطاق اختصاصهم المكاني، ولهم كذلك تلقي البلاغات لضبط تلك الجرائم.\n\n3- تقوم وزارة الداخلية بتوفير المساندة الأمنية لضبط الجرائم المشار إليها في هذه المادة، عند طلب ذلك من أي من الجهات المشار إليها في الفقرة (2) من هذه المادة.\n\n4- لرجال الضبط الجنائي - المشار إليهم في هذه المادة - التحفظ على ما يتعلق بالجريمة من سجلات ووثائق وأدوات ومعدات وغير ذلك، ويكون ذلك على نفقة مرتكبها، ويتخذ المحقق ما يلزم نظاماً حيالها\".»؛ النفاذ: ثانياً: يعمل بالتعديل -ا... (النص المستخرج من أم القرى مقطوع؛ وملاحظة الحزمة: «ويعمل به بعد (180) يوم من تاريخ نشره في الجريدة الرسمية 1447/10/11هـ») (النشر 1447-10-11هـ، https://www.uqn.gov.sa/cdn/?url=uploads/pdf/2026/03/30/ummalqura_pdf-20260330-1.pdf&ts=213422) ← 2026-09-26 [قارئان مستقلان متفقان (t/u)، HKM-052]$hk$, now()),\n($hk$g16bu-c6f5fd76935f0f7d39cd116c$hk$, $hk$cmpz5ufsi00vpcwg2pvty3sqs$hk$, $hk$مع عدم الإخلال بأي عقوبة أشد ينص عليها نظام آخر، يعاقب كل من يخالف أحكام هذا النظام بواحدة أو أكثر من العقوبات التالية :\n\n1 - غرامة لا تزيد على (500) خمسمائة ألف ريال، وتضاعف الغرامة إذا تكررت المخالفة.\n\n2 - إيقاف المخالف عن الكتابة في جميع الصحف والمطبوعات، أو عن المشاركة الإعلامية من خلال القنوات الفضائية، أو عنهما معًا.\n\n3 - إغلاق أو حجب محل المخالفة مؤقتًا أو نهائيًا، فإن كان محل المخالفة صحيفة فيكون تنفيذ قرار الإغلاق بموافقة رئيس مجلس الوزراء، وإن كان محلها صحيفة إلكترونية أو موقعًا ونحو ذلك فيكون تنفيذ قرار الإغلاق أو الحجب من صلاحية الوزير.\n\n4 - نشر إعتذار من المخالف في المطبوعة - إذا كانت مخالفته نشر معلومات مغلوطة أو اتهامات تجاه المذكورين في الفقرة (3) من المادة (التاسعة) من هذا النظام - وفق الصيغة التي تراها اللجنة وعلى نفقته الخاصة وفي المكان نفسه الذي نشرت فيه المخالفة.\n\nوإذا كانت المخالفة تمثل إساءة إلى الدين الإسلامي، أو المساس بمصالح الدولة العليا أو بعقوبات يختص بنظرها القضاء، فعلى اللجنة إحالتها - بقرار مسبب - إلى الوزير لرفعها إلى الملك للنظر في اتخاذ الإجراءات النظامية لإقامة الدعوى أمام المحكمة المختصة، أو اتخاذ ما يراه محققًا للمصلحة العامة$hk$, $hk$2012-04-06$hk$::timestamptz, $hk$مرسوم ملكي رقم (م/20) وتاريخ 1433/4/11هـ — من 2012-04-06$hk$, $hk$https://www.uqn.gov.sa/details?p=20714 ; https://www.uqn.gov.sa/cdn/?url=wp-content/uploads/2022/10/UM-ALQRA-4404.pdf$hk$, $hk$ملاحظة هيئة الخبراء على المادة: «تم تعديل هذه المادة بموجب المرسوم الملكي رقم (م/20) وتاريخ 11 / 4 / 1433هـ، لتصبح كما يلى :\n\n\" مع عدم الإخلال بأي عقوبة أشد ينص عليها نظام آخر، يعاقب كل من يخالف أحكام هذا النظام بواحدة أو أكثر من العقوبات التالية :\n\n1 - غرامة لا تزيد على (500) خمسمائة ألف ريال، وتضاعف الغرامة إذا تكررت المخالفة.\n\n2 - إيقاف المخالف عن الكتابة في جميع الصحف والمطبوعات، أو عن المشاركة الإعلامية من خلال القنوات الفضائية، أو عنهما معًا.\n\n3 - إغلاق أو حجب محل المخالفة مؤقتًا أو نهائيًا، فإن كان محل المخالفة صحيفة فيكون تنفيذ قرار الإغلاق بموافقة رئيس مجلس الوزراء، وإن كان محلها صحيفة إلكترونية أو موقعًا ونحو ذلك فيكون تنفيذ قرار الإغلاق أو الحجب من صلاحية الوزير.\n\n4 - نشر إعتذار من المخالف في المطبوعة - إذا كانت مخالفته نشر معلومات مغلوطة أو اتهامات تجاه المذكورين في الفقرة (3) من المادة (التاسعة) من هذا النظام - وفق الصيغة التي تراها اللجنة وعلى نفقته الخاصة وفي المكان نفسه الذي نشرت فيه المخالفة.\n\nوإذا كانت المخالفة تمثل إساءة إلى الدين الإسلامي، أو المساس بمصالح الدولة العليا أو بعقوبات يختص بنظرها القضاء، فعلى اللجنة إحالتها - بقرار مسبب - إلى الوزير لرفعها إلى الملك للنظر في اتخاذ الإجراءات النظامية لإقامة الدعوى أمام المحكمة المختصة، أو اتخاذ ما يراه محققًا للمصلحة العامة \".»؛ النفاذ: سكتت الأداة: م71 من النظام الأساسي (النشر 1433-05-14هـ، https://www.uqn.gov.sa/details?p=20714 ; https://www.uqn.gov.sa/cdn/?url=wp-content/uploads/2022/10/UM-ALQRA-4404.pdf) ← 2012-04-06 [قارئان مستقلان متفقان (m/n/o)، HKM-052]$hk$, now()),\n($hk$g16bu-67974c43902872ebc057bda5$hk$, $hk$cmpzcvahb0bbbvtrk5nslenyq$hk$, $hk$يعيّن رئيس الديوان بأمر ملكي .\n\nفيما عدا رئيس الديوان، يسري على منسوبي الديوان لوائح الديوان الإدارية والمالية.\n\nيعد الرئيس مشروع هيكل الديوان التنظيمي، ومشروع ميزانيته، ومشروع اللوائح الإدارية والمالية المشار إليها في الفقرة (2) من هذه المادة، وترفع إلى الملك للنظر في اعتمادها.$hk$, $hk$2020-07-31$hk$::timestamptz, $hk$مرسوم ملكي رقم (م/178) وتاريخ 1441/12/2هـ — من 2020-07-31$hk$, $hk$https://www.uqn.gov.sa/details?p=20310 ; https://www.uqn.gov.sa/cdn/?url=wp-content/uploads/2022/10/%D8%A7%D9%84%D8%B9%D8%AF%D8%AF-4842.pdf$hk$, $hk$ملاحظة هيئة الخبراء على المادة: «- عُدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م / 178) وتاريخ 2 / 12 / 1441هـ\n\n لتصبح بالنص الآتي: \"\n\nيعيّن رئيس الديوان بأمر ملكي .\n\nفيما عدا رئيس الديوان، يسري على منسوبي الديوان لوائح الديوان الإدارية والمالية.\n\nيعد الرئيس مشروع هيكل الديوان التنظيمي، ومشروع ميزانيته، ومشروع اللوائح الإدارية والمالية المشار إليها في الفقرة (2) من هذه المادة، وترفع إلى الملك للنظر في اعتمادها. \"»؛ النفاذ: سكتت الأداة: م71 من النظام الأساسي (النشر 1441-12-10هـ، https://www.uqn.gov.sa/details?p=20310 ; https://www.uqn.gov.sa/cdn/?url=wp-content/uploads/2022/10/%D8%A7%D9%84%D8%B9%D8%AF%D8%AF-4842.pdf) ← 2020-07-31 [قارئان مستقلان متفقان (m/n/o)، HKM-052]$hk$, now()),\n($hk$g16bu-8b5532d5846e7c007976cc34$hk$, $hk$cmpz6oit30b51cwg2g5qjmlf1$hk$, $hk$يخضع منسوبو الهيئة لأحكام نظام العمل ونظام التأمينات الاجتماعية$hk$, $hk$2022-03-18$hk$::timestamptz, $hk$قرار مجلس الوزراء رقم (426) وتاريخ 1443/8/5هـ — من 2022-03-18$hk$, $hk$https://www.uqn.gov.sa/details?p=19133$hk$, $hk$ملاحظة هيئة الخبراء على المادة: «- عُدلت هذه المادة وذلك بموجب قرار مجلس الوزراء رقم (426) وتاريخ 1443/8/5هـ، لتكون بالنص الآتي: \"يخضع منسوبو الهيئة لأحكام نظام العمل ونظام التأمينات الاجتماعية\".»؛ النفاذ: سكتت الأداة: م71 من النظام الأساسي (النشر 1443-08-15هـ، https://www.uqn.gov.sa/details?p=19133) ← 2022-03-18 [قارئان مستقلان متفقان (m/n/o)، HKM-052]$hk$, now())",
+  "SELECT CASE WHEN (SELECT count(*) FROM unit_version WHERE id LIKE 'g16bu-%')=15 AND (SELECT md5(string_agg(unit_id||':'||valid_from::date||':'||encode(sha256(convert_to(body,'UTF8')),'hex'), '|' ORDER BY unit_id, valid_from)) FROM unit_version WHERE id LIKE 'g16bu-%')=$hk$067257a89b370962c6fc965a7e1ebbb3$hk$ THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard_after"
+ ],
+ "diag_guards": [
+  "(SELECT count(*) FROM legal_articles WHERE id=$hk$cmpzcuxfd07l6vtrk7b6kp3dm$hk$ AND \"legalSystemId\"=$hk$cmpz5qjiu0087cwg2yhgd8twm$hk$ AND \"articleNumber\"=29 AND \"articleBis\"=0 AND md5(content)=$hk$a2bb310f509c5c5b43f54c18f5db94d7$hk$)=1",
+  "(SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpzcuxfd07l6vtrk7b6kp3dm$hk$)=0",
+  "coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpzcuxfd07l6vtrk7b6kp3dm$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل')",
+  "(SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5qjiu0087cwg2yhgd8twm$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري'",
+  "(SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-01f82f1eb67afb1ae0168b82$hk$ AND position($hk$1- يشطب اسم المحامي المرخص له من الجدول ويلغى ترخيصه إذا حكم عليه بعقوبة في جريمة مخلة بالشرف أو الأمانة.\n\n2- يشطب مكتب المحاماة الأجنبي المرخص له من سجل مكاتب المحاماة الأجنبية، ويلغى ترخيصه؛ إذا حكم على أحد شركاء المكتب المقيمين في المملكة أو مديره أو أحد منسوبيه بعقوبة في جريمة مخلة بالشرف أو الأمانة إذا ثبت أن الجريمة قد ارتكبت لمصلحة المكتب وبعلم منه.\n\n3- مع عدم الإخلال بدعوى التعويض لمن لحقه ضرر أو أي دعوى أخرى، يعاقب كل مرخص له بمزاولة مهنة المحاماة يخالف أي من أحكام هذا النظام، أو لائحته التنفيذية، أو يخل بواجباته المهنية، أو يرتكب عملًا ينال من شرف المهنة؛ بواحدة (أو أكثر) من العـقوبات الآتية:\n\nأ- الإنذار.   \n\nب- الإيقاف عن مزاولة مهنة المحاماة لمدة لا تتجاوز (ثلاث) سنوات.\n\nج- الشطب وإلغاء الترخيص.\n\nد- غرامة مالية لا تزيد على (ثلاثمائة) ألف ريال عن كل مخالفة$hk$ in new_text)>0)=1",
+  "(SELECT count(*) FROM legal_articles WHERE id=$hk$cmpzcuxfd07l7vtrksnuyipgk$hk$ AND \"legalSystemId\"=$hk$cmpz5qjiu0087cwg2yhgd8twm$hk$ AND \"articleNumber\"=30 AND \"articleBis\"=0 AND md5(content)=$hk$7aa5bf331f9a3945ff995cb7371df31a$hk$)=1",
+  "(SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpzcuxfd07l7vtrksnuyipgk$hk$)=0",
+  "coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpzcuxfd07l7vtrksnuyipgk$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل')",
+  "(SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5qjiu0087cwg2yhgd8twm$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري'",
+  "(SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-0d13ea5f46732c708af73820$hk$ AND position($hk$يصدر وزير العدل قواعد وإجراءات الضبط ورفع الدعوى التأديبية ونظرها بما يتناسب مع طبيعتها$hk$ in new_text)>0)=1",
+  "(SELECT count(*) FROM legal_articles WHERE id=$hk$cmpzcuxfe07livtrk80uqxn0o$hk$ AND \"legalSystemId\"=$hk$cmpz5qjiu0087cwg2yhgd8twm$hk$ AND \"articleNumber\"=41 AND \"articleBis\"=0 AND md5(content)=$hk$d9775bf6527f9bd15cad654847ea5dad$hk$)=1",
+  "(SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpzcuxfe07livtrk80uqxn0o$hk$)=0",
+  "coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpzcuxfe07livtrk80uqxn0o$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل')",
+  "(SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5qjiu0087cwg2yhgd8twm$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري'",
+  "(SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-029bea00a47e08f75f4d8b0a$hk$ AND position($hk$1- مع مراعاة ما تقضي به الأنظمة ذات العلاقة والاتفاقيات الدولية التي تكون المملكة طرفاً فيها، للمرخص له بمزاولة مهنة المحاماة أن يستعين بمستشار (أو أكثر) نظامي أو شرعي غير سعودي للعمل لديه؛ بناءً على عقد عمل تحت مسؤوليته وإشرافه؛ بالشروط الآتية:\n\nأ- أن تتوافر في غير السعودي شروط القيد في جدول المحامين عدا شرط الجنسية، أو أن يكون مرخصاً له بمزاولة مهنة المحاماة وفق أحكام أي نظام أجنبي آخر ينظم مزاولة مهنة المحاماة وفق المعايير والضوابط التي تبينها اللائحة التنفيذية لهذا النظام في هذا الشأن.\n\nب- أن تتوافر لديه خبرة عملية في مزاولة مهنة المحاماة لا تقل عن (خمس) سنوات.\n\nج- التسجيل في عضوية الهيئة السعودية للمحامين وفق الأحكام المنظمة لذلك.\n\nد- ألا يتولى الترافع أمام الجهات المشار إليها في المادة (الأولى) من هذا النظام.\n\n2- يُنشأ في وزارة العدل سجل خاص للمستشارين النظاميين أو الشرعيين غير السعوديين، بحيث تقيد فيه أسماؤهم بعد تحقق الجهة المختصة في الوزارة من استيفائهم للشروط المنصوص عليها في الفقرة (1) من هذه المادة. وتحدد اللائحة التنفيذية لهذا النظام البيانات الواجب توافرها في هذا السجل$hk$ in new_text)>0)=1",
+  "(SELECT count(*) FROM legal_articles WHERE id=$hk$cmpzcvb5h0bduvtrktivkin7d$hk$ AND \"legalSystemId\"=$hk$cmpz5rjp100cccwg2ooufbnk2$hk$ AND \"articleNumber\"=61 AND \"articleBis\"=0 AND md5(content)=$hk$52fa022f453f101ba4fdc848ec07a61a$hk$)=1",
+  "(SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpzcvb5h0bduvtrktivkin7d$hk$)=0",
+  "coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpzcvb5h0bduvtrktivkin7d$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل')",
+  "(SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5rjp100cccwg2ooufbnk2$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري'",
+  "(SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-7551a4cb262c01b47939efa1$hk$ AND position($hk$تشكل لجنة للفصل في القيمة من موظفي الإدارة بموجب قرار من المدير العام أو من يفوضه، وتكون مهمتها حل الخلافات التي تنشأ بين الدائرة الجمركية وأصحاب العلاقة حول قيمة البضائع المستوردة، ولها الاستعانة بمن تراه من ذوي الخبرة. ودون الإخلال بحق المستورد باللجوء إلى القضاء، يحق للمستورد أن يتظلم من قرارات زيادة قيمة البضاعة أمام لجنة القيمة، وذلك خلال خمسة عشر يوماً من تاريخ تسجيل البيان الجمركي أو من تاريخ إعلامه بالقيمة التي قدرتها الإدارة للبضاعة بكتاب مسجل بعلم الوصول. وتكون قرارات هذه اللجنة بالأغلبية ونافذة بعد تصديق المدير العام عليها أو من يفوضه. ويجب إبلاغ المستورد كتابة بالقرار الذي أصدرته اللجنة في تظلمه، ويكون قرارها مسبباً$hk$ in new_text)>0)=1",
+  "(SELECT count(*) FROM legal_articles WHERE id=$hk$cmpzcvbtt0bplvtrk52xc9vve$hk$ AND \"legalSystemId\"=$hk$cmpz5rn3900cmcwg2t70wevmi$hk$ AND \"articleNumber\"=25 AND \"articleBis\"=0 AND md5(content)=$hk$c0d058edf9186c4ce29a9535e17c8a28$hk$)=1",
+  "(SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpzcvbtt0bplvtrk52xc9vve$hk$)=0",
+  "coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpzcvbtt0bplvtrk52xc9vve$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل')",
+  "(SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5rn3900cmcwg2t70wevmi$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري'",
+  "(SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-22d2ed9330cabc77be765d81$hk$ AND position($hk$لاينظر في إعفاء المدينين من الديون المترتبة من ارتكاب جرائم اختلاس أو تزوير أو تحايل$hk$ in new_text)>0)=1",
+  "(SELECT count(*) FROM legal_articles WHERE id=$hk$cmpzcv6wo0aazvtrkdmb77xs3$hk$ AND \"legalSystemId\"=$hk$cmpz5r2rc00awcwg2qgdtqq1u$hk$ AND \"articleNumber\"=13 AND \"articleBis\"=0 AND md5(content)=$hk$a3b3fe5aec6d3f82f8f983dd035f8be3$hk$)=1",
+  "(SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpzcv6wo0aazvtrkdmb77xs3$hk$)=0",
+  "coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpzcv6wo0aazvtrkdmb77xs3$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل')",
+  "(SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5r2rc00awcwg2qgdtqq1u$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري'",
+  "(SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-278e1d65d10bfb71488cf270$hk$ AND position($hk$1- إذا رغب المرخص له في التنازل عن رخصته أو جزء من أوجه النشاط المرخص به، أو في منحها لغيره، أو تأجيرها أو مبادلتها، أو نقل ملكية الأصول الأساسية بأي طريق كان، أو رغب في الاندماج مع غيره، أو أن يستحوذ غيره على معظم حصصه أو موجوداته، أو نقل ملكية الحصص والأسهم التي تمثل نسبة مؤثرة؛ فعليه التقدم بطلب للوزارة للحصول على موافقتها المسبقة بحسب الشروط التي تضعها. ويجب على الوزارة أن تبت في الطلب خلال مدة لا تتجاوز (تسعين) يوماً من تاريخ اكتماله. ويُعد مضي المدة دون البت في الطلب إذناً له بالتصرف. فإن رُفض الطلب فيجب أن يكون ذلك مسبباً.\n\n2- يُقصد بالأصول الأساسية -المذكورة في الفقرة (1) من هذه المادة- جميع الأصول التي يترتب على نقل ملكيتها إخلال بأداء النشاط المرخص به، ومنها: شبكة توزيع الغاز الجاف، وشبكة توزيع الغاز المستقلة، ومرافق غاز البترول السائل، وغيرها مما تحدده اللوائح.$hk$ in new_text)>0)=1",
+  "(SELECT count(*) FROM legal_articles WHERE id=$hk$cmpz62hwc03k9cwg2815msgbm$hk$ AND \"legalSystemId\"=$hk$cmpz5pbo80020cwg2n615nhji$hk$ AND \"articleNumber\"=29 AND \"articleBis\"=0 AND md5(content)=$hk$35a2eb7e7034c769755a4627236ece07$hk$)=1",
+  "(SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpz62hwc03k9cwg2815msgbm$hk$)=0",
+  "coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpz62hwc03k9cwg2815msgbm$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل')",
+  "(SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5pbo80020cwg2n615nhji$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري'",
+  "(SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-06a8429ffe18c849124eeca9$hk$ AND position($hk$1- مع مراعاة ما ورد في الفقرة (2) من هذه المادة، يجوز لجهة التحكم نقل البيانات الشخصية إلى خارج المملكة أو الإفصاح عنها لجهة خارج المملكة، وذلك لتحقيق أيٍّ من الأغراض الآتية:\n\nأ- إذا كان ذلك تنفيذاً لالتزام بموجب اتفاقية تكون المملكة طرفاً فيه.\n\nب- إذا كان ذلك لخدمة مصالح المملكة.\n\nج- إذا كان ذلك تنفيذاً لالتزام يكون صاحب البيانات الشخصية طرفاً فيه.\n\nد- إذا كان ذلك تنفيذاً لأغراض أخرى وفق ما تحدده اللوائح.\n\n2- تكون الشروط الواجب توافرها عند نقل البيانات الشخصية أو الإفصاح عنها -وفق ما ورد في الفقرة (1) من هذه المادة- على النحو الآتي:\n\nأ- ألا يترتب على النقل أو الإفصاح مساس بالأمن الوطني أو بمصالح المملكة الحيوية.\n\nب- أن يتوافر مستوى مناسب لحماية البيانات الشخصية في خارج المملكة؛ بما لا يقل عن مستوى الحماية المقرر في النظام واللوائح، وفقاً لنتائج تقويم تجريه الجهة المختصة في هذا الشأن بالتنسيق مع من تراه من الجهات المعنية.\n\nج- أن يقتصر النقل أو الإفصاح على الحد الأدنى من البيانات الشخصية الذي تدعو الحاجة إليه.\n\n3- لا يسري ما ورد في الفقرة (2) من هذه المادة على حالات الضرورة القصوى للمحافظة على حياة صاحب البيانات الشخصية أو مصالحه الحيوية أو الوقاية من عدوى مرضية أو فحصها أو معالجتها.\n\n4- تحدد اللوائح الأحكام والمعايير والإجراءات المتعلقة بتطبيق ما ورد في هذه المادة، بما في ذلك تحديد حالات إعفاء جهات التحكم من الالتزام بأي من الشروط المشار إليها في الفقرتين الفرعيتين (ب) و(ج) من الفقرة (2) من هذه المادة، وكذلك ضوابط وإجراءات ذلك الإعفاء والعدول عنه$hk$ in new_text)>0)=1",
+  "(SELECT count(*) FROM legal_articles WHERE id=$hk$cmpz5wgu901k5cwg2agtrrufa$hk$ AND \"legalSystemId\"=$hk$cmpz5p4as000zcwg2nx3yo0cj$hk$ AND \"articleNumber\"=14 AND \"articleBis\"=0 AND md5(content)=$hk$7f9c87a6d50e8a78a5b1bf1c947b49f2$hk$)=1",
+  "(SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpz5wgu901k5cwg2agtrrufa$hk$)=0",
+  "coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpz5wgu901k5cwg2agtrrufa$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل')",
+  "(SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5p4as000zcwg2nx3yo0cj$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري'",
+  "(SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-b0db3d476ff7cbfbc2b0a8f7$hk$ AND position($hk$يُصدر وزير الداخلية -بناءً على توصية لجنة تكون من (وزارة الداخلية، ووزارة الموارد البشرية والتنمية الاجتماعية، وهيئة الرقابة ومكافحة الفساد) -قراراً بإعادة النظر في العقبات التبعية بعد مضي خمس سنوات من تاريخ انتهاء تنفيذ العقوبة الأصلية، ويعتمد وزير الداخلية آلية وقواعد عمل اللجنة$hk$ in new_text)>0)=1",
+  "(SELECT count(*) FROM legal_articles WHERE id=$hk$cmpz5ywbl02e5cwg24mzbft0s$hk$ AND \"legalSystemId\"=$hk$cmpz5p77f001ecwg2be4uvmg9$hk$ AND \"articleNumber\"=11 AND \"articleBis\"=0 AND md5(content)=$hk$846e927556d80a4c4ff36d5b740af258$hk$)=1",
+  "(SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpz5ywbl02e5cwg24mzbft0s$hk$)=0",
+  "coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpz5ywbl02e5cwg24mzbft0s$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل')",
+  "(SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5p77f001ecwg2be4uvmg9$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري'",
+  "(SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-7aefef2a520268917efa68b4$hk$ AND position($hk$1- تكوّن لجنة تحضيرية للجنة تضم في عضويتها عدداً من المختصين والخبراء ذوي الكفاية والتأهيل في مجال التوعية والتعيم الوقائي ومجال العلاج والتأهيل، يرشحون بناءً على خبراتهم، إضافة إلى عضوية أمين عام اللجنة. ويسمى أعضاء اللجنة التحضيرية ويختار رئيسها بقرار من رئيس اللجنة الوطنية لمدة (ثلاث) سنوات قابلة للتجديد مرتين فقط.\n\n2- تعقد اللجنة التحضيرية اجتماعاتها بصفة دورية أربع مرات في السنة، أو كلما دعت الحاجة إلى ذلك بحسب ما يقدره رئيسها$hk$ in new_text)>0)=1",
+  "(SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-cc49a8c63c111264cb7113bc$hk$ AND position($hk$1- تكوّن لجنة تحضيرية للجنة تضم في عضويتها:\n\nأ- أعضاء من اللجنة.\n\nب- ذوي اختصاص يرشحون بناء على خبراتهم.\n\nج- الامين العام.\n\n2- تشكل اللجنة التحضيرية ويسمى رئيسها بأمر من رئيس مجلس الوزراء، بناء على اقتراح من رئيس اللجنة.\n\n3- تكون مدة عضوية الأعضاء المشار إليهم في الفقرتين الفرعيتين (أ) و(ب) من الفقرة (1) من هذه المادة (ثلاث) سنوات قابلة للتجديد.\n\n4- تعقد اللجنة التحضيرية اجتماعاتها بصفة دورية (أربع) مرات في السنة، وكلما دعت الحاجة إلى ذلك بحسب ما يقدره رئيسها$hk$ in new_text)>0)=1",
+  "(SELECT count(*) FROM legal_articles WHERE id=$hk$cmpz6aaah065hcwg2m59rycep$hk$ AND \"legalSystemId\"=$hk$cmpz5pj1k0032cwg262ocrzeh$hk$ AND \"articleNumber\"=24 AND \"articleBis\"=0 AND md5(content)=$hk$dcd10d348aa8ffd471520211d20d59ff$hk$)=1",
+  "(SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpz6aaah065hcwg2m59rycep$hk$)=0",
+  "coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpz6aaah065hcwg2m59rycep$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل')",
+  "(SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5pj1k0032cwg262ocrzeh$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري'",
+  "(SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-29a467501062d9e5de0042cf$hk$ AND position($hk$1- تكون للهيئة ميزانية سنوية مستقلة.\n\n2- السنة المالية للهيئة هي السنة المالية للدولة$hk$ in new_text)>0)=1",
+  "(SELECT count(*) FROM legal_articles WHERE id=$hk$cmpzcv7lh0afvvtrkil04iy64$hk$ AND \"legalSystemId\"=$hk$cmpz5r44600b3cwg2p3j5jwbt$hk$ AND \"articleNumber\"=27 AND \"articleBis\"=0 AND md5(content)=$hk$bdc8a596b2115e816d80e737a714ce15$hk$)=1",
+  "(SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpzcv7lh0afvvtrkil04iy64$hk$)=0",
+  "coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpzcv7lh0afvvtrkil04iy64$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل')",
+  "(SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5r44600b3cwg2p3j5jwbt$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري'",
+  "(SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-db8b0844d2a0ed652aed9dc0$hk$ AND position($hk$1- يكون لممثلي الوزارة المختصين صفة الضبط الإداري، ولهم دخول مواقع الرخص التعدينية بموجب النظام، للتفتيش، والمراقبة، وضبط المخالفات، والتأكد من تقيد المرخص له بأحكام النظام واللوائح وشروط الرخصة، وعلى المرخص له أن يتعاون مع ممثلي الوزارة بما يمكنهم من أداء مهماتهم على أكمل وجه.\n\n2- يكون لممثلي الوزارة المختصين - المشار إليهم في الفقرة (1) من هذه المادة - ورجال السلطة العامة من موظفي الوزارات والأجهزة الحكومية الأخرى وكذلك الجهات الأمنية - الذين يمارسون أعمالاً وفق الأنظمة الخاصة بهم لضبط المخالفات أو الجرائم المتصلة بها - صفة الضبط الجنائي عند اكتشافهم لأي من الجرائم المنصوص عليها في المادة (السادسة والخمسين مكرر) من النظام أثناء جولاتهم الميدانية في نطاق اختصاصهم المكاني، ولهم كذلك تلقي البلاغات لضبط تلك الجرائم.\n\n3- تقوم وزارة الداخلية بتوفير المساندة الأمنية لضبط الجرائم المشار إليها في هذه المادة، عند طلب ذلك من أي من الجهات المشار إليها في الفقرة (2) من هذه المادة.\n\n4- لرجال الضبط الجنائي - المشار إليهم في هذه المادة - التحفظ على ما يتعلق بالجريمة من سجلات ووثائق وأدوات ومعدات وغير ذلك، ويكون ذلك على نفقة مرتكبها، ويتخذ المحقق ما يلزم نظاماً حيالها$hk$ in new_text)>0)=1",
+  "(SELECT count(*) FROM legal_articles WHERE id=$hk$cmpz5ufsi00vpcwg2pvty3sqs$hk$ AND \"legalSystemId\"=$hk$cmpz5ozg4000acwg2i8ksehlg$hk$ AND \"articleNumber\"=38 AND \"articleBis\"=0 AND md5(content)=$hk$7625c1ee279b34ec8a9c693f4e9d18dc$hk$)=1",
+  "(SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpz5ufsi00vpcwg2pvty3sqs$hk$)=0",
+  "coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpz5ufsi00vpcwg2pvty3sqs$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل')",
+  "(SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5ozg4000acwg2i8ksehlg$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري'",
+  "(SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-e312dcf771e514c6266d691d$hk$ AND position($hk$مع عدم الإخلال بأي عقوبة أشد ينص عليها نظام آخر، يعاقب كل من يخالف أحكام هذا النظام بواحدة أو أكثر من العقوبات التالية :\n\n1 - غرامة لا تزيد على (500) خمسمائة ألف ريال، وتضاعف الغرامة إذا تكررت المخالفة.\n\n2 - إيقاف المخالف عن الكتابة في جميع الصحف والمطبوعات، أو عن المشاركة الإعلامية من خلال القنوات الفضائية، أو عنهما معًا.\n\n3 - إغلاق أو حجب محل المخالفة مؤقتًا أو نهائيًا، فإن كان محل المخالفة صحيفة فيكون تنفيذ قرار الإغلاق بموافقة رئيس مجلس الوزراء، وإن كان محلها صحيفة إلكترونية أو موقعًا ونحو ذلك فيكون تنفيذ قرار الإغلاق أو الحجب من صلاحية الوزير.\n\n4 - نشر إعتذار من المخالف في المطبوعة - إذا كانت مخالفته نشر معلومات مغلوطة أو اتهامات تجاه المذكورين في الفقرة (3) من المادة (التاسعة) من هذا النظام - وفق الصيغة التي تراها اللجنة وعلى نفقته الخاصة وفي المكان نفسه الذي نشرت فيه المخالفة.\n\nوإذا كانت المخالفة تمثل إساءة إلى الدين الإسلامي، أو المساس بمصالح الدولة العليا أو بعقوبات يختص بنظرها القضاء، فعلى اللجنة إحالتها - بقرار مسبب - إلى الوزير لرفعها إلى الملك للنظر في اتخاذ الإجراءات النظامية لإقامة الدعوى أمام المحكمة المختصة، أو اتخاذ ما يراه محققًا للمصلحة العامة$hk$ in new_text)>0)=1",
+  "(SELECT count(*) FROM legal_articles WHERE id=$hk$cmpzcvahb0bbbvtrk5nslenyq$hk$ AND \"legalSystemId\"=$hk$cmpz5rj2u00cacwg2jgopy3av$hk$ AND \"articleNumber\"=3 AND \"articleBis\"=0 AND md5(content)=$hk$92c9166ed07e9735c25c1739e029bd11$hk$)=1",
+  "(SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpzcvahb0bbbvtrk5nslenyq$hk$)=0",
+  "coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpzcvahb0bbbvtrk5nslenyq$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل')",
+  "(SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5rj2u00cacwg2jgopy3av$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري'",
+  "(SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-d67cbebbc0ca612c90f34c13$hk$ AND position($hk$يعيّن رئيس الديوان بأمر ملكي .\n\nفيما عدا رئيس الديوان، يسري على منسوبي الديوان لوائح الديوان الإدارية والمالية.\n\nيعد الرئيس مشروع هيكل الديوان التنظيمي، ومشروع ميزانيته، ومشروع اللوائح الإدارية والمالية المشار إليها في الفقرة (2) من هذه المادة، وترفع إلى الملك للنظر في اعتمادها.$hk$ in new_text)>0)=1",
+  "(SELECT count(*) FROM legal_articles WHERE id=$hk$cmpz6oit30b51cwg2g5qjmlf1$hk$ AND \"legalSystemId\"=$hk$cmpz5q5jn0068cwg2yjxi0ots$hk$ AND \"articleNumber\"=13 AND \"articleBis\"=1 AND md5(content)=$hk$90b5bb1c08bb5365813f2405c4bbe632$hk$)=1",
+  "(SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpz6oit30b51cwg2g5qjmlf1$hk$)=0",
+  "coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpz6oit30b51cwg2g5qjmlf1$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل')",
+  "(SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5q5jn0068cwg2yjxi0ots$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري'",
+  "(SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-32d183b0a150082a21e0a0a8$hk$ AND position($hk$يخضع منسوبو الهيئة لأحكام نظام العمل ونظام التأمينات الاجتماعية$hk$ in new_text)>0)=1"
+ ]
+}

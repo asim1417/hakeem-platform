@@ -1,0 +1,242 @@
+{
+ "taken_at": "2026-10-29T15:50+03:00",
+ "source": "Neon misty-base-66693229 production (read-only, MCP run_sql)",
+ "total": 2089,
+ "by_gap": {
+  "A1": {
+   "name": "مرفق في الهيئة لم يُقرأ نصه",
+   "open": 294,
+   "routes": {
+    "fetch": 294
+   },
+   "resolved": 0,
+   "suppressed": 0
+  },
+  "E1": {
+   "name": "أثر تعديل/إلغاء في أم القرى لم يتحول إلى عملية في الطابور",
+   "open": 254,
+   "routes": {
+    "reader": 254
+   },
+   "resolved": 0,
+   "suppressed": 0
+  },
+  "E2": {
+   "name": "إحلال مثبت والنظام القديم في حكيم بلا حالة",
+   "open": 1,
+   "routes": {
+    "reader": 1
+   },
+   "resolved": 0,
+   "suppressed": 2
+  },
+  "L1": {
+   "name": "لائحة/قواعد/ضوابط بلا علاقة IMPLEMENTS بنظامها",
+   "open": 37,
+   "routes": {
+    "reader": 37
+   },
+   "resolved": 0,
+   "suppressed": 152
+  },
+  "L2": {
+   "name": "مادة نظام بلا ربط بمادة لائحتها (خريطة من مصدر ثانوي)",
+   "open": 8,
+   "routes": {
+    "reader": 8
+   },
+   "resolved": 0,
+   "suppressed": 0
+  },
+  "M1": {
+   "name": "نظام بلا حالة نفاذ",
+   "open": 11,
+   "routes": {
+    "reader": 11
+   },
+   "resolved": 0,
+   "suppressed": 0
+  },
+  "M2": {
+   "name": "نظام بلا تاريخ نفاذ",
+   "open": 14,
+   "routes": {
+    "reader": 14
+   },
+   "resolved": 0,
+   "suppressed": 0
+  },
+  "M2b": {
+   "name": "تاريخ النفاذ المخزن = تاريخ الصدور مع نص نفاذ مؤجل",
+   "open": 137,
+   "routes": {
+    "code": 137
+   },
+   "resolved": 0,
+   "suppressed": 0
+  },
+  "M3": {
+   "name": "نظام بلا تصنيف",
+   "open": 129,
+   "routes": {
+    "reader": 129
+   },
+   "resolved": 0,
+   "suppressed": 0
+  },
+  "N1": {
+   "name": "نظام في حكيم مواده أقل مما في nezams (لغير المطابَق بالهيئة)",
+   "open": 1,
+   "routes": {
+    "fetch": 1
+   },
+   "resolved": 0,
+   "suppressed": 0
+  },
+  "P1": {
+   "name": "ديباجة/أداة إصدار في الهيئة ونظام حكيم بلا ديباجة",
+   "open": 0,
+   "routes": {},
+   "resolved": 0,
+   "suppressed": 3
+  },
+  "P2u": {
+   "name": "عناوين أبواب وفصول في أم القرى ونظام حكيم بلا تقسيم",
+   "open": 5,
+   "routes": {
+    "build": 5
+   },
+   "resolved": 0,
+   "suppressed": 0
+  },
+  "Q1": {
+   "name": "عملية تعديل من أم القرى بلا قرار",
+   "open": 5,
+   "routes": {
+    "owner": 5
+   },
+   "resolved": 0,
+   "suppressed": 0
+  },
+  "Q2": {
+   "name": "ملاحظة مراقب يومي مفتوحة",
+   "open": 39,
+   "routes": {
+    "owner": 39
+   },
+   "resolved": 0,
+   "suppressed": 0
+  },
+  "T1": {
+   "name": "جدول أو ملحق في nezams لنظام في حكيم (لم يُقابل بمرفقات حكيم بعد)",
+   "open": 81,
+   "routes": {
+    "fetch": 81
+   },
+   "resolved": 0,
+   "suppressed": 0
+  },
+  "U1": {
+   "name": "مادة رسمية غائبة من نظام في حكيم",
+   "open": 4,
+   "routes": {
+    "build": 4
+   },
+   "resolved": 0,
+   "suppressed": 91
+  },
+  "U1m": {
+   "name": "مواد في بوابة وزارة العدل أكثر مما في حكيم",
+   "open": 1,
+   "routes": {
+    "reader": 1
+   },
+   "resolved": 0,
+   "suppressed": 0
+  },
+  "U1u": {
+   "name": "مادة في أم القرى غائبة من النظام المُدخل منها",
+   "open": 1,
+   "routes": {
+    "build": 1
+   },
+   "resolved": 0,
+   "suppressed": 0
+  },
+  "U2": {
+   "name": "مادة في حكيم بلا مقابل رسمي (مراجعة لا حذف)",
+   "open": 48,
+   "routes": {
+    "reader": 48
+   },
+   "resolved": 0,
+   "suppressed": 0
+  },
+  "U3": {
+   "name": "مادة معدلة يعرض حكيم نصها الأصلي (ملاحظة تعديل غير مطبقة)",
+   "open": 548,
+   "routes": {
+    "reader": 548
+   },
+   "resolved": 0,
+   "suppressed": 0
+  },
+  "U4b": {
+   "name": "مادة ألغتها مادة في نظام لاحق ويعرضها حكيم سارية",
+   "open": 40,
+   "routes": {
+    "build": 35,
+    "identity": 2,
+    "reader": 3
+   },
+   "resolved": 82,
+   "suppressed": 3
+  },
+  "W1b": {
+   "name": "عمل في لقطة أم القرى لم يُدخل حكيم",
+   "open": 33,
+   "routes": {
+    "fetch": 33
+   },
+   "resolved": 4,
+   "suppressed": 0
+  },
+  "W1c": {
+   "name": "نظام ساري مرشح من مصدر ثانوي غير موجود في حكيم",
+   "open": 10,
+   "routes": {
+    "fetch": 10
+   },
+   "resolved": 0,
+   "suppressed": 0
+  },
+  "W2a": {
+   "name": "إصدار ملغى/قديم في الهيئة غير موجود في حكيم (لعرض «كما في تاريخ»)",
+   "open": 20,
+   "routes": {
+    "build": 20
+   },
+   "resolved": 2,
+   "suppressed": 0
+  },
+  "W2c": {
+   "name": "إصدار ملغى/قديم مرشح من مصدر ثانوي",
+   "open": 7,
+   "routes": {
+    "identity": 2,
+    "fetch": 5
+   },
+   "resolved": 0,
+   "suppressed": 0
+  },
+  "W3": {
+   "name": "نظام في حكيم بلا مواد",
+   "open": 22,
+   "routes": {
+    "fetch": 22
+   },
+   "resolved": 0,
+   "suppressed": 0
+  }
+ }
+}

@@ -1,0 +1,141 @@
+{
+ "by": "gap017-status-dates-2026-10-29",
+ "md5": "81ff35ab100e04fe2eb2738df5b34bdc",
+ "count": 19,
+ "expect_delta": {},
+ "report": {
+  "statuses": 9,
+  "dates": 8,
+  "new_articles": 0,
+  "changed_text": 0,
+  "plan": {
+   "statuses": [
+    {
+     "item": "SD-01",
+     "name": "نظام مدينة الملك عبدالله للطاقة الذرية والمتجددة",
+     "status": "مستبدل",
+     "instrument": "أمر سامي رقم (75080) وتاريخ 1443/11/30هـ (إلغاء)، مقرونًا بقرار مجلس الوزراء رقم (628) وتاريخ 1443/11/15هـ (الموافقة على تنظيم المدينة) — من 2022-07-29"
+    },
+    {
+     "item": "SD-02",
+     "name": "آلية الاستعانة بمحام على نفقة الدولة للمتهم في الجرائم الكبيرة",
+     "status": "ساري",
+     "instrument": "قرار وزير العدل رقم (1529) وتاريخ 1439/05/06هـ (أُبلغ بتعميم الوزارة رقم 13/ت/7210 وتاريخ 1439/06/02هـ) — لا أداة إلغاء أو إحلال حتى 2026-10-29"
+    },
+    {
+     "item": "SD-03",
+     "name": "القواعد الخاصة بتنظيم شؤون الخبرة أمام المحاكم",
+     "status": "ساري",
+     "instrument": "قرار وزير العدل رقم (921) وتاريخ 1444/03/16هـ (البند ثانيًا)، بناءً على المادة (126/1/ب) من نظام الإثبات الصادر بالمرسوم الملكي (م/43) وتاريخ 1443/05/26هـ — لا أداة إلغاء أو إحلال حتى 2026-10-29"
+    },
+    {
+     "item": "SD-04",
+     "name": "القواعد المنظمة لإجراءات الإفلاس العابرة للحدود",
+     "status": "ساري",
+     "instrument": "قرار وزير التجارة رقم (149) وتاريخ 1444/05/14هـ، بناءً على الفقرة (1) من المادة (97) من اللائحة التنفيذية لنظام الإفلاس — لا أداة إلغاء أو إحلال حتى 2026-10-29"
+    },
+    {
+     "item": "SD-05",
+     "name": "القواعد المنظمة لإجراءات قضايا الإفلاس في المحاكم التجارية",
+     "status": "ساري",
+     "instrument": "قرار وزير العدل رقم (6421) وتاريخ 1441/03/21هـ، بناءً على الفقرة (3) من المادة (97) من اللائحة التنفيذية لنظام الإفلاس وبعد موافقة المجلس الأعلى للقضاء — لا أداة إلغاء أو إحلال حتى 2026-10-29"
+    },
+    {
+     "item": "SD-06",
+     "name": "اللائحة التنفيذية لنظام المحاكم التجارية",
+     "status": "ساري",
+     "instrument": "قرار وزير العدل رقم (8344) وتاريخ 1441/10/26هـ، بناءً على نظام المحاكم التجارية الصادر بالمرسوم الملكي (م/93) وتاريخ 1441/08/15هـ — لا أداة إلغاء أو إحلال حتى 2026-10-29"
+    },
+    {
+     "item": "SD-08",
+     "name": "اللوائح التنفيذية لنظام المرافعات الشرعية",
+     "status": "ساري",
+     "instrument": "قرار وزير العدل رقم (39933) وتاريخ 1435/05/19هـ (أُبلغ بالتعميم 13/ت/5332 في اليوم نفسه) — ساري، وأُلغي منه جزئيًا من 2023-08-11 بالمادة (61) من اللائحة التنفيذية لطرق الاعتراض على الأحكام (قرار وزير العدل رقم (512) وتاريخ 1445/01/05هـ)"
+    },
+    {
+     "item": "SD-09",
+     "name": "تنظيم المركز الوطني للدراسات الاستراتيجية التنموية",
+     "status": "ملغى",
+     "instrument": "قرار مجلس الوزراء رقم (746) وتاريخ 1441/11/23هـ"
+    },
+    {
+     "item": "SD-10",
+     "name": "تنظيم هيئة توليد الوظائف ومكافحة البطالة",
+     "status": "ملغى",
+     "instrument": "قرار مجلس الوزراء رقم (283) وتاريخ 1439/06/04هـ، المنشور في أم القرى العدد 4716 وتاريخ 1439/07/06هـ — من 2018-03-23"
+    }
+   ],
+   "dates": [
+    {
+     "item": "SD-04",
+     "name": "القواعد المنظمة لإجراءات الإفلاس العابرة للحدود",
+     "effective_from": "2022-12-16"
+    },
+    {
+     "item": "SD-05",
+     "name": "القواعد المنظمة لإجراءات قضايا الإفلاس في المحاكم التجارية",
+     "effective_from": "2019-12-06"
+    },
+    {
+     "item": "SD-06",
+     "name": "اللائحة التنفيذية لنظام المحاكم التجارية",
+     "effective_from": "2020-07-03"
+    },
+    {
+     "item": "SD-08",
+     "name": "اللوائح التنفيذية لنظام المرافعات الشرعية",
+     "effective_from": "2014-03-20"
+    },
+    {
+     "item": "SD-12",
+     "name": "نظام تأديب الموظفين",
+     "effective_from": "1971-04-03"
+    },
+    {
+     "item": "SD-14",
+     "name": "الترتيبات التنظيمية للمكتب الاستراتيجي لتطوير منطقة الجوف",
+     "effective_from": "2022-06-14"
+    },
+    {
+     "item": "SD-15",
+     "name": "اللائحة التنفيذية لإجراءات الاستئناف",
+     "effective_from": "2019-07-12"
+    },
+    {
+     "item": "SD-16",
+     "name": "تعليمات بناء سجل الأوامر وتخصيص الأسهم في الاكتتابات الأولية",
+     "effective_from": "2023-01-01"
+    }
+   ],
+   "deferred": {
+    "SD-07": "الحالة: خلاف القارئين",
+    "SD-11": "الحالة: ثقة دنيا وتشريع جديد محتمل",
+    "SD-03/SD-13/SD-17": "التاريخ: قرار المالك",
+    "SD-18": "التاريخ: نفاذ متدرج بجدول لم يُقرأ",
+    "SD-02/SD-11": "التاريخ: لم يُنشرا",
+    "SD-08": "حالات المواد: دفعة لاحقة"
+   }
+  }
+ },
+ "statements": [
+  "SELECT CASE WHEN (SELECT count(*) FROM verification WHERE object_type='work' AND object_id IN ($hk$cmpz5r26d00atcwg2t803ymw4$hk$,$hk$cmr4rvn9i009y1j0uzckmk8h8$hk$,$hk$cmr4rvmho008l1j0u71o24tkk$hk$,$hk$cmr4rvofa00bk1j0uicgw1qzq$hk$,$hk$cmr4rvnn800aa1j0u921x9lq8$hk$,$hk$cmr4qm68e00009vd1j3znq2av$hk$,$hk$cmr4qm6yu009w9vd138glrj9z$hk$,$hk$cmpz5pldh003dcwg2v7xek640$hk$,$hk$cmpz5qayz006zcwg22wiv9coh$hk$))=0 AND (SELECT count(*) FROM legal_systems WHERE id IN ($hk$cmpz5r26d00atcwg2t803ymw4$hk$,$hk$cmr4rvn9i009y1j0uzckmk8h8$hk$,$hk$cmr4rvmho008l1j0u71o24tkk$hk$,$hk$cmr4rvofa00bk1j0uicgw1qzq$hk$,$hk$cmr4rvnn800aa1j0u921x9lq8$hk$,$hk$cmr4qm68e00009vd1j3znq2av$hk$,$hk$cmr4qm6yu009w9vd138glrj9z$hk$,$hk$cmpz5pldh003dcwg2v7xek640$hk$,$hk$cmpz5qayz006zcwg22wiv9coh$hk$))=9 AND (SELECT count(*) FROM legal_systems WHERE id IN ($hk$cmr4rvofa00bk1j0uicgw1qzq$hk$,$hk$cmr4rvnn800aa1j0u921x9lq8$hk$,$hk$cmr4qm68e00009vd1j3znq2av$hk$,$hk$cmr4qm6yu009w9vd138glrj9z$hk$,$hk$fix25-1d499fa86360862021ef73aa$hk$,$hk$b683f041174a43688033e6389ebe3af2$hk$,$hk$cmr4rvkrh001d1j0u78q4z84m$hk$,$hk$b9d0077e4e4d45daaff78aa21d795e0c$hk$) AND preamble_effective_from IS NULL)=8 AND (SELECT count(*) FROM verification WHERE verified_by=$hk$gap017-status-dates-2026-10-29$hk$)=0 AND (SELECT count(*) FROM legal_text_provenance WHERE id LIKE 'g17p-%')=0 THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard_before",
+  "INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, evidence_quote, method, verified_by, supersedes_verification_id) VALUES\n($hk$vfg17-4d6de9ba3b792c6e7eae2411$hk$, 'work', $hk$cmpz5r26d00atcwg2t803ymw4$hk$, $hk$مستبدل$hk$, $hk$أمر سامي رقم (75080) وتاريخ 1443/11/30هـ (إلغاء)، مقرونًا بقرار مجلس الوزراء رقم (628) وتاريخ 1443/11/15هـ (الموافقة على تنظيم المدينة) — من 2022-07-29$hk$, $hk$https://nezams.com/تحديثات-الأنظمة/إلغاء-نظام-مدينة-الملك-عبدالله-للطاقة/$hk$, $hk$القارئ الأول: «تضمن الأمر السامي رقم ( ٧٥٠٨٠) وتاريخ 30 /11/ 1443هـ إلغاء نظام مدينة الملك عبدالله للطاقة الذرية والمتجددة الصادر بالأمر رقم (أ/٣٥) وتاريخ ١٤٣١/٥/٣هـ من تاريخ نفاذ التنظيم للمدينة الصادر بموجب قرار مجلس الوزراء رقم (٦٢٨) وتاريخ ١٤٤٣/١١/١٥هـ.» (نظما). وفي الخلف، المادة الخامسة عشرة من التنظيم: «يُنشر التنظيم في الجريدة الرسمية، ويُعمل به من تاريخ نشره.» (أم القرى، المنشور 1443-12-30 الموافق 29-07-2022) | القارئ الثاني: «المتضمنة التوصية بإلغاء نظام المدينة - الصادر بالأمر رقم (f/٣٥) في ١٤٣١/٥/٣هـ - من تاريخ نفاذ تنظيم المدينة المشار إليه. مضيفاً سموه ما رأته اللجنة العامة لمجلس الوزراء بهذا الصدد. ونخبركم بموافقتنا على ذلك فأكملوا ما يلزم بموجبه.» [نص OCR لنسخة المركز الوطني للوثائق؛ «f/٣٥» تشويه لـ«أ/٣٥»] — والخلف م15: «يُنشر التنظيم في الجريدة الرسمية، ويُعمل به من تاريخ نشره.» [قارئان مستقلان متفقان (p، q)، HKM-052]$hk$, 'manual', $hk$gap017-status-dates-2026-10-29$hk$, NULL),\n($hk$vfg17-4cbcb7e7f4d6033b6df0e295$hk$, 'work', $hk$cmr4rvn9i009y1j0uzckmk8h8$hk$, $hk$ساري$hk$, $hk$قرار وزير العدل رقم (1529) وتاريخ 1439/05/06هـ (أُبلغ بتعميم الوزارة رقم 13/ت/7210 وتاريخ 1439/06/02هـ) — لا أداة إلغاء أو إحلال حتى 2026-10-29$hk$, $hk$https://tashree.app/tameems/240$hk$, $hk$القارئ الأول: لا أداة إلغاء. آخر ما وجدته: تعميم وزارة العدل رقم 13/ت/7210 وتاريخ 1439/06/02: «عليه فقد صدر قرار معالي وزير العدل رقم (1529) في 6/5/1439هـ المتضمن الموافقة على آلية الاستعانة بمحام على نفقة الدولة للمتهم في الجرائم الكبيرة. نرغب إليكم الإطلاع والعمل بموجبه»؛ وصفحة وزارة العدل «الأنظمة واللوائح والتعاميم لمهنة المحاماة» ما زالت تدرج «قرار 1529 بالموافقة على آلية الاستعانة بمحامٍ على نفقة الدولة للمتهم في الجرائم الكبيرة» (مقتطف نتيجة البحث بتاريخ 21/10/2026) | القارئ الثاني: لا أداة إلغاء أو إحلال. آخر ما وجدته: تعميم الوزارة رقم 13/ت/7210 في 1439/06/02هـ: «عليه فقد صدر قرار معالي وزير العدل رقم (1529) في 6/5/1439هـ المتضمن الموافقة على آلية الاستعانة بمحام على نفقة الدولة للمتهم في الجرائم الكبيرة. نرغب إليكم الإطلاع والعمل بموجبه»؛ وقرار وزير العدل رقم (676) في 1446/04/19هـ (اللائحة التنفيذية الجديدة لنظام المحاماة) عدّد ما ألغاه ولم يذكر الآلية. [قارئان مستقلان متفقان (p، q)، HKM-052]$hk$, 'manual', $hk$gap017-status-dates-2026-10-29$hk$, NULL),\n($hk$vfg17-814260ecbbdbb83867bc3f41$hk$, 'work', $hk$cmr4rvmho008l1j0u71o24tkk$hk$, $hk$ساري$hk$, $hk$قرار وزير العدل رقم (921) وتاريخ 1444/03/16هـ (البند ثانيًا)، بناءً على المادة (126/1/ب) من نظام الإثبات الصادر بالمرسوم الملكي (م/43) وتاريخ 1443/05/26هـ — لا أداة إلغاء أو إحلال حتى 2026-10-29$hk$, $hk$https://www.uqn.gov.sa/details?p=20766$hk$, $hk$القارئ الأول: لا أداة إلغاء أو إحلال. آخر ما وجدته عنه إحالة لاحقة إليه في الأدلة الإجرائية لنظام الإثبات (المنشورة معه): «المادة التاسعة بعد المائة: دون الإخلال بالقواعد الخاصة بتنظيم شؤون الخبرة أمام المحاكم، يجب أن يراعى في اختيار الخبير...»؛ ونظما: «ساري.» «لم يجرى عليه تعديل.» | القارئ الثاني: لا أداة إلغاء أو إحلال. نظما (حتى 2026-10-24): «ساري.» «لم يجرى عليه تعديل.»؛ والأدلة الإجرائية م135 تحيل إليها: «...وضوابط إجراءات الإثبات إلكترونياً، والقواعد الخاصة بتنظيم شؤون الخبرة أمام المحاكم.» [قارئان مستقلان متفقان (p، q)، HKM-052]$hk$, 'manual', $hk$gap017-status-dates-2026-10-29$hk$, NULL),\n($hk$vfg17-2000c36c494afcf2f20e385e$hk$, 'work', $hk$cmr4rvofa00bk1j0uicgw1qzq$hk$, $hk$ساري$hk$, $hk$قرار وزير التجارة رقم (149) وتاريخ 1444/05/14هـ، بناءً على الفقرة (1) من المادة (97) من اللائحة التنفيذية لنظام الإفلاس — لا أداة إلغاء أو إحلال حتى 2026-10-29$hk$, $hk$https://www.uqn.gov.sa/details?p=21056$hk$, $hk$القارئ الأول: لا أداة إلغاء أو إحلال. آخر ما وجدته: نشر القواعد وقرار إصدارها في أم القرى 1444-5-22 (16-12-2022)، والبحث عن «تعديل القواعد المنظمة لإجراءات الإفلاس العابرة للحدود» في أم القرى لم يُعد إلا صفحتي النشر الأصلي | القارئ الثاني: لا أداة إلغاء أو إحلال. آخر ما وجدته: أداة الإصدار نفسها في أم القرى: «أولاً: إصدار القواعد المنظمة لإجراءات الإفلاس العابرة للحدود بالصيغة المرافقة لهذا القرار.ثانياً: تنشر القواعد المرفقة لهذا القرار في الجريدة الرسمية ويعمل بها من تاريخ نشرها.» [قارئان مستقلان متفقان (p، q)، HKM-052]$hk$, 'manual', $hk$gap017-status-dates-2026-10-29$hk$, NULL),\n($hk$vfg17-4f758bd9a3294991cedd075d$hk$, 'work', $hk$cmr4rvnn800aa1j0u921x9lq8$hk$, $hk$ساري$hk$, $hk$قرار وزير العدل رقم (6421) وتاريخ 1441/03/21هـ، بناءً على الفقرة (3) من المادة (97) من اللائحة التنفيذية لنظام الإفلاس وبعد موافقة المجلس الأعلى للقضاء — لا أداة إلغاء أو إحلال حتى 2026-10-29$hk$, $hk$https://www.lexismiddleeast.com/law/SaudiArabia/MinisterialDecision_6421_1441/ar$hk$, $hk$القارئ الأول: لا أداة إلغاء أو إحلال. آخر ما وجدته إشارات لاحقة إليه بوصفه نافذًا: قواعد الإفلاس العابرة للحدود (1444) تعرّف مصطلحاتها بنظام الإفلاس ولائحته دون مساس بهذه القواعد، ودليل لجنة الإفلاس وقواعد البنك المركزي تحيل إليها: «القواعد المنظمة لإجراءات قضايا الإفلاس في المحاكم التجارية، الصادرة بقرار وزير العدل رقم (6421) وتاريخ 1441/03/21هـ» (مقتطف نتيجة بحث rulebook.sama.gov.sa) | القارئ الثاني: لا أداة إلغاء أو إحلال. آخر ما وجدته: أرقام 2019-12-07: «نشرت الجريدة الرسمية، لوائح وأنظمة القواعد المنظمة لإجراءات قضايا الإفلاس في المحاكم التجارية، والتي كان قد وافق عليها مؤخرا وزير العدل»؛ ومرجعها ما زال يُستشهد به في دليل البنك المركزي (مقتطف بحث). [قارئان مستقلان متفقان (p، q)، HKM-052]$hk$, 'manual', $hk$gap017-status-dates-2026-10-29$hk$, NULL),\n($hk$vfg17-638e814d86f101a786566e29$hk$, 'work', $hk$cmr4qm68e00009vd1j3znq2av$hk$, $hk$ساري$hk$, $hk$قرار وزير العدل رقم (8344) وتاريخ 1441/10/26هـ، بناءً على نظام المحاكم التجارية الصادر بالمرسوم الملكي (م/93) وتاريخ 1441/08/15هـ — لا أداة إلغاء أو إحلال حتى 2026-10-29$hk$, $hk$https://qanoniah.com/File/m9WMNVEaj5olNbe7eybYvQB6O$hk$, $hk$القارئ الأول: لا أداة إلغاء أو إحلال. آخر ما وجدته: الأحكام القضائية المنشورة في البوابة القانونية لوزارة العدل ما زالت تطبقها (مثل جلسة 24/12/1445هـ: «استيفاء ما نصت عليه المادة (٩٠) من اللائحة التنفيذية الصادرة بقرار وزير العدل...» — مقتطف نتيجة بحث)، ومنصة استطلاع تعرض مشروع «تعديل الفقرة (ب) من المادة (السادسة والسبعون) من اللائحة التنفيذية لنظام المحاكم التجارية» (مشروع لا أداة نافذة)؛ وقانونية: «النفاذ: | ساري» | القارئ الثاني: لا أداة إلغاء أو إحلال. آخر ما وجدته: مشروع على منصة استطلاع «تعديل الفقرة (ب) من المادة (السادسة والسبعون) من اللائحة التنفيذية لنظام المحاكم التجارية الصادرة بقرار معالي وزير العدل رقم ( 8344 ) في 1441/11/12هـ» (مقتطف بحث) — أي أنها قائمة يُقترح تعديلها. [قارئان مستقلان متفقان (p، q)، HKM-052]$hk$, 'manual', $hk$gap017-status-dates-2026-10-29$hk$, NULL),\n($hk$vfg17-0bec49e23670d03d1ab66f53$hk$, 'work', $hk$cmr4qm6yu009w9vd138glrj9z$hk$, $hk$ساري$hk$, $hk$قرار وزير العدل رقم (39933) وتاريخ 1435/05/19هـ (أُبلغ بالتعميم 13/ت/5332 في اليوم نفسه) — ساري، وأُلغي منه جزئيًا من 2023-08-11 بالمادة (61) من اللائحة التنفيذية لطرق الاعتراض على الأحكام (قرار وزير العدل رقم (512) وتاريخ 1445/01/05هـ)$hk$, $hk$https://www.uqn.gov.sa/details?p=23463$hk$, $hk$م61 من اللائحة التنفيذية لطرق الاعتراض على الأحكام: «تحـل هذه اللائحة محل اللوائح التنفيذية لمواد الباب (الحادي عشر) من نظام المرافعات الشرعية، الصادرة بقرار وزير العدل رقم (39933) وتاريخ 19 /5 /1435هـ، واللائحة التنفيذية لإجراءات الاستئناف، الصادرة بقرار وزير العدل رقم (5134) وتاريخ 21 /9 /1440هـ.» — الجزء الملغى: لوائح مواد الباب الحادي عشر (طرق الاعتراض على الأحكام)، والباقي ساري [قارئان مستقلان متفقان (p، q)، HKM-052]$hk$, 'manual', $hk$gap017-status-dates-2026-10-29$hk$, NULL),\n($hk$vfg17-0115489acbd92827a8ed529e$hk$, 'work', $hk$cmpz5pldh003dcwg2v7xek640$hk$, $hk$ملغى$hk$, $hk$قرار مجلس الوزراء رقم (746) وتاريخ 1441/11/23هـ$hk$, $hk$https://www.al-madina.com/article/694390/$hk$, $hk$القارئ الأول: «صدرت توجيهات المقام السامي بإلغاء المركز الوطني للدراسات الإستراتيجية التنموية وتنظيمه وتُنقل وثائق المركز ودراساته إلى وزارة الاقتصاد ...» (صحيفة المدينة 2020-07-27، مقتطف نتيجة البحث لأن نص الصفحة لم يُعرض)؛ وقانونية: «النفاذ: | لاغي» «تاريخ التعديل الأخير: | 1440-10-22»؛ ونسخة تشريع من سجل المركز الوطني للوثائق: «الحالة: غير سارية» | القارئ الثاني: «يقرر ما يلي: أولاً : يلغى المركز الوطني للدراسات الاستراتيجية التنموية وتنظيمه الصادر بقرار مجلس الوزراء رقم (٣٦٤) وتاريخ ١٤٣٧/٩/١هـ. ثانياً : تنقل وثائق المركز الوطني للدراسات الاستراتيجية التنموية (الملغي) ودراساته إلى وزارة الاقتصاد والتخطيط.» [قارئان مستقلان متفقان (p، q)، HKM-052]$hk$, 'manual', $hk$gap017-status-dates-2026-10-29$hk$, NULL),\n($hk$vfg17-ad6a0157bf331c32aee65382$hk$, 'work', $hk$cmpz5qayz006zcwg22wiv9coh$hk$, $hk$ملغى$hk$, $hk$قرار مجلس الوزراء رقم (283) وتاريخ 1439/06/04هـ، المنشور في أم القرى العدد 4716 وتاريخ 1439/07/06هـ — من 2018-03-23$hk$, $hk$https://www.uqn.gov.sa/details?p=20440$hk$, $hk$القارئ الأول: «أولاً: إلغاء \"هيئة توليد الوظائف ومكافحة البطالة\" وتنظيمها، الموافق عليه بقرار \"مجلس الوزراء\" رقم (535) وتاريخ 29-12-1436هـ . ثانياً: تتولى \" ...» (منهم، مقتطف نتيجة بحث)؛ وفي نص العدد 4716 نفسه (مستخرج مشوَّه الحروف): «يقرر ما يلي: اأولاً: اإلغاء هيئة توليد الوظائف ومكافحة البطالة وتنظيمها، الموافق عليه بقرار مجل[س الوزراء رقم (]535) ... ثانياً: تتولى وزارة العمل والتنمية الاجتماعية المهمات التي كانت م[سندة للهيئة]»؛ وحساب أم القرى على إكس: «في عدد 4716: إلغاء هيئة توليد الوظائف ومكافحة البطالة وتنظيمها وإسناد مهامها إلى وزارة العمل والتنمية الاجتماعية» | القارئ الثاني: مال (عن الرياض، 2018-02-20): «انهى القرار الصادر اليوم من مجلس الوزراء عمر الهيئة...وتتولى هذه الوكالة الاختصاصات والمهمات المنوطة بهيئة توليد الوظائف ومكافحة البطالة (الملغاة).» ونص القرار (OCR قانونية): «تتولىوزارةالعملوالتنميةالاجتماعيالمهماتالتيكانتمسندةلهيئةتوليد الوظائفومكافحةالبطالة» [قارئان مستقلان متفقان (p، q)، HKM-052]$hk$, 'manual', $hk$gap017-status-dates-2026-10-29$hk$, NULL)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g17p-2000c36c494afcf2f20e385e$hk$, 'system', $hk$cmr4rvofa00bk1j0uicgw1qzq$hk$, $hk$القواعد المنظمة لإجراءات الإفلاس العابرة للحدود$hk$, NULL, 'uqn', $hk$gap017-status-dates-2026-10-29$hk$, $hk$https://www.uqn.gov.sa/details?p=21057$hk$, $hk$16f9d32e3f333635b9d21eabfa3248fe$hk$, DATE '2026-10-29', $hk$effective_from_set:2022-12-16$hk$, $hk$HKM-052 gap017-status-dates-2026-10-29: قرار وزير التجارة رقم (149) وتاريخ 1444/05/14هـ، بناءً على الفقرة (1) من المادة (97) من اللائحة التنفيذية لنظام الإفلاس — عبارة النفاذ: المادة (23): «تُنشر القواعد في الجريدة الرسمية، ويعمل بها من تاريخ نشرها.»؛ وقرار الإصدار البند ثانيًا: «تنشر القواعد المرفقة لهذا القرار في الجريدة الرسمية ويعمل بها من تاريخ نشرها.» — النشر 1444-05-22هـ ← 2022-12-16 [قارئان مستقلان متفقان (p، q)، HKM-052]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g17p-2000c36c494afcf2f20e385e$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g17p-4f758bd9a3294991cedd075d$hk$, 'system', $hk$cmr4rvnn800aa1j0u921x9lq8$hk$, $hk$القواعد المنظمة لإجراءات قضايا الإفلاس في المحاكم التجارية$hk$, NULL, 'uqn', $hk$gap017-status-dates-2026-10-29$hk$, $hk$https://www.lexismiddleeast.com/law/SaudiArabia/MinisterialDecision_6421_1441/ar$hk$, $hk$df9d9dd35a2c0b383514bb4d1fa693f4$hk$, DATE '2026-10-29', $hk$effective_from_set:2019-12-06$hk$, $hk$HKM-052 gap017-status-dates-2026-10-29: قرار وزير العدل رقم (6421) وتاريخ 1441/03/21هـ، بناءً على الفقرة (3) من المادة (97) من اللائحة التنفيذية لنظام الإفلاس وبعد موافقة المجلس الأعلى للقضاء — عبارة النفاذ: قرار الإصدار البند ثانيًا: «تنشر هذه القواعد في الجريدة الرسمية، ويعمل بها من تاريخ نشرها»؛ والمادة (24): «تنشر هذه القواعد في الجريدة الرسمية، ويعمل بها من تاريخ نشرها.» — النشر 1441-04-09هـ ← 2019-12-06 [قارئان مستقلان متفقان (p، q)، HKM-052]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g17p-4f758bd9a3294991cedd075d$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g17p-638e814d86f101a786566e29$hk$, 'system', $hk$cmr4qm68e00009vd1j3znq2av$hk$, $hk$اللائحة التنفيذية لنظام المحاكم التجارية$hk$, NULL, 'uqn', $hk$gap017-status-dates-2026-10-29$hk$, $hk$https://www.uqn.gov.sa/details?p=20314$hk$, $hk$818e5895f13d68c7d0f3701410dc10ba$hk$, DATE '2026-10-29', $hk$effective_from_set:2020-07-03$hk$, $hk$HKM-052 gap017-status-dates-2026-10-29: قرار وزير العدل رقم (8344) وتاريخ 1441/10/26هـ، بناءً على نظام المحاكم التجارية الصادر بالمرسوم الملكي (م/93) وتاريخ 1441/08/15هـ — عبارة النفاذ: المادة (281): «تنشر اللائحة في الجريدة الرسمية، ويعمل بها من تاريخ نشرها.» — النشر 1441-11-12هـ ← 2020-07-03 [قارئان مستقلان متفقان (p، q)، HKM-052]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g17p-638e814d86f101a786566e29$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g17p-0bec49e23670d03d1ab66f53$hk$, 'system', $hk$cmr4qm6yu009w9vd138glrj9z$hk$, $hk$اللوائح التنفيذية لنظام المرافعات الشرعية$hk$, NULL, 'uqn', $hk$gap017-status-dates-2026-10-29$hk$, $hk$https://www.uqn.gov.sa/details?p=23463$hk$, $hk$2921a5c5ec548535c52ebcdc0d83f0b6$hk$, DATE '2026-10-29', $hk$effective_from_set:2014-03-20$hk$, $hk$HKM-052 gap017-status-dates-2026-10-29: قرار وزير العدل رقم (39933) وتاريخ 1435/05/19هـ (أُبلغ بالتعميم 13/ت/5332 في اليوم نفسه) — عبارة النفاذ: قرار 39933 البند ثالثًا: «يبلغ هذا القرار للجهات المختصة ولمن يلزم لاعتماده والعمل بموجبه اعتباراً من تاريخه.» (نص القرار على نظما) — النشر —هـ ← 2014-03-20 [قارئان مستقلان متفقان (p، q)، HKM-052]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g17p-0bec49e23670d03d1ab66f53$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g17p-ef28c40eb3341aa7931c8d1a$hk$, 'system', $hk$fix25-1d499fa86360862021ef73aa$hk$, $hk$نظام تأديب الموظفين$hk$, NULL, 'uqn', $hk$gap017-status-dates-2026-10-29$hk$, $hk$https://www.uqn.gov.sa/details?p=25317$hk$, $hk$4efcb1b65aaaef7a54e4063bfc9def85$hk$, DATE '2026-10-29', $hk$effective_from_set:1971-04-03$hk$, $hk$HKM-052 gap017-status-dates-2026-10-29: المرسوم الملكي رقم (م/7) وتاريخ 1391/02/01هـ، بناءً على قرار مجلس الوزراء رقم (1023) وتاريخ 1390/10/28هـ — عبارة النفاذ: سكتت الأداة: م71 من النظام الأساسي (المرسوم م/7 والمواد 1-50 بلا عبارة نشر ولا نفاذ) — النشر 1391-02-07هـ ← 1971-04-03 [قارئان مستقلان متفقان (p، q)، HKM-052]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g17p-ef28c40eb3341aa7931c8d1a$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g17p-1f241d10b7936dd37dc66ebd$hk$, 'system', $hk$b683f041174a43688033e6389ebe3af2$hk$, $hk$الترتيبات التنظيمية للمكتب الاستراتيجي لتطوير منطقة الجوف$hk$, NULL, 'uqn', $hk$gap017-status-dates-2026-10-29$hk$, $hk$https://www.uqn.gov.sa/details?p=19658$hk$, $hk$09a3cb5acadbf9d885df5f8429501d2f$hk$, DATE '2026-10-29', $hk$effective_from_set:2022-06-14$hk$, $hk$HKM-052 gap017-status-dates-2026-10-29: قرار مجلس الوزراء رقم (625) وتاريخ 1443/11/15هـ — عبارة النفاذ: المادة (13): «يعمل بالترتيبات من تاريخ صدورها.» — النشر 1443-11-25هـ ← 2022-06-14 [قارئان مستقلان متفقان (p، q)، HKM-052]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g17p-1f241d10b7936dd37dc66ebd$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g17p-564a6347b9eebcecdf7305c8$hk$, 'system', $hk$cmr4rvkrh001d1j0u78q4z84m$hk$, $hk$اللائحة التنفيذية لإجراءات الاستئناف$hk$, NULL, 'uqn', $hk$gap017-status-dates-2026-10-29$hk$, $hk$https://www.uqn.gov.sa/details?p=23463$hk$, $hk$85d3b8fab8fdea3ec02c6ccf52fa5b9a$hk$, DATE '2026-10-29', $hk$effective_from_set:2019-07-12$hk$, $hk$HKM-052 gap017-status-dates-2026-10-29: قرار وزير العدل رقم (5134) وتاريخ 1440/09/21هـ (أُبلغ بتعميم الوزارة 13/ت/7822 وتاريخ 1440/10/28هـ) — عبارة النفاذ: المادة (35): «تنشر اللائحة في الجريدة الرسمية، ويعمل بها من تاريخ نشرها.» — النشر 1440-11-09هـ ← 2019-07-12 [قارئان مستقلان متفقان (p، q)، HKM-052]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g17p-564a6347b9eebcecdf7305c8$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g17p-c0d2097ae287fdd59e9c1a83$hk$, 'system', $hk$b9d0077e4e4d45daaff78aa21d795e0c$hk$, $hk$تعليمات بناء سجل الأوامر وتخصيص الأسهم في الاكتتابات الأولية$hk$, NULL, 'uqn', $hk$gap017-status-dates-2026-10-29$hk$, $hk$https://www.uqn.gov.sa/details?p=21494$hk$, $hk$590ecafe69a6f981bec68488cf11b789$hk$, DATE '2026-10-29', $hk$effective_from_set:2023-01-01$hk$, $hk$HKM-052 gap017-status-dates-2026-10-29: قرار مجلس هيئة السوق المالية رقم (1-103-2022) وتاريخ 1444/03/02هـ (اعتماد التعليمات المعدّلة)؛ وأصلها بقرار المجلس رقم (2-94-2016) وتاريخ 1437/10/15هـ — عبارة النفاذ: قرار الاعتماد (1-103-2022) الفقرة 1: «اعتماد تعليمات بناء سجل الأوامر وتخصيص الأسهم في الاكتتابات الأولية المعدّلة، وفق الصيغة المرافقة، ويُعمل بها ابتداءً من تاريخ 8 /6/ 1444هـ، الموافق 1/1/ 2023م.»؛ والبند تاسعًا من التعليمات: «تكون هذه التعليمات نافذة وفقاً لقرار اعتمادها.» — النشر 1444-08-04هـ ← 2023-01-01 [قارئان مستقلان متفقان (p، q)، HKM-052]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g17p-c0d2097ae287fdd59e9c1a83$hk$)",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2022-12-16$hk$::timestamptz WHERE id = $hk$cmr4rvofa00bk1j0uicgw1qzq$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2019-12-06$hk$::timestamptz WHERE id = $hk$cmr4rvnn800aa1j0u921x9lq8$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2020-07-03$hk$::timestamptz WHERE id = $hk$cmr4qm68e00009vd1j3znq2av$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2014-03-20$hk$::timestamptz WHERE id = $hk$cmr4qm6yu009w9vd138glrj9z$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$1971-04-03$hk$::timestamptz WHERE id = $hk$fix25-1d499fa86360862021ef73aa$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2022-06-14$hk$::timestamptz WHERE id = $hk$b683f041174a43688033e6389ebe3af2$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2019-07-12$hk$::timestamptz WHERE id = $hk$cmr4rvkrh001d1j0u78q4z84m$hk$ AND preamble_effective_from IS NULL",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2023-01-01$hk$::timestamptz WHERE id = $hk$b9d0077e4e4d45daaff78aa21d795e0c$hk$ AND preamble_effective_from IS NULL",
+  "SELECT CASE WHEN (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmr4rvofa00bk1j0uicgw1qzq$hk$)=$hk$2022-12-16$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmr4rvnn800aa1j0u921x9lq8$hk$)=$hk$2019-12-06$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmr4qm68e00009vd1j3znq2av$hk$)=$hk$2020-07-03$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmr4qm6yu009w9vd138glrj9z$hk$)=$hk$2014-03-20$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$fix25-1d499fa86360862021ef73aa$hk$)=$hk$1971-04-03$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$b683f041174a43688033e6389ebe3af2$hk$)=$hk$2022-06-14$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmr4rvkrh001d1j0u78q4z84m$hk$)=$hk$2019-07-12$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$b9d0077e4e4d45daaff78aa21d795e0c$hk$)=$hk$2023-01-01$hk$::date AND (SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5r26d00atcwg2t803ymw4$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)=$hk$مستبدل$hk$ AND (SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmr4rvn9i009y1j0uzckmk8h8$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)=$hk$ساري$hk$ AND (SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmr4rvmho008l1j0u71o24tkk$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)=$hk$ساري$hk$ AND (SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmr4rvofa00bk1j0uicgw1qzq$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)=$hk$ساري$hk$ AND (SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmr4rvnn800aa1j0u921x9lq8$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)=$hk$ساري$hk$ AND (SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmr4qm68e00009vd1j3znq2av$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)=$hk$ساري$hk$ AND (SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmr4qm6yu009w9vd138glrj9z$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)=$hk$ساري$hk$ AND (SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5pldh003dcwg2v7xek640$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)=$hk$ملغى$hk$ AND (SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5qayz006zcwg22wiv9coh$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)=$hk$ملغى$hk$ AND (SELECT count(*) FROM verification WHERE verified_by=$hk$gap017-status-dates-2026-10-29$hk$)=9 AND (SELECT count(*) FROM legal_text_provenance WHERE id LIKE 'g17p-%')=8 THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard_after"
+ ]
+}

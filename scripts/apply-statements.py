@@ -92,6 +92,10 @@ def main() -> int:
         # تاريخ نفاذ النظام: تعبئة حقل فارغ فقط (لا يستبدل قيمة قائمة)
         if a.allow_guarded_update and re.match(r"^\s*UPDATE legal_systems SET preamble_effective_from = \$hk\$\d{4}-\d{2}-\d{2}\$hk\$::timestamptz WHERE id = \$hk\$[^$]+\$hk\$ AND preamble_effective_from IS NULL\s*$", s):
             return True
+        # تصحيح تاريخ نفاذ مخزن خطأً (تاريخ الصدور بدل النفاذ المؤجل، HKM-052 الصنف M2b، بتفويض المالك 29/10 «نفذ كل شيء»):
+        # يُستبدل فقط إذا كانت القيمة الحالية هي القيمة القديمة المذكورة نصًا، ويرافقه صف legal_text_provenance بالقيمة السابقة
+        if a.allow_guarded_update and re.match(r"^\s*UPDATE legal_systems SET preamble_effective_from = \$hk\$\d{4}-\d{2}-\d{2}\$hk\$::timestamptz WHERE id = \$hk\$[^$]+\$hk\$ AND preamble_effective_from::date = \$hk\$\d{4}-\d{2}-\d{2}\$hk\$::date\s*$", s):
+            return True
         # تصنيف النظام: تعبئة حقل فارغ فقط
         if a.allow_guarded_update and re.match(r"^\s*UPDATE legal_systems SET classification = \$hk\$[^$]+\$hk\$ WHERE id = \$hk\$[^$]+\$hk\$ AND coalesce\(classification, ''\) = ''\s*$", s):
             return True

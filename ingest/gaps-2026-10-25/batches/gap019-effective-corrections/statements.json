@@ -1,0 +1,875 @@
+{
+ "by": "gap019-effective-corrections-2026-10-29",
+ "md5": "b0f748d9d1a7467f930e54898eecfd04",
+ "count": 212,
+ "expect_delta": {},
+ "report": {
+  "corrected": 105,
+  "new_articles": 0,
+  "changed_text": 0,
+  "dropped": [
+   {
+    "item": "EC-053",
+    "name": "نظام المعادن الثمينة والأحجار الكريمة",
+    "ours": "1986-03-20",
+    "verifier": null,
+    "verdict": "hold",
+    "notes": "نشر 1406/04/08 = 1985-12-20؛ الصدور 1403/07/10 = 1983-04-23؛ المخزَّن 1983-04-23 هو تاريخ الصدور. hold: المدة (تسعون يومًا) تُحسب من نشر اللائحة التنفيذية لا من نشر النظام؛ فلا يصح حسابها من تاريخ نشر"
+   },
+   {
+    "item": "EC-088",
+    "name": "نظام نقل الحجاج إلى المملكة وإعادتهم إلى بلادهم",
+    "ours": "2005-09-14",
+    "verifier": null,
+    "verdict": "hold",
+    "notes": "نشر 1426/02/08 = 2005-03-18؛ الصدور 1425/12/28 = 2005-02-08؛ المخزَّن 2005-02-08 هو تاريخ الصدور. hold: العبارة في الحزمة مقطوعة عند «…مائة وثمانين يومًا من ت»؛ المدة 180 يومًا، لكن مبدأ الحساب (الأغل"
+   }
+  ],
+  "plan": [
+   {
+    "name": "نظام الأحوال الشخصية",
+    "old": "2022-03-09",
+    "new": "2022-06-16",
+    "days": 90
+   },
+   {
+    "name": "نظام الإثبات",
+    "old": "2021-12-30",
+    "new": "2022-07-06",
+    "days": 180
+   },
+   {
+    "name": "نظام التحكيم",
+    "old": "2012-04-16",
+    "new": "2012-07-08",
+    "days": 30
+   },
+   {
+    "name": "نظام التوثيق",
+    "old": "2020-07-10",
+    "new": "2021-01-13",
+    "days": 180
+   },
+   {
+    "name": "نظام العمل",
+    "old": "2005-09-27",
+    "new": "2006-04-26",
+    "days": 180
+   },
+   {
+    "name": "النظام الأساس لجمعية الكشافة العربية السعودية",
+    "old": "2018-04-11",
+    "new": "2018-11-05",
+    "days": 180
+   },
+   {
+    "name": "النظام الجزائي لجرائم التزوير",
+    "old": "2013-12-21",
+    "new": "2014-03-09",
+    "days": 30
+   },
+   {
+    "name": "نظام أخلاقيات البحث على المخلوقات الحية",
+    "old": "2010-08-24",
+    "new": "2010-12-16",
+    "days": 90
+   },
+   {
+    "name": "نظام أندية السيارات والدراجات النارية",
+    "old": "2009-05-26",
+    "new": "2009-10-17",
+    "days": 120
+   },
+   {
+    "name": "نظام إجراءات التراخيص البلدية",
+    "old": "2014-07-20",
+    "new": "2014-12-04",
+    "days": 90
+   },
+   {
+    "name": "نظام إدارة النفايات",
+    "old": "2021-08-13",
+    "new": "2021-11-16",
+    "days": 60
+   },
+   {
+    "name": "نظام إمدادات الطاقة",
+    "old": "2022-12-28",
+    "new": "2023-03-07",
+    "days": 60
+   },
+   {
+    "name": "نظام إنتاج المواد التعليمية المساعدة وتسويقها",
+    "old": "2004-12-12",
+    "new": "2005-07-06",
+    "days": 180
+   },
+   {
+    "name": "نظام إيرادات الدولة",
+    "old": "2010-10-26",
+    "new": "2011-02-24",
+    "days": 90
+   },
+   {
+    "name": "نظام استئجار الدولة للعقار",
+    "old": "2022-07-27",
+    "new": "2023-02-01",
+    "days": 180
+   },
+   {
+    "name": "نظام استخدام كاميرات المراقبة الأمنية",
+    "old": "2022-10-03",
+    "new": "2023-04-05",
+    "days": 180
+   },
+   {
+    "name": "نظام استخدام وحماية شارة واسم الهلال الأحمر وما في حكمهما",
+    "old": "2023-07-24",
+    "new": "2023-11-02",
+    "days": 90
+   },
+   {
+    "name": "نظام استيراد المواد الكيميائية وإدارتها ( نظام إدارة المواد الكيميائية )",
+    "old": "2006-07-12",
+    "new": "2007-02-14",
+    "days": 180
+   },
+   {
+    "name": "نظام الآثار والمتاحف والتراث العمراني",
+    "old": "2014-11-02",
+    "new": "2015-03-28",
+    "days": 120
+   },
+   {
+    "name": "نظام الأجهزة والمستلزمات الطبية",
+    "old": "2021-02-18",
+    "new": "2021-08-25",
+    "days": 180
+   },
+   {
+    "name": "نظام الأحداث",
+    "old": "2018-08-01",
+    "new": "2019-01-29",
+    "days": 90
+   },
+   {
+    "name": "نظام الأسلحة والذخائر",
+    "old": "2005-08-30",
+    "new": "2006-04-19",
+    "days": 180
+   },
+   {
+    "name": "نظام الأعلاف",
+    "old": "2014-07-20",
+    "new": "2015-03-04",
+    "days": 180
+   },
+   {
+    "name": "نظام الأوسمة السعودية",
+    "old": "2013-05-04",
+    "new": "2013-11-27",
+    "days": 180
+   },
+   {
+    "name": "نظام الإيداع في المخازن العامة",
+    "old": "2006-06-06",
+    "new": "2007-06-14",
+    "days": 90
+   },
+   {
+    "name": "نظام الاتصالات وتقنية المعلومات",
+    "old": "2022-06-01",
+    "new": "2022-12-07",
+    "days": 180
+   },
+   {
+    "name": "نظام الامتياز التجاري",
+    "old": "2019-10-08",
+    "new": "2020-04-20",
+    "days": 180
+   },
+   {
+    "name": "نظام الانضباط الوظيفي",
+    "old": "2021-09-15",
+    "new": "2022-03-23",
+    "days": 180
+   },
+   {
+    "name": "نظام الايجار التمويلي",
+    "old": "2012-07-03",
+    "new": "2012-11-29",
+    "days": 90
+   },
+   {
+    "name": "نظام البنك السعودي للتسليف والادخار ( بنك التنمية الاجتماعية )",
+    "old": "2006-06-27",
+    "new": "2006-11-09",
+    "days": 90
+   },
+   {
+    "name": "نظام البيئة",
+    "old": "2020-07-10",
+    "new": "2021-01-13",
+    "days": 180
+   },
+   {
+    "name": "نظام التسجيل العيني للعقار",
+    "old": "2022-04-20",
+    "new": "2022-08-11",
+    "days": 90
+   },
+   {
+    "name": "نظام التعامل مع الموارد الوراثية النباتية للأغذية والزراعة",
+    "old": "2018-07-11",
+    "new": "2018-10-23",
+    "days": 90
+   },
+   {
+    "name": "نظام التكاليف القضائية",
+    "old": "2021-09-07",
+    "new": "2022-03-16",
+    "days": 180
+   },
+   {
+    "name": "نظام التمويل العقاري",
+    "old": "2012-07-03",
+    "new": "2012-11-29",
+    "days": 90
+   },
+   {
+    "name": "نظام الجمعيات والمؤسسات الأهلية",
+    "old": "2015-12-01",
+    "new": "2016-03-17",
+    "days": 90
+   },
+   {
+    "name": "نظام الحراسة الأمنية المدنية الخاصة",
+    "old": "2005-08-13",
+    "new": "2005-12-08",
+    "days": 90
+   },
+   {
+    "name": "نظام الرعاية الصحية النفسية",
+    "old": "2014-07-17",
+    "new": "2014-11-27",
+    "days": 90
+   },
+   {
+    "name": "نظام الرقابة على الاستخدامات النووية والاشعاعية",
+    "old": "2018-04-11",
+    "new": "2018-10-21",
+    "days": 180
+   },
+   {
+    "name": "نظام الرهن العقاري المسجل",
+    "old": "2012-07-03",
+    "new": "2012-11-08",
+    "days": 90
+   },
+   {
+    "name": "نظام الزراعة",
+    "old": "2021-03-23",
+    "new": "2021-07-01",
+    "days": 90
+   },
+   {
+    "name": "نظام الضمان الاجتماعي",
+    "old": "2020-11-19",
+    "new": "2021-03-27",
+    "days": 120
+   },
+   {
+    "name": "نظام الطيران المدني",
+    "old": "2005-08-23",
+    "new": "2006-04-26",
+    "days": 180
+   },
+   {
+    "name": "نظام الغذاء",
+    "old": "2014-10-30",
+    "new": "2015-06-10",
+    "days": 180
+   },
+   {
+    "name": "نظام الكهرباء",
+    "old": "2020-12-31",
+    "new": "2021-07-07",
+    "days": 180
+   },
+   {
+    "name": "نظام المؤسسات الصحية الخاصة",
+    "old": "2003-01-06",
+    "new": "2003-05-08",
+    "days": 90
+   },
+   {
+    "name": "نظام المتفجرات والمفرقعات",
+    "old": "2007-05-15",
+    "new": "2007-10-06",
+    "days": 120
+   },
+   {
+    "name": "نظام المجالس البلدية",
+    "old": "2014-07-31",
+    "new": "2015-02-25",
+    "days": 180
+   },
+   {
+    "name": "نظام المدفوعات وخدماتها",
+    "old": "2021-10-28",
+    "new": "2022-05-04",
+    "days": 180
+   },
+   {
+    "name": "نظام المراقبة الصحية في منافذ الدخول",
+    "old": "2012-06-27",
+    "new": "2012-11-29",
+    "days": 90
+   },
+   {
+    "name": "نظام المسؤولية المدنية عن الأضرار النووية",
+    "old": "2018-04-11",
+    "new": "2018-10-21",
+    "days": 180
+   },
+   {
+    "name": "نظام المساهمات العقارية",
+    "old": "2023-07-16",
+    "new": "2023-11-18",
+    "days": 120
+   },
+   {
+    "name": "نظام المعالجات التجارية في التجارة الدولية",
+    "old": "2022-11-23",
+    "new": "2023-03-02",
+    "days": 90
+   },
+   {
+    "name": "نظام المقيمين المعتمدين",
+    "old": "2012-05-30",
+    "new": "2013-02-06",
+    "days": 180
+   },
+   {
+    "name": "نظام الملابس والتجهيزات العسكرية الفردية",
+    "old": "2005-08-13",
+    "new": "2006-03-15",
+    "days": 180
+   },
+   {
+    "name": "نظام المنشآت والمستحضرات الصيدلانية والعشبية",
+    "old": "2020-04-15",
+    "new": "2020-08-22",
+    "days": 120
+   },
+   {
+    "name": "نظام الهيئة العامة للأوقاف",
+    "old": "2015-12-08",
+    "new": "2016-03-24",
+    "days": 90
+   },
+   {
+    "name": "نظام الهيئة العامة للغذاء والدواء",
+    "old": "2007-02-13",
+    "new": "2007-06-07",
+    "days": 90
+   },
+   {
+    "name": "نظام الهيئة العامة للولاية على أموال القاصرين ومن فى حكمهم",
+    "old": "2006-04-11",
+    "new": "2006-08-17",
+    "days": 90
+   },
+   {
+    "name": "نظام الوساطة العقارية",
+    "old": "2022-06-29",
+    "new": "2023-01-18",
+    "days": 180
+   },
+   {
+    "name": "نظام براءات الاختراع والتصميمات التخطيطية للدارات المتكاملة والأصناف النباتية والنماذج الصناعية",
+    "old": "2004-07-17",
+    "new": "2004-09-05",
+    "days": 30
+   },
+   {
+    "name": "نظام بيع وتأجير مشروعات عقارية على الخارطة",
+    "old": "2023-09-25",
+    "new": "2024-04-04",
+    "days": 90
+   },
+   {
+    "name": "نظام تداول بدائل حليب الأم",
+    "old": "2004-11-04",
+    "new": "2005-03-10",
+    "days": 90
+   },
+   {
+    "name": "نظام تصنيف المقاولين",
+    "old": "2021-08-26",
+    "new": "2021-12-02",
+    "days": 90
+   },
+   {
+    "name": "نظام حقوق الأشخاص ذوي الإعاقة",
+    "old": "2023-08-27",
+    "new": "2024-01-06",
+    "days": 120
+   },
+   {
+    "name": "نظام حماية الطفل",
+    "old": "2014-11-25",
+    "new": "2015-03-26",
+    "days": 90
+   },
+   {
+    "name": "نظام حماية المبلغين والشهود والخبراء والضحايا",
+    "old": "2024-02-18",
+    "new": "2024-06-29",
+    "days": 120
+   },
+   {
+    "name": "نظام خدمة حجاج الداخل",
+    "old": "2005-11-30",
+    "new": "2006-03-30",
+    "days": 90
+   },
+   {
+    "name": "نظام رسوم الأراضي البيضاء",
+    "old": "2015-11-24",
+    "new": "2016-06-08",
+    "days": 180
+   },
+   {
+    "name": "نظام رسوم تسجيل السفن والوحدات العائمة",
+    "old": "1998-05-27",
+    "new": "1998-08-18",
+    "days": 60
+   },
+   {
+    "name": "نظام صندوق التنمية الزراعية.",
+    "old": "2023-09-05",
+    "new": "2023-12-14",
+    "days": 90
+   },
+   {
+    "name": "نظام ضريبة الدخل",
+    "old": "2004-03-06",
+    "new": "2004-07-29",
+    "days": 90
+   },
+   {
+    "name": "نظام عقوبات نشر الوثائق والمعلومات السرية وإفشائها",
+    "old": "2011-04-12",
+    "new": "2011-08-18",
+    "days": 90
+   },
+   {
+    "name": "نظام مراقبة شركات التأمين التعاوني",
+    "old": "2003-07-31",
+    "new": "2003-11-20",
+    "days": 90
+   },
+   {
+    "name": "نظام مراقبة شركات التمويل",
+    "old": "2012-07-03",
+    "new": "2012-11-29",
+    "days": 90
+   },
+   {
+    "name": "نظام مزاولة المهن الصحية",
+    "old": "2005-12-06",
+    "new": "2006-02-28",
+    "days": 60
+   },
+   {
+    "name": "نظام مزاولة المهن الهندسية",
+    "old": "2017-01-17",
+    "new": "2017-04-04",
+    "days": 60
+   },
+   {
+    "name": "نظام معالجة المنشآت المالية المهمة",
+    "old": "2020-12-10",
+    "new": "2021-06-16",
+    "days": 180
+   },
+   {
+    "name": "نظام مكافحة الاحتيال المالي وخيانة الأمانة",
+    "old": "2021-04-22",
+    "new": "2021-07-29",
+    "days": 90
+   },
+   {
+    "name": "نظام مكافحة التستر",
+    "old": "2020-08-20",
+    "new": "2021-02-24",
+    "days": 180
+   },
+   {
+    "name": "نظام مكافحة الرشوة",
+    "old": "1992-06-30",
+    "new": "1992-09-30",
+    "days": 30
+   },
+   {
+    "name": "نظام مكافحة المخدرات والمؤثرات العقلية",
+    "old": "2005-08-13",
+    "new": "2005-12-15",
+    "days": 90
+   },
+   {
+    "name": "نظام مكافحة جرائم الاتجار بالأشخاص",
+    "old": "2009-07-14",
+    "new": "2009-11-05",
+    "days": 90
+   },
+   {
+    "name": "نظام ملكية الوحدات العقارية وفرزها وإدارتها",
+    "old": "2020-02-26",
+    "new": "2020-09-09",
+    "days": 180
+   },
+   {
+    "name": "نظام منتجات التجميل",
+    "old": "2015-04-07",
+    "new": "2015-11-04",
+    "days": 180
+   },
+   {
+    "name": "نظام مهنة المحاسبة والمراجعة",
+    "old": "2021-03-11",
+    "new": "2021-06-17",
+    "days": 90
+   },
+   {
+    "name": "نظام نقل معلومات المتعاملين مع المنشآت الخاصة إلكترونياً إلى مركز المعلومات الوطني في وزارة الداخلية (نظام شموس الأمني)",
+    "old": "2014-04-21",
+    "new": "2014-08-14",
+    "days": 90
+   },
+   {
+    "name": "نظام وظائف مباشرة الأموال العامة",
+    "old": "2014-12-15",
+    "new": "2015-07-08",
+    "days": 180
+   },
+   {
+    "name": "اللائحة الأساسية للبيوت الاجتماعية",
+    "old": "2014-12-01",
+    "new": "2015-03-26",
+    "days": 90
+   },
+   {
+    "name": "اللائحة التنفيذية لنظام الأحداث",
+    "old": "2020-12-01",
+    "new": "2021-01-10",
+    "days": 30
+   },
+   {
+    "name": "تنظيم الجمعية السعودية للجودة",
+    "old": "2011-06-27",
+    "new": "2011-09-20",
+    "days": 60
+   },
+   {
+    "name": "تنظيم الجمعية السعودية للسفر والسياحة",
+    "old": "2014-05-26",
+    "new": "2014-08-03",
+    "days": 30
+   },
+   {
+    "name": "تنظيم الجمعية السعودية للمرشدين السياحيين",
+    "old": "2014-05-26",
+    "new": "2014-08-03",
+    "days": 30
+   },
+   {
+    "name": "تنظيم الجمعية السعودية لمرافق الإيواء السياحي",
+    "old": "2014-05-26",
+    "new": "2014-08-03",
+    "days": 30
+   },
+   {
+    "name": "تنظيم الدعم السكني",
+    "old": "2014-01-06",
+    "new": "2014-04-15",
+    "days": 60
+   },
+   {
+    "name": "تنظيم الفحص الفني الدوري للمركبات",
+    "old": "2021-02-23",
+    "new": "2021-09-08",
+    "days": 180
+   },
+   {
+    "name": "تنظيم المؤسسة العامة للصناعات العسكرية",
+    "old": "2013-07-01",
+    "new": "2013-09-01",
+    "days": 30
+   },
+   {
+    "name": "تنظيم المخصص المالي لصعوبة الحصول على عمل",
+    "old": "2013-12-02",
+    "new": "2014-05-01",
+    "days": 90
+   },
+   {
+    "name": "تنظيم الهيئة السعودية للمحامين",
+    "old": "2015-04-27",
+    "new": "2015-07-21",
+    "days": 60
+   },
+   {
+    "name": "تنظيم الهيئة السعودية للمراجعين والمحاسبين",
+    "old": "2021-03-09",
+    "new": "2021-06-17",
+    "days": 90
+   },
+   {
+    "name": "تنظيم الهيئة السعودية للمقاولين",
+    "old": "2015-09-07",
+    "new": "2015-12-01",
+    "days": 60
+   },
+   {
+    "name": "تنظيم الهيئة العامة للإحصاء",
+    "old": "2015-10-26",
+    "new": "2016-02-11",
+    "days": 90
+   },
+   {
+    "name": "تنظيم هيئة الهلال الأحمر السعودي",
+    "old": "2011-06-13",
+    "new": "2011-09-29",
+    "days": 90
+   },
+   {
+    "name": "تنظيم هيئة حقوق الإنسان",
+    "old": "2005-09-12",
+    "new": "2005-12-06",
+    "days": 60
+   },
+   {
+    "name": "قواعد تنظيم لوحات الدعاية والإعلان",
+    "old": "1992-06-29",
+    "new": "1992-10-22",
+    "days": 90
+   }
+  ]
+ },
+ "statements": [
+  "SELECT CASE WHEN (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpwi0bkw001xnxff8zst26lv$hk$)=$hk$2022-03-09$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pbv80021cwg2br8calht$hk$)=$hk$2021-12-30$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qixw0084cwg2e4jtdk5z$hk$)=$hk$2012-04-16$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpwi0c8m0020nxffmobucqkh$hk$)=$hk$2020-07-10$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5r8eo00becwg21qt63wx7$hk$)=$hk$2005-09-27$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pyd30057cwg2aeeqrvg7$hk$)=$hk$2018-04-11$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p3iv000vcwg2j8yoctxi$hk$)=$hk$2013-12-21$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qvrv009xcwg2jl97m5li$hk$)=$hk$2010-08-24$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qra4009acwg25u2zl7wp$hk$)=$hk$2009-05-26$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q4ks0063cwg2hgm8rkmr$hk$)=$hk$2014-07-20$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q6pi006ecwg2ucqkh1a3$hk$)=$hk$2021-08-13$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5r53300b8cwg2hyqj8zrc$hk$)=$hk$2022-12-28$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pwt6004zcwg2175jlssl$hk$)=$hk$2004-12-12$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rn3900cmcwg2t70wevmi$hk$)=$hk$2010-10-26$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q7hf006icwg2m1ouzs82$hk$)=$hk$2022-07-27$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pcg70024cwg235dc7j6f$hk$)=$hk$2022-10-03$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pa48001scwg210ue3g5g$hk$)=$hk$2023-07-24$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pinm0030cwg2vb9m262i$hk$)=$hk$2006-07-12$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qo68008ucwg29x0hiyos$hk$)=$hk$2014-11-02$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qzgp00afcwg264bh8sh6$hk$)=$hk$2021-02-18$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rfi400c0cwg2ltsts5j9$hk$)=$hk$2018-08-01$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p6th001ccwg2fz4ds933$hk$)=$hk$2005-08-30$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qeof007icwg2nv2r2hch$hk$)=$hk$2014-07-20$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pv2f004rcwg231jxvfvb$hk$)=$hk$2013-05-04$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rkx500cfcwg2kl7mpzda$hk$)=$hk$2006-06-06$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rzyy00dmcwg2j18drci6$hk$)=$hk$2022-06-01$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pq0x0041cwg2ca51b15b$hk$)=$hk$2019-10-08$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qbcy0071cwg2dtqd49va$hk$)=$hk$2021-09-15$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5ro1u00cpcwg2nejhzpz1$hk$)=$hk$2012-07-03$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rl8i00cgcwg2ktcgb134$hk$)=$hk$2006-06-27$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qgt5007tcwg20weum23t$hk$)=$hk$2020-07-10$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q73g006gcwg211uev9pu$hk$)=$hk$2022-04-20$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qfna007ncwg2oxxnvm1x$hk$)=$hk$2018-07-11$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qneb008qcwg2uif5zy3a$hk$)=$hk$2021-09-07$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rnql00cocwg26h3a4y1g$hk$)=$hk$2012-07-03$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rc4200bpcwg20np662kj$hk$)=$hk$2015-12-01$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p6mi001bcwg27ufsl8jw$hk$)=$hk$2005-08-13$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qxir00a5cwg2b6meszdc$hk$)=$hk$2014-07-17$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5r3j900b0cwg2apftkobe$hk$)=$hk$2018-04-11$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5roo700crcwg2i29zu45b$hk$)=$hk$2012-07-03$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qhe2007wcwg2e9oyrkyh$hk$)=$hk$2021-03-23$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rg4c00c2cwg22ehsnc7c$hk$)=$hk$2020-11-19$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rtgl00d6cwg2u1ezbkrh$hk$)=$hk$2005-08-23$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qxpr00a6cwg2yt687eee$hk$)=$hk$2014-10-30$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5r4p500b6cwg2t04bq0yd$hk$)=$hk$2020-12-31$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5quly009rcwg2uk382g4o$hk$)=$hk$2003-01-06$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p52o0013cwg2sdqmgh59$hk$)=$hk$2007-05-15$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q4rr0064cwg276wf6qoi$hk$)=$hk$2014-07-31$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5ptij004jcwg2f5398mcs$hk$)=$hk$2021-10-28$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qwjt00a0cwg2y15pl0z9$hk$)=$hk$2012-06-27$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5r3q800b1cwg2jsfe33uh$hk$)=$hk$2018-04-11$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q7oe006jcwg2rb0vzn8c$hk$)=$hk$2023-07-16$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5puah004ncwg26nbvbeow$hk$)=$hk$2022-11-23$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pjtg0036cwg27xwfuvbg$hk$)=$hk$2012-05-30$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q985006qcwg2ha9y1f0d$hk$)=$hk$2005-08-13$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qz2r00adcwg2tfe62w2s$hk$)=$hk$2020-04-15$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rcfi00bqcwg2517ubmn0$hk$)=$hk$2015-12-08$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qvkv009wcwg2rhfglw79$hk$)=$hk$2007-02-13$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qjws0089cwg2dmf0bb1s$hk$)=$hk$2006-04-11$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q7af006hcwg29r4dpenu$hk$)=$hk$2022-06-29$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pi2n002xcwg2cbut4twg$hk$)=$hk$2004-07-17$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q82d006lcwg28paja3t7$hk$)=$hk$2023-09-25$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5quzx009tcwg2a1i14leh$hk$)=$hk$2004-11-04$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5psxm004gcwg2zub1ek0a$hk$)=$hk$2021-08-26$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rhoj00c7cwg2lqnf2ujl$hk$)=$hk$2023-08-27$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qlgj008gcwg2hwyn08pu$hk$)=$hk$2014-11-25$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p8di001kcwg2ol8wrk40$hk$)=$hk$2024-02-18$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q044005gcwg2glq3hew6$hk$)=$hk$2005-11-30$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q4yq0065cwg21c3dn066$hk$)=$hk$2015-11-24$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rmhl00ckcwg2h620qxn3$hk$)=$hk$1998-05-27$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qi5z0080cwg20wug3r3n$hk$)=$hk$2023-09-05$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rkah00cdcwg2k7sogfqt$hk$)=$hk$2004-03-06$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p0sz000hcwg2bjpaijcw$hk$)=$hk$2011-04-12$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pery002gcwg2patgc9q7$hk$)=$hk$2003-07-31$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rod200cqcwg2tswwe4ov$hk$)=$hk$2012-07-03$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qvdw009vcwg2fj9o8f6g$hk$)=$hk$2005-12-06$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5plrf003fcwg2cd9cczyu$hk$)=$hk$2017-01-17$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5prdr0048cwg21aqs4rrn$hk$)=$hk$2020-12-10$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pbaa001ycwg2daw7gsdk$hk$)=$hk$2021-04-22$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pqlu0044cwg2dzxmg6u3$hk$)=$hk$2020-08-20$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p4as000zcwg2nx3yo0cj$hk$)=$hk$1992-06-30$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p4vp0012cwg2oxepo39w$hk$)=$hk$2005-08-13$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qkvl008dcwg2snth8nil$hk$)=$hk$2009-07-14$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q7vd006kcwg2uaelgo7l$hk$)=$hk$2020-02-26$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qxwq00a7cwg2593x43jn$hk$)=$hk$2015-04-07$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5prkq0049cwg2fez2xqdz$hk$)=$hk$2021-03-11$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p7zc001icwg2r2ug14re$hk$)=$hk$2014-04-21$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rozq00cscwg2eqnjv8my$hk$)=$hk$2014-12-15$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rd3700bscwg2zw1okf98$hk$)=$hk$2014-12-01$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rgf700c3cwg2jmb08zy6$hk$)=$hk$2020-12-01$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pjfi0034cwg2pns2vqhi$hk$)=$hk$2011-06-27$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qp58008zcwg2aqrf5ow4$hk$)=$hk$2014-05-26$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qor7008xcwg2hbz6ig6b$hk$)=$hk$2014-05-26$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qoy6008ycwg2w9aeccsh$hk$)=$hk$2014-05-26$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q4dt0062cwg2w57de2mz$hk$)=$hk$2014-01-06$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pb3a001xcwg2gyp5i7lg$hk$)=$hk$2021-02-23$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p7sd001hcwg2m94ux5ce$hk$)=$hk$2013-07-01$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rbi100bncwg2ghr8kt40$hk$)=$hk$2013-12-02$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qlni008hcwg26lvgevla$hk$)=$hk$2015-04-27$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5prrp004acwg2ddbflie0$hk$)=$hk$2021-03-09$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pkln003acwg2j9kghq1d$hk$)=$hk$2015-09-07$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pkzj003bcwg2bdfvfxzw$hk$)=$hk$2015-10-26$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qtu2009ncwg2r98qd4t5$hk$)=$hk$2011-06-13$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qkom008ccwg2xep4aje1$hk$)=$hk$2005-09-12$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p0f1000fcwg2qjypldky$hk$)=$hk$1992-06-29$hk$::date AND (SELECT count(*) FROM legal_text_provenance WHERE id LIKE 'g19p-%')=0 THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard_before",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-8dd135e72e9c365874cae8a0$hk$, 'system', $hk$cmpwi0bkw001xnxff8zst26lv$hk$, $hk$نظام الأحوال الشخصية$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-606c4e87c85dc11573334ab5$hk$, $hk$e6c7f730c09efba809d09132e86323d5$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2022-03-09->2022-06-16$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام بعد مضي (تسعين) يوماً من تاريخ نشره، ويلغي كل ما يتعارض معه من أحكام.» — النشر 1443/08/15هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2022-03-18 + 90 يومًا = 2022-06-16؛ وكان المخزن 2022-03-09 (تاريخ الصدور 1443/08/06هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-8dd135e72e9c365874cae8a0$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-8c6d0659ab6eb4bd78861f1b$hk$, 'system', $hk$cmpz5pbv80021cwg2br8calht$hk$, $hk$نظام الإثبات$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-04a147d9fad81a48dc5be61d$hk$, $hk$6c7310d7a52a598d976fb94b90760c49$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2021-12-30->2022-07-06$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام بعد (مائة وثمانين) يوماً من تاريخ نشره في الجريدة الرسمية.» — النشر 1443/06/04هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2022-01-07 + 180 يومًا = 2022-07-06؛ وكان المخزن 2021-12-30 (تاريخ الصدور 1443/05/26هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-8c6d0659ab6eb4bd78861f1b$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-f9c8055117a6b457452fba0c$hk$, 'system', $hk$cmpz5qixw0084cwg2e4jtdk5z$hk$, $hk$نظام التحكيم$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-a8e143a1cdf4bb707a3f0373$hk$, $hk$7c1856db98568beca724000c34878b54$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2012-04-16->2012-07-08$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام بعد ثلاثين يوماً من تاريخ نشره في الجريدة الرسمية.» — النشر 1433/07/18هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2012-06-08 + 30 يومًا = 2012-07-08؛ وكان المخزن 2012-04-16 (تاريخ الصدور 1433/05/24هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-f9c8055117a6b457452fba0c$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-4813b67605685c9dd15aef7b$hk$, 'system', $hk$cmpwi0c8m0020nxffmobucqkh$hk$, $hk$نظام التوثيق$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-72ccdf4fb595464495052c90$hk$, $hk$a8e0d4b242950efd8fb55dfd8b5f838e$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2020-07-10->2021-01-13$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بالنظام بعد مائة وثمانين يوماً من تاريخ نشره في الجريدة الرسمية، ويلغي كل ما يتعارض معه من أحكام.» — النشر 1441/11/26هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2020-07-17 + 180 يومًا = 2021-01-13؛ وكان المخزن 2020-07-10 (تاريخ الصدور 1441/11/19هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-4813b67605685c9dd15aef7b$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-dd5c027d15a592c9dd459e37$hk$, 'system', $hk$cmpz5r8eo00becwg21qt63wx7$hk$, $hk$نظام العمل$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-5ba2e20d7e53ddfc6aa1aa6d$hk$, $hk$5f91851f64f3d5a30e387f0033268154$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2005-09-27->2006-04-26$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «ينشر هذا النظام في الجريدة الرسمية، ويعمل به بعد مائة وثمانين يومًا من تاريخ نشره.» — النشر 1426/09/25هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2005-10-28 + 180 يومًا = 2006-04-26؛ وكان المخزن 2005-09-27 (تاريخ الصدور 1426/08/23هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-dd5c027d15a592c9dd459e37$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-4a042a71e9057c18323fa497$hk$, 'system', $hk$cmpz5pyd30057cwg2aeeqrvg7$hk$, $hk$النظام الأساس لجمعية الكشافة العربية السعودية$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-4d10c15960e4b0c61dd6a445$hk$, $hk$d86e623387298bed7eb63f8966b1a2bc$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2018-04-11->2018-11-05$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «ينشر هذا النظام في الجريدة الرسمية، ويعمل به بعد (مائة وثمانين) يوماً من تاريخ نشره، ويلغي نظام جمعية الكشافة العربية السعودية، الصادر بالمرسوم الملكي رقم (م/8) وتاريخ 20 / 4 / 1407 هـ، وجميع ما يتعار» — النشر 1439/08/23هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2018-05-09 + 180 يومًا = 2018-11-05؛ وكان المخزن 2018-04-11 (تاريخ الصدور 1439/07/25هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-4a042a71e9057c18323fa497$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-98f7c9573fa780aaac7353ab$hk$, 'system', $hk$cmpz5p3iv000vcwg2j8yoctxi$hk$, $hk$النظام الجزائي لجرائم التزوير$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-d05aca474cd8ad591eb27608$hk$, $hk$07d1657450bc9943bdf9df38ec6e19c9$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2013-12-21->2014-03-09$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام بعد مضي ثلاثين يوماً من تاريخ نشره في الجريدة الرسمية.» — النشر 1435/04/07هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2014-02-07 + 30 يومًا = 2014-03-09؛ وكان المخزن 2013-12-21 (تاريخ الصدور 1435/02/18هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-98f7c9573fa780aaac7353ab$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-d9c8f6acc0fd35c8cdb6d4c5$hk$, 'system', $hk$cmpz5qvrv009xcwg2jl97m5li$hk$, $hk$نظام أخلاقيات البحث على المخلوقات الحية$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-acec9ea3d17c591b6af1a4a5$hk$, $hk$3e96762b5c1372585dac219bd6da6b0a$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2010-08-24->2010-12-16$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام بعد تسعين يومًا من تاريخ نشره في الجريدة الرسمية.» — النشر 1431/10/08هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2010-09-17 + 90 يومًا = 2010-12-16؛ وكان المخزن 2010-08-24 (تاريخ الصدور 1431/09/14هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-d9c8f6acc0fd35c8cdb6d4c5$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-96f8cc214f7e8a811716d273$hk$, 'system', $hk$cmpz5qra4009acwg25u2zl7wp$hk$, $hk$نظام أندية السيارات والدراجات النارية$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-e24a910085bb490ad09b1c13$hk$, $hk$5231a13d3226b961cee281f873e660c6$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2009-05-26->2009-10-17$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام بعد (مائة وعشرين) يومًا من تاريخ نشره.» — النشر 1430/06/26هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2009-06-19 + 120 يومًا = 2009-10-17؛ وكان المخزن 2009-05-26 (تاريخ الصدور 1430/06/02هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-96f8cc214f7e8a811716d273$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-995aeadf11f529bff3df758a$hk$, 'system', $hk$cmpz5q4ks0063cwg2hgm8rkmr$hk$, $hk$نظام إجراءات التراخيص البلدية$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-070c5b9f479c11184e353976$hk$, $hk$f47a5dca61f6578c3e8ed41385a0a599$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2014-07-20->2014-12-04$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يلغي هذا النظام كل ما يتعارض معه، ويعمل به بعد تسعين يوماً من تاريخ نشره في الجريدة الرسمية.» — النشر 1435/11/10هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2014-09-05 + 90 يومًا = 2014-12-04؛ وكان المخزن 2014-07-20 (تاريخ الصدور 1435/09/23هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-995aeadf11f529bff3df758a$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-083ad0011039ee6047add892$hk$, 'system', $hk$cmpz5q6pi006ecwg2ucqkh1a3$hk$, $hk$نظام إدارة النفايات$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-8813a70b163f1c04314867e1$hk$, $hk$4543b6d91326b0dd75023e25385d3afe$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2021-08-13->2021-11-16$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بالنظام بعد مضي (ستين) يومًا من تاريخ نشره في الجريدة الرسمية.» — النشر 1443/02/10هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2021-09-17 + 60 يومًا = 2021-11-16؛ وكان المخزن 2021-08-13 (تاريخ الصدور 1443/01/05هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-083ad0011039ee6047add892$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-4d551e5b38c4e3853ecfa9bb$hk$, 'system', $hk$cmpz5r53300b8cwg2hyqj8zrc$hk$, $hk$نظام إمدادات الطاقة$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-8c0da2383ffa94b5542accae$hk$, $hk$9102ae1d2e44124f57debb74f272e66c$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2022-12-28->2023-03-07$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بالنظام بعد (ستين) يوماً من تاريخ نشره في الجريدة الرسمية، ويحل محل نظام إمدادات الغاز وتسعيره الصادر بالمرسوم الملكي رقم (م / 36) وتاريخ 25 / 6 / 1424هـ، ويلغي كل ما يتعارض معه من أحكام.» — النشر 1444/06/13هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2023-01-06 + 60 يومًا = 2023-03-07؛ وكان المخزن 2022-12-28 (تاريخ الصدور 1444/06/04هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-4d551e5b38c4e3853ecfa9bb$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-88879780c705ebccc55c88e0$hk$, 'system', $hk$cmpz5pwt6004zcwg2175jlssl$hk$, $hk$نظام إنتاج المواد التعليمية المساعدة وتسويقها$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-1fce316aaa83250a21adf674$hk$, $hk$ec3a625c8aa2dce7961d1d323154914a$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2004-12-12->2005-07-06$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام بعد مائة وثمانين يومًا من تاريخ نشره.» — النشر 1425/11/26هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2005-01-07 + 180 يومًا = 2005-07-06؛ وكان المخزن 2004-12-12 (تاريخ الصدور 1425/10/29هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-88879780c705ebccc55c88e0$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-3c85beec2135aa28b58cb92b$hk$, 'system', $hk$cmpz5rn3900cmcwg2t70wevmi$hk$, $hk$نظام إيرادات الدولة$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-d2256b8af5f37bdb97519919$hk$, $hk$a34fb2a6f608a4b825c6db8bcaed88e2$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2010-10-26->2011-02-24$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «ينشر هذا النظام في الجريدة الرسمية ، ويعمل به بعد تسعين يوما من تاريخ نشره .» — النشر 1431/12/20هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2010-11-26 + 90 يومًا = 2011-02-24؛ وكان المخزن 2010-10-26 (تاريخ الصدور 1431/11/18هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-3c85beec2135aa28b58cb92b$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-72415d106a1e5559bd9bb8c4$hk$, 'system', $hk$cmpz5q7hf006icwg2m1ouzs82$hk$, $hk$نظام استئجار الدولة للعقار$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-1119a800664738f4644885fa$hk$, $hk$d91fcfed81e2da8a1473ce7e9560310d$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2022-07-27->2023-02-01$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بالنظام بعد مضي (مائة وثمانين) يومًا من تاريخ نشره في الجريدة الرسمية.» — النشر 1444/01/07هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2022-08-05 + 180 يومًا = 2023-02-01؛ وكان المخزن 2022-07-27 (تاريخ الصدور 1443/12/28هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-72415d106a1e5559bd9bb8c4$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-57afac5cf608bb12358b6b9b$hk$, 'system', $hk$cmpz5pcg70024cwg235dc7j6f$hk$, $hk$نظام استخدام كاميرات المراقبة الأمنية$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-0df3091a303b6c03e66aefb5$hk$, $hk$3dfad7b37f5147ae39d48a8df00717b9$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2022-10-03->2023-04-05$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بالنظام بعد (مائة وثمانين) يومًا من تاريخ نشره في الجريدة الرسمية.» — النشر 1444/03/11هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2022-10-07 + 180 يومًا = 2023-04-05؛ وكان المخزن 2022-10-03 (تاريخ الصدور 1444/03/07هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-57afac5cf608bb12358b6b9b$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-cdb19ceaefb1e92fac15ae1d$hk$, 'system', $hk$cmpz5pa48001scwg210ue3g5g$hk$, $hk$نظام استخدام وحماية شارة واسم الهلال الأحمر وما في حكمهما$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-f596c9cb07fbdd1b6126be03$hk$, $hk$e993861516ea54b37d28006acd059341$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2023-07-24->2023-11-02$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بالنظام بعد مضي (تسعين) يومًا من تاريخ نشره في الجريدة الرسمية.» — النشر 1445/01/17هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2023-08-04 + 90 يومًا = 2023-11-02؛ وكان المخزن 2023-07-24 (تاريخ الصدور 1445/01/06هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-cdb19ceaefb1e92fac15ae1d$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-91c31bf2d3b795df66dcbcdf$hk$, 'system', $hk$cmpz5pinm0030cwg2vb9m262i$hk$, $hk$نظام استيراد المواد الكيميائية وإدارتها ( نظام إدارة المواد الكيميائية )$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-cd55c50458095c8885ff3282$hk$, $hk$f2bfff9670972bf1998198c4e924f629$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2006-07-12->2007-02-14$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام بعد مائة وثمانين يومًا من تاريخ نشره في الجريدة الرسمية،» — النشر 1427/07/24هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2006-08-18 + 180 يومًا = 2007-02-14؛ وكان المخزن 2006-07-12 (تاريخ الصدور 1427/06/16هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-91c31bf2d3b795df66dcbcdf$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-fe12a2007b15e5b22b78170d$hk$, 'system', $hk$cmpz5qo68008ucwg29x0hiyos$hk$, $hk$نظام الآثار والمتاحف والتراث العمراني$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-b2040544332109a13e05ffb4$hk$, $hk$4419c634b182f48c7e4b286da3f1a1d8$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2014-11-02->2015-03-28$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام بعد مضي (مائة وعشرين) يوماً من تاريخ نشره في الجريدة الرسمية.» — النشر 1436/02/06هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2014-11-28 + 120 يومًا = 2015-03-28؛ وكان المخزن 2014-11-02 (تاريخ الصدور 1436/01/09هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-fe12a2007b15e5b22b78170d$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-e6a1b34d2353f39b2917b1fd$hk$, 'system', $hk$cmpz5qzgp00afcwg264bh8sh6$hk$, $hk$نظام الأجهزة والمستلزمات الطبية$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-fcf804b2dadecd4f93e829a4$hk$, $hk$e8fddbcea6567c8ad6d538dded4210a4$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2021-02-18->2021-08-25$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بالنظام بعد (مائة وثمانين) يومًا من تاريخ نشره في الجريدة الرسمية.» — النشر 1442/07/14هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2021-02-26 + 180 يومًا = 2021-08-25؛ وكان المخزن 2021-02-18 (تاريخ الصدور 1442/07/06هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-e6a1b34d2353f39b2917b1fd$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-ff3a286b072c46bb680a4a25$hk$, 'system', $hk$cmpz5rfi400c0cwg2ltsts5j9$hk$, $hk$نظام الأحداث$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-35f282332e4e29ede3e471b7$hk$, $hk$1b0679862ae2a34486eaec869e9224e2$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2018-08-01->2019-01-29$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بالنظام بعد تسعين يوماً من تاريخ نشره في الجريدة الرسمية، ويُلغي كل ما يتعارض معه من إجراءات وأحكام.» — النشر 1440/02/22هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2018-10-31 + 90 يومًا = 2019-01-29؛ وكان المخزن 2018-08-01 (تاريخ الصدور 1439/11/19هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-ff3a286b072c46bb680a4a25$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-779275ad51566ed4a3fe198b$hk$, 'system', $hk$cmpz5p6th001ccwg2fz4ds933$hk$, $hk$نظام الأسلحة والذخائر$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-7667ad65162d5e3330a17842$hk$, $hk$312bd30ac6ce4075f88c89fe93b91f83$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2005-08-30->2006-04-19$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام و اللائحة بعد مائة وثمانين يوما من تاريخ نشره في الجريدة الرسمية، ويصدر الوزير اللائحة لهذا النظام خلال هذه المدة .» — النشر 1426/09/18هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2005-10-21 + 180 يومًا = 2006-04-19؛ وكان المخزن 2005-08-30 (تاريخ الصدور 1426/07/25هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-779275ad51566ed4a3fe198b$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-4896c3534b7d8ae4329a573b$hk$, 'system', $hk$cmpz5qeof007icwg2nv2r2hch$hk$, $hk$نظام الأعلاف$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-72c6dddbc1498dded648bab6$hk$, $hk$b2d4db73b6609b125bb21290cae35659$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2014-07-20->2015-03-04$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام بعد مائة وثمانين يوماً من تاريخ نشره، ويلغي كل ما يتعارض معه من أحكام.» — النشر 1435/11/10هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2014-09-05 + 180 يومًا = 2015-03-04؛ وكان المخزن 2014-07-20 (تاريخ الصدور 1435/09/23هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-4896c3534b7d8ae4329a573b$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-c6ab03866b86fb964f6d5163$hk$, 'system', $hk$cmpz5pv2f004rcwg231jxvfvb$hk$, $hk$نظام الأوسمة السعودية$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-a6bffa26d19dcc775649472f$hk$, $hk$ecedff05d83100d935cf5815381459f5$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2013-05-04->2013-11-27$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام بعد مائة وثمانين يوماً من تاريخ نشره في الجريدة الرسمية.» — النشر 1434/07/21هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2013-05-31 + 180 يومًا = 2013-11-27؛ وكان المخزن 2013-05-04 (تاريخ الصدور 1434/06/24هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-c6ab03866b86fb964f6d5163$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-0b98165e5f3b613c6d9df82a$hk$, 'system', $hk$cmpz5rkx500cfcwg2kl7mpzda$hk$, $hk$نظام الإيداع في المخازن العامة$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-85b73c60f438a1a5bb7495ae$hk$, $hk$d6daeaa7ca47360699bed5a788bcad00$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2006-06-06->2007-06-14$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «ينشر هذا النظام في الجريدة الرسمية، ويعمل به بعد تسعين يوما من تاريخ نشره، ويلغي كل ما يتعارض مع أحكامه.» — النشر 1428/02/26هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2007-03-16 + 90 يومًا = 2007-06-14؛ وكان المخزن 2006-06-06 (تاريخ الصدور 1427/05/10هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-0b98165e5f3b613c6d9df82a$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-e2135865b10e8f626c519793$hk$, 'system', $hk$cmpz5rzyy00dmcwg2j18drci6$hk$, $hk$نظام الاتصالات وتقنية المعلومات$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-3f120f0e819566b42d8887fb$hk$, $hk$9503fd5ba06a606389fdf8dd4d2c8174$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2022-06-01->2022-12-07$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يحل هذا النظام محل نظام الاتصالات الصادر بالمرسوم الملكي رقم (م / 12) وتاريخ 12 / 3 / 1422هـ، ويلغي ما يتعارض معه من أحكام. يعمل بالنظام بعد مضي (180) يومًا من تاريخ نشره في الجريدة الرسمية.» — النشر 1443/11/11هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2022-06-10 + 180 يومًا = 2022-12-07؛ وكان المخزن 2022-06-01 (تاريخ الصدور 1443/11/02هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-e2135865b10e8f626c519793$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-c744e70ef92472065b3cfcdd$hk$, 'system', $hk$cmpz5pq0x0041cwg2ca51b15b$hk$, $hk$نظام الامتياز التجاري$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-7509663322a8299377563993$hk$, $hk$b7878d4e50cc426c865a80757c0dfd7d$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2019-10-08->2020-04-20$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بالنظام بعد مضي (مائة وثمانين) يوماً من تاريخ نشره في الجريدة الرسمية، ويلغي كل ما يتعارض معه من أحكام.» — النشر 1441/02/24هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2019-10-23 + 180 يومًا = 2020-04-20؛ وكان المخزن 2019-10-08 (تاريخ الصدور 1441/02/09هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-c744e70ef92472065b3cfcdd$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-bc681fac7790e0c57abbb059$hk$, 'system', $hk$cmpz5qbcy0071cwg2dtqd49va$hk$, $hk$نظام الانضباط الوظيفي$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-b620c3dc1637c3e4beed4453$hk$, $hk$00d4853db03e660bf255f237fd6681bd$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2021-09-15->2022-03-23$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بالنظام بعد (مائة وثمانين) يومًا من تاريخ نشره في الجريدة الرسمية.» — النشر 1443/02/17هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2021-09-24 + 180 يومًا = 2022-03-23؛ وكان المخزن 2021-09-15 (تاريخ الصدور 1443/02/08هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-bc681fac7790e0c57abbb059$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-ac7bc1970cb2b82971027b1d$hk$, 'system', $hk$cmpz5ro1u00cpcwg2nejhzpz1$hk$, $hk$نظام الايجار التمويلي$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-9130a7bc72b7b08390593ab3$hk$, $hk$fabb52fc7e6518ec380912c50be93198$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2012-07-03->2012-11-29$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام بعد مضي (تسعين) يومًا من تاريخ نشره في الجريدة الرسمية.» — النشر 1433/10/13هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2012-08-31 + 90 يومًا = 2012-11-29؛ وكان المخزن 2012-07-03 (تاريخ الصدور 1433/08/13هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-ac7bc1970cb2b82971027b1d$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-5036b604b819e5cee34f0a8f$hk$, 'system', $hk$cmpz5rl8i00cgcwg2ktcgb134$hk$, $hk$نظام البنك السعودي للتسليف والادخار ( بنك التنمية الاجتماعية )$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-1d7fd2a9edb00fb678e5e9c5$hk$, $hk$f66e8d109216be2b28f86bfd7fb4801f$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2006-06-27->2006-11-09$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «ينشر هذا النظام في الجريدة الرسمية، ويعمل به بعد تسعين يوما من تاريخ نشره.» — النشر 1427/07/17هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2006-08-11 + 90 يومًا = 2006-11-09؛ وكان المخزن 2006-06-27 (تاريخ الصدور 1427/06/01هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-5036b604b819e5cee34f0a8f$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-64bda3e49f870efc594105f9$hk$, 'system', $hk$cmpz5qgt5007tcwg20weum23t$hk$, $hk$نظام البيئة$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-cac061cf62e7f29ef3afdc79$hk$, $hk$a3810db663ad38680c195d871a02d376$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2020-07-10->2021-01-13$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بالنظام بعد (مائة وثمانين) يوماً من تاريخ نشره في الجريدة الرسمية.» — النشر 1441/11/26هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2020-07-17 + 180 يومًا = 2021-01-13؛ وكان المخزن 2020-07-10 (تاريخ الصدور 1441/11/19هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-64bda3e49f870efc594105f9$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-64a31bd52a6e3b8f67061df1$hk$, 'system', $hk$cmpz5q73g006gcwg211uev9pu$hk$, $hk$نظام التسجيل العيني للعقار$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-ebc181f10631754ae894a10b$hk$, $hk$36901666050d57c5ae9a8efd097776c5$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2022-04-20->2022-08-11$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بالنظام بعد (تسعين) يوماً من تاريخ نشره في الجريدة الرسمية.» — النشر 1443/10/12هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2022-05-13 + 90 يومًا = 2022-08-11؛ وكان المخزن 2022-04-20 (تاريخ الصدور 1443/09/19هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-64a31bd52a6e3b8f67061df1$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-222590c2c7a3a0771c5b4875$hk$, 'system', $hk$cmpz5qfna007ncwg2oxxnvm1x$hk$, $hk$نظام التعامل مع الموارد الوراثية النباتية للأغذية والزراعة$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-05188d9d16ffa1bebf3e162c$hk$, $hk$682316fb3d3e671abfa9d8e858ba5fa8$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2018-07-11->2018-10-23$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام بعد تسعين يوماً من تاريخ نشره في الجريدة الرسمية، ويلغي كل ما يتعارض معه من أحكام.» — النشر 1439/11/12هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2018-07-25 + 90 يومًا = 2018-10-23؛ وكان المخزن 2018-07-11 (تاريخ الصدور 1439/10/27هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-222590c2c7a3a0771c5b4875$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-88e9e9dba36009f74e291a98$hk$, 'system', $hk$cmpz5qneb008qcwg2uif5zy3a$hk$, $hk$نظام التكاليف القضائية$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-c80a210e115cdc2cc8fd46e9$hk$, $hk$af675bc431289a1056047763e85f7343$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2021-09-07->2022-03-16$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بالنظام بعد (مائة وثمانين) يوماً من تاريخ نشره في الجريدة الرسمية.» — النشر 1443/02/10هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2021-09-17 + 180 يومًا = 2022-03-16؛ وكان المخزن 2021-09-07 (تاريخ الصدور 1443/01/30هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-88e9e9dba36009f74e291a98$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-d53f49f4575d535fc37a1e1f$hk$, 'system', $hk$cmpz5rnql00cocwg26h3a4y1g$hk$, $hk$نظام التمويل العقاري$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-e7c8c1b9e57dc2c261b8d04a$hk$, $hk$fabb52fc7e6518ec380912c50be93198$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2012-07-03->2012-11-29$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام بعد مضي (تسعين) يومًا من تاريخ نشره في الجريدة الرسمية.» — النشر 1433/10/13هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2012-08-31 + 90 يومًا = 2012-11-29؛ وكان المخزن 2012-07-03 (تاريخ الصدور 1433/08/13هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-d53f49f4575d535fc37a1e1f$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-7632dfbbe6719c0ff53c1856$hk$, 'system', $hk$cmpz5rc4200bpcwg20np662kj$hk$, $hk$نظام الجمعيات والمؤسسات الأهلية$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-48443e0d4df4d0daaa02bbdc$hk$, $hk$161fdfeb0ee56de5bdda0b09c6da38f7$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2015-12-01->2016-03-17$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام بعد (تسعين) يوماً من تاريخ نشره في الجريدة الرسمية.» — النشر 1437/03/07هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2015-12-18 + 90 يومًا = 2016-03-17؛ وكان المخزن 2015-12-01 (تاريخ الصدور 1437/02/19هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-7632dfbbe6719c0ff53c1856$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-dc53e9bb387915dce92d5d07$hk$, 'system', $hk$cmpz5p6mi001bcwg27ufsl8jw$hk$, $hk$نظام الحراسة الأمنية المدنية الخاصة$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-4201cf85f5c34c64d442eb61$hk$, $hk$56a9d152bf5db3f56085bc65920acb91$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2005-08-13->2005-12-08$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «ينشر هذا النظام في الجريدة الرسمية، ويعمل به بعد تسعين يوما من تاريخ نشره، ويلغي كل ما يتعارض معه من أحكام. .» — النشر 1426/08/05هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2005-09-09 + 90 يومًا = 2005-12-08؛ وكان المخزن 2005-08-13 (تاريخ الصدور 1426/07/08هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-dc53e9bb387915dce92d5d07$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-d88aa434edb3dcb13a2529a2$hk$, 'system', $hk$cmpz5qxir00a5cwg2b6meszdc$hk$, $hk$نظام الرعاية الصحية النفسية$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-4ea6617a50aaab9ab28a9e1e$hk$, $hk$094a80fcbe793cbdfa9983e11b4c8656$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2014-07-17->2014-11-27$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام بعد (تسعين) يوماً من تاريخ نشره في الجريدة الرسمية.» — النشر 1435/11/03هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2014-08-29 + 90 يومًا = 2014-11-27؛ وكان المخزن 2014-07-17 (تاريخ الصدور 1435/09/20هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-d88aa434edb3dcb13a2529a2$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-0ae98cb9fdc69174c4abd43a$hk$, 'system', $hk$cmpz5r3j900b0cwg2apftkobe$hk$, $hk$نظام الرقابة على الاستخدامات النووية والاشعاعية$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-815a5221fd8bbb8261bed21c$hk$, $hk$2031f9b412ae7283ac69b0cb34d76b36$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2018-04-11->2018-10-21$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بالنظام بعد (مائة وثمانين) يومًا من تاريخ نشره في الجريدة الرسمية، ويلغى كل ما يتعارض معه من أحكام.» — النشر 1439/08/08هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2018-04-24 + 180 يومًا = 2018-10-21؛ وكان المخزن 2018-04-11 (تاريخ الصدور 1439/07/25هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-0ae98cb9fdc69174c4abd43a$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-b7cac603d4037f3719ddfd75$hk$, 'system', $hk$cmpz5roo700crcwg2i29zu45b$hk$, $hk$نظام الرهن العقاري المسجل$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-a33034c2b07eab8b17e332af$hk$, $hk$37ce0559420f52aef901acd31d934370$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2012-07-03->2012-11-08$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام بعد مضي تسعين يومًا من تاريخ نشره في الجريدة الرسمية.» — النشر 1433/09/22هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2012-08-10 + 90 يومًا = 2012-11-08؛ وكان المخزن 2012-07-03 (تاريخ الصدور 1433/08/13هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-b7cac603d4037f3719ddfd75$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-e1f58b60decbd1f09229ce71$hk$, 'system', $hk$cmpz5qhe2007wcwg2e9oyrkyh$hk$, $hk$نظام الزراعة$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-5200f4827ca96ac62fa11fd0$hk$, $hk$25fe9e172a6c1785196e5e22162a5a9f$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2021-03-23->2021-07-01$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بالنظام بعد (تسعين) يومًا من تاريخ نشره في الجريدة الرسمية.» — النشر 1442/08/20هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2021-04-02 + 90 يومًا = 2021-07-01؛ وكان المخزن 2021-03-23 (تاريخ الصدور 1442/08/10هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-e1f58b60decbd1f09229ce71$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-ec4e011559aa623b63ae418b$hk$, 'system', $hk$cmpz5rg4c00c2cwg22ehsnc7c$hk$, $hk$نظام الضمان الاجتماعي$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-076c5eb4477d880067b27123$hk$, $hk$9fa524b30b65af2d48d68e8d1108634c$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2020-11-19->2021-03-27$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بالنظام بعد (مائة وعشرين) يوماً من تاريخ نشره في الجريدة الرسمية.» — النشر 1442/04/12هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2020-11-27 + 120 يومًا = 2021-03-27؛ وكان المخزن 2020-11-19 (تاريخ الصدور 1442/04/04هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-ec4e011559aa623b63ae418b$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-5aa418af302452d2fa0df2aa$hk$, 'system', $hk$cmpz5rtgl00d6cwg2u1ezbkrh$hk$, $hk$نظام الطيران المدني$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-8e19a67e990ba64f3fcfa710$hk$, $hk$2c12846dd7f1420240d1fba2e0083a6f$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2005-08-23->2006-04-26$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يُنشر هذا النظام في الجريدة الرسمية ويعمل به بعد مائة وثمانين يوما من تاريخ نشره، ويلغي كل ما يتعارض معه من أحكام.والله الموفق.» — النشر 1426/09/25هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2005-10-28 + 180 يومًا = 2006-04-26؛ وكان المخزن 2005-08-23 (تاريخ الصدور 1426/07/18هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-5aa418af302452d2fa0df2aa$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-4890bc88eb5c3347cdcbd2a0$hk$, 'system', $hk$cmpz5qxpr00a6cwg2yt687eee$hk$, $hk$نظام الغذاء$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-4bc03127019518bd5fe5a591$hk$, $hk$4d9712ca7e95101079bb92144d5ee4d6$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2014-10-30->2015-06-10$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام بعد (مائة وثمانين) يوماً من تاريخ نشره في الجريدة الرسمية، ويلغي كل ما يتعارض معه من أحكام.» — النشر 1436/02/20هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2014-12-12 + 180 يومًا = 2015-06-10؛ وكان المخزن 2014-10-30 (تاريخ الصدور 1436/01/06هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-4890bc88eb5c3347cdcbd2a0$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-8a44e0677dbb7a659d7fc403$hk$, 'system', $hk$cmpz5r4p500b6cwg2t04bq0yd$hk$, $hk$نظام الكهرباء$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-6d81a826f89b83a6526e1dc8$hk$, $hk$a3aae978822c39560d707283aae1b944$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2020-12-31->2021-07-07$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بالنظام بعد (180) مائة وثمانين يوماً من تاريخ نشره بالجريدة الرسمية. يحل النظام محل نظام الكهرباء الصادر بالمرسوم الملكي رقم (م / 56) وتاريخ 20 / 10 / 1426هـ، وتعديلاته، ويلغي ما يتعارض معه من أح» — النشر 1442/05/24هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2021-01-08 + 180 يومًا = 2021-07-07؛ وكان المخزن 2020-12-31 (تاريخ الصدور 1442/05/16هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-8a44e0677dbb7a659d7fc403$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-dfea870154abea64277df2f8$hk$, 'system', $hk$cmpz5quly009rcwg2uk382g4o$hk$, $hk$نظام المؤسسات الصحية الخاصة$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-d58fdf9f684ce59f559a8b72$hk$, $hk$fae963d93887af134eb0228281ad560c$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2003-01-06->2003-05-08$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «ينشر هذا النظام في الجريدة الرسمية ، ويعمل به بعد تسعين يومًا من تاريخ نشره.» — النشر 1423/12/06هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2003-02-07 + 90 يومًا = 2003-05-08؛ وكان المخزن 2003-01-06 (تاريخ الصدور 1423/11/03هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-dfea870154abea64277df2f8$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-9cb3a75bdba0bf61ae283261$hk$, 'system', $hk$cmpz5p52o0013cwg2sdqmgh59$hk$, $hk$نظام المتفجرات والمفرقعات$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-4eba716407fbabd23e293f23$hk$, $hk$9e776e09f682219ea7e3d401b39b0a71$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2007-05-15->2007-10-06$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «ينشر هذا النظام في الجريدة الرسمية، ويعمل به بعد مائة وعشرين يوما من تاريخ نشره، ويلغي كل ما يتعارض معه من أحكام.» — النشر 1428/05/22هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2007-06-08 + 120 يومًا = 2007-10-06؛ وكان المخزن 2007-05-15 (تاريخ الصدور 1428/04/28هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-9cb3a75bdba0bf61ae283261$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-c2e6deec38a2de4fb55cf3f8$hk$, 'system', $hk$cmpz5q4rr0064cwg276wf6qoi$hk$, $hk$نظام المجالس البلدية$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-af0563a1a43771065a7a3196$hk$, $hk$fc49542300dfa663a6222b8e5d1e716c$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2014-07-31->2015-02-25$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام بعد مضي مائة وثمانين يوماً من تاريخ نشره، على أن تصدر اللوائح اللازمة لهذا النظام خلال هذه المدة.» — النشر 1435/11/03هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2014-08-29 + 180 يومًا = 2015-02-25؛ وكان المخزن 2014-07-31 (تاريخ الصدور 1435/10/04هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-c2e6deec38a2de4fb55cf3f8$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-40296629209d598b94203162$hk$, 'system', $hk$cmpz5ptij004jcwg2f5398mcs$hk$, $hk$نظام المدفوعات وخدماتها$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-89a53722fe90e080e2fd1bf1$hk$, $hk$f1bbcbd0a70298e8ae45ba6f1d83e5c0$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2021-10-28->2022-05-04$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «ينشر النظام في الجريدة الرسمية ويعمل به بعد (مائة وثمانين) يوماً من تاريخ نشره.» — النشر 1443/03/30هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2021-11-05 + 180 يومًا = 2022-05-04؛ وكان المخزن 2021-10-28 (تاريخ الصدور 1443/03/22هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-40296629209d598b94203162$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-c94dd18d6b14ea1e5eaa4bdf$hk$, 'system', $hk$cmpz5qwjt00a0cwg2y15pl0z9$hk$, $hk$نظام المراقبة الصحية في منافذ الدخول$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-8d4dbbfa8a89cf90bf09381a$hk$, $hk$9e95bd01976da65db6fefe7cfa2b606c$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2012-06-27->2012-11-29$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام بعد تسعين يوماً من تاريخ نشره في الجريدة الرسمية .» — النشر 1433/10/13هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2012-08-31 + 90 يومًا = 2012-11-29؛ وكان المخزن 2012-06-27 (تاريخ الصدور 1433/08/07هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-c94dd18d6b14ea1e5eaa4bdf$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-98829e63d3edf0aafc256c28$hk$, 'system', $hk$cmpz5r3q800b1cwg2jsfe33uh$hk$, $hk$نظام المسؤولية المدنية عن الأضرار النووية$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-8199701531f1baedabb39d7a$hk$, $hk$e4d4134fead9844b4ffd071ca2653375$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2018-04-11->2018-10-21$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بالنظام بعد (مائة وثمانين) يوماً من تاريخ نشره في الجريدة الرسمية، ويلغي كل ما يتعارض معه من أحكام.» — النشر 1439/08/08هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2018-04-24 + 180 يومًا = 2018-10-21؛ وكان المخزن 2018-04-11 (تاريخ الصدور 1439/07/25هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-98829e63d3edf0aafc256c28$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-9c2595f82ce6e612259b2288$hk$, 'system', $hk$cmpz5q7oe006jcwg2rb0vzn8c$hk$, $hk$نظام المساهمات العقارية$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-d1d5d600e166e763960152c9$hk$, $hk$60df04fcb39d01bbb62baa95da753b6f$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2023-07-16->2023-11-18$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «ينشر النظام في الجريدة الرسمية، ويعمل به بعد (مائة وعشرين) يوماً من تاريخ نشره، ويلغي كل ما يتعارض معه من أحكام.» — النشر 1445/01/03هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2023-07-21 + 120 يومًا = 2023-11-18؛ وكان المخزن 2023-07-16 (تاريخ الصدور 1444/12/28هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-9c2595f82ce6e612259b2288$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-00b177149304f7ec76637d45$hk$, 'system', $hk$cmpz5puah004ncwg26nbvbeow$hk$, $hk$نظام المعالجات التجارية في التجارة الدولية$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-94e828bbb6cb4ac8cfd382bd$hk$, $hk$b0a03675c0d714de17a5ab769daa410a$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2022-11-23->2023-03-02$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بالنظام بعد مضي (تسعين) يوماً من تاريخ نشره في الجريدة الرسمية.» — النشر 1444/05/08هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2022-12-02 + 90 يومًا = 2023-03-02؛ وكان المخزن 2022-11-23 (تاريخ الصدور 1444/04/29هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-00b177149304f7ec76637d45$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-c929d4294efc4b844c208c50$hk$, 'system', $hk$cmpz5pjtg0036cwg27xwfuvbg$hk$, $hk$نظام المقيمين المعتمدين$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-cbf11dadd943402e183695cf$hk$, $hk$cbc07a6f5775ed194a18fca4fe1b9df4$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2012-05-30->2013-02-06$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «ينشر هذا النظام في الجريدة الرسمية، ويعمل به بعد مائة وثمانين يوماً من تاريخ نشره.» — النشر 1433/09/22هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2012-08-10 + 180 يومًا = 2013-02-06؛ وكان المخزن 2012-05-30 (تاريخ الصدور 1433/07/09هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-c929d4294efc4b844c208c50$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-69c8a73f791369922e91dbb7$hk$, 'system', $hk$cmpz5q985006qcwg2ha9y1f0d$hk$, $hk$نظام الملابس والتجهيزات العسكرية الفردية$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-bb573813f2d2425894af0ab3$hk$, $hk$6e64e544591ce791d95cd0d2a7eabbc8$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2005-08-13->2006-03-15$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «ينشر هذا النظام في الجريدة الرسمية ، ويعمل به بعد مائة وثمانين يومًا من تاريخ نشره» — النشر 1426/08/12هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2005-09-16 + 180 يومًا = 2006-03-15؛ وكان المخزن 2005-08-13 (تاريخ الصدور 1426/07/08هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-69c8a73f791369922e91dbb7$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-0f1c83fe302f967946dc1442$hk$, 'system', $hk$cmpz5qz2r00adcwg2tfe62w2s$hk$, $hk$نظام المنشآت والمستحضرات الصيدلانية والعشبية$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-e6c271e09eb86c84ca8e556b$hk$, $hk$1f34161d91d3dd289f601ddf53091c9a$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2020-04-15->2020-08-22$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بالنظام بعد (مائة وعشرين) يوماً من تاريخ نشره في الجريدة الرسمية.» — النشر 1441/09/01هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2020-04-24 + 120 يومًا = 2020-08-22؛ وكان المخزن 2020-04-15 (تاريخ الصدور 1441/08/22هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-0f1c83fe302f967946dc1442$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-cac19530ac265a39e11b9f2f$hk$, 'system', $hk$cmpz5rcfi00bqcwg2517ubmn0$hk$, $hk$نظام الهيئة العامة للأوقاف$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-03fc6698d60c074b680b2cd7$hk$, $hk$7f88e726569014f28ebec81add987439$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2015-12-08->2016-03-24$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «1- يحل هذا النظام محل نظام مجلس الأوقاف الأعلى الصادر بالمرسوم الملكي رقم (م/35) وتاريخ 18 /7 /1386هـ، ويعمل به بعد تسعين يوماً من تاريخ نشره في الجريدة الرسمية. 2 - تسري على الأوقاف التي تكون الهيئة» — النشر 1437/03/14هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2015-12-25 + 90 يومًا = 2016-03-24؛ وكان المخزن 2015-12-08 (تاريخ الصدور 1437/02/26هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-cac19530ac265a39e11b9f2f$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-392db87812bdaf91a3f20ac1$hk$, 'system', $hk$cmpz5qvkv009wcwg2rhfglw79$hk$, $hk$نظام الهيئة العامة للغذاء والدواء$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-7ee83747cf38f62e46f70695$hk$, $hk$e5bf5c32d10bcccd6d9f3defe1ffd230$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2007-02-13->2007-06-07$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام بعد تسعين يومًا من تاريخ نشره في الجريدة الرسمية.» — النشر 1428/02/19هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2007-03-09 + 90 يومًا = 2007-06-07؛ وكان المخزن 2007-02-13 (تاريخ الصدور 1428/01/25هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-392db87812bdaf91a3f20ac1$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-1788a7eec9963813633a85a4$hk$, 'system', $hk$cmpz5qjws0089cwg2dmf0bb1s$hk$, $hk$نظام الهيئة العامة للولاية على أموال القاصرين ومن فى حكمهم$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-3e194ec36073688812073d88$hk$, $hk$26e4f88e0453f406726320b4f06f5cf3$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2006-04-11->2006-08-17$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «ينشر هذا النظام في الجريدة الرسمية ويعمل به بعد مضي تسعين يوما من تاريخ نشره .» — النشر 1427/04/21هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2006-05-19 + 90 يومًا = 2006-08-17؛ وكان المخزن 2006-04-11 (تاريخ الصدور 1427/03/13هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-1788a7eec9963813633a85a4$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-bd510ca34047a0a245c89736$hk$, 'system', $hk$cmpz5q7af006hcwg29r4dpenu$hk$, $hk$نظام الوساطة العقارية$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-fed87b2d65656f13c4403d51$hk$, $hk$338dd8a8732c1fdb7e707612bf7033ed$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2022-06-29->2023-01-18$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بالنظام بعد (مائة وثمانين) يوماً من تاريخ نشره في الجريدة الرسمية.» — النشر 1443/12/23هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2022-07-22 + 180 يومًا = 2023-01-18؛ وكان المخزن 2022-06-29 (تاريخ الصدور 1443/11/30هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-bd510ca34047a0a245c89736$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-ebabc54c0ec88526b1f5bf83$hk$, 'system', $hk$cmpz5pi2n002xcwg2cbut4twg$hk$, $hk$نظام براءات الاختراع والتصميمات التخطيطية للدارات المتكاملة والأصناف النباتية والنماذج الصناعية$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-2b1e8694b896517a4ad05efd$hk$, $hk$5421ff27d9c919de94345d7ab36e83e2$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2004-07-17->2004-09-05$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «ينشر هذا النظام فى الجريدة الرسمية، ويعمل به بعد ثلاثين يوما من تاريخ نشره.» — النشر 1425/06/20هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2004-08-06 + 30 يومًا = 2004-09-05؛ وكان المخزن 2004-07-17 (تاريخ الصدور 1425/05/29هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-ebabc54c0ec88526b1f5bf83$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-169e41ca1ec841fe6e4325c5$hk$, 'system', $hk$cmpz5q82d006lcwg28paja3t7$hk$, $hk$نظام بيع وتأجير مشروعات عقارية على الخارطة$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-51ba1145d8873b1f1ff2f67e$hk$, $hk$3061d61db6b248c2be1ba731b1543444$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2023-09-25->2024-04-04$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بالنظام بعد (تسعين) يومًا من تاريخ نشره في الجريدة الرسمية.» — النشر 1445/06/23هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2024-01-05 + 90 يومًا = 2024-04-04؛ وكان المخزن 2023-09-25 (تاريخ الصدور 1445/03/10هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-169e41ca1ec841fe6e4325c5$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-f9aec6a2484c01f29e1334ae$hk$, 'system', $hk$cmpz5quzx009tcwg2a1i14leh$hk$, $hk$نظام تداول بدائل حليب الأم$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-997708d39ad817373c431de6$hk$, $hk$e790b7a96f1ebc153685947aeb161f51$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2004-11-04->2005-03-10$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «ينشر هذا النظام في الجريدة الرسمية، ويعمل به بعد تسعين يومًا من تاريخ نشره.» — النشر 1425/10/27هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2004-12-10 + 90 يومًا = 2005-03-10؛ وكان المخزن 2004-11-04 (تاريخ الصدور 1425/09/21هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-f9aec6a2484c01f29e1334ae$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-87ecf106df7c3516c7affa9d$hk$, 'system', $hk$cmpz5psxm004gcwg2zub1ek0a$hk$, $hk$نظام تصنيف المقاولين$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-aa544d54725605bcf72f27e2$hk$, $hk$973fe74751db7d9232d446068ec20f3d$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2021-08-26->2021-12-02$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «ينشر النظام في الجريدة الرسمية، ويعمل به بعد مضي (تسعين) يومًا من تاريخ نشره.» — النشر 1443/01/26هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2021-09-03 + 90 يومًا = 2021-12-02؛ وكان المخزن 2021-08-26 (تاريخ الصدور 1443/01/18هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-87ecf106df7c3516c7affa9d$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-e7af0f942e3819be77336923$hk$, 'system', $hk$cmpz5rhoj00c7cwg2lqnf2ujl$hk$, $hk$نظام حقوق الأشخاص ذوي الإعاقة$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-e1d502876b23821c8471f098$hk$, $hk$88e1e96b6a0dfc20808c76f81c638b9c$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2023-08-27->2024-01-06$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بالنظام بعد مضي (مائة وعشرين) يومًا من تاريخ نشره في الجريدة الرسمية.» — النشر 1445/02/23هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2023-09-08 + 120 يومًا = 2024-01-06؛ وكان المخزن 2023-08-27 (تاريخ الصدور 1445/02/11هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-e7af0f942e3819be77336923$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-8380e3b8beed6abbf9fc5584$hk$, 'system', $hk$cmpz5qlgj008gcwg2hwyn08pu$hk$, $hk$نظام حماية الطفل$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-a25ab271f3f1285fe9bd092c$hk$, $hk$a362a12256734c42f18e77422c0349be$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2014-11-25->2015-03-26$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام بعد (تسعين) يومًا من تاريخ نشره في الجريدة الرسمية.» — النشر 1436/03/04هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2014-12-26 + 90 يومًا = 2015-03-26؛ وكان المخزن 2014-11-25 (تاريخ الصدور 1436/02/03هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-8380e3b8beed6abbf9fc5584$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-08239d1b98061afebebff45d$hk$, 'system', $hk$cmpz5p8di001kcwg2ol8wrk40$hk$, $hk$نظام حماية المبلغين والشهود والخبراء والضحايا$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-8c67ccca4e215389e2eaa702$hk$, $hk$c34cfb2ba8c480a6a97de5f3c6459597$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2024-02-18->2024-06-29$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بالنظام بعد مضي (120) يوماً من تاريخ نشره في الجريدة الرسمية.» — النشر 1445/08/20هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2024-03-01 + 120 يومًا = 2024-06-29؛ وكان المخزن 2024-02-18 (تاريخ الصدور 1445/08/08هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-08239d1b98061afebebff45d$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-8348d0d123480e135ae391db$hk$, 'system', $hk$cmpz5q044005gcwg2glq3hew6$hk$, $hk$نظام خدمة حجاج الداخل$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-6adfc8585c29451c6baf8400$hk$, $hk$7e3ace824ef20ecb9785a17281b7281a$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2005-11-30->2006-03-30$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «ينشرهذه النظام في الجريدة الرسمية، ويعمل به بعد تسعين يومًا من تاريخ نشره.» — النشر 1426/11/28هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2005-12-30 + 90 يومًا = 2006-03-30؛ وكان المخزن 2005-11-30 (تاريخ الصدور 1426/10/28هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-8348d0d123480e135ae391db$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-e46d02363e424cb4b6759b14$hk$, 'system', $hk$cmpz5q4yq0065cwg21c3dn066$hk$, $hk$نظام رسوم الأراضي البيضاء$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-25f85d5347ca67980e776fad$hk$, $hk$9bf71568a80df508dca5684bc7482a2c$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2015-11-24->2016-06-08$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام بعد مائة وثمانين يوماً من تاريخ نشره في الجريدة الرسمية.» — النشر 1437/02/29هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2015-12-11 + 180 يومًا = 2016-06-08؛ وكان المخزن 2015-11-24 (تاريخ الصدور 1437/02/12هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-e46d02363e424cb4b6759b14$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-54f393c4036219a2a2001d35$hk$, 'system', $hk$cmpz5rmhl00ckcwg2h620qxn3$hk$, $hk$نظام رسوم تسجيل السفن والوحدات العائمة$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-c9e1f42bb6d67e7eabf8fa95$hk$, $hk$ba77892721f3cb4edb6bd6bfafb42665$hk$, DATE '2026-10-29', $hk$effective_from_corrected:1998-05-27->1998-08-18$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام بعد ستين يوما من تاريخ نشره بالجريدة الرسمية، ويلغي كل ما يتعارض معه من أحكام.» — النشر 1419/02/25هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 1998-06-19 + 60 يومًا = 1998-08-18؛ وكان المخزن 1998-05-27 (تاريخ الصدور 1419/02/02هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-54f393c4036219a2a2001d35$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-292afb36e3d5e118323a54c9$hk$, 'system', $hk$cmpz5qi5z0080cwg20wug3r3n$hk$, $hk$نظام صندوق التنمية الزراعية.$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-dd40ef0c0a11fa44a072e04e$hk$, $hk$aab28d5b4cc2e6f38480e888d7fae814$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2023-09-05->2023-12-14$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يحل النظام محل نظام صندوق التنمية الزراعية، الصادر بالمرسوم الملكي رقم (م / 9) وتاريخ 1 / 2 / 1430هـ. ينشر النظام في الجريدة الرسمية، ويعمل به بعد (تسعين) يوماً من تاريخ نشره.» — النشر 1445/02/30هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2023-09-15 + 90 يومًا = 2023-12-14؛ وكان المخزن 2023-09-05 (تاريخ الصدور 1445/02/20هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-292afb36e3d5e118323a54c9$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-592df25fc621728b579b075e$hk$, 'system', $hk$cmpz5rkah00cdcwg2k7sogfqt$hk$, $hk$نظام ضريبة الدخل$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-ead4312fecabfe5d5d4baf28$hk$, $hk$41f772370692abc09634e4ca5f34fc38$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2004-03-06->2004-07-29$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «أ - ينشر هذا النظام في الجريدة الرسمية ويعمل به بعد تسعين يوما من تاريخ نشره.» — النشر 1425/03/11هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2004-04-30 + 90 يومًا = 2004-07-29؛ وكان المخزن 2004-03-06 (تاريخ الصدور 1425/01/15هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-592df25fc621728b579b075e$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-e65fea177b145ef14fca4131$hk$, 'system', $hk$cmpz5p0sz000hcwg2bjpaijcw$hk$, $hk$نظام عقوبات نشر الوثائق والمعلومات السرية وإفشائها$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-668d64e8a581a05d9c0f6747$hk$, $hk$8b49ce9ceaafddab30d66532a560d0d3$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2011-04-12->2011-08-18$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام بعد تسعين يوما من تاريخ نشره في الجريدة الرسمية.» — النشر 1432/06/17هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2011-05-20 + 90 يومًا = 2011-08-18؛ وكان المخزن 2011-04-12 (تاريخ الصدور 1432/05/08هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-e65fea177b145ef14fca4131$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-9f3cbe97f981c9d4e8fbe7e7$hk$, 'system', $hk$cmpz5pery002gcwg2patgc9q7$hk$, $hk$نظام مراقبة شركات التأمين التعاوني$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-727ea43fe5199c64df355cfe$hk$, $hk$0c88980268f52fd738ee24106636cc41$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2003-07-31->2003-11-20$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «ينشر هذا النظام في الجريدة الرسمية ويعمل به بعد مضي تسعين يومًا من تاريخ نشره .» — النشر 1424/06/24هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2003-08-22 + 90 يومًا = 2003-11-20؛ وكان المخزن 2003-07-31 (تاريخ الصدور 1424/06/02هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-9f3cbe97f981c9d4e8fbe7e7$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-ffc2c1c181bf2e3dc430dbd3$hk$, 'system', $hk$cmpz5rod200cqcwg2tswwe4ov$hk$, $hk$نظام مراقبة شركات التمويل$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-731b22ffc7a83863b30a509a$hk$, $hk$df71585f4662c339f5a2e62b18464639$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2012-07-03->2012-11-29$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام بعد مضي تسعين يومًا من تاريخ نشره في الجريدة الرسمية.» — النشر 1433/10/13هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2012-08-31 + 90 يومًا = 2012-11-29؛ وكان المخزن 2012-07-03 (تاريخ الصدور 1433/08/13هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-ffc2c1c181bf2e3dc430dbd3$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-fd20a3dd1cf4f7743794f626$hk$, 'system', $hk$cmpz5qvdw009vcwg2fj9o8f6g$hk$, $hk$نظام مزاولة المهن الصحية$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-3881fb8ea02250f15e561130$hk$, $hk$eb1ccd1391259a9412795cb9ea863cb4$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2005-12-06->2006-02-28$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «ينشر هذا النظام بالجريدة الرسمية، ويعمل به بعد ستين يومًا من تاريخ نشرة» — النشر 1426/11/28هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2005-12-30 + 60 يومًا = 2006-02-28؛ وكان المخزن 2005-12-06 (تاريخ الصدور 1426/11/04هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-fd20a3dd1cf4f7743794f626$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-eefdd0be3a92afe255066e16$hk$, 'system', $hk$cmpz5plrf003fcwg2cd9cczyu$hk$, $hk$نظام مزاولة المهن الهندسية$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-01c56d6fe8ce80b27196728a$hk$, $hk$96a85441fc38893406b4e3482972e59f$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2017-01-17->2017-04-04$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام بعد ستين يوماً من تاريخ نشره في الجريدة الرسمية.» — النشر 1438/05/06هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2017-02-03 + 60 يومًا = 2017-04-04؛ وكان المخزن 2017-01-17 (تاريخ الصدور 1438/04/19هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-eefdd0be3a92afe255066e16$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-f5f51811cef3b4a1ae65a95b$hk$, 'system', $hk$cmpz5prdr0048cwg21aqs4rrn$hk$, $hk$نظام معالجة المنشآت المالية المهمة$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-3e15ec9c12b461d553aa5b30$hk$, $hk$334edfd43c8af2b8a244f52e2e748daa$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2020-12-10->2021-06-16$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بالنظام بعد (مائة وثمانين) يومًا من تاريخ نشره في الجريدة الرسمية.» — النشر 1442/05/03هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2020-12-18 + 180 يومًا = 2021-06-16؛ وكان المخزن 2020-12-10 (تاريخ الصدور 1442/04/25هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-f5f51811cef3b4a1ae65a95b$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-6766a50027dd57cef05f97cd$hk$, 'system', $hk$cmpz5pbaa001ycwg2daw7gsdk$hk$, $hk$نظام مكافحة الاحتيال المالي وخيانة الأمانة$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-340b9ecfabf150f7c78c2b36$hk$, $hk$954ba1f0d8833eb4eaa5070f0c96a461$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2021-04-22->2021-07-29$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام بعد مضي (تسعين) يوماً من تاريخ نشره في الجريدة الرسمية.» — النشر 1442/09/18هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2021-04-30 + 90 يومًا = 2021-07-29؛ وكان المخزن 2021-04-22 (تاريخ الصدور 1442/09/10هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-6766a50027dd57cef05f97cd$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-2d54269a415d15194391870b$hk$, 'system', $hk$cmpz5pqlu0044cwg2dzxmg6u3$hk$, $hk$نظام مكافحة التستر$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-7c93911dce773de3ba1ea4c4$hk$, $hk$3f2a39edc6de3422d5668f3fc8fbfdd2$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2020-08-20->2021-02-24$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يحل النظام محل نظام مكافحة التستر الصادر بالمرسوم الملكي رقم (م/22) وتاريخ 4/5/1425هـ، ويلغي كل ما يتعارض معه من أحكام، ويعمل به بعد مضي (مائة وثمانين) يومًا من تاريخ نشره في الجريدة الرسمية.» — النشر 1442/01/09هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2020-08-28 + 180 يومًا = 2021-02-24؛ وكان المخزن 2020-08-20 (تاريخ الصدور 1442/01/01هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-2d54269a415d15194391870b$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-6aaaf72ec2cb00915ed1c66d$hk$, 'system', $hk$cmpz5p4as000zcwg2nx3yo0cj$hk$, $hk$نظام مكافحة الرشوة$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-0e9062cee060d94760ca2036$hk$, $hk$0f0aa127b3ba8d48196c50ce6163685f$hk$, DATE '2026-10-29', $hk$effective_from_corrected:1992-06-30->1992-09-30$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «ينشر هذا النظام في الجريدة الرسمية ويعمل به بعد ثلاثين يوما من تاريخ نشره» — النشر 1413/03/03هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 1992-08-31 + 30 يومًا = 1992-09-30؛ وكان المخزن 1992-06-30 (تاريخ الصدور 1412/12/29هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-6aaaf72ec2cb00915ed1c66d$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-9c5b72f57703012eed783c43$hk$, 'system', $hk$cmpz5p4vp0012cwg2oxepo39w$hk$, $hk$نظام مكافحة المخدرات والمؤثرات العقلية$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-9eb63cc0b2745ec565e639e6$hk$, $hk$7e572c6e04a2f8fc7e7f86c81a6efe4b$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2005-08-13->2005-12-15$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «ينشر هذا النظام في الجريدة الرسمية ، ويعمل به بعد تسعين يوما من تاريخ نشره.» — النشر 1426/08/12هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2005-09-16 + 90 يومًا = 2005-12-15؛ وكان المخزن 2005-08-13 (تاريخ الصدور 1426/07/08هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-9c5b72f57703012eed783c43$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-8b256ac29c7623c203d437fc$hk$, 'system', $hk$cmpz5qkvl008dcwg2snth8nil$hk$, $hk$نظام مكافحة جرائم الاتجار بالأشخاص$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-9c0dbf03e708742304bfa504$hk$, $hk$0f0162da01d0e696b297e01d284f160f$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2009-07-14->2009-11-05$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام بعد (تسعين) يوما من تاريخ نشره في الجريدة الرسمية .» — النشر 1430/08/16هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2009-08-07 + 90 يومًا = 2009-11-05؛ وكان المخزن 2009-07-14 (تاريخ الصدور 1430/07/21هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-8b256ac29c7623c203d437fc$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-37ff2391d0927717c512162b$hk$, 'system', $hk$cmpz5q7vd006kcwg2uaelgo7l$hk$, $hk$نظام ملكية الوحدات العقارية وفرزها وإدارتها$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-38f13efaa2bd365a44a868ba$hk$, $hk$616c361b07fc8ec323ddc6f8877ac622$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2020-02-26->2020-09-09$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بالنظام بعد (مائة وثمانين) يوماً من تاريخ نشره في الجريدة الرسمية.» — النشر 1441/07/18هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2020-03-13 + 180 يومًا = 2020-09-09؛ وكان المخزن 2020-02-26 (تاريخ الصدور 1441/07/02هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-37ff2391d0927717c512162b$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-67b036c659a5e66cfb4c6c68$hk$, 'system', $hk$cmpz5qxwq00a7cwg2593x43jn$hk$, $hk$نظام منتجات التجميل$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-662333a6cc72706115935c1d$hk$, $hk$833f68fe0661776d358cf1d9e4296249$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2015-04-07->2015-11-04$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام بعد مائة وثمانين يومًا من تاريخ نشره في الجريدة الرسمية.» — النشر 1436/07/19هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2015-05-08 + 180 يومًا = 2015-11-04؛ وكان المخزن 2015-04-07 (تاريخ الصدور 1436/06/18هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-67b036c659a5e66cfb4c6c68$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-471f37a9423b6e7481142a33$hk$, 'system', $hk$cmpz5prkq0049cwg2fez2xqdz$hk$, $hk$نظام مهنة المحاسبة والمراجعة$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-3faefaddd33709316c9bb648$hk$, $hk$c3e7877fbbc95cf619ea2cbf80156c44$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2021-03-11->2021-06-17$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بالنظام بعد مضي (تسعين) يوماً من تاريخ نشره في الجريدة الرسمية، ويصدر الوزير اللائحة والقرارات اللازمة لتنفيذه خلال (تسعين) يومًا من تاريخ نشره، ويعمل بها من تاريخ العمل به.» — النشر 1442/08/06هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2021-03-19 + 90 يومًا = 2021-06-17؛ وكان المخزن 2021-03-11 (تاريخ الصدور 1442/07/27هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-471f37a9423b6e7481142a33$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-8ce738637eca5d9ce89fe0af$hk$, 'system', $hk$cmpz5p7zc001icwg2r2ug14re$hk$, $hk$نظام نقل معلومات المتعاملين مع المنشآت الخاصة إلكترونياً إلى مركز المعلومات الوطني في وزارة الداخلية (نظام شموس الأمني)$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-0e295d9c4300720e27abb511$hk$, $hk$70acfefc5a97782ebc0c383fe39badf5$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2014-04-21->2014-08-14$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام بعد تسعين يوماً من تاريخ نشره في الجريدة الرسمية.» — النشر 1435/07/17هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2014-05-16 + 90 يومًا = 2014-08-14؛ وكان المخزن 2014-04-21 (تاريخ الصدور 1435/06/21هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-8ce738637eca5d9ce89fe0af$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-26d374663641b097cb29b07b$hk$, 'system', $hk$cmpz5rozq00cscwg2eqnjv8my$hk$, $hk$نظام وظائف مباشرة الأموال العامة$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-07f16cd1abf94bf28285dc59$hk$, $hk$e924b297c345ce4e933d068df24dd6b1$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2014-12-15->2015-07-08$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام بعد مضي (مائة وثمانين) يومًا من تاريخ نشره في الجريدة الرسمية.» — النشر 1436/03/18هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2015-01-09 + 180 يومًا = 2015-07-08؛ وكان المخزن 2014-12-15 (تاريخ الصدور 1436/02/23هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-26d374663641b097cb29b07b$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-e133fa7b908ae48b467d1ed8$hk$, 'system', $hk$cmpz5rd3700bscwg2zw1okf98$hk$, $hk$اللائحة الأساسية للبيوت الاجتماعية$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-d4e341a9ad0020f0cca8e5e0$hk$, $hk$412b234e495591085f80ac670991bd6e$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2014-12-01->2015-03-26$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذه اللائحة بعد (تسعين) يوماً من تاريخ نشرها في الجريدة الرسمية.» — النشر 1436/03/04هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2014-12-26 + 90 يومًا = 2015-03-26؛ وكان المخزن 2014-12-01 (تاريخ الصدور 1436/02/09هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-e133fa7b908ae48b467d1ed8$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-5afc34fc86481188aa57c1d7$hk$, 'system', $hk$cmpz5rgf700c3cwg2jmb08zy6$hk$, $hk$اللائحة التنفيذية لنظام الأحداث$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-f40aea8e9b84b29fe9be2aad$hk$, $hk$c3f01300b85ed7a2857658c4a12770b4$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2020-12-01->2021-01-10$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «تنشر هذه اللائحة في الجريدة الرسمية، ويعمل بها بعد مضي (ثلاثين) يوماً من تاريخ نشرها.» — النشر 1442/04/26هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2020-12-11 + 30 يومًا = 2021-01-10؛ وكان المخزن 2020-12-01 (تاريخ الصدور 1442/04/16هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-5afc34fc86481188aa57c1d7$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-a7c8596b79c874cb5924c097$hk$, 'system', $hk$cmpz5pjfi0034cwg2pns2vqhi$hk$, $hk$تنظيم الجمعية السعودية للجودة$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-5a1de11391739720d2511232$hk$, $hk$4dd6d3aba07b115306aef70e2c0ea3c2$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2011-06-27->2011-09-20$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «ينشر هذا التنظيم في الجريدة الرسمية ، ويعمل به بعد ستين يوماً من تاريخ نشره.» — النشر 1432/08/21هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2011-07-22 + 60 يومًا = 2011-09-20؛ وكان المخزن 2011-06-27 (تاريخ الصدور 1432/07/25هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-a7c8596b79c874cb5924c097$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-f4715def234c948b0d139bea$hk$, 'system', $hk$cmpz5qp58008zcwg2aqrf5ow4$hk$, $hk$تنظيم الجمعية السعودية للسفر والسياحة$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-28ab600c963537a7219887ae$hk$, $hk$bb525ff50a1915f08f08876eb03083ca$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2014-05-26->2014-08-03$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «ينشر هذا التنظيم في الجريدة الرسمية ويعمل به بعد ثلاثين يوماً من تاريخ نشره.» — النشر 1435/09/07هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2014-07-04 + 30 يومًا = 2014-08-03؛ وكان المخزن 2014-05-26 (تاريخ الصدور 1435/07/27هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-f4715def234c948b0d139bea$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-23e1e5f34f2e58a0d6049a96$hk$, 'system', $hk$cmpz5qor7008xcwg2hbz6ig6b$hk$, $hk$تنظيم الجمعية السعودية للمرشدين السياحيين$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-d2adb1612f7700d832a2bbda$hk$, $hk$bb525ff50a1915f08f08876eb03083ca$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2014-05-26->2014-08-03$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «ينشر هذا التنظيم في الجريدة الرسمية ويعمل به بعد ثلاثين يوماً من تاريخ نشره.» — النشر 1435/09/07هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2014-07-04 + 30 يومًا = 2014-08-03؛ وكان المخزن 2014-05-26 (تاريخ الصدور 1435/07/27هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-23e1e5f34f2e58a0d6049a96$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-79ea62c916f0e88d81134cfb$hk$, 'system', $hk$cmpz5qoy6008ycwg2w9aeccsh$hk$, $hk$تنظيم الجمعية السعودية لمرافق الإيواء السياحي$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-779f24ed7185dc071044b251$hk$, $hk$bb525ff50a1915f08f08876eb03083ca$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2014-05-26->2014-08-03$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «ينشر هذا التنظيم في الجريدة الرسمية ويعمل به بعد ثلاثين يوماً من تاريخ نشره.» — النشر 1435/09/07هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2014-07-04 + 30 يومًا = 2014-08-03؛ وكان المخزن 2014-05-26 (تاريخ الصدور 1435/07/27هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-79ea62c916f0e88d81134cfb$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-ef37f7b60f6bc0465657d7a8$hk$, 'system', $hk$cmpz5q4dt0062cwg2w57de2mz$hk$, $hk$تنظيم الدعم السكني$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-53c4f391a9d5736df5df9450$hk$, $hk$73ed43b7fafc7deec40c650784593ca1$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2014-01-06->2014-04-15$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا التنظيم بعد مضي ستين يوماً من تاريخ نشره.» — النشر 1435/04/14هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2014-02-14 + 60 يومًا = 2014-04-15؛ وكان المخزن 2014-01-06 (تاريخ الصدور 1435/03/05هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-ef37f7b60f6bc0465657d7a8$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-1d91f8343749c224d7525494$hk$, 'system', $hk$cmpz5pb3a001xcwg2gyp5i7lg$hk$, $hk$تنظيم الفحص الفني الدوري للمركبات$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-5d13103bf6c596767afabf72$hk$, $hk$fccc5c209283bff25d65d78be7dda834$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2021-02-23->2021-09-08$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «ينشر التنظيم في الجريدة الرسمية، ويعمل به بعد (مائة وثمانين) يوماً من تاريخ نشره.» — النشر 1442/07/28هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2021-03-12 + 180 يومًا = 2021-09-08؛ وكان المخزن 2021-02-23 (تاريخ الصدور 1442/07/11هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-1d91f8343749c224d7525494$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-bdb32bf2fac20fc419e84100$hk$, 'system', $hk$cmpz5p7sd001hcwg2m94ux5ce$hk$, $hk$تنظيم المؤسسة العامة للصناعات العسكرية$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-2e1d16b3542e0d250e99b2c6$hk$, $hk$90eedf2b4cfae7216349e9541f365192$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2013-07-01->2013-09-01$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «ينشر هذا التنظيم في الجريدة الرسمية، ويعمل به بعد مضي ثلاثين يوماً من تاريخ نشره.» — النشر 1434/09/25هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2013-08-02 + 30 يومًا = 2013-09-01؛ وكان المخزن 2013-07-01 (تاريخ الصدور 1434/08/22هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-bdb32bf2fac20fc419e84100$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-6e45965b5c525ba52d548979$hk$, 'system', $hk$cmpz5rbi100bncwg2ghr8kt40$hk$, $hk$تنظيم المخصص المالي لصعوبة الحصول على عمل$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-fe9d402fcdfcde494fee607b$hk$, $hk$ddad6460a1cf3a112b744a35929fa232$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2013-12-02->2014-05-01$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا التنظيم بعد تسعين يوماً من تاريخ نشره في الجريدة الرسمية.» — النشر 1435/03/30هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2014-01-31 + 90 يومًا = 2014-05-01؛ وكان المخزن 2013-12-02 (تاريخ الصدور 1435/01/29هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-6e45965b5c525ba52d548979$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-c9ad026798fe59271e7ae744$hk$, 'system', $hk$cmpz5qlni008hcwg26lvgevla$hk$, $hk$تنظيم الهيئة السعودية للمحامين$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-8086cf27c5404239fdc7466f$hk$, $hk$9aced99d66634b50438c79eade08112d$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2015-04-27->2015-07-21$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «يعمل بهذا التنظيم بعد ستين يوماً من تاريخ نشره في الجريدة الرسمية.» — النشر 1436/08/04هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2015-05-22 + 60 يومًا = 2015-07-21؛ وكان المخزن 2015-04-27 (تاريخ الصدور 1436/07/08هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-c9ad026798fe59271e7ae744$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-b7133e5aa42a1e343f36fcb6$hk$, 'system', $hk$cmpz5prrp004acwg2ddbflie0$hk$, $hk$تنظيم الهيئة السعودية للمراجعين والمحاسبين$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-a90b9e881684289bc24e7f1c$hk$, $hk$6462f8c76d089649deb7dc1e00dcea41$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2021-03-09->2021-06-17$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «ينشر التنظيم في الجريدة الرسمية، ويعمل به بعد مضي (90) يومًا من تاريخ نشره.» — النشر 1442/08/06هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2021-03-19 + 90 يومًا = 2021-06-17؛ وكان المخزن 2021-03-09 (تاريخ الصدور 1442/07/25هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-b7133e5aa42a1e343f36fcb6$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-20d9253511ead072d2b8db80$hk$, 'system', $hk$cmpz5pkln003acwg2j9kghq1d$hk$, $hk$تنظيم الهيئة السعودية للمقاولين$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-1d1c3ec5056b436901146b71$hk$, $hk$409bc431113687211e9b2df1a0876b24$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2015-09-07->2015-12-01$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «ينشر التنظيم في الجريدة الرسمية، ويعمل به بعد ستين يوماً من تاريخ نشره.» — النشر 1436/12/19هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2015-10-02 + 60 يومًا = 2015-12-01؛ وكان المخزن 2015-09-07 (تاريخ الصدور 1436/11/23هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-20d9253511ead072d2b8db80$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-7a1f303a973a83e4a93a2d4c$hk$, 'system', $hk$cmpz5pkzj003bcwg2bdfvfxzw$hk$, $hk$تنظيم الهيئة العامة للإحصاء$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-a055751c2aacfcedf2cb39f7$hk$, $hk$26d14eb466434d53f01c50d35987fcc0$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2015-10-26->2016-02-11$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «ينشر هذا التنظيم في الجريدة الرسمية، ويعمل به بعد تسعين يوماً من تاريخ نشره، ويلغي كل ما يتعارض معه من أحكام.» — النشر 1437/02/01هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2015-11-13 + 90 يومًا = 2016-02-11؛ وكان المخزن 2015-10-26 (تاريخ الصدور 1437/01/13هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-7a1f303a973a83e4a93a2d4c$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-a75044c2e8f622664124b285$hk$, 'system', $hk$cmpz5qtu2009ncwg2r98qd4t5$hk$, $hk$تنظيم هيئة الهلال الأحمر السعودي$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-2e8303139f2b2afc9853d512$hk$, $hk$76ff55f3d6ac9f9d924412840665dec4$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2011-06-13->2011-09-29$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «ينشر هذا التنظيم في الجريدة الرسمية ، ويعمل به بعد تسعين يوماً من تاريخ نشره .» — النشر 1432/07/29هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2011-07-01 + 90 يومًا = 2011-09-29؛ وكان المخزن 2011-06-13 (تاريخ الصدور 1432/07/11هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-a75044c2e8f622664124b285$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-4eebfbdacf33ef758e296669$hk$, 'system', $hk$cmpz5qkom008ccwg2xep4aje1$hk$, $hk$تنظيم هيئة حقوق الإنسان$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-39e484b436c49f429f001a37$hk$, $hk$eedb5d55e05aba69940849a8ace85c0a$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2005-09-12->2005-12-06$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «ينشر هذا التنظيم في الجريدة الرسمية، ويعمل به بعد ستين يوماً من تاريخ نشره.» — النشر 1426/09/04هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 2005-10-07 + 60 يومًا = 2005-12-06؛ وكان المخزن 2005-09-12 (تاريخ الصدور 1426/08/08هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-4eebfbdacf33ef758e296669$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19p-6830c6029128c149c37566b3$hk$, 'system', $hk$cmpz5p0f1000fcwg2qjypldky$hk$, $hk$قواعد تنظيم لوحات الدعاية والإعلان$hk$, NULL, 'boe', $hk$gap019-effective-corrections-2026-10-29$hk$, $hk$boe:boe26-79ef972e459dc3043e452be0$hk$, $hk$e68a92a689356e03a793ef3bfc6097f7$hk$, DATE '2026-10-29', $hk$effective_from_corrected:1992-06-29->1992-10-22$hk$, $hk$HKM-052 gap019-effective-corrections-2026-10-29: عبارة النفاذ: «تنشر هذه القواعد في الجريدة الرسمية ويعمل بها بعد تسعين يومًا من تاريخ نشرها.» — النشر 1413/01/24هـ (بطاقة هيئة الخبراء، ويطابقها نظما) = 1992-07-24 + 90 يومًا = 1992-10-22؛ وكان المخزن 1992-06-29 (تاريخ الصدور 1412/12/28هـ) [مراجع مستقل متفق]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19p-6830c6029128c149c37566b3$hk$)",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2022-06-16$hk$::timestamptz WHERE id = $hk$cmpwi0bkw001xnxff8zst26lv$hk$ AND preamble_effective_from::date = $hk$2022-03-09$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2022-07-06$hk$::timestamptz WHERE id = $hk$cmpz5pbv80021cwg2br8calht$hk$ AND preamble_effective_from::date = $hk$2021-12-30$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2012-07-08$hk$::timestamptz WHERE id = $hk$cmpz5qixw0084cwg2e4jtdk5z$hk$ AND preamble_effective_from::date = $hk$2012-04-16$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2021-01-13$hk$::timestamptz WHERE id = $hk$cmpwi0c8m0020nxffmobucqkh$hk$ AND preamble_effective_from::date = $hk$2020-07-10$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2006-04-26$hk$::timestamptz WHERE id = $hk$cmpz5r8eo00becwg21qt63wx7$hk$ AND preamble_effective_from::date = $hk$2005-09-27$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2018-11-05$hk$::timestamptz WHERE id = $hk$cmpz5pyd30057cwg2aeeqrvg7$hk$ AND preamble_effective_from::date = $hk$2018-04-11$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2014-03-09$hk$::timestamptz WHERE id = $hk$cmpz5p3iv000vcwg2j8yoctxi$hk$ AND preamble_effective_from::date = $hk$2013-12-21$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2010-12-16$hk$::timestamptz WHERE id = $hk$cmpz5qvrv009xcwg2jl97m5li$hk$ AND preamble_effective_from::date = $hk$2010-08-24$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2009-10-17$hk$::timestamptz WHERE id = $hk$cmpz5qra4009acwg25u2zl7wp$hk$ AND preamble_effective_from::date = $hk$2009-05-26$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2014-12-04$hk$::timestamptz WHERE id = $hk$cmpz5q4ks0063cwg2hgm8rkmr$hk$ AND preamble_effective_from::date = $hk$2014-07-20$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2021-11-16$hk$::timestamptz WHERE id = $hk$cmpz5q6pi006ecwg2ucqkh1a3$hk$ AND preamble_effective_from::date = $hk$2021-08-13$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2023-03-07$hk$::timestamptz WHERE id = $hk$cmpz5r53300b8cwg2hyqj8zrc$hk$ AND preamble_effective_from::date = $hk$2022-12-28$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2005-07-06$hk$::timestamptz WHERE id = $hk$cmpz5pwt6004zcwg2175jlssl$hk$ AND preamble_effective_from::date = $hk$2004-12-12$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2011-02-24$hk$::timestamptz WHERE id = $hk$cmpz5rn3900cmcwg2t70wevmi$hk$ AND preamble_effective_from::date = $hk$2010-10-26$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2023-02-01$hk$::timestamptz WHERE id = $hk$cmpz5q7hf006icwg2m1ouzs82$hk$ AND preamble_effective_from::date = $hk$2022-07-27$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2023-04-05$hk$::timestamptz WHERE id = $hk$cmpz5pcg70024cwg235dc7j6f$hk$ AND preamble_effective_from::date = $hk$2022-10-03$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2023-11-02$hk$::timestamptz WHERE id = $hk$cmpz5pa48001scwg210ue3g5g$hk$ AND preamble_effective_from::date = $hk$2023-07-24$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2007-02-14$hk$::timestamptz WHERE id = $hk$cmpz5pinm0030cwg2vb9m262i$hk$ AND preamble_effective_from::date = $hk$2006-07-12$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2015-03-28$hk$::timestamptz WHERE id = $hk$cmpz5qo68008ucwg29x0hiyos$hk$ AND preamble_effective_from::date = $hk$2014-11-02$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2021-08-25$hk$::timestamptz WHERE id = $hk$cmpz5qzgp00afcwg264bh8sh6$hk$ AND preamble_effective_from::date = $hk$2021-02-18$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2019-01-29$hk$::timestamptz WHERE id = $hk$cmpz5rfi400c0cwg2ltsts5j9$hk$ AND preamble_effective_from::date = $hk$2018-08-01$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2006-04-19$hk$::timestamptz WHERE id = $hk$cmpz5p6th001ccwg2fz4ds933$hk$ AND preamble_effective_from::date = $hk$2005-08-30$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2015-03-04$hk$::timestamptz WHERE id = $hk$cmpz5qeof007icwg2nv2r2hch$hk$ AND preamble_effective_from::date = $hk$2014-07-20$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2013-11-27$hk$::timestamptz WHERE id = $hk$cmpz5pv2f004rcwg231jxvfvb$hk$ AND preamble_effective_from::date = $hk$2013-05-04$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2007-06-14$hk$::timestamptz WHERE id = $hk$cmpz5rkx500cfcwg2kl7mpzda$hk$ AND preamble_effective_from::date = $hk$2006-06-06$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2022-12-07$hk$::timestamptz WHERE id = $hk$cmpz5rzyy00dmcwg2j18drci6$hk$ AND preamble_effective_from::date = $hk$2022-06-01$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2020-04-20$hk$::timestamptz WHERE id = $hk$cmpz5pq0x0041cwg2ca51b15b$hk$ AND preamble_effective_from::date = $hk$2019-10-08$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2022-03-23$hk$::timestamptz WHERE id = $hk$cmpz5qbcy0071cwg2dtqd49va$hk$ AND preamble_effective_from::date = $hk$2021-09-15$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2012-11-29$hk$::timestamptz WHERE id = $hk$cmpz5ro1u00cpcwg2nejhzpz1$hk$ AND preamble_effective_from::date = $hk$2012-07-03$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2006-11-09$hk$::timestamptz WHERE id = $hk$cmpz5rl8i00cgcwg2ktcgb134$hk$ AND preamble_effective_from::date = $hk$2006-06-27$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2021-01-13$hk$::timestamptz WHERE id = $hk$cmpz5qgt5007tcwg20weum23t$hk$ AND preamble_effective_from::date = $hk$2020-07-10$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2022-08-11$hk$::timestamptz WHERE id = $hk$cmpz5q73g006gcwg211uev9pu$hk$ AND preamble_effective_from::date = $hk$2022-04-20$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2018-10-23$hk$::timestamptz WHERE id = $hk$cmpz5qfna007ncwg2oxxnvm1x$hk$ AND preamble_effective_from::date = $hk$2018-07-11$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2022-03-16$hk$::timestamptz WHERE id = $hk$cmpz5qneb008qcwg2uif5zy3a$hk$ AND preamble_effective_from::date = $hk$2021-09-07$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2012-11-29$hk$::timestamptz WHERE id = $hk$cmpz5rnql00cocwg26h3a4y1g$hk$ AND preamble_effective_from::date = $hk$2012-07-03$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2016-03-17$hk$::timestamptz WHERE id = $hk$cmpz5rc4200bpcwg20np662kj$hk$ AND preamble_effective_from::date = $hk$2015-12-01$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2005-12-08$hk$::timestamptz WHERE id = $hk$cmpz5p6mi001bcwg27ufsl8jw$hk$ AND preamble_effective_from::date = $hk$2005-08-13$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2014-11-27$hk$::timestamptz WHERE id = $hk$cmpz5qxir00a5cwg2b6meszdc$hk$ AND preamble_effective_from::date = $hk$2014-07-17$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2018-10-21$hk$::timestamptz WHERE id = $hk$cmpz5r3j900b0cwg2apftkobe$hk$ AND preamble_effective_from::date = $hk$2018-04-11$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2012-11-08$hk$::timestamptz WHERE id = $hk$cmpz5roo700crcwg2i29zu45b$hk$ AND preamble_effective_from::date = $hk$2012-07-03$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2021-07-01$hk$::timestamptz WHERE id = $hk$cmpz5qhe2007wcwg2e9oyrkyh$hk$ AND preamble_effective_from::date = $hk$2021-03-23$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2021-03-27$hk$::timestamptz WHERE id = $hk$cmpz5rg4c00c2cwg22ehsnc7c$hk$ AND preamble_effective_from::date = $hk$2020-11-19$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2006-04-26$hk$::timestamptz WHERE id = $hk$cmpz5rtgl00d6cwg2u1ezbkrh$hk$ AND preamble_effective_from::date = $hk$2005-08-23$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2015-06-10$hk$::timestamptz WHERE id = $hk$cmpz5qxpr00a6cwg2yt687eee$hk$ AND preamble_effective_from::date = $hk$2014-10-30$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2021-07-07$hk$::timestamptz WHERE id = $hk$cmpz5r4p500b6cwg2t04bq0yd$hk$ AND preamble_effective_from::date = $hk$2020-12-31$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2003-05-08$hk$::timestamptz WHERE id = $hk$cmpz5quly009rcwg2uk382g4o$hk$ AND preamble_effective_from::date = $hk$2003-01-06$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2007-10-06$hk$::timestamptz WHERE id = $hk$cmpz5p52o0013cwg2sdqmgh59$hk$ AND preamble_effective_from::date = $hk$2007-05-15$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2015-02-25$hk$::timestamptz WHERE id = $hk$cmpz5q4rr0064cwg276wf6qoi$hk$ AND preamble_effective_from::date = $hk$2014-07-31$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2022-05-04$hk$::timestamptz WHERE id = $hk$cmpz5ptij004jcwg2f5398mcs$hk$ AND preamble_effective_from::date = $hk$2021-10-28$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2012-11-29$hk$::timestamptz WHERE id = $hk$cmpz5qwjt00a0cwg2y15pl0z9$hk$ AND preamble_effective_from::date = $hk$2012-06-27$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2018-10-21$hk$::timestamptz WHERE id = $hk$cmpz5r3q800b1cwg2jsfe33uh$hk$ AND preamble_effective_from::date = $hk$2018-04-11$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2023-11-18$hk$::timestamptz WHERE id = $hk$cmpz5q7oe006jcwg2rb0vzn8c$hk$ AND preamble_effective_from::date = $hk$2023-07-16$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2023-03-02$hk$::timestamptz WHERE id = $hk$cmpz5puah004ncwg26nbvbeow$hk$ AND preamble_effective_from::date = $hk$2022-11-23$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2013-02-06$hk$::timestamptz WHERE id = $hk$cmpz5pjtg0036cwg27xwfuvbg$hk$ AND preamble_effective_from::date = $hk$2012-05-30$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2006-03-15$hk$::timestamptz WHERE id = $hk$cmpz5q985006qcwg2ha9y1f0d$hk$ AND preamble_effective_from::date = $hk$2005-08-13$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2020-08-22$hk$::timestamptz WHERE id = $hk$cmpz5qz2r00adcwg2tfe62w2s$hk$ AND preamble_effective_from::date = $hk$2020-04-15$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2016-03-24$hk$::timestamptz WHERE id = $hk$cmpz5rcfi00bqcwg2517ubmn0$hk$ AND preamble_effective_from::date = $hk$2015-12-08$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2007-06-07$hk$::timestamptz WHERE id = $hk$cmpz5qvkv009wcwg2rhfglw79$hk$ AND preamble_effective_from::date = $hk$2007-02-13$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2006-08-17$hk$::timestamptz WHERE id = $hk$cmpz5qjws0089cwg2dmf0bb1s$hk$ AND preamble_effective_from::date = $hk$2006-04-11$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2023-01-18$hk$::timestamptz WHERE id = $hk$cmpz5q7af006hcwg29r4dpenu$hk$ AND preamble_effective_from::date = $hk$2022-06-29$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2004-09-05$hk$::timestamptz WHERE id = $hk$cmpz5pi2n002xcwg2cbut4twg$hk$ AND preamble_effective_from::date = $hk$2004-07-17$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2024-04-04$hk$::timestamptz WHERE id = $hk$cmpz5q82d006lcwg28paja3t7$hk$ AND preamble_effective_from::date = $hk$2023-09-25$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2005-03-10$hk$::timestamptz WHERE id = $hk$cmpz5quzx009tcwg2a1i14leh$hk$ AND preamble_effective_from::date = $hk$2004-11-04$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2021-12-02$hk$::timestamptz WHERE id = $hk$cmpz5psxm004gcwg2zub1ek0a$hk$ AND preamble_effective_from::date = $hk$2021-08-26$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2024-01-06$hk$::timestamptz WHERE id = $hk$cmpz5rhoj00c7cwg2lqnf2ujl$hk$ AND preamble_effective_from::date = $hk$2023-08-27$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2015-03-26$hk$::timestamptz WHERE id = $hk$cmpz5qlgj008gcwg2hwyn08pu$hk$ AND preamble_effective_from::date = $hk$2014-11-25$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2024-06-29$hk$::timestamptz WHERE id = $hk$cmpz5p8di001kcwg2ol8wrk40$hk$ AND preamble_effective_from::date = $hk$2024-02-18$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2006-03-30$hk$::timestamptz WHERE id = $hk$cmpz5q044005gcwg2glq3hew6$hk$ AND preamble_effective_from::date = $hk$2005-11-30$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2016-06-08$hk$::timestamptz WHERE id = $hk$cmpz5q4yq0065cwg21c3dn066$hk$ AND preamble_effective_from::date = $hk$2015-11-24$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$1998-08-18$hk$::timestamptz WHERE id = $hk$cmpz5rmhl00ckcwg2h620qxn3$hk$ AND preamble_effective_from::date = $hk$1998-05-27$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2023-12-14$hk$::timestamptz WHERE id = $hk$cmpz5qi5z0080cwg20wug3r3n$hk$ AND preamble_effective_from::date = $hk$2023-09-05$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2004-07-29$hk$::timestamptz WHERE id = $hk$cmpz5rkah00cdcwg2k7sogfqt$hk$ AND preamble_effective_from::date = $hk$2004-03-06$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2011-08-18$hk$::timestamptz WHERE id = $hk$cmpz5p0sz000hcwg2bjpaijcw$hk$ AND preamble_effective_from::date = $hk$2011-04-12$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2003-11-20$hk$::timestamptz WHERE id = $hk$cmpz5pery002gcwg2patgc9q7$hk$ AND preamble_effective_from::date = $hk$2003-07-31$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2012-11-29$hk$::timestamptz WHERE id = $hk$cmpz5rod200cqcwg2tswwe4ov$hk$ AND preamble_effective_from::date = $hk$2012-07-03$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2006-02-28$hk$::timestamptz WHERE id = $hk$cmpz5qvdw009vcwg2fj9o8f6g$hk$ AND preamble_effective_from::date = $hk$2005-12-06$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2017-04-04$hk$::timestamptz WHERE id = $hk$cmpz5plrf003fcwg2cd9cczyu$hk$ AND preamble_effective_from::date = $hk$2017-01-17$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2021-06-16$hk$::timestamptz WHERE id = $hk$cmpz5prdr0048cwg21aqs4rrn$hk$ AND preamble_effective_from::date = $hk$2020-12-10$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2021-07-29$hk$::timestamptz WHERE id = $hk$cmpz5pbaa001ycwg2daw7gsdk$hk$ AND preamble_effective_from::date = $hk$2021-04-22$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2021-02-24$hk$::timestamptz WHERE id = $hk$cmpz5pqlu0044cwg2dzxmg6u3$hk$ AND preamble_effective_from::date = $hk$2020-08-20$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$1992-09-30$hk$::timestamptz WHERE id = $hk$cmpz5p4as000zcwg2nx3yo0cj$hk$ AND preamble_effective_from::date = $hk$1992-06-30$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2005-12-15$hk$::timestamptz WHERE id = $hk$cmpz5p4vp0012cwg2oxepo39w$hk$ AND preamble_effective_from::date = $hk$2005-08-13$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2009-11-05$hk$::timestamptz WHERE id = $hk$cmpz5qkvl008dcwg2snth8nil$hk$ AND preamble_effective_from::date = $hk$2009-07-14$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2020-09-09$hk$::timestamptz WHERE id = $hk$cmpz5q7vd006kcwg2uaelgo7l$hk$ AND preamble_effective_from::date = $hk$2020-02-26$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2015-11-04$hk$::timestamptz WHERE id = $hk$cmpz5qxwq00a7cwg2593x43jn$hk$ AND preamble_effective_from::date = $hk$2015-04-07$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2021-06-17$hk$::timestamptz WHERE id = $hk$cmpz5prkq0049cwg2fez2xqdz$hk$ AND preamble_effective_from::date = $hk$2021-03-11$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2014-08-14$hk$::timestamptz WHERE id = $hk$cmpz5p7zc001icwg2r2ug14re$hk$ AND preamble_effective_from::date = $hk$2014-04-21$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2015-07-08$hk$::timestamptz WHERE id = $hk$cmpz5rozq00cscwg2eqnjv8my$hk$ AND preamble_effective_from::date = $hk$2014-12-15$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2015-03-26$hk$::timestamptz WHERE id = $hk$cmpz5rd3700bscwg2zw1okf98$hk$ AND preamble_effective_from::date = $hk$2014-12-01$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2021-01-10$hk$::timestamptz WHERE id = $hk$cmpz5rgf700c3cwg2jmb08zy6$hk$ AND preamble_effective_from::date = $hk$2020-12-01$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2011-09-20$hk$::timestamptz WHERE id = $hk$cmpz5pjfi0034cwg2pns2vqhi$hk$ AND preamble_effective_from::date = $hk$2011-06-27$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2014-08-03$hk$::timestamptz WHERE id = $hk$cmpz5qp58008zcwg2aqrf5ow4$hk$ AND preamble_effective_from::date = $hk$2014-05-26$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2014-08-03$hk$::timestamptz WHERE id = $hk$cmpz5qor7008xcwg2hbz6ig6b$hk$ AND preamble_effective_from::date = $hk$2014-05-26$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2014-08-03$hk$::timestamptz WHERE id = $hk$cmpz5qoy6008ycwg2w9aeccsh$hk$ AND preamble_effective_from::date = $hk$2014-05-26$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2014-04-15$hk$::timestamptz WHERE id = $hk$cmpz5q4dt0062cwg2w57de2mz$hk$ AND preamble_effective_from::date = $hk$2014-01-06$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2021-09-08$hk$::timestamptz WHERE id = $hk$cmpz5pb3a001xcwg2gyp5i7lg$hk$ AND preamble_effective_from::date = $hk$2021-02-23$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2013-09-01$hk$::timestamptz WHERE id = $hk$cmpz5p7sd001hcwg2m94ux5ce$hk$ AND preamble_effective_from::date = $hk$2013-07-01$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2014-05-01$hk$::timestamptz WHERE id = $hk$cmpz5rbi100bncwg2ghr8kt40$hk$ AND preamble_effective_from::date = $hk$2013-12-02$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2015-07-21$hk$::timestamptz WHERE id = $hk$cmpz5qlni008hcwg26lvgevla$hk$ AND preamble_effective_from::date = $hk$2015-04-27$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2021-06-17$hk$::timestamptz WHERE id = $hk$cmpz5prrp004acwg2ddbflie0$hk$ AND preamble_effective_from::date = $hk$2021-03-09$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2015-12-01$hk$::timestamptz WHERE id = $hk$cmpz5pkln003acwg2j9kghq1d$hk$ AND preamble_effective_from::date = $hk$2015-09-07$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2016-02-11$hk$::timestamptz WHERE id = $hk$cmpz5pkzj003bcwg2bdfvfxzw$hk$ AND preamble_effective_from::date = $hk$2015-10-26$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2011-09-29$hk$::timestamptz WHERE id = $hk$cmpz5qtu2009ncwg2r98qd4t5$hk$ AND preamble_effective_from::date = $hk$2011-06-13$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2005-12-06$hk$::timestamptz WHERE id = $hk$cmpz5qkom008ccwg2xep4aje1$hk$ AND preamble_effective_from::date = $hk$2005-09-12$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$1992-10-22$hk$::timestamptz WHERE id = $hk$cmpz5p0f1000fcwg2qjypldky$hk$ AND preamble_effective_from::date = $hk$1992-06-29$hk$::date",
+  "SELECT CASE WHEN (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpwi0bkw001xnxff8zst26lv$hk$)=$hk$2022-06-16$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pbv80021cwg2br8calht$hk$)=$hk$2022-07-06$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qixw0084cwg2e4jtdk5z$hk$)=$hk$2012-07-08$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpwi0c8m0020nxffmobucqkh$hk$)=$hk$2021-01-13$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5r8eo00becwg21qt63wx7$hk$)=$hk$2006-04-26$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pyd30057cwg2aeeqrvg7$hk$)=$hk$2018-11-05$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p3iv000vcwg2j8yoctxi$hk$)=$hk$2014-03-09$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qvrv009xcwg2jl97m5li$hk$)=$hk$2010-12-16$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qra4009acwg25u2zl7wp$hk$)=$hk$2009-10-17$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q4ks0063cwg2hgm8rkmr$hk$)=$hk$2014-12-04$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q6pi006ecwg2ucqkh1a3$hk$)=$hk$2021-11-16$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5r53300b8cwg2hyqj8zrc$hk$)=$hk$2023-03-07$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pwt6004zcwg2175jlssl$hk$)=$hk$2005-07-06$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rn3900cmcwg2t70wevmi$hk$)=$hk$2011-02-24$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q7hf006icwg2m1ouzs82$hk$)=$hk$2023-02-01$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pcg70024cwg235dc7j6f$hk$)=$hk$2023-04-05$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pa48001scwg210ue3g5g$hk$)=$hk$2023-11-02$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pinm0030cwg2vb9m262i$hk$)=$hk$2007-02-14$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qo68008ucwg29x0hiyos$hk$)=$hk$2015-03-28$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qzgp00afcwg264bh8sh6$hk$)=$hk$2021-08-25$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rfi400c0cwg2ltsts5j9$hk$)=$hk$2019-01-29$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p6th001ccwg2fz4ds933$hk$)=$hk$2006-04-19$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qeof007icwg2nv2r2hch$hk$)=$hk$2015-03-04$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pv2f004rcwg231jxvfvb$hk$)=$hk$2013-11-27$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rkx500cfcwg2kl7mpzda$hk$)=$hk$2007-06-14$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rzyy00dmcwg2j18drci6$hk$)=$hk$2022-12-07$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pq0x0041cwg2ca51b15b$hk$)=$hk$2020-04-20$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qbcy0071cwg2dtqd49va$hk$)=$hk$2022-03-23$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5ro1u00cpcwg2nejhzpz1$hk$)=$hk$2012-11-29$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rl8i00cgcwg2ktcgb134$hk$)=$hk$2006-11-09$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qgt5007tcwg20weum23t$hk$)=$hk$2021-01-13$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q73g006gcwg211uev9pu$hk$)=$hk$2022-08-11$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qfna007ncwg2oxxnvm1x$hk$)=$hk$2018-10-23$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qneb008qcwg2uif5zy3a$hk$)=$hk$2022-03-16$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rnql00cocwg26h3a4y1g$hk$)=$hk$2012-11-29$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rc4200bpcwg20np662kj$hk$)=$hk$2016-03-17$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p6mi001bcwg27ufsl8jw$hk$)=$hk$2005-12-08$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qxir00a5cwg2b6meszdc$hk$)=$hk$2014-11-27$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5r3j900b0cwg2apftkobe$hk$)=$hk$2018-10-21$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5roo700crcwg2i29zu45b$hk$)=$hk$2012-11-08$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qhe2007wcwg2e9oyrkyh$hk$)=$hk$2021-07-01$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rg4c00c2cwg22ehsnc7c$hk$)=$hk$2021-03-27$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rtgl00d6cwg2u1ezbkrh$hk$)=$hk$2006-04-26$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qxpr00a6cwg2yt687eee$hk$)=$hk$2015-06-10$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5r4p500b6cwg2t04bq0yd$hk$)=$hk$2021-07-07$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5quly009rcwg2uk382g4o$hk$)=$hk$2003-05-08$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p52o0013cwg2sdqmgh59$hk$)=$hk$2007-10-06$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q4rr0064cwg276wf6qoi$hk$)=$hk$2015-02-25$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5ptij004jcwg2f5398mcs$hk$)=$hk$2022-05-04$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qwjt00a0cwg2y15pl0z9$hk$)=$hk$2012-11-29$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5r3q800b1cwg2jsfe33uh$hk$)=$hk$2018-10-21$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q7oe006jcwg2rb0vzn8c$hk$)=$hk$2023-11-18$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5puah004ncwg26nbvbeow$hk$)=$hk$2023-03-02$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pjtg0036cwg27xwfuvbg$hk$)=$hk$2013-02-06$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q985006qcwg2ha9y1f0d$hk$)=$hk$2006-03-15$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qz2r00adcwg2tfe62w2s$hk$)=$hk$2020-08-22$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rcfi00bqcwg2517ubmn0$hk$)=$hk$2016-03-24$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qvkv009wcwg2rhfglw79$hk$)=$hk$2007-06-07$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qjws0089cwg2dmf0bb1s$hk$)=$hk$2006-08-17$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q7af006hcwg29r4dpenu$hk$)=$hk$2023-01-18$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pi2n002xcwg2cbut4twg$hk$)=$hk$2004-09-05$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q82d006lcwg28paja3t7$hk$)=$hk$2024-04-04$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5quzx009tcwg2a1i14leh$hk$)=$hk$2005-03-10$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5psxm004gcwg2zub1ek0a$hk$)=$hk$2021-12-02$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rhoj00c7cwg2lqnf2ujl$hk$)=$hk$2024-01-06$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qlgj008gcwg2hwyn08pu$hk$)=$hk$2015-03-26$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p8di001kcwg2ol8wrk40$hk$)=$hk$2024-06-29$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q044005gcwg2glq3hew6$hk$)=$hk$2006-03-30$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q4yq0065cwg21c3dn066$hk$)=$hk$2016-06-08$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rmhl00ckcwg2h620qxn3$hk$)=$hk$1998-08-18$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qi5z0080cwg20wug3r3n$hk$)=$hk$2023-12-14$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rkah00cdcwg2k7sogfqt$hk$)=$hk$2004-07-29$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p0sz000hcwg2bjpaijcw$hk$)=$hk$2011-08-18$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pery002gcwg2patgc9q7$hk$)=$hk$2003-11-20$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rod200cqcwg2tswwe4ov$hk$)=$hk$2012-11-29$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qvdw009vcwg2fj9o8f6g$hk$)=$hk$2006-02-28$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5plrf003fcwg2cd9cczyu$hk$)=$hk$2017-04-04$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5prdr0048cwg21aqs4rrn$hk$)=$hk$2021-06-16$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pbaa001ycwg2daw7gsdk$hk$)=$hk$2021-07-29$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pqlu0044cwg2dzxmg6u3$hk$)=$hk$2021-02-24$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p4as000zcwg2nx3yo0cj$hk$)=$hk$1992-09-30$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p4vp0012cwg2oxepo39w$hk$)=$hk$2005-12-15$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qkvl008dcwg2snth8nil$hk$)=$hk$2009-11-05$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q7vd006kcwg2uaelgo7l$hk$)=$hk$2020-09-09$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qxwq00a7cwg2593x43jn$hk$)=$hk$2015-11-04$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5prkq0049cwg2fez2xqdz$hk$)=$hk$2021-06-17$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p7zc001icwg2r2ug14re$hk$)=$hk$2014-08-14$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rozq00cscwg2eqnjv8my$hk$)=$hk$2015-07-08$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rd3700bscwg2zw1okf98$hk$)=$hk$2015-03-26$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rgf700c3cwg2jmb08zy6$hk$)=$hk$2021-01-10$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pjfi0034cwg2pns2vqhi$hk$)=$hk$2011-09-20$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qp58008zcwg2aqrf5ow4$hk$)=$hk$2014-08-03$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qor7008xcwg2hbz6ig6b$hk$)=$hk$2014-08-03$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qoy6008ycwg2w9aeccsh$hk$)=$hk$2014-08-03$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q4dt0062cwg2w57de2mz$hk$)=$hk$2014-04-15$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pb3a001xcwg2gyp5i7lg$hk$)=$hk$2021-09-08$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p7sd001hcwg2m94ux5ce$hk$)=$hk$2013-09-01$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rbi100bncwg2ghr8kt40$hk$)=$hk$2014-05-01$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qlni008hcwg26lvgevla$hk$)=$hk$2015-07-21$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5prrp004acwg2ddbflie0$hk$)=$hk$2021-06-17$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pkln003acwg2j9kghq1d$hk$)=$hk$2015-12-01$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pkzj003bcwg2bdfvfxzw$hk$)=$hk$2016-02-11$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qtu2009ncwg2r98qd4t5$hk$)=$hk$2011-09-29$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qkom008ccwg2xep4aje1$hk$)=$hk$2005-12-06$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p0f1000fcwg2qjypldky$hk$)=$hk$1992-10-22$hk$::date AND (SELECT count(*) FROM legal_text_provenance WHERE id LIKE 'g19p-%')=105 THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard_after"
+ ]
+}
