@@ -1,0 +1,25 @@
+{
+ "by": "gap026b-surface-align-2026-10-30",
+ "md5": "fd774c7f8c7e15560667708b7c28d344",
+ "count": 3,
+ "expect_delta": {},
+ "report": {
+  "works": 1,
+  "surface_rows": 2,
+  "new_articles": 0,
+  "changed_text": 0,
+  "plan": [
+   {
+    "work": "we:cmpz5rs6j00d2cwg2y2xak3bx",
+    "name": "نظام البريد 1443 (بدل البريد 1406)",
+    "shown_from_before": "2021-10-14",
+    "shown_from_after": "2022-04-20"
+   }
+  ]
+ },
+ "statements": [
+  "SELECT CASE WHEN (SELECT count(*) FROM search_surface WHERE id=$hk$ss34-9db34e3b517f1feaf5470c12$hk$ AND surface_system_id=$hk$cmpz5rzn500dlcwg2izh9vm6v$hk$ AND valid_on=$hk$2021-10-14$hk$::date)=1 AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rzn500dlcwg2izh9vm6v$hk$)=$hk$2022-04-20$hk$::date AND (SELECT count(*) FROM search_surface WHERE created_by=$hk$gap026b-surface-align-2026-10-30$hk$)=0 THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard_before",
+  "INSERT INTO search_surface (id, work_key, surface_system_id, valid_on, reason, supersedes_surface_id, created_by, created_at) VALUES\n($hk$ssg26b-9db2ad2a5ffdbaa7aef85aa3$hk$, $hk$we:cmpz5rs6j00d2cwg2y2xak3bx$hk$, $hk$cmpz5rs6j00d2cwg2y2xak3bx$hk$, $hk$2021-10-14$hk$::date, $hk$HKM-052 gap026b-surface-align-2026-10-30: يبقى الإصدار السابق ظاهرًا من 2021-10-14 إلى ما قبل نفاذ الجديد (نظام البريد 1443 (بدل البريد 1406)) في 2022-04-20$hk$, $hk$ss34-9db34e3b517f1feaf5470c12$hk$, $hk$gap026b-surface-align-2026-10-30$hk$, now()),\n($hk$ssg26b-3f44e9f70caa8bdf204df754$hk$, $hk$we:cmpz5rs6j00d2cwg2y2xak3bx$hk$, $hk$cmpz5rzn500dlcwg2izh9vm6v$hk$, $hk$2022-04-20$hk$::date, $hk$HKM-052 gap026b-surface-align-2026-10-30: الإصدار الجديد (نظام البريد 1443 (بدل البريد 1406)) يظهر من تاريخ نفاذه الموثق 2022-04-20 (legal_systems + legal_text_provenance) بدل 2021-10-14$hk$, $hk$ss34-9db34e3b517f1feaf5470c12$hk$, $hk$gap026b-surface-align-2026-10-30$hk$, now())",
+  "SELECT CASE WHEN (SELECT surface_system_id FROM search_surface WHERE work_key=$hk$we:cmpz5rs6j00d2cwg2y2xak3bx$hk$ AND valid_on <= $hk$2022-04-19$hk$::date ORDER BY valid_on DESC, created_at DESC, id DESC LIMIT 1)=$hk$cmpz5rs6j00d2cwg2y2xak3bx$hk$ AND (SELECT surface_system_id FROM search_surface WHERE work_key=$hk$we:cmpz5rs6j00d2cwg2y2xak3bx$hk$ AND valid_on <= $hk$2022-04-20$hk$::date ORDER BY valid_on DESC, created_at DESC, id DESC LIMIT 1)=$hk$cmpz5rzn500dlcwg2izh9vm6v$hk$ AND (SELECT count(*) FROM search_surface WHERE created_by=$hk$gap026b-surface-align-2026-10-30$hk$)=2 THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard_after"
+ ]
+}
