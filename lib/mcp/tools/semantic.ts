@@ -12,6 +12,7 @@ import type { SqlClient } from "../../modules/legal-core/sql-port";
 import { articleLabel, NON_ARTICLE_BIS } from "../../modules/legal-core/article-key";
 import { normalizeLawName } from "../../modules/legal-core/law-name-match";
 import { compileTerm, matchesNormalized, normalizeAr, type CompiledTerm } from "./word-match";
+import { queryKeywords } from "../query-words";
 import { filtersFromArgs, lawScopeForFilters, loadLawCatalog, type LawScope } from "./catalog";
 import { snippetAround, type EffectiveFn, type FilterArgs } from "./text-search";
 
@@ -22,21 +23,8 @@ export interface SemanticDeps {
   vectorSearch?: (q: string, limit: number, lawIds?: string[]) => Promise<Array<{ id: string; score: number }>>;
 }
 
-const QUERY_STOP = new Set(
-  [
-    "ما", "ماذا", "هل", "كيف", "متي", "كم", "اين", "لماذا", "من", "في", "على", "علي", "الى", "الي", "عن", "او", "و", "ثم", "ان",
-    "اذا", "لو", "التي", "الذي", "هذا", "هذه", "ذلك", "تلك", "هو", "هي", "مع", "بين", "عند", "كل", "اي", "لا", "لم", "لن", "قد",
-    "بعد", "قبل", "حتي", "غير", "عليه", "فيه", "له", "به", "نظام", "النظام", "الماده", "ماده", "حكم", "يجب", "يحق",
-  ].map(normalizeAr),
-);
-
-/** ألفاظ السؤال ذات المعنى (بلا أدوات الاستفهام والحروف). */
-export function queryKeywords(q: string): string[] {
-  const words = normalizeAr(q)
-    .split(/[^ء-يa-zA-Z0-9]+/)
-    .filter((w) => w.length >= 2 && !QUERY_STOP.has(w));
-  return [...new Set(words)].slice(0, 12);
-}
+// HKM-062: ألفاظ السؤال (وحذف عبارات الطلب والحوار الدارج) في وحدة صرفة بلا قاعدة: lib/mcp/query-words.ts.
+export { queryKeywords };
 
 /** حد التشابه لهذه الأداة (العتبة العامة 0.6 تقطع الأسئلة القصيرة الحوارية: م84 عمل لا تظهر)؛ التحمية بتغطية الألفاظ في الترتيب. */
 export const SEMANTIC_TOOL_MIN_SCORE = 0.5;

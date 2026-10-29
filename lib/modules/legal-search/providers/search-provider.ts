@@ -55,8 +55,23 @@ export interface SearchProvider {
   name: SearchSource;
   /** هل المزوّد متاح الآن؟ يجب ألا يرمي — يعيد false عند التعذّر. */
   isAvailable(): Promise<boolean>;
-  /** البحث؛ يجب أن يلتقط أخطاءه داخلياً ويعيد [] عند الفشل. */
+  /**
+   * البحث؛ يلتقط أخطاءه داخلياً ويعيد [] عند الفشل، إلا رفض HTTP من خدمة خارجية فيرمي ProviderHttpError
+   * (HKM-062) ليُسجَّل `outcome=http_403` بدل `ok` ويُعدّ المزوّد غير متاح. المنسّق يلتقطه، فالنتائج كما هي.
+   */
   search(query: SearchQuery): Promise<RawResult[]>;
+  /** HKM-062: سبب عدم الإتاحة الأخير إن عُرف (مثل http_403)، للسجل وحده. */
+  lastFailure?(): string | null;
+}
+
+/** HKM-062: رفض HTTP من مزوّد خارجي (OpenSearch)؛ المنسّق يسجّل حالته ولا يغيّر النتائج. */
+export class ProviderHttpError extends Error {
+  readonly status: number;
+  constructor(provider: SearchSource, status: number) {
+    super(`${provider} http ${status}`);
+    this.name = "ProviderHttpError";
+    this.status = status;
+  }
 }
 
 // ── الإعدادات من البيئة ──

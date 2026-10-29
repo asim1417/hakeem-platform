@@ -114,3 +114,54 @@ export function buildArabicSearchVariants(query: string, searchType: ArabicSearc
 
   return [...variants].filter((variant) => variant.length >= 2).slice(0, 32);
 }
+
+/**
+ * HKM-062 — صور بديلة للفظ السؤال (جهة السؤال وحدها): السؤال بلغة الناس يكتب الفعل بضميره («فصلوه»، «يحجزوني»)
+ * أو بحرف المضارعة («أفسخ»، «تخصم») أو الجمع («إجازات»)، والمطابقة في النص (word-match) تتسع للسوابق واللواحق
+ * من جهة النص لا من جهة اللفظ: «فصلوه» لا تطابق «فُصل». فتُولَّد هنا صور أقصر تدخل بدائلَ (OR) للفظ، لا بدلًا منه:
+ *   • سابقة الجر والعطف مع «ال»: بالتقسيط ← تقسيط.
+ *   • ضمير متصل في آخر الفعل أو الاسم: فصلوه ← فصل، يطالبني ← يطالب، زوجته ← زوجه (التاء المربوطة).
+ *   • حرف المضارعة (أ، ي، ت، ن) في كلمة من أربعة أحرف فأكثر: تخصم ← خصم، أفسخ ← فسخ.
+ *   • الجمع السالم: إجازات ← إجازه، الموظفين ← موظف.
+ * لا يبقى أقل من ثلاثة أحرف، ولا تُمسّ الكلمة المعرّفة إلا بتجريد «ال». الدخل والخرج مطبَّعان (normalizeAr في word-match):
+ * الهمزات ألف، والتاء المربوطة هاء. صورة لا ترد في المدونة لا تضر (لا تطابق شيئًا).
+ */
+const STEM_MIN = 3;
+const OBJECT_SUFFIXES = ["وهم", "وها", "وني", "وكم", "هما", "وه", "ني", "ها", "هم", "كم", "ه", "ك", "ي"];
+
+export function queryStemVariants(normalizedWord: string): string[] {
+  const w = (normalizedWord ?? "").trim();
+  const out = new Set<string>();
+  if (w.length < STEM_MIN + 1) return [];
+  const add = (x: string) => {
+    if (x.length >= STEM_MIN && x !== w) out.add(x);
+  };
+  const plural = (x: string) => {
+    if (x.endsWith("ات") && x.length - 2 >= STEM_MIN) {
+      add(x.slice(0, -2));
+      add(`${x.slice(0, -2)}ه`);
+    }
+    if (/(?:ين|ون)$/.test(x) && x.length - 2 >= STEM_MIN) add(x.slice(0, -2));
+  };
+  // ١) المعرّف: سابقة مع «ال» (وال، فال، بال، كال، لل) تُجرَّد، ثم الجمع السالم على ما بعد «ال»؛ ولا ضمير مع «ال».
+  const def = w.match(/^(?:[وف]?[بك]?ال|[وف]?لل)(.+)$/);
+  if (def) {
+    const core = def[1];
+    if (core.length >= STEM_MIN && !w.startsWith("ال")) add(core);
+    plural(core);
+    return [...out];
+  }
+  // ٢) ضمير متصل: «ته/تها/تي/تك/تهم» على اسم مؤنث ← التاء المربوطة.
+  const ta = w.match(/^(.{2,})ت(?:هما|هم|ها|ه|ي|ك|كم)$/);
+  if (ta && ta[1].length + 1 >= STEM_MIN) add(`${ta[1]}ه`);
+  // كل ضمير محتمل يُجرَّد (لا الأطول وحده): «قانوني» ← قانون (ي) وقان (وني)؛ الصورة الزائدة لا تطابق شيئًا غالبًا.
+  const bases = [w, ...OBJECT_SUFFIXES.filter((suf) => w.endsWith(suf) && w.length - suf.length >= STEM_MIN).map((suf) => w.slice(0, -suf.length))];
+  // ٣) حرف المضارعة على الأصل وعلى ما جُرّد ضميره.
+  for (const b of bases) {
+    add(b);
+    if (b.length >= STEM_MIN + 1 && /^[ايتن]/.test(b)) add(b.slice(1));
+  }
+  // ٤) الجمع السالم.
+  plural(w);
+  return [...out];
+}

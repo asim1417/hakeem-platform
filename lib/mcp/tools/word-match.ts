@@ -247,6 +247,17 @@ export function compileTerm(term: string, mode: MatchMode = "word"): CompiledTer
   };
 }
 
+/**
+ * HKM-062: لفظ واحد بصيغ بديلة (OR): «فصلوه» أو «فصل» أو «فسخ» أو «إنهاء». للمطابقة في الكود وحدها (التغطية والقرب
+ * والتكرار)، لا لشرط القاعدة: literal فارغ (لا تصفية مسبقة مشتركة)، والنمط اتحاد أنماط الصيغ بحدودها.
+ */
+export function compileAny(label: string, terms: string[], mode: MatchMode = "derivatives"): CompiledTerm | null {
+  const parts = [...new Set(terms)].map((t) => compileTerm(t, mode)).filter((c): c is CompiledTerm => c !== null && c.regex !== null);
+  if (!parts.length) return null;
+  if (parts.length === 1) return { ...parts[0], term: label };
+  return { term: label, mode, literal: "", regex: parts.map((p) => `(?:${p.regex})`).join("|") };
+}
+
 /** يطابق النصَّ المطبَّع (normalizeAr) لفظٌ مُجمَّع؛ نظير شرط القاعدة في الكود. */
 export function matchesNormalized(normText: string, t: CompiledTerm): boolean {
   if (!normText.toLowerCase().includes(t.literal.toLowerCase())) return false;

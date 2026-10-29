@@ -131,12 +131,22 @@ async function main() {
   const fx = loadFixture();
   const report: Record<string, unknown> = { fixture_version: fx.version, limit: LIMIT, variants: [] as unknown[] };
   let gateFailed = false;
+  let first: Map<string, number | null> | null = null;
+  let warnings = 0;
+  const CONCURRENCY = Math.min(Math.max(Number(process.env.EVAL_EVERYDAY_CONCURRENCY) || 1, 1), 4);
   for (const v of variants()) {
-    const per: Array<{ id: string; rank: number | null; ms: number; top3: string; error: string | null }> = [];
-    for (const q of fx.queries) {
-      const { rows, ms, error } = await runSearch(q.query, q.law_id, v.opts);
-      per.push({ id: q.id, rank: error ? null : rankOf(rows, q.expected), ms, top3: top3(rows), error });
-    }
+    type Per = { id: string; rank: number | null; ms: number; top3: string; error: string | null };
+    const per: Per[] = new Array(fx.queries.length);
+    let next = 0;
+    await Promise.all(
+      Array.from({ length: CONCURRENCY }, async () => {
+        for (let i = next++; i < fx.queries.length; i = next++) {
+          const q = fx.queries[i];
+          const { rows, ms, error } = await runSearch(q.query, q.law_id, v.opts);
+          per[i] = { id: q.id, rank: error ? null : rankOf(rows, q.expected), ms, top3: top3(rows), error };
+        }
+      }),
+    );
     const n = per.length;
     const hitAt = (k: number) => per.filter((p) => p.rank !== null && p.rank <= k).length / n;
     const mrr = per.reduce((s, p) => s + (p.rank ? 1 / p.rank : 0), 0) / n;
@@ -163,8 +173,16 @@ async function main() {
     const head = `variant=${v.name} n=${n} hit1=${summary.hit1} hit3=${summary.hit3} hit10=${summary.hit10} mrr=${summary.mrr} errors=${summary.errors} p50=${summary.p50_ms} p95=${summary.p95_ms}`;
     const gateLine = gates.map((g) => `${g.id}=${g.pass ? "PASS" : "FAIL"}(${g.detail})`).join("\n");
     annotate("notice", `everyday ${v.name} summary`, `${head}\n${gateLine}`);
-    const lines = per.map((p) => `${p.id}=${p.rank ?? "-"}|${p.ms}|${p.top3}${p.error ? `|ERR ${p.error}` : ""}`);
-    chunks(lines).forEach((c, i) => annotate("warning", `everyday ${v.name} ranks ${i + 1}`, c));
+    // الإعداد الأول: الرتب كلها؛ وما بعده: ما تغيّرت رتبته عن الأول وحده (حد التعليقات 10 لكل خطوة).
+    const lines = first
+      ? per.filter((p) => first!.get(p.id) !== p.rank).map((p) => `${p.id}: ${first!.get(p.id) ?? "-"}→${p.rank ?? "-"} |${p.top3}`)
+      : per.map((p) => `${p.id}=${p.rank ?? "-"}|${p.ms}|${p.top3}${p.error ? `|ERR ${p.error}` : ""}`);
+    if (!first) first = new Map(per.map((p) => [p.id, p.rank]));
+    for (const [i, c] of chunks(lines.length ? lines : ["(لا تغيير عن الإعداد الأول)"]).entries()) {
+      if (warnings >= 10) break;
+      annotate("warning", `everyday ${v.name} ranks ${i + 1}`, c);
+      warnings++;
+    }
 
     (report.variants as unknown[]).push({ name: v.name, opts: v.opts ?? {}, summary, gates, per });
     if (process.env.GITHUB_STEP_SUMMARY) {

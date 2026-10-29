@@ -26,9 +26,24 @@ export const W_SIMILARITY = 0.35;
 export const W_LEXICAL = 0.1;
 export const W_LAW_NAMED = 0.08;
 
-export function fusionScore(c: FusionCandidate): number {
+/** وزنا التغطية والتشابه. */
+export interface FusionWeights {
+  coverage: number;
+  similarity: number;
+}
+
+/** الافتراض: في السؤال لفظ نادر يميّز المواد (صفحة حصر لفظي مقبولة)، فالتغطية أقوى الدليلين. */
+export const WEIGHTS_DISTINCTIVE: FusionWeights = { coverage: W_COVERAGE, similarity: W_SIMILARITY };
+
+/**
+ * HKM-062: لا دليل لفظي مميِّز — كل ألفاظ السؤال شائعة (لا صفحة حصر مقبولة: «حق العامل اذا فصلوه بدون سبب»)،
+ * فتغطية «العامل» و«حق» لا تفرّق بين مئات المواد؛ يُقدَّم المعنى: الوزنان يتبادلان (المجموع ثابت 0.9).
+ */
+export const WEIGHTS_WEAK_LEXICAL: FusionWeights = { coverage: W_SIMILARITY, similarity: W_COVERAGE };
+
+export function fusionScore(c: FusionCandidate, w: FusionWeights = WEIGHTS_DISTINCTIVE): number {
   const clamp = (x: number) => (Number.isFinite(x) ? Math.min(Math.max(x, 0), 1) : 0);
-  const s = W_COVERAGE * clamp(c.coverage) + W_SIMILARITY * clamp(c.similarity) + (c.lexicalHit ? W_LEXICAL : 0) + (c.lawNamed ? W_LAW_NAMED : 0);
+  const s = w.coverage * clamp(c.coverage) + w.similarity * clamp(c.similarity) + (c.lexicalHit ? W_LEXICAL : 0) + (c.lawNamed ? W_LAW_NAMED : 0);
   return Math.round(s * 1000) / 1000;
 }
 
@@ -50,7 +65,7 @@ export function bm25TermWeight(tf: number, len: number, avgLen: number, k1 = BM2
  * يدمج مرشحين مكرّرين بالمعرّف (يأخذ الأعلى لكل حقل) ويرتّبهم تنازليًا؛ التعادل بالتشابه ثم بوزن التكرار (BM25)
  * ثم بالمعرّف (ثبات). HKM-058: كان التعادل بالمعرّف وحده، فداخل نظام واحد تتقدم المواد الأولى (التعريفات) على مواد الموضوع.
  */
-export function rankFused(candidates: FusionCandidate[], limit: number): Array<FusionCandidate & { score: number }> {
+export function rankFused(candidates: FusionCandidate[], limit: number, weights: FusionWeights = WEIGHTS_DISTINCTIVE): Array<FusionCandidate & { score: number }> {
   const byId = new Map<string, FusionCandidate>();
   for (const c of candidates) {
     const prev = byId.get(c.id);
@@ -69,7 +84,7 @@ export function rankFused(candidates: FusionCandidate[], limit: number): Array<F
     );
   }
   return [...byId.values()]
-    .map((c) => ({ ...c, score: fusionScore(c) }))
+    .map((c) => ({ ...c, score: fusionScore(c, weights) }))
     .sort((a, b) => b.score - a.score || b.similarity - a.similarity || (b.termWeight ?? 0) - (a.termWeight ?? 0) || a.id.localeCompare(b.id))
     .slice(0, Math.max(0, limit));
 }

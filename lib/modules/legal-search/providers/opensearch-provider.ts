@@ -1,6 +1,7 @@
 import {
   getOpenSearchConfig,
   openSearchHeaders,
+  ProviderHttpError,
   type LegalEntityType,
   type RawResult,
   type SearchProvider,
@@ -8,30 +9,40 @@ import {
   scopedLawIds,
   wantsType,
 } from "./search-provider";
+import { noteOpenSearchFailure, openSearchBlocked } from "./opensearch-breaker";
 import { parseArticleQuery } from "../query-parse";
 
 // مزوّد OpenSearch/Elasticsearch — مستقل وقابل للتبديل. اختياري بالكامل:
 // إن لم تُضبط متغيرات البيئة أو تعذّر الاتصال، يُعَدّ غير متاح ولا يكسر البحث.
+// HKM-062: الرفض (403 لعنقود موقوف) لا يُبتلع: الفحص يفتح القاطع فيُتخطّى المزوّد بلا نداء شبكة، والبحث
+// يرمي ProviderHttpError فيُسجَّل outcome=http_403 بدل ok. النتائج كما كانت ([]).
 export const opensearchProvider: SearchProvider = {
   name: "opensearch",
 
   async isAvailable() {
     const cfg = getOpenSearchConfig();
     if (!cfg) return false;
+    if (openSearchBlocked()) return false;
     try {
       const res = await fetch(`${cfg.url}/_cluster/health`, {
         headers: openSearchHeaders(cfg),
         signal: AbortSignal.timeout(2500),
       });
+      if (!res.ok) noteOpenSearchFailure(res.status, "health");
       return res.ok;
     } catch {
       return false;
     }
   },
 
+  lastFailure() {
+    return openSearchBlocked();
+  },
+
   async search({ q, limit = 10, types, lawIds }: SearchQuery): Promise<RawResult[]> {
     const cfg = getOpenSearchConfig();
     if (!cfg) return [];
+    if (openSearchBlocked()) return [];
     // فهرس الأحكام والمبادئ لا يُسأل إن لم تُطلب (فلا تأخذ أحكامه مقاعد المواد).
     // HKM-053: فهرس المواد بلا معرّف النظام، فلا يُحصر داخل الاستعلام؛ مع الحصر بنظام لا يُسأل (المزوّد اللفظي يغطيه).
     const scoped = scopedLawIds({ lawIds }) !== null;
@@ -93,7 +104,10 @@ export const opensearchProvider: SearchProvider = {
         body: JSON.stringify(body),
         signal: AbortSignal.timeout(4000),
       });
-      if (!res.ok) return [];
+      if (!res.ok) {
+        noteOpenSearchFailure(res.status, "search");
+        throw new ProviderHttpError("opensearch", res.status);
+      }
       const data = (await res.json()) as {
         hits?: { max_score?: number; hits?: Array<{ _score?: number; _source?: Record<string, unknown>; highlight?: Record<string, string[]> }> };
       };
@@ -122,7 +136,9 @@ export const opensearchProvider: SearchProvider = {
         });
       }
       return results;
-    } catch {
+    } catch (e) {
+      // رفض HTTP يصل إلى المنسّق ليُسجَّل؛ ما سواه (مهلة، شبكة، JSON) سقوط آمن كما كان.
+      if (e instanceof ProviderHttpError) throw e;
       return [];
     }
   },

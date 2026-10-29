@@ -8,6 +8,7 @@ import { postgresProvider } from "./providers/postgres-provider";
 import { vectorProvider } from "./providers/vector-provider";
 import {
   getSearchMode,
+  ProviderHttpError,
   type LegalEntityType,
   type ProviderStatus,
   type RawResult,
@@ -120,7 +121,8 @@ export async function hybridSearch(query: SearchQuery): Promise<HybridSearchResp
   const rawBatches = await Promise.all(
     selected.map(async (p): Promise<RawResult[]> => {
       const t0 = Date.now();
-      const state: { outcome: "ok" | "unavailable" | "error" | "budget" } = { outcome: "ok" };
+      // HKM-062: outcome=http_403 (رفض المزوّد) يُميَّز عن ok؛ وunavailable يحمل سببه إن عُرف (reason=http_403).
+      const state: { outcome: string; reason?: string | null } = { outcome: "ok" };
       try {
         // ميزانية لكل مزوّد: البطيء يُسقَط وتُرجَع نتائج البقية، بدل أن يُسقط البحث كله مهلةَ الأداة.
         const r = await withBudget(
@@ -128,6 +130,7 @@ export async function hybridSearch(query: SearchQuery): Promise<HybridSearchResp
             const available = await p.isAvailable();
             if (!available) {
               state.outcome = "unavailable";
+              state.reason = p.lastFailure?.() ?? null;
               return [] as RawResult[];
             }
             return p.search({ ...query, limit });
@@ -141,12 +144,12 @@ export async function hybridSearch(query: SearchQuery): Promise<HybridSearchResp
         }
         providerStatuses.push({ name: p.name, status: state.outcome === "unavailable" ? "unavailable" : "active" });
         return r;
-      } catch {
-        state.outcome = "error";
+      } catch (e) {
+        state.outcome = e instanceof ProviderHttpError ? `http_${e.status}` : "error";
         providerStatuses.push({ name: p.name, status: "unavailable" });
         return [];
       } finally {
-        console.info(`[search] provider=${p.name} ms=${Date.now() - t0} outcome=${state.outcome}`);
+        console.info(`[search] provider=${p.name} ms=${Date.now() - t0} outcome=${state.outcome}${state.reason ? ` reason=${state.reason}` : ""}`);
       }
     })
   );
