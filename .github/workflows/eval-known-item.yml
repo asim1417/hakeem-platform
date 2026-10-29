@@ -54,8 +54,22 @@ jobs:
         run: |
           export DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
           if [ -z "$DATABASE_URL" ]; then echo "::error::لا اتصال (اضبط NEON_DATABASE_URL أو DATABASE_URL)."; exit 1; fi
+          set -o pipefail
           if [ "${{ inputs.gate }}" = "true" ]; then
-            npm run eval:known-item -- --gate
+            npm run eval:known-item -- --gate 2>&1 | tee "$RUNNER_TEMP/eval.log"
           else
-            npm run eval:known-item
+            npm run eval:known-item 2>&1 | tee "$RUNNER_TEMP/eval.log"
           fi
+      # HKM-062: آخر السجل (الملخص) تعليقاتٍ تُقرأ من واجهة check-runs حين يتعذّر تنزيل السجل. قراءة فقط.
+      - name: Publish summary as annotations
+        if: always()
+        run: |
+          [ -f "$RUNNER_TEMP/eval.log" ] || exit 0
+          grep -v '^::' "$RUNNER_TEMP/eval.log" | tail -n 45 | python3 -c 'import sys
+          t=sys.stdin.read().replace("%","%25").split("\n")
+          cur=""; out=[]
+          for l in t:
+              if len(cur)+len(l)>3000 and cur: out.append(cur); cur=""
+              cur+=("%0A" if cur else "")+l
+          out.append(cur)
+          [print("::notice title=eval tail %d::%s" % (i+1, c)) for i, c in enumerate(out[:8])]'

@@ -83,8 +83,22 @@ jobs:
           SCRIPT="eval:search"
           if [ "${{ inputs.suite }}" = "everyday" ]; then SCRIPT="eval:everyday"; fi
           if [ -z "$EVAL_EVERYDAY_VARIANTS" ]; then unset EVAL_EVERYDAY_VARIANTS; fi
+          set -o pipefail
           if [ "${{ inputs.gate }}" = "true" ]; then
-            npm run "$SCRIPT" -- --gate
+            npm run "$SCRIPT" -- --gate 2>&1 | tee "$RUNNER_TEMP/eval.log"
           else
-            npm run "$SCRIPT"
+            npm run "$SCRIPT" 2>&1 | tee "$RUNNER_TEMP/eval.log"
           fi
+      # HKM-062: آخر السجل (الملخص) تعليقاتٍ تُقرأ من واجهة check-runs حين يتعذّر تنزيل السجل. قراءة فقط.
+      - name: Publish summary as annotations
+        if: always()
+        run: |
+          [ -f "$RUNNER_TEMP/eval.log" ] || exit 0
+          grep -v '^::' "$RUNNER_TEMP/eval.log" | tail -n 45 | python3 -c 'import sys
+          t=sys.stdin.read().replace("%","%25").split("\n")
+          cur=""; out=[]
+          for l in t:
+              if len(cur)+len(l)>3000 and cur: out.append(cur); cur=""
+              cur+=("%0A" if cur else "")+l
+          out.append(cur)
+          [print("::notice title=eval tail %d::%s" % (i+1, c)) for i, c in enumerate(out[:8])]'
