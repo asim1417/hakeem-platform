@@ -17,6 +17,8 @@ export interface FusionCandidate {
   lexicalHit: boolean;
   /** سمّى السؤال النظام باسمه. */
   lawNamed: boolean;
+  /** HKM-058: وزن تكرار الألفاظ في النص (BM25، تشبّع وتطبيع بالطول)؛ لكسر التعادل وحده. */
+  termWeight?: number;
 }
 
 export const W_COVERAGE = 0.55;
@@ -30,7 +32,24 @@ export function fusionScore(c: FusionCandidate): number {
   return Math.round(s * 1000) / 1000;
 }
 
-/** يدمج مرشحين مكرّرين بالمعرّف (يأخذ الأعلى لكل حقل) ويرتّبهم تنازليًا؛ التعادل بالتشابه ثم بالمعرّف (ثبات). */
+/** HKM-058: معاملا BM25 القياسيان (Robertson وZaragoza 2009). */
+export const BM25_K1 = 1.2;
+export const BM25_B = 0.75;
+
+/**
+ * مكوّن التكرار في BM25 لنص: tf·(k1+1) / (tf + k1·(1−b+b·len/avgLen)). يتشبّع مع التكرار ويُطبَّع بطول النص،
+ * فلا تتقدم مادة طويلة (التعريفات) لمجرد كثرة ورود اللفظ فيها. 0 بلا ورود.
+ */
+export function bm25TermWeight(tf: number, len: number, avgLen: number, k1 = BM25_K1, b = BM25_B): number {
+  if (!Number.isFinite(tf) || tf <= 0) return 0;
+  const ratio = avgLen > 0 && Number.isFinite(len) && len > 0 ? len / avgLen : 1;
+  return (tf * (k1 + 1)) / (tf + k1 * (1 - b + b * ratio));
+}
+
+/**
+ * يدمج مرشحين مكرّرين بالمعرّف (يأخذ الأعلى لكل حقل) ويرتّبهم تنازليًا؛ التعادل بالتشابه ثم بوزن التكرار (BM25)
+ * ثم بالمعرّف (ثبات). HKM-058: كان التعادل بالمعرّف وحده، فداخل نظام واحد تتقدم المواد الأولى (التعريفات) على مواد الموضوع.
+ */
 export function rankFused(candidates: FusionCandidate[], limit: number): Array<FusionCandidate & { score: number }> {
   const byId = new Map<string, FusionCandidate>();
   for (const c of candidates) {
@@ -44,13 +63,14 @@ export function rankFused(candidates: FusionCandidate[], limit: number): Array<F
             similarity: Math.max(prev.similarity, c.similarity),
             lexicalHit: prev.lexicalHit || c.lexicalHit,
             lawNamed: prev.lawNamed || c.lawNamed,
+            termWeight: Math.max(prev.termWeight ?? 0, c.termWeight ?? 0),
           }
         : c,
     );
   }
   return [...byId.values()]
     .map((c) => ({ ...c, score: fusionScore(c) }))
-    .sort((a, b) => b.score - a.score || b.similarity - a.similarity || a.id.localeCompare(b.id))
+    .sort((a, b) => b.score - a.score || b.similarity - a.similarity || (b.termWeight ?? 0) - (a.termWeight ?? 0) || a.id.localeCompare(b.id))
     .slice(0, Math.max(0, limit));
 }
 

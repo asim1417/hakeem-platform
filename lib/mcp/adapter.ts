@@ -21,11 +21,11 @@ import { latestVerification } from "@/lib/modules/legal-core/verification-read";
 import { NON_ARTICLE_BIS } from "@/lib/modules/legal-core/article-key";
 import { effectiveArticleTexts } from "@/lib/modules/legal-core/effective-text";
 import { BUDGET_EXCEEDED, filterArticleIdsToSurface, hybridSearch, providerBudgetMs, withBudget } from "@/lib/modules/legal-search/hybrid-search";
-import { acceptFill, keepCandidate, lexicalPageUsable, rankFused, RARE_TERM_MAX, type FusionCandidate } from "@/lib/mcp/search-fusion";
+import { acceptFill, bm25TermWeight, keepCandidate, lexicalPageUsable, rankFused, RARE_TERM_MAX, type FusionCandidate } from "@/lib/mcp/search-fusion";
 import { handleSemanticSearch, hintedLaws, queryKeywords } from "@/lib/mcp/tools/semantic";
 import { handleEnumerate } from "@/lib/mcp/tools/enumerate";
 import { loadLawCatalog } from "@/lib/mcp/tools/catalog";
-import { compileTerm, matchesNormalized, normalizeAr, windowCoverage, type CompiledTerm } from "@/lib/mcp/tools/word-match";
+import { compileTerm, matchesNormalized, matchPositions, normalizeAr, windowCoverage, type CompiledTerm } from "@/lib/mcp/tools/word-match";
 import { matchThesaurusConcepts } from "@/lib/modules/legal-thesaurus/concept-index";
 import { prismaSqlClient } from "@/lib/modules/legal-core/sql-port";
 import { getSiteUrl } from "@/lib/modules/config/site-url";
@@ -114,11 +114,22 @@ async function fusedArticleIds(query: string, lawId: string | undefined, limit: 
     const rows = await prisma.legalArticle.findMany({ where: { id: { in: [...new Set(lexRows.map((r) => r.article_id))] } }, select: { id: true, content: true } }).catch(() => []);
     for (const r of rows) fullText.set(r.id, r.content ?? "");
   }
-  for (const r of lexRows) {
-    const text = fullText.get(r.article_id) ?? r.snippet;
+  // HKM-058: وزن التكرار (BM25) لكسر التعادل بين مرشحين بالتغطية نفسها؛ متوسط الطول من المرشحين اللفظيين.
+  const lexNorm = lexRows.map((r) => normalizeAr(fullText.get(r.article_id) ?? r.snippet));
+  const avgLen = lexNorm.length ? lexNorm.reduce((n, t) => n + t.length, 0) / lexNorm.length : 0;
+  lexRows.forEach((r, i) => {
+    const norm = lexNorm[i];
+    const tf = compiled.reduce((n, c) => n + matchPositions(norm, c).length, 0);
     // لفظ شائع (نتائجه أكثر من الحد) استُبعدت صفحته أعلاه: لا يميّز مادة.
-    cands.push({ id: r.article_id, coverage: windowCoverage(normalizeAr(text), compiled), similarity: 0, lexicalHit: true, lawNamed: Boolean(r.law_id && named.has(r.law_id)) });
-  }
+    cands.push({
+      id: r.article_id,
+      coverage: windowCoverage(norm, compiled),
+      similarity: 0,
+      lexicalHit: true,
+      lawNamed: Boolean(r.law_id && named.has(r.law_id)),
+      termWeight: bm25TermWeight(tf, norm.length, avgLen),
+    });
+  });
   // مرشح الوجه: لا تُعرض مواد أنظمة ملغاة أو مخفية عن الوجه الحالي (كالمحرك الهجين).
   const allowed = await filterArticleIdsToSurface([...new Set(cands.map((c) => c.id))]).catch(() => null);
   const visible = (allowed ? cands.filter((c) => allowed.has(c.id)) : cands).filter((c) => keepCandidate(c, compiled.length));

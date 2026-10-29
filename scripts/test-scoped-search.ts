@@ -140,7 +140,23 @@ async function main() {
   await handleSemanticSearch(db, { query: "التصفية" }, deps);
   ok(asked[1] === undefined, "بلا law_id لا حصر على المتجهات");
 
-  // ⑦ issued_by: من بطاقة النظام عند غياب عمود المادة (بطاقة الإفلاس كما في الإنتاج).
+  // ⑦ HKM-058: التعادل داخل النظام بوزن التكرار (BM25) لا بالمعرّف.
+  const { bm25TermWeight, rankFused } = await import("../lib/mcp/search-fusion");
+  ok(bm25TermWeight(0, 100, 100) === 0 && bm25TermWeight(2, 100, 100) > bm25TermWeight(1, 100, 100), "BM25: صفر بلا ورود، ويزيد مع التكرار");
+  ok(bm25TermWeight(20, 100, 100) < 2.2 && bm25TermWeight(20, 100, 100) - bm25TermWeight(10, 100, 100) < bm25TermWeight(2, 100, 100) - bm25TermWeight(1, 100, 100), "BM25: يتشبّع (لا يتجاوز k1+1)");
+  // م1 التعريفات: طويلة وتذكر اللفظ 6 مرات؛ م94: قصيرة وتذكره مرتين — الأقصر الأكثف أولى.
+  const avg = 1500;
+  const defs = bm25TermWeight(6, 9000, avg);
+  const art94 = bm25TermWeight(2, 300, avg);
+  ok(art94 > defs, `BM25: المادة الطويلة لا تتقدم لكثرة الورود (${art94.toFixed(2)} > ${defs.toFixed(2)})`);
+  const C = (id: string, termWeight: number, coverage = 1, similarity = 0) => ({ id, coverage, similarity, lexicalHit: true, lawNamed: false, termWeight });
+  const tie = rankFused([C("a-001", defs), C("a-094", art94), C("a-090", art94 * 0.9)], 3).map((c) => c.id);
+  ok(tie.join(",") === "a-094,a-090,a-001", `التعادل يُكسر بوزن التكرار لا بالمعرّف (${tie.join(",")})`);
+  const notTie = rankFused([C("a-001", 0, 1, 0.8), C("a-094", art94, 1, 0)], 2).map((c) => c.id);
+  ok(notTie[0] === "a-001", "وزن التكرار لا يغلب فرق الدرجة (التشابه يبقى أولًا)");
+  ok(rankFused([C("b", 0), C("a", 0)], 2).map((c) => c.id).join(",") === "a,b", "بلا وزن: التعادل بالمعرّف كما كان");
+
+  // ⑧ issued_by: من بطاقة النظام عند غياب عمود المادة (بطاقة الإفلاس كما في الإنتاج).
   const card = { issued_hijri: "1439/05/28", instruments: [{ kind: "royal_decree", text: "مرسوم ملكي رقم ( م/50) وتاريخ 1439/5/28هـ" }, { kind: "cabinet_decision", text: "قرار مجلس الوزراء" }] };
   const fromCard = articleIssuance(null, card);
   ok(fromCard.issuedBy === "مرسوم ملكي رقم ( م/50) وتاريخ 1439/5/28هـ" && fromCard.issuedDateH === "1439/05/28", "المادة 1 من الإفلاس: issued_by وissued_date_h من البطاقة");
