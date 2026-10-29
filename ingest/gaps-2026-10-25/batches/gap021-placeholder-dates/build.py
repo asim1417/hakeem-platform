@@ -7,7 +7,7 @@
 يُكتب التاريخ إذا اجتمع:
   1. قاعدة النفاذ من القارئ: `publication` أو `silent` (يعمل به من النشر: م71 من النظام الأساسي، وهو العرف قبله)، أو `publication_plus` بمدة،
      أو `issue` (من تاريخ الصدور، وتاريخ الأداة من سطرها في الهيئة)، أو `explicit` (تاريخ منصوص). و`other` يُعلَّق.
-  2. لقاعدة النشر: تاريخ نشر قرأه القارئ بنفسه من الصفحة الحية، ويطابق تاريخ زحف نظما في الحزمة (لقطتان للمصدر)، ويقع بعد الصدور بيوم إلى 120 يومًا
+  2. ثقة القارئ ليست دنيا. ولقاعدة النشر: تاريخ نشر قرأه القارئ بنفسه من الصفحة الحية، ويطابق تاريخ زحف نظما في الحزمة (لقطتان للمصدر)، ويقع بعد الصدور بيوم إلى 120 يومًا
      (ما زاد فخطأ محتمل في المصدر فيُعلّق، مثل البند PH-69 بعد سنتين وثمانية أشهر).
   3. المخزن الآن هو القيمة النائبة نفسها (أو فارغ)، والكتابة محروسة بها.
 الحساب بالكود: الهجري بتقويم أم القرى (hijri_converter)؛ الأيام تضاف ميلاديًا، والأشهر والسنون هجرية (كما في gap019j).
@@ -77,6 +77,7 @@ def add_months(t, n):
         return Hijri(y, m, 29).to_gregorian()
 
 
+NZ_OLD_NAME = {'PH-11': '١٤٢٢/٠٤/٠٨هـ', 'PH-12': '١٤٢٢/٠٤/٠٨هـ'}
 ok, held = [], []
 for item, p in sorted(P.items()):
     r = READ.get(item)
@@ -88,8 +89,12 @@ for item, p in sorted(P.items()):
     issue = hij(r.get('issue_hijri'))
     pub = hij(r.get('pub_hijri'))
     nz = hij((p['nezams'][0]['publish_date'] if p['nezams'] else None))
+    if item in NZ_OLD_NAME:  # في الزحف باسمه القديم «تنظيم هيئة الاتصالات السعودية» (نظما 203)، فلم يطابقه الاسم في الحزمة
+        nz = hij(NZ_OLD_NAME[item])
     eff, basis = None, None
-    if rule in ('publication', 'silent', 'publication_plus'):
+    if r.get('confidence') == 'low':
+        why = 'ثقة القارئ دنيا: ' + (r.get('notes') or '')[:200]
+    elif rule in ('publication', 'silent', 'publication_plus'):
         if not pub:
             why = 'لا تاريخ نشر في أي مصدر'
         elif r.get('pub_source') == 'nezams' and nz != pub:
