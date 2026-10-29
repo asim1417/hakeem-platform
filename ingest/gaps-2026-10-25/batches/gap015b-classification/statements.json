@@ -1,0 +1,50 @@
+{
+ "by": "gap015b-classification-2026-10-29",
+ "md5": "9885139ec22ed3e1aefdc2cf587cf052",
+ "count": 23,
+ "expect_delta": {},
+ "report": {
+  "updated": 21,
+  "agreed": 21,
+  "reviewed": 0,
+  "open": 9,
+  "by_class": {
+   "أنظمة الطاقة والصناعة والتعدين": 2,
+   "أنظمة الخدمات البلدية والتخطيط والتطوير الحضري": 4,
+   "أنظمة الأمن الداخلي والأحوال المدنية والأنظمة الجنائية": 3,
+   "أنظمة الإعلام والثقافة والنشر": 3,
+   "أنظمة الخدمة المدنية": 3,
+   "أنظمة المال والرقابة": 1,
+   "أنظمة العمل والرعاية الاجتماعية": 2,
+   "أنظمة الزراعة والمياه والثروات الحية": 1,
+   "أنظمة التجارة والاقتصاد والاستثمار": 2
+  },
+  "new_articles": 0,
+  "changed_text": 0
+ },
+ "statements": [
+  "SELECT CASE WHEN (SELECT count(*) FROM legal_systems WHERE id IN ($hk$0c2febaf117e4ea5863774f643e07a26$hk$,$hk$0caed8cf41b84f97b7b1fcf168746fc1$hk$,$hk$0fd910abdae34501a2dae975df490669$hk$,$hk$1a1629bbc31f4f48920f4422d7fbb9b8$hk$,$hk$20603c7d93964ee2a56699d36a363076$hk$,$hk$23de4525bb4d45379bdda6cf189cd575$hk$,$hk$5cbdcc91cbae42198d9de717b774aeb2$hk$,$hk$5f3383df317e44eb9f573785210284ac$hk$,$hk$6806993ebedc4264921f93b2705ae07a$hk$,$hk$75d1850d85a34393804fa99424ed6ea1$hk$,$hk$7b0eda14bcb148319fae7a1ffa0029f3$hk$,$hk$7b791a265cd043ffa48f2f33220eee4f$hk$,$hk$80ad010137ee4147b1224fd833f02334$hk$,$hk$864a9d88f20d45779e51cf83dca2fb57$hk$,$hk$b3453f82851d4e368c8b072c14212cc4$hk$,$hk$c85249b8e2fc4323a59f6236cf59fdbd$hk$,$hk$cb2253b5f4894bc99005d26387495602$hk$,$hk$dad5021a7e7144cd997af063f22df522$hk$,$hk$e00306468ef84f46b6e5c5bdcb87b1eb$hk$,$hk$eadc9043516d4e24ba9f95208010e0b3$hk$,$hk$ff0204bfe59f49fa883b06f28a7efa31$hk$) AND coalesce(classification,'')='')=21 THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard_before",
+  "UPDATE legal_systems SET classification = $hk$أنظمة الخدمات البلدية والتخطيط والتطوير الحضري$hk$ WHERE id = $hk$0c2febaf117e4ea5863774f643e07a26$hk$ AND coalesce(classification, '') = ''",
+  "UPDATE legal_systems SET classification = $hk$أنظمة العمل والرعاية الاجتماعية$hk$ WHERE id = $hk$0caed8cf41b84f97b7b1fcf168746fc1$hk$ AND coalesce(classification, '') = ''",
+  "UPDATE legal_systems SET classification = $hk$أنظمة الخدمات البلدية والتخطيط والتطوير الحضري$hk$ WHERE id = $hk$0fd910abdae34501a2dae975df490669$hk$ AND coalesce(classification, '') = ''",
+  "UPDATE legal_systems SET classification = $hk$أنظمة التجارة والاقتصاد والاستثمار$hk$ WHERE id = $hk$1a1629bbc31f4f48920f4422d7fbb9b8$hk$ AND coalesce(classification, '') = ''",
+  "UPDATE legal_systems SET classification = $hk$أنظمة الخدمات البلدية والتخطيط والتطوير الحضري$hk$ WHERE id = $hk$20603c7d93964ee2a56699d36a363076$hk$ AND coalesce(classification, '') = ''",
+  "UPDATE legal_systems SET classification = $hk$أنظمة المال والرقابة$hk$ WHERE id = $hk$23de4525bb4d45379bdda6cf189cd575$hk$ AND coalesce(classification, '') = ''",
+  "UPDATE legal_systems SET classification = $hk$أنظمة التجارة والاقتصاد والاستثمار$hk$ WHERE id = $hk$5cbdcc91cbae42198d9de717b774aeb2$hk$ AND coalesce(classification, '') = ''",
+  "UPDATE legal_systems SET classification = $hk$أنظمة الزراعة والمياه والثروات الحية$hk$ WHERE id = $hk$5f3383df317e44eb9f573785210284ac$hk$ AND coalesce(classification, '') = ''",
+  "UPDATE legal_systems SET classification = $hk$أنظمة الأمن الداخلي والأحوال المدنية والأنظمة الجنائية$hk$ WHERE id = $hk$6806993ebedc4264921f93b2705ae07a$hk$ AND coalesce(classification, '') = ''",
+  "UPDATE legal_systems SET classification = $hk$أنظمة الخدمة المدنية$hk$ WHERE id = $hk$75d1850d85a34393804fa99424ed6ea1$hk$ AND coalesce(classification, '') = ''",
+  "UPDATE legal_systems SET classification = $hk$أنظمة الخدمات البلدية والتخطيط والتطوير الحضري$hk$ WHERE id = $hk$7b0eda14bcb148319fae7a1ffa0029f3$hk$ AND coalesce(classification, '') = ''",
+  "UPDATE legal_systems SET classification = $hk$أنظمة الأمن الداخلي والأحوال المدنية والأنظمة الجنائية$hk$ WHERE id = $hk$7b791a265cd043ffa48f2f33220eee4f$hk$ AND coalesce(classification, '') = ''",
+  "UPDATE legal_systems SET classification = $hk$أنظمة الخدمة المدنية$hk$ WHERE id = $hk$80ad010137ee4147b1224fd833f02334$hk$ AND coalesce(classification, '') = ''",
+  "UPDATE legal_systems SET classification = $hk$أنظمة الإعلام والثقافة والنشر$hk$ WHERE id = $hk$864a9d88f20d45779e51cf83dca2fb57$hk$ AND coalesce(classification, '') = ''",
+  "UPDATE legal_systems SET classification = $hk$أنظمة الأمن الداخلي والأحوال المدنية والأنظمة الجنائية$hk$ WHERE id = $hk$b3453f82851d4e368c8b072c14212cc4$hk$ AND coalesce(classification, '') = ''",
+  "UPDATE legal_systems SET classification = $hk$أنظمة الإعلام والثقافة والنشر$hk$ WHERE id = $hk$c85249b8e2fc4323a59f6236cf59fdbd$hk$ AND coalesce(classification, '') = ''",
+  "UPDATE legal_systems SET classification = $hk$أنظمة الخدمة المدنية$hk$ WHERE id = $hk$cb2253b5f4894bc99005d26387495602$hk$ AND coalesce(classification, '') = ''",
+  "UPDATE legal_systems SET classification = $hk$أنظمة الإعلام والثقافة والنشر$hk$ WHERE id = $hk$dad5021a7e7144cd997af063f22df522$hk$ AND coalesce(classification, '') = ''",
+  "UPDATE legal_systems SET classification = $hk$أنظمة الطاقة والصناعة والتعدين$hk$ WHERE id = $hk$e00306468ef84f46b6e5c5bdcb87b1eb$hk$ AND coalesce(classification, '') = ''",
+  "UPDATE legal_systems SET classification = $hk$أنظمة الطاقة والصناعة والتعدين$hk$ WHERE id = $hk$eadc9043516d4e24ba9f95208010e0b3$hk$ AND coalesce(classification, '') = ''",
+  "UPDATE legal_systems SET classification = $hk$أنظمة العمل والرعاية الاجتماعية$hk$ WHERE id = $hk$ff0204bfe59f49fa883b06f28a7efa31$hk$ AND coalesce(classification, '') = ''",
+  "SELECT CASE WHEN (SELECT md5(string_agg(id||':'||classification, '|' ORDER BY id)) FROM legal_systems WHERE id IN ($hk$0c2febaf117e4ea5863774f643e07a26$hk$,$hk$0caed8cf41b84f97b7b1fcf168746fc1$hk$,$hk$0fd910abdae34501a2dae975df490669$hk$,$hk$1a1629bbc31f4f48920f4422d7fbb9b8$hk$,$hk$20603c7d93964ee2a56699d36a363076$hk$,$hk$23de4525bb4d45379bdda6cf189cd575$hk$,$hk$5cbdcc91cbae42198d9de717b774aeb2$hk$,$hk$5f3383df317e44eb9f573785210284ac$hk$,$hk$6806993ebedc4264921f93b2705ae07a$hk$,$hk$75d1850d85a34393804fa99424ed6ea1$hk$,$hk$7b0eda14bcb148319fae7a1ffa0029f3$hk$,$hk$7b791a265cd043ffa48f2f33220eee4f$hk$,$hk$80ad010137ee4147b1224fd833f02334$hk$,$hk$864a9d88f20d45779e51cf83dca2fb57$hk$,$hk$b3453f82851d4e368c8b072c14212cc4$hk$,$hk$c85249b8e2fc4323a59f6236cf59fdbd$hk$,$hk$cb2253b5f4894bc99005d26387495602$hk$,$hk$dad5021a7e7144cd997af063f22df522$hk$,$hk$e00306468ef84f46b6e5c5bdcb87b1eb$hk$,$hk$eadc9043516d4e24ba9f95208010e0b3$hk$,$hk$ff0204bfe59f49fa883b06f28a7efa31$hk$))=$hk$08790860af1733e621194e3ba270cd21$hk$ THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard_after"
+ ]
+}
