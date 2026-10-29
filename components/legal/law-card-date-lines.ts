@@ -3,11 +3,15 @@
 // HKM-064: والإصدار المجهول (أو بلا بطاقة) يسقط إلى مصادر صفحة /law نفسها (pickIssuedDate): وحدات المقدمة ← legal_system_issuance.
 import { cardDatePlaceholders, pickIssuedDate, type CardDates, type IssuedDateFallbacks } from "../../lib/modules/legal-core/law-card-dates";
 
-/** «1443/05/26 هـ الموافق: 30/12/2021 م»، أو null إن لم يوجد التاريخان. */
+/**
+ * «1443/05/26 هـ الموافق: 30/12/2021 م»، أو null إن لم يوجد التاريخان.
+ * HKM-064: الهجري من legal_system_issuance يأتي بـ«هـ» ملصقة («16/3/1444هـ»)؛ تُحذف قبل إضافتها فلا تتكرر.
+ */
 export function dateLine(hijri: string | null, gregorian: string | null): string | null {
   if (!hijri && !gregorian) return null;
   const g = gregorian ? gregorian.split("-").reverse().join("/") : null;
-  return [hijri ? `${hijri} هـ` : null, g ? `الموافق: ${g} م` : null].filter(Boolean).join(" ");
+  const h = hijri ? hijri.trim().replace(/\s*هـ$/, "") : null;
+  return [h ? `${h} هـ` : null, g ? `الموافق: ${g} م` : null].filter(Boolean).join(" ");
 }
 
 /** السطران المعروضان؛ null = لا يُعرض الصف (غائب أو نائب بلا مصدر تالٍ). fallbacks: مصادر الإصدار بعد البطاقة. */

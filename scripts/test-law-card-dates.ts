@@ -109,6 +109,7 @@ ok(needsIssuedFallback(pair) && needsIssuedFallback(null) && !needsIssuedFallbac
 ok(eq(lawCardDateLines(pair, fbIss), { issued: "1372/03/15 هـ الموافق: 04/12/1952 م", published: null }), "L-5 /legal الزوج النائب: صف الإصدار من legal_system_issuance، والنشر النائب مخفي");
 ok(eq(lawCardDateLines(pair, fbPre), { issued: "1443/5/26 هـ", published: null }), "L-5 /legal الزوج النائب ومقدمة: صف الإصدار من وحدات المقدمة");
 ok(eq(lawCardDateLines(null, fbIss), { issued: "1372/03/15 هـ الموافق: 04/12/1952 م", published: null }), "L-5 /legal بلا بطاقة: صف الإصدار من legal_system_issuance");
+ok(eq(lawCardDateLines(null, { preambleHijri: null, issuanceHijri: "16/3/1444هـ", issuanceGregorian: "2022-10-12" }), { issued: "16/3/1444 هـ الموافق: 12/10/2022 م", published: null }), "L-5 /legal هجري legal_system_issuance بـ«هـ» ملصقة (الأدلة الإجرائية لنظام الإثبات): لا تتكرر «هـ»");
 ok(eq(lawCardDateLines(companies, fbIss), lawCardDateLines(companies)) && eq(lawCardDateLines(pair, fbNone), { issued: null, published: null }), "L-5 بطاقة حقيقية لا تتأثر، والنائب بلا مصدر يبقى مخفيًا");
 // hakeem_get_article (نقي): البطاقة النائبة كما يقرؤها loadLawCardIssuance.
 const naqaba = { issued_hijri: "1372/01/01", issued_gregorian: "1952-09-20", published_hijri: "1372/01/01", published_gregorian: "1952-09-20", instruments: [] };
