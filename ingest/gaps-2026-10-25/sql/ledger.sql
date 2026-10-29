@@ -71,7 +71,11 @@ g AS (
   UNION ALL
   SELECT 'M1', 'reader', prio, id, name, NULL, NULL, NULL, '{}'::jsonb FROM sys WHERE ws = ''
   UNION ALL
-  SELECT 'M2', 'reader', prio, id, name, NULL, NULL, NULL, jsonb_build_object('status', ws) FROM sys WHERE preamble_effective_from IS NULL
+  -- M2: النظام يلزمه تاريخ نفاذ دائمًا (م71 من النظام الأساسي). وغير النظام (لائحة، قواعد، …) لا يُعد ناقصًا إلا إذا نص على نفاذه،
+  -- لأن ليس كل لائحة تتطلب تاريخ نفاذ (ملاحظة المالك 29/10)
+  SELECT 'M2', 'reader', prio, id, name, NULL, NULL, NULL, jsonb_build_object('status', ws, 'kind', instrument_kind) FROM sys WHERE preamble_effective_from IS NULL
+    AND (instrument_kind = 'نظام' OR EXISTS (SELECT 1 FROM legal_articles x WHERE x."legalSystemId" = sys.id
+         AND x.content ~ '(يعمل|يُعمل|تسري|يسري|تنفذ|ينفذ)[^.]{0,40}(من تاريخ|بعد)'))
   UNION ALL
   -- M2b: تاريخ النفاذ المخزن يساوي تاريخ الصدور، والنظام نفسه ينص على نفاذ مؤجل بعد النشر
   SELECT 'M2b', 'code', cur.prio, cur.sid, cur.name, NULL, NULL, cur.url,
