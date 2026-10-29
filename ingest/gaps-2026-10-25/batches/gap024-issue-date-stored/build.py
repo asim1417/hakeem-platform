@@ -112,6 +112,14 @@ for l in open(D / 'verify.jsonl', encoding='utf-8'):
     if l.strip():
         v = json.loads(l)
         V[v['item']] = v
+# حماية البيانات الشخصية: المراجع قرأ النص الساري للمادة (43) المعدلة بالمرسوم (م/148) وتاريخ 1444/9/5هـ: 720 يومًا من النشر، لا 180؛
+# والنشر 1443/02/17هـ + 720 = 2023-09-14، وهو ما أعلنته سدايا («دخول نظام حماية البيانات الشخصية حيز النفاذ 14 سبتمبر 2023»)
+OVERRIDE = {'ID-021': dict(new='2023-09-14', n=720, unit='days',
+                           clause='المادة (43) بعد تعديلها بالمرسوم الملكي (م/148) وتاريخ 1444/9/5هـ: يعمل بالنظام بعد مضي (سبعمائة وعشرين) يومًا من تاريخ نشره؛ وأعلنت سدايا النفاذ 14 سبتمبر 2023')}
+for p in plan:
+    if p['item'] in OVERRIDE and V.get(p['item'], {}).get('effective_gregorian') == OVERRIDE[p['item']]['new']:
+        p.update(OVERRIDE[p['item']])
+        V[p['item']]['verdict'] = 'ok'
 ok = [p for p in plan if V.get(p['item'], {}).get('verdict') == 'ok' and V[p['item']].get('effective_gregorian') == p['new']]
 dropped = [dict(item=p['item'], name=p['name'], ours=p['new'], verifier=V.get(p['item'], {}).get('effective_gregorian'), notes=(V.get(p['item'], {}).get('notes') or '')[:200])
            for p in plan if p not in ok]
