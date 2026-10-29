@@ -209,7 +209,11 @@ export async function getArticle(articleId: string) {
   const [effective, card] = await Promise.all([
     effectiveArticleTexts([{ id: a.id, content: a.content }]),
     // HKM-053: أداة الإصدار من بطاقة النظام عند غياب عمود المادة (كان issued_by فارغًا للإفلاس والإثبات).
-    !a.royalDecree?.trim() && a.legalSystemId ? loadLawCardIssuance(prismaSqlClient(prisma), a.legalSystemId).catch(() => null) : Promise.resolve(null),
+    !a.royalDecree?.trim() && a.legalSystemId ? loadLawCardIssuance(prismaSqlClient(prisma), a.legalSystemId).catch((e: unknown) => {
+          // HKM-059: لا ابتلاع صامت — يُسجَّل نوع الخطأ ورسالته فقط (بلا معرّفات أو بيانات مستخدم) ثم يُتابع بلا بطاقة.
+          console.error("[mcp] getArticle: loadLawCardIssuance failed", e instanceof Error ? `${e.name}: ${e.message}` : "unknown");
+          return null;
+        }) : Promise.resolve(null),
   ]);
   const e = effective.get(a.id);
   const issuance = articleIssuance(a.royalDecree, card);

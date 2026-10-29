@@ -80,6 +80,22 @@ const basePre: PreambleView = { kind: "none", label: null, completeness: null, u
   ok(tones.filter((t) => V.matchesFilter(t, "amended")).length === c.amended, "U-3.3 «المعدّل فقط» يعرض عدد العدّاد");
   ok(tones.filter((t) => V.matchesFilter(t, "repealed")).length === c.repealed, "U-3.3 «الملغى فقط» يعرض عدد العدّاد");
   ok(tones.filter((t) => V.matchesFilter(t, "live")).length === c.live, "U-3.3 «إخفاء الملغى» يعرض الكل ناقص الملغى");
+  // HKM-059: نظام «مستبدل» بلا سجل مواد (كلها replaced بالتبعية): الإخفاء يخفيها كلها، والملغى فقط يعرضها كلها لا صفرًا.
+  {
+    const cs = { total: 4, inForce: 0, amended: 0, repealed: 0, replaced: 4, unverified: 0 };
+    const f = V.filterCounts(cs);
+    const t: V.ArticleTone[] = ["replaced", "replaced", "replaced", "replaced"];
+    ok(f.live === 0 && f.repealed === 4 && f.all === 4, "HKM-059 نظام مستبدل بلا سجل مواد: العدّادات live=0 وrepealed=4");
+    ok(t.filter((x) => V.matchesFilter(x, "live")).length === f.live && t.filter((x) => V.matchesFilter(x, "repealed")).length === f.repealed, "HKM-059 المرشحان يطابقان العدّادات (لا صفر في «الملغى فقط»)");
+  }
+  // نظام «مستبدل» ومادة بسجل خاص بها (ساري/معدّل/ملغى/مستبدل) وعدّادات مختلطة.
+  {
+    const cs = { total: 6, inForce: 1, amended: 1, repealed: 1, replaced: 3, unverified: 0 };
+    const f = V.filterCounts(cs);
+    const t: V.ArticleTone[] = ["plain", "amended", "repealed", "replaced", "replaced", "replaced"];
+    ok(f.live === 2 && f.repealed === 4 && f.amended === 1, "HKM-059 عدّادات مختلطة: live=2 وrepealed=4 (ملغى+مستبدل)");
+    ok(t.filter((x) => V.matchesFilter(x, "live")).length === f.live && t.filter((x) => V.matchesFilter(x, "repealed")).length === f.repealed && t.filter((x) => V.matchesFilter(x, "amended")).length === f.amended, "HKM-059 المرشحات الثلاثة تطابق العدّادات في الحالة المختلطة");
+  }
   ok(V.parseFilter("amended") === "amended" && V.parseFilter("x") === "all" && V.parseFilter(null) === "all", "U-3 المرشح من الرابط ?show= وما سواه «الكل»");
 }
 
@@ -107,7 +123,7 @@ const basePre: PreambleView = { kind: "none", label: null, completeness: null, u
 {
   ok(V.articleTone("معدّل") === "amended" && V.articleTone("ملغى") === "repealed" && V.articleTone("ساري") === "plain" && V.articleTone(null) === "plain", "U-6.1/U-7a.1 حالة العرض من حالة المادة");
   // HKM-030: المستبدلة حالة عرض مستقلة (باهتة بنصها)، لا تُعدّ ملغاة في المرشحات ولا في الإحالة.
-  ok(V.articleTone("مستبدل") === "replaced" && !V.matchesFilter("replaced", "repealed") && V.matchesFilter("replaced", "live") && V.matchesFilter("replaced", "all"), "U-7b.1 المستبدلة: حالة عرض replaced، تظهر مع «إخفاء الملغى» لا مع «الملغى فقط»");
+  ok(V.articleTone("مستبدل") === "replaced" && V.matchesFilter("replaced", "repealed") && !V.matchesFilter("replaced", "live") && V.matchesFilter("replaced", "all") && !V.matchesFilter("replaced", "amended"), "U-7b.1 المستبدلة: نغمة replaced مستقلة، وغير نافذة في المرشحات (تُخفى مع «إخفاء الملغى» وتظهر في «الملغى فقط»)");
   const citeReplaced = V.citationText("نظام اصطناعي", { number: 7, label: "7", status: "مستبدل", statusLabel: "مستبدل", repeal: { type: "replacement", typeDerived: true, instrument: "م/32", url: null, quote: null, effectiveDate: "2021-06-01", effectiveDateSource: "search_surface", repealingSystem: null, repealingSystemBasis: null, repealingArticle: null } }, "https://x/7");
   ok(citeReplaced.includes("— مستبدلة منذ 2021-06-01 —") && !citeReplaced.includes("ملغاة"), "U-7b.1 إحالة المستبدلة «مستبدلة منذ …» لا «ملغاة»");
   const r: RepealInfo = { type: "express_partial", typeDerived: true, instrument: "مرسوم ملكي رقم م/43 وتاريخ 1443/5/26هـ", url: null, quote: null, effectiveDate: null, effectiveDateSource: null, repealingSystem: { id: "s", name: "نظام الإثبات", slug: "نظام-الاثبات" }, repealingSystemBasis: "instrument_number", repealingArticle: null };

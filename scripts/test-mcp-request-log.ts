@@ -3,7 +3,7 @@
  * وأن الاستجابة تمرّ كما هي (الحالة والرؤوس والجسم). ساعة ومؤقتات وهمية؛ لا شبكة ولا قاعدة.
  * التشغيل: npx tsx scripts/test-mcp-request-log.ts
  */
-import { classifyMcpDuration, describeMcpRequest, MCP_SLOW_MS, withMcpRequestLog, type RequestLogDeps } from "../lib/mcp/request-log";
+import { classifyMcpDuration, describeMcpRequest, MCP_LOG_BODY_MAX_BYTES, MCP_SLOW_MS, readCappedJson, withMcpRequestLog, type RequestLogDeps } from "../lib/mcp/request-log";
 
 let failed = 0;
 const ok = (c: boolean, m: string) => {
@@ -112,6 +112,45 @@ async function main() {
     }, h.deps);
     const err = await handler(call({ method: "initialize" })).catch((e: Error) => e);
     ok(err instanceof Error && err.message === "boom" && (h.lines.find((l) => l.includes("phase=end")) ?? "").includes("outcome=error"), "الاستثناء يُسجَّل ويُعاد رميه");
+  }
+
+  // ⑦ HKM-059: سقف قراءة الجسم — ما فوق 64KB يُتجاهل دون فشل الطلب، والطلب الأصلي يبقى قابلًا للقراءة.
+  {
+    const small = call({ method: "tools/call", params: { name: "hakeem_search" } });
+    const got = (await readCappedJson(small)) as { method?: string } | null;
+    ok(got?.method === "tools/call" && (await small.json()).method === "tools/call", "جسم صغير يُقرأ، والطلب الأصلي لم يُستهلك");
+
+    const pad = "x".repeat(MCP_LOG_BODY_MAX_BYTES + 10);
+    const big = new Request("https://hakeemai.net/mcp", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ method: "tools/call", pad }) });
+    ok((await readCappedJson(big)) === null, "جسم نصي أكبر من السقف (بلا طول معلن) يُتجاهل");
+
+    const declaredBig = new Request("https://hakeemai.net/mcp", { method: "POST", headers: { "content-type": "application/json", "content-length": String(MCP_LOG_BODY_MAX_BYTES + 1) }, body: "{}" });
+    let touched = false;
+    const spy = new Proxy(declaredBig, { get: (t, p) => (p === "clone" ? () => ((touched = true), t.clone()) : Reflect.get(t, p, t) instanceof Function ? (Reflect.get(t, p, t) as Function).bind(t) : Reflect.get(t, p, t)) });
+    ok((await readCappedJson(spy as Request)) === null && !touched, "Content-Length أكبر من السقف: لا يُنسخ الجسم ولا يُقرأ أصلًا");
+
+    const enc = new TextEncoder();
+    const chunked = new Request("https://hakeemai.net/mcp", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: new ReadableStream<Uint8Array>({
+        start(c) {
+          c.enqueue(enc.encode('{"method":"tools/call","pad":"'));
+          c.enqueue(enc.encode("y".repeat(MCP_LOG_BODY_MAX_BYTES)));
+          c.enqueue(enc.encode('"}'));
+          c.close();
+        },
+      }),
+      // @ts-expect-error duplex مطلوب لجسم بثّي في Node
+      duplex: "half",
+    });
+    ok((await readCappedJson(chunked)) === null, "جسم بثّي بلا طول معلن يُقطع عند السقف");
+
+    const h = harness();
+    const handler = withMcpRequestLog(async (r) => new Response(await r.text(), { status: 200 }), h.deps);
+    const res = await handler(big.clone());
+    const echoed = await res.text();
+    ok(res.status === 200 && echoed.length > MCP_LOG_BODY_MAX_BYTES && (h.lines.find((l) => l.includes("phase=start")) ?? "").includes("rpc=-"), "الطلب الكبير يصل المعالج كاملًا ولا يفشل، والسجل بلا rpc");
   }
 
   if (failed) {
