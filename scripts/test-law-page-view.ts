@@ -132,6 +132,13 @@ const basePre: PreambleView = { kind: "none", label: null, completeness: null, u
   const withArt = V.repealSentence({ ...r, repealingArticle: { systemId: "s", articleNumber: 128 }, effectiveDate: "2022-07-08" });
   ok(withArt.startsWith("أُلغيت بالمادة 128 من نظام الإثبات") && withArt.includes("2022-07-08"), "U-7a.2 حين تتوفر المادة الملغية: «أُلغيت بالمادة ١٢٨ من نظام الإثبات»");
   ok(V.REPEAL_TYPE_LABEL.implicit === "إلغاء ضمني معتمد" && V.REPEAL_TYPE_LABEL.replacement === "إحلال نظام محل نظام", "U-7 تسميات نوع الإلغاء");
+  // HKM-064: «ملغى مع بقاء أحكام محددة مؤقتًا» — نوع مستقل يسمّي الأحكام الباقية بدل «هذا النظام لاغٍ … إلغاء صريح كلي».
+  const ret = (labels: string[]): RepealInfo => ({ ...r, type: "express_total_with_retained", retainedArticles: labels.map((label, i) => ({ id: `a${i}`, number: Number(label.split(" ")[0]), bis: label.includes("مكرر") ? 1 : 0, key: label.replace(" مكرر", "_bis"), label, anchor: `art-${label}`, url: `/legal/x/${label}` })) });
+  ok(V.REPEAL_TYPE_LABEL.express_total_with_retained === "إلغاء مع بقاء أحكام محددة مؤقتًا" && V.REPEAL_TYPE_LABEL.express_total === "إلغاء صريح كلي", "HKM-064 U-7 تسمية النوع الجديد، والكلي كما هو");
+  ok(V.retainedRepealSentence(ret(["47"])) === "أُلغي هذا النظام مع استمرار العمل بأحكام محددة منه مؤقتًا: المادة (47)", "HKM-064 U-7 مادة باقية واحدة: «… مؤقتًا: المادة (47)» (تأديب الموظفين)");
+  ok(V.retainedArticlesPhrase([{ label: "5" }, { label: "7" }]) === "المادتان (5) و(7)" && V.retainedArticlesPhrase([{ label: "5" }, { label: "7" }, { label: "9 مكرر" }]) === "المواد (5) و(7) و(9 مكرر)", "HKM-064 U-7 مادتان «المادتان (5) و(7)»، وثلاث «المواد (5) و(7) و(9 مكرر)»");
+  ok(V.retainedRepealSentence(ret([])) === "أُلغي هذا النظام مع استمرار العمل بأحكام محددة منه مؤقتًا." && V.retainedArticlesPhrase([]) === "", "HKM-064 U-7 بلا أحكام معيّنة بعد: السطر بنقطة بلا قائمة مخترعة");
+  ok(V.repealBannerHeading(ret(["47"])) === V.retainedRepealSentence(ret(["47"])) && V.repealBannerHeading({ ...r, type: "express_total" }) === "هذا النظام لاغٍ" && V.repealBannerHeading({ ...r, type: "replacement" }) === "هذا النظام لاغٍ" && V.repealBannerHeading({ ...r, type: null }) === "هذا النظام لاغٍ", "HKM-064 U-7 عنوان الشريط: الباقية أحكامه بسطرها، وغيرها «هذا النظام لاغٍ» كما كان");
   const g = V.groupOutgoingRepeals([101, 102, 103, 150].map((n) => ({ systemId: "m", systemName: "نظام المرافعات (اصطناعي)", articleNumber: n })));
   ok(g.length === 2 && g[0].label === "المواد من 101 إلى 103 من نظام المرافعات (اصطناعي)" && g[1].label.startsWith("المادة 150"), "U-7a.3 ما ألغته الأداة مجمّع نطاقات لا سطرًا لكل مادة");
 }

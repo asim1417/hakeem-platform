@@ -79,6 +79,11 @@ function rank(cands: Array<{ c: LawCandidate; n: string }>, wantsSub: boolean, y
   });
 }
 
+/** عنوان الإصدار بلا لاحقة أداة إصداره («… الصادر بالمرسوم الملكي/بالأمر/بقرار …»)؛ الاسم نفسه إن لم تكن. نقي. */
+export function editionTitle(normalized: string): string {
+  return normalized.replace(/\s+الصادر(?:ه)?\s+ب(?:ال)?(?:مرسوم|امر|قرار)(?:\s.*)?$/, "").trim();
+}
+
 /** يرتب المرشحين لاسم: تامة ← يبدأ بـ ← احتواء. */
 export function rankLawNameMatches(candidates: LawCandidate[], name: string, opts: RankOptions = {}): LawNameMatch {
   const q = normalizeLawName(name);
@@ -87,9 +92,12 @@ export function rankLawNameMatches(candidates: LawCandidate[], name: string, opt
   const years = queryYears(name);
   const retired = opts.retired ?? new Set<string>();
   const all = candidates.map((c) => ({ c, n: normalizeLawName(c.name) })).filter((x) => x.n);
-  const exact = all.filter((x) => x.n === q);
-  const prefix = all.filter((x) => x.n !== q && x.n.startsWith(q));
-  const contains = all.filter((x) => x.n !== q && !x.n.startsWith(q) && x.n.includes(q));
+  // HKM-065: اسم الإصدار «X الصادر بالمرسوم الملكي …» عنوانه X؛ فيطابق «X» مطابقةً تامة، لا «يبدأ بـ» مع نظام آخر
+  // عنوانه أطول («نظام التنفيذ» ← نظام التنفيذ م/237 لا «نظام التنفيذ أمام ديوان المظالم»).
+  const exact = all.filter((x) => x.n === q || editionTitle(x.n) === q);
+  const isExact = (x: { n: string }) => x.n === q || editionTitle(x.n) === q;
+  const prefix = all.filter((x) => !isExact(x) && x.n.startsWith(q));
+  const contains = all.filter((x) => !isExact(x) && !x.n.startsWith(q) && x.n.includes(q));
   const tiers: Array<[LawMatchType, typeof all]> = [["exact", exact], ["prefix", prefix], ["contains", contains]];
   const ranked = tiers.map(([type, tier]) => [type, rank(tier, wantsSub, years, retired)] as const);
   // السنة المطلوبة: أول درجة فيها اسم يحمل السنة، وإلا أول درجة غير فارغة.

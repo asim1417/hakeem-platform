@@ -3,6 +3,7 @@
 //   ثم «نص النظام»: العنوان، السنة، البسملة، نص المرسوم، نص قرار مجلس الوزراء، عنوان النظام، ثم المواد.
 // لا يعرض إلا ما له مصدر: الحقل الغائب يُحذف ولا يُخمَّن. الحالة من سجل التحقق وحده.
 import type { LawCardBlock, LawCardRecord } from "@/lib/modules/legal-core/verification-read";
+import type { IssuedDateFallbacks } from "@/lib/modules/legal-core/law-card-dates";
 import { lawCardDateLines } from "./law-card-date-lines";
 
 const INSTRUMENT_LABEL: Record<string, string> = {
@@ -28,6 +29,7 @@ export function LawCardPanel({
   statusDetail,
   fallbackInstruments,
   archiveNotice,
+  issuedFallbacks,
 }: {
   name: string;
   card: LawCardRecord | null;
@@ -36,9 +38,12 @@ export function LawCardPanel({
   statusDetail?: string | null;
   fallbackInstruments: string[];
   archiveNotice?: { label: string; href: string | null } | null;
+  /** HKM-064: مصادر الإصدار بعد البطاقة (وحدات المقدمة ← legal_system_issuance)، كصفحة /law. */
+  issuedFallbacks?: IssuedDateFallbacks | null;
 }) {
   // HKM-063: تاريخ البطاقة النائب (1 محرم، أو 1440/03/21 رفع الهيئة) مجهول فلا يُعرض (law-card-date-lines).
-  const { issued, published } = lawCardDateLines(card);
+  // HKM-064: والإصدار المجهول يسقط إلى مصادر صفحة /law التالية بدل الإخفاء.
+  const { issued, published } = lawCardDateLines(card, issuedFallbacks);
   const instruments = card?.instruments.length ? card.instruments.map((i) => i.text) : fallbackInstruments;
   const tone =
     statusTone === "retired"
