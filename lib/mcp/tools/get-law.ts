@@ -7,6 +7,8 @@
  *   الست (أو null إن لم تقابلها حالة موثّقة).
  * المضاف: match (طريقة المطابقة والبدائل)، official_name، kind، status_detail، issue_instruments[]، dates (الأربعة)،
  *   replaced_by/replaces/repeal، preamble (وحدات أو نص مع وسم الاكتمال)، counts، url، article_url_template، as_of.
+ *   HKM-064: repeal.type قد يكون express_total_with_retained (نظام «ملغى مع بقاء أحكام محددة مؤقتًا»)، ومعه
+ *   repeal.retained_articles[{article_id، number، bis?، key، label}] وrepeal.note (سطر الصفحة). الحقول القديمة كما هي.
  *
  * الفهرس مضغوط (مراجعة الجودة ع٢: النسخة الأولى كبّرت المخرج 3.6 مرات). كل عنصر يبقى بحقوله القديمة الثلاثة، ولا
  * يُضاف إليه إلا ما له قيمة:
@@ -25,6 +27,7 @@
  * («نظام الاستثمار الأجنبي» ظهر ملغى بمرسومه م/1 لعام 1421)؛ تُرفع في data_warnings حتى تُصحَّح البيانات.
  */
 import { getLawPageData, instrumentKey, type LawPageData, type RepealInfo } from "../../modules/legal-core/law-page-data";
+import { retainedRepealSentence } from "../../modules/legal-core/law-page-view";
 import { findLawByName, type LawMatchType } from "../../modules/legal-core/law-name-match";
 import type { SqlClient } from "../../modules/legal-core/sql-port";
 
@@ -107,6 +110,13 @@ const repealOut = (r: RepealInfo | null, ownKeys: ReadonlySet<string>) =>
         url: r.url,
         effective_date: r.effectiveDate,
         repealing_law: r.repealingSystem ? { law_id: r.repealingSystem.id, name: r.repealingSystem.name } : null,
+        // HKM-064 (إضافي): لنوع express_total_with_retained وحده — الأحكام الباقية وسطر الصفحة نفسه.
+        ...(r.type === "express_total_with_retained"
+          ? {
+              retained_articles: (r.retainedArticles ?? []).map((a) => ({ article_id: a.id, number: a.number, ...(a.bis > 0 ? { bis: a.bis } : {}), key: a.key, label: a.label })),
+              note: retainedRepealSentence(r),
+            }
+          : {}),
       }
     : null;
 

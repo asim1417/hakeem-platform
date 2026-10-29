@@ -35,6 +35,8 @@
  *   ومرساتها art-<key> ورابطها /legal/<slug>/<key>، وترتيبها بعد أصلها. الصفوف غير المادية (articleBis ≥ 100) لا تُقرأ.
  *   لا جدول legal_effect في الإنتاج (تحقق 17/10/2026): repeal_type مشتق من الحالة (typeDerived=true)، وتاريخ نفاذ
  *   الإلغاء من وجه البحث أو من نص الأداة («— من YYYY-MM-DD») أو null.
+ *   HKM-064: نظام «ملغى مع بقاء أحكام محددة مؤقتًا» نوع إلغائه express_total_with_retained ومعه retainedArticles؛
+ *   ويوم إحلال الخلف محل السلف = تاريخ نفاذ الخلف الموثّق (legal_systems بسند) إن وُجد، وإلا يوم صار وجهًا في البحث.
  *
  * نقي عدا الاستعلامات عبر db. لا Prisma ولا كتابة. غياب جدول = سقوط آمن إلى «لا شيء».
  */
@@ -48,6 +50,7 @@ import {
   isRepealedStatus,
   isReplacedStatus,
   isRetainedProvision,
+  RETAINED_PROVISIONS_STATUS,
   textAsOf,
   UNVERIFIED_NOTICE,
   type UnitVersionRecord,
@@ -56,7 +59,15 @@ import {
 import { resolveWorkKind, type WorkKind } from "./work-kind";
 import { resolveSystemSlug } from "./eli";
 import { NON_ARTICLE_BIS, articleKey, articleLabel } from "./article-key";
-import { cardDatePlaceholders, EFFECTIVE_FROM_PROVENANCE_SQL, pickEffectiveDate, type CardDates } from "./law-card-dates";
+import {
+  backedEffectiveDate,
+  cardDatePlaceholders,
+  EFFECTIVE_FROM_PROVENANCE_SQL,
+  pickEffectiveDate,
+  pickIssuedDate,
+  type CardDates,
+  type IssuedDateFallbacks,
+} from "./law-card-dates";
 
 // المعيار الواحد لحالتي الإلغاء والاستبدال ويوم النفاذ في verified-status (HKM-030)؛ يُعاد تصديره لمن استورده من هنا.
 export { effectiveDateFromEvidence } from "./verified-status";
@@ -70,7 +81,11 @@ export const PREAMBLE_SOURCE_BLOCKS_LABEL = "نص المقدمة من لقطة �
 export const BOE_LAW_STATUSES = ["مسودة", "تحت الإجراء", "ساري", "ساري خلال مدة", "لاغي خلال مدة", "لاغي"] as const;
 export type BoeLawStatus = (typeof BOE_LAW_STATUSES)[number];
 
-export type RepealType = "express_partial" | "replacement" | "express_total" | "implicit" | "temporal";
+/**
+ * express_total_with_retained (HKM-064): نظام «ملغى مع بقاء أحكام محددة مؤقتًا» — أُلغي مع استمرار العمل بأحكام منه
+ * (RepealInfo.retainedArticles)، فلا يوصف «إلغاء صريح كلي» والمادة الباقية معروضة «ساري».
+ */
+export type RepealType = "express_partial" | "replacement" | "express_total" | "express_total_with_retained" | "implicit" | "temporal";
 /** «مستبدل» حالة مستقلة (HKM-030، قرار المالك HKM-026/028): تُعرض باهتة بنصها لا كملغاة. */
 export type ArticleStatus = "ساري" | "معدّل" | "ملغى" | "مستبدل";
 
@@ -120,12 +135,29 @@ export interface RepealInfo {
   quote: string | null;
   /** يوم نفاذ الإلغاء YYYY-MM-DD أو null. */
   effectiveDate: string | null;
-  effectiveDateSource: "search_surface" | "evidence_text" | null;
+  /** legal_systems (HKM-064): تاريخ نفاذ النظام الخلف الموثّق (preamble_effective_from بسند provenance). */
+  effectiveDateSource: "legal_systems" | "search_surface" | "evidence_text" | null;
   /** النظام الذي ألغى/حلّ محل (مشتق بمطابقة رقم الأداة أو من وجه البحث). */
   repealingSystem: SystemRef | null;
   repealingSystemBasis: "search_surface" | "instrument_number" | null;
   /** المادة الملغية بعينها: لا يخزّنها الإنتاج بعد = null. */
   repealingArticle: { systemId: string; articleNumber: number } | null;
+  /**
+   * HKM-064: لنوع express_total_with_retained وحده — المواد الباقية (isRetainedProvision: سجلها «ساري») بترتيب المتن،
+   * وقد تكون [] إن لم تُعيَّن بعد. غائب في الأنواع الأخرى.
+   */
+  retainedArticles?: RetainedArticleRef[];
+}
+
+export interface RetainedArticleRef {
+  id: string;
+  number: number;
+  bis: number;
+  key: string;
+  /** «47» أو «12 مكرر». */
+  label: string;
+  anchor: string;
+  url: string;
 }
 
 export interface LawCardView {
@@ -483,6 +515,33 @@ async function loadPreambleUnits(db: SqlClient, systemId: string): Promise<Loade
   };
 }
 
+/**
+ * HKM-064: تاريخ نفاذ نظام موثّق بقاعدة HKM-063 (preamble_effective_from بسند effective_from_* في legal_text_provenance،
+ * ميلادي معقول وغير نائب في بطاقته)، أو null. لنظام واحد (الخلف): ثلاثة استعلامات بمفتاح أساسي/فهرس.
+ */
+async function loadBackedEffectiveDate(db: SqlClient, systemId: string): Promise<string | null> {
+  const [stored, backed, card] = await Promise.all([
+    db
+      .query<{ eff: string | null }>(`SELECT preamble_effective_from::date::text AS eff FROM legal_systems WHERE id = $1`, [systemId])
+      .then((r) => day(r[0]?.eff ?? null)),
+    safe(() => db.query<{ backed: boolean }>(EFFECTIVE_FROM_PROVENANCE_SQL, [systemId]), [] as Array<{ backed: boolean }>).then((r) => r[0]?.backed === true),
+    safe(
+      () =>
+        db.query<{ issued_hijri: string | null; issued_gregorian: string | null; published_hijri: string | null; published_gregorian: string | null }>(
+          `SELECT issued_hijri, issued_gregorian::text AS issued_gregorian, published_hijri, published_gregorian::text AS published_gregorian
+             FROM law_card WHERE system_id = $1 ORDER BY created_at DESC, id DESC LIMIT 1`,
+          [systemId],
+        ),
+      [],
+    ).then((r) => r[0] ?? null),
+  ]);
+  if (!stored || !backed) return null;
+  const cardDates: CardDates | null = card
+    ? { issuedHijri: card.issued_hijri, issuedGregorian: day(card.issued_gregorian), publishedHijri: card.published_hijri, publishedGregorian: day(card.published_gregorian) }
+    : null;
+  return backedEffectiveDate({ stored, storedBacked: backed, card: cardDates });
+}
+
 /** بيانات صفحة النظام كاملة. null إن لم يوجد النظام. */
 export interface LawPageDataOptions {
   asOf?: string;
@@ -583,7 +642,11 @@ export async function getLawPageData(db: SqlClient, systemId: string, opts: LawP
     : null;
   const ownFaceFrom = surfaceState.rows.filter((r) => r.surfaceSystemId === systemId).map((r) => r.validOn).sort()[0] ?? null;
 
-  const refs = await systemRefs(db, [...replacesIds, redirect ?? ""]);
+  // HKM-064: للخلف تاريخ نفاذ موثّق؟ به يُؤرَّخ الإحلال، فيتفق مع «تاريخ النفاذ» في صفحة الخلف (وجه البحث قد يسبقه).
+  const [refs, successorEffective] = await Promise.all([
+    systemRefs(db, [...replacesIds, redirect ?? ""]),
+    redirect ? loadBackedEffectiveDate(db, redirect) : Promise.resolve(null),
+  ]);
 
   // ── أدوات الإصدار ──
   const instruments: IssueInstrument[] = [];
@@ -616,31 +679,39 @@ export async function getLawPageData(db: SqlClient, systemId: string, opts: LawP
     ? { issuedHijri: cardRow.issued_hijri, issuedGregorian: day(cardRow.issued_gregorian), publishedHijri: cardRow.published_hijri, publishedGregorian: day(cardRow.published_gregorian) }
     : null;
   const placeholder = cardDatePlaceholders(cardDates);
-  let issued: DateValue = empty;
-  if (!placeholder.issued && (cardRow?.issued_hijri || cardRow?.issued_gregorian)) issued = { hijri: cardRow.issued_hijri, gregorian: day(cardRow.issued_gregorian), source: "law_card" };
-  else if (preambleUnits?.instruments[0]?.dateHijri) issued = { hijri: preambleUnits.instruments[0].dateHijri, gregorian: null, source: "preamble_units" };
-  else if (issuance?.issue_date_hijri || issuance?.issue_date_greg) issued = { hijri: issuance.issue_date_hijri, gregorian: day(issuance.issue_date_greg), source: "legal_system_issuance" };
+  // HKM-064: الترتيب نفسه في pickIssuedDate، يستعمله hakeem_get_article وبطاقة /legal أيضًا.
+  const issuedFallbacks: IssuedDateFallbacks = {
+    preambleHijri: preambleUnits?.instruments[0]?.dateHijri ?? null,
+    issuanceHijri: issuance?.issue_date_hijri ?? null,
+    issuanceGregorian: day(issuance?.issue_date_greg),
+  };
+  const issued: DateValue = pickIssuedDate(cardDates, issuedFallbacks);
   const published: DateValue =
     !placeholder.published && (cardRow?.published_hijri || cardRow?.published_gregorian) ? { hijri: cardRow.published_hijri, gregorian: day(cardRow.published_gregorian), source: "law_card" } : empty;
   const eff = pickEffectiveDate({ stored: day(sys.preamble_effective_from), storedBacked: effectiveFromBacked, surfaceFrom: ownFaceFrom, card: cardDates });
   const effective: DateValue = eff.gregorian ? { hijri: null, gregorian: eff.gregorian, source: eff.source } : empty;
 
   // ── بيان إلغاء النظام ──
-  const repealedWork = hakeem === "ملغى" || hakeem === "مستبدل" || hakeem === "ملغى مع بقاء أحكام محددة مؤقتًا";
+  const retainedWork = hakeem === RETAINED_PROVISIONS_STATUS;
+  const repealedWork = hakeem === "ملغى" || hakeem === "مستبدل" || retainedWork;
   let workRepeal: RepealInfo | null = null;
   if (repealedWork) {
     const evDate = effectiveDateFromEvidence(workVer?.evidenceInstrument ?? null);
+    // HKM-064: يوم الإحلال = نفاذ الخلف الموثّق إن وُجد، ثم يوم صار وجهًا، ثم تاريخ نص الأداة.
+    const replacedFrom = successorEffective ?? successorFrom;
     workRepeal = {
-      type: hakeem === "مستبدل" || redirect ? "replacement" : "express_total",
+      // HKM-064: «ملغى مع بقاء أحكام محددة مؤقتًا» نوع مستقل (لا «إلغاء صريح كلي» ولا «إحلال») ولو عرف وجه البحث خلفًا.
+      type: retainedWork ? "express_total_with_retained" : hakeem === "مستبدل" || redirect ? "replacement" : "express_total",
       typeDerived: true,
       instrument: workVer?.evidenceInstrument ?? null,
       url: workVer?.evidenceUrl ?? null,
       quote: workVer?.evidenceQuote ?? null,
-      effectiveDate: successorFrom ?? evDate,
-      effectiveDateSource: successorFrom ? "search_surface" : evDate ? "evidence_text" : null,
+      effectiveDate: replacedFrom ?? evDate,
+      effectiveDateSource: successorEffective ? "legal_systems" : successorFrom ? "search_surface" : evDate ? "evidence_text" : null,
       repealingSystem: redirect ? refs.get(redirect) ?? null : null,
       repealingSystemBasis: redirect ? "search_surface" : null,
       repealingArticle: null,
+      ...(retainedWork ? { retainedArticles: [] as RetainedArticleRef[] } : {}),
     };
   }
 
@@ -740,6 +811,10 @@ export async function getLawPageData(db: SqlClient, systemId: string, opts: LawP
 
     const bis = Number(a.articleBis) || 0;
     const key = articleKey(a.articleNumber, bis);
+    // HKM-064: الحكم الباقي يُسمّى في بيان إلغاء النظام (المعيار الواحد isRetainedProvision، كفرع الحالة أعلاه).
+    if (workRepeal?.retainedArticles && isRetainedProvision(hakeem, label)) {
+      workRepeal.retainedArticles.push({ id: a.id, number: a.articleNumber, bis, key, label: articleLabel(a.articleNumber, bis), anchor: `art-${key}`, url: `/legal/${encodeURIComponent(slug)}/${key}` });
+    }
     return {
       id: a.id,
       number: a.articleNumber,

@@ -22,7 +22,9 @@ import {
   orNA,
   preambleAnchor,
   preambleDisplay,
+  repealBannerHeading,
   repealSentence,
+  retainedArticlesPhrase,
   shouldCollapse,
   splitParagraphs,
   statusRangeLine,
@@ -67,10 +69,12 @@ function DateField({ label, v }: { label: string; v: DateValue }) {
 
 function RepealBanner({ r, data }: { r: RepealInfo; data: LawPageData }) {
   const successor = data.card.replacedBy ?? r.repealingSystem;
+  // HKM-064: «ملغى مع بقاء أحكام محددة مؤقتًا» يسمّي الأحكام الباقية بدل «هذا النظام لاغٍ … إلغاء صريح كلي».
+  const retained = r.type === "express_total_with_retained" ? r.retainedArticles ?? [] : [];
   return (
     <section className="banner" aria-labelledby="banner-h">
       <h2 id="banner-h">
-        <Ban aria-hidden size={20} /> هذا النظام لاغٍ
+        <Ban aria-hidden size={20} /> {repealBannerHeading(r)}
       </h2>
       <p>
         أُلغي منذ <LtrDates text={orNA(r.effectiveDate)} />
@@ -84,6 +88,11 @@ function RepealBanner({ r, data }: { r: RepealInfo; data: LawPageData }) {
       </p>
       <p>يبقى نصّه محفوظًا كاملًا، وحاكمًا للوقائع السابقة على إلغائه.</p>
       <div className="actions">
+        {retained.map((a) => (
+          <a key={a.id} className="lbtn lbtn--outline" href={`#${a.anchor}`}>
+            <span>الحكم الباقي: {retainedArticlesPhrase([a])}</span>
+          </a>
+        ))}
         {successor ? (
           <Link className="lbtn lbtn--primary" href={lawPath(successor.slug)}>
             <span>الساري هو: {successor.name}</span> <ArrowLeft aria-hidden size={20} />
