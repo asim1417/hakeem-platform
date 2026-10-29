@@ -1,0 +1,24 @@
+{
+ "by": "gap019k-companies-2026-10-29",
+ "md5": "429987941814b90c0c88774fc6037ce2",
+ "count": 4,
+ "expect_delta": {},
+ "report": {
+  "corrected": 1,
+  "new_articles": 0,
+  "changed_text": 0,
+  "plan": [
+   {
+    "name": "نظام الشركات",
+    "old": "2022-06-30",
+    "new": "2023-01-19"
+   }
+  ]
+ },
+ "statements": [
+  "SELECT CASE WHEN (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpwi0cei0021nxff6ei08xis$hk$)=$hk$2022-06-30$hk$::date AND (SELECT count(*) FROM legal_text_provenance WHERE id LIKE 'g19kp-%')=0 THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard_before",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19kp-3d101a8311fd9290c6d18152$hk$, 'system', $hk$cmpwi0cei0021nxff6ei08xis$hk$, $hk$نظام الشركات$hk$, NULL, 'official', $hk$gap019k-companies-2026-10-29$hk$, $hk$https://cma.gov.sa/MediaCenter/PR/Pages/-New-Companies-Law.aspx$hk$, $hk$4b15a65aa3336927e82c3918789d189c$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2022-06-30->2023-01-19$hk$, $hk$HKM-052 gap019k-companies-2026-10-29: «يعمل به بعد (180) يومًا من تاريخ نشره»؛ النشر 1443/12/23هـ = 2022-07-22 (بطاقة هيئة الخبراء، فُتحت في كروم 29/10)؛ وبيان هيئة السوق المالية: «وسينفذ بتاريخ 26/06/1444هـ الموافق 19/01/2023م». الحساب (النشر + 180) = 2023-01-18 آخر يوم في المدة، والمعتمد التاريخ الرسمي المعلن 2023-01-19؛ وكان المخزن 2022-06-30 (تاريخ الصدور) [تفويض المالك 29/10]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19kp-3d101a8311fd9290c6d18152$hk$)",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2023-01-19$hk$::timestamptz WHERE id = $hk$cmpwi0cei0021nxff6ei08xis$hk$ AND preamble_effective_from::date = $hk$2022-06-30$hk$::date",
+  "SELECT CASE WHEN (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpwi0cei0021nxff6ei08xis$hk$)=$hk$2023-01-19$hk$::date AND (SELECT count(*) FROM legal_text_provenance WHERE id LIKE 'g19kp-%')=1 THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard_after"
+ ]
+}
