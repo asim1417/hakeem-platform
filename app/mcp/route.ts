@@ -22,6 +22,7 @@ import { mcpAccessMode, mcpClosedResponse } from "@/lib/mcp/policy";
 import { verifyMcpRequest } from "@/lib/mcp/principal";
 import { runMcpTool } from "@/lib/mcp/tool-runner";
 import { withMcpRequestLog } from "@/lib/mcp/request-log";
+import { withListenRefused } from "@/lib/mcp/listen-guard";
 
 // Prisma يتطلّب بيئة Node (لا Edge)، والمخرجات ديناميكية دائمًا.
 export const runtime = "nodejs";
@@ -281,13 +282,14 @@ const authOptions = {
   requiredScopes: ["mcp:read"],
 };
 
-const authedHandler = withMcpAuth(withEmptyPrompts(handler), (req, bearer) => verifyMcpRequest(req, bearer), {
+// HKM-054: subscriptions/listen يُرفض بعد المصادقة فورًا (كان بثًّا لا ينتهي حتى مهلة 300 ث؛ lib/mcp/listen-guard.ts).
+const authedHandler = withMcpAuth(withListenRefused(withEmptyPrompts(handler)), (req, bearer) => verifyMcpRequest(req, bearer), {
   required: true,
   ...authOptions,
 });
 
 const openHandler = withMcpAuth(
-  withEmptyPrompts(handler),
+  withListenRefused(withEmptyPrompts(handler)),
   async () => ({ token: "open", clientId: "public", scopes: ["mcp:read"], extra: { principal: { kind: "open" } } }),
   { required: false, ...authOptions }
 );
