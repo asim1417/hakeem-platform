@@ -5,6 +5,7 @@ import {
   type RawResult,
   type SearchProvider,
   type SearchQuery,
+  scopedLawIds,
   wantsType,
 } from "./search-provider";
 import { parseArticleQuery } from "../query-parse";
@@ -28,11 +29,13 @@ export const opensearchProvider: SearchProvider = {
     }
   },
 
-  async search({ q, limit = 10, types }: SearchQuery): Promise<RawResult[]> {
+  async search({ q, limit = 10, types, lawIds }: SearchQuery): Promise<RawResult[]> {
     const cfg = getOpenSearchConfig();
     if (!cfg) return [];
     // فهرس الأحكام والمبادئ لا يُسأل إن لم تُطلب (فلا تأخذ أحكامه مقاعد المواد).
-    const want = (t: LegalEntityType) => wantsType({ types }, t);
+    // HKM-053: فهرس المواد بلا معرّف النظام، فلا يُحصر داخل الاستعلام؛ مع الحصر بنظام لا يُسأل (المزوّد اللفظي يغطيه).
+    const scoped = scopedLawIds({ lawIds }) !== null;
+    const want = (t: LegalEntityType) => wantsType({ types }, t) && !(scoped && t === "article");
     const indices = [want("article") ? cfg.indexArticles : null, want("ruling") || want("principle") ? cfg.indexCases : null].filter(Boolean);
     if (!indices.length) return [];
     try {

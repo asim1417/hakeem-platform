@@ -861,10 +861,12 @@ function filterMeaningfulVariants(variants: string[]): string[] {
   return meaningful.length ? meaningful : variants;
 }
 
-export async function findRelevantLegalArticles(query: string, options: { systemId?: string; category?: string; topic?: string; limit?: number; requireConceptCoverage?: boolean; semantic?: boolean } = {}): Promise<LegalCoreResult[]> {
+export async function findRelevantLegalArticles(query: string, options: { systemId?: string; systemIds?: string[]; category?: string; topic?: string; limit?: number; requireConceptCoverage?: boolean; semantic?: boolean } = {}): Promise<LegalCoreResult[]> {
+  // HKM-053: systemIds يحصر البحث في عدة أنظمة داخل الاستعلام (مع systemId إن مُرّر).
+  const systemIds = [...(options.systemId ? [options.systemId] : []), ...(options.systemIds ?? [])];
   const response = await searchLegalCore({
     query: [query, options.topic].filter(Boolean).join(" "),
-    systemIds: options.systemId ? [options.systemId] : undefined,
+    systemIds: systemIds.length ? systemIds : undefined,
     categoryIds: options.category ? [options.category] : undefined,
     searchType: "derivatives",
     limit: options.limit ?? 8,

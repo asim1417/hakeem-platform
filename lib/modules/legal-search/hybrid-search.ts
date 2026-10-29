@@ -12,6 +12,7 @@ import {
   type ProviderStatus,
   type RawResult,
   type SearchProvider,
+  scopedLawIds,
   type SearchQuery,
   type SearchSource,
 } from "./providers/search-provider";
@@ -156,7 +157,9 @@ export async function hybridSearch(query: SearchQuery): Promise<HybridSearchResp
 
   // مطابقة «المادة {رقم} {نظام}» المباشرة تتصدّر النتائج (تصحيح تجاهل اسم النظام كقيد).
   const exact = await findExactArticleMatch(query.q, { asOf: query.asOf, surface: query.surface }).catch(() => null);
-  if (exact) {
+  // HKM-053: مع الحصر بنظام لا تتصدر مطابقة مادة من نظام آخر.
+  const lawIds = scopedLawIds(query);
+  if (exact && (!lawIds || lawIds.includes(String(exact.meta?.systemId ?? "")))) {
     results = [exact, ...results.filter((r) => !(r.type === "article" && r.id === exact.id))].slice(0, limit);
   }
   // وجه البحث: مواد الأنظمة المخفية اليوم لا تظهر في صناديق البحث (الأحكام والمبادئ كما هي).

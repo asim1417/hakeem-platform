@@ -4,7 +4,7 @@ import {
   resolveEntity,
   type EntityType,
 } from "@/lib/modules/knowledge-graph/relations";
-import { wantsType, type LegalEntityType, type RawResult, type SearchProvider, type SearchQuery } from "./search-provider";
+import { scopedLawIds, wantsType, type LegalEntityType, type RawResult, type SearchProvider, type SearchQuery } from "./search-provider";
 
 // مزوّد اجتياز الرسم المعرفي: يجد مواد مطابقة للسؤال ثم يتوسّع عبر العلاقات
 // ليُرجع الأحكام/المبادئ المرتبطة بها. غير كاسر إن كان الرسم فارغاً.
@@ -20,14 +20,21 @@ export const knowledgeGraphProvider: SearchProvider = {
     }
   },
 
-  async search({ q, limit = 10, types }: SearchQuery): Promise<RawResult[]> {
+  async search({ q, limit = 10, types, lawIds: rawLawIds }: SearchQuery): Promise<RawResult[]> {
     const term = q.trim();
+    // HKM-053: الحصر بالنظام شرط على البذور، وعلى المواد المجاورة في الرسم.
+    const lawIds = scopedLawIds({ lawIds: rawLawIds });
+    const inScope = async (articleId: string) =>
+      !lawIds || (await prisma.legalArticle.count({ where: { id: articleId, legalSystemId: { in: lawIds } } })) > 0;
     const want = (t: LegalEntityType) => wantsType({ types }, t);
     if (term.length < 2) return [];
     try {
       // ١. بذور: مواد مطابقة نصياً
       const seeds = await prisma.legalArticle.findMany({
-        where: { OR: [{ title: { contains: term, mode: "insensitive" } }, { content: { contains: term, mode: "insensitive" } }] },
+        where: {
+          OR: [{ title: { contains: term, mode: "insensitive" } }, { content: { contains: term, mode: "insensitive" } }],
+          ...(lawIds ? { legalSystemId: { in: lawIds } } : {}),
+        },
         select: { id: true, lawName: true, articleNumber: true, title: true },
         take: 5,
       });
@@ -62,6 +69,7 @@ export const knowledgeGraphProvider: SearchProvider = {
           const key = `${otherType}:${otherId}`;
           if (seen.has(key)) continue;
           seen.add(key);
+          if (otherType === "article" && !(await inScope(otherId))) continue;
 
           const entity = await resolveEntity(otherType, otherId);
           if (!entity.exists) continue;

@@ -23,7 +23,18 @@ export interface SearchQuery {
    * أداة hakeem_semantic_search تخفضه لأن إعادة الترتيب بتغطية الألفاظ تحميها من الضجيج.
    */
   minScore?: number;
+  /**
+   * HKM-053: حصر المواد في أنظمة بعينها داخل استعلام كل مزوّد قبل الترتيب (لا تصفية بعد الجلب، فكانت «التصفية»
+   * مع نظام الإفلاس ترجع صفرًا لأن أعلى المرشحين من أنظمة أخرى). الأحكام والمبادئ لا يمسّها الحصر.
+   */
+  lawIds?: string[];
 }
+
+/** الأنظمة المحصور فيها الاستعلام (null بلا حصر). */
+export const scopedLawIds = (query: Pick<SearchQuery, "lawIds">): string[] | null => {
+  const ids = (query.lawIds ?? []).filter((id) => typeof id === "string" && id.length > 0);
+  return ids.length ? [...new Set(ids)] : null;
+};
 
 /** النوع مطلوب في الاستعلام (بلا types فكل الأنواع). */
 export const wantsType = (query: Pick<SearchQuery, "types">, type: LegalEntityType): boolean => !query.types || query.types.includes(type);

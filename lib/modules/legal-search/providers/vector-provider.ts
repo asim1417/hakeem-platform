@@ -6,7 +6,8 @@ import { findRelevantLegalArticles } from "@/lib/modules/legal-core/legal-retrie
 import { latestVectorSource } from "@/lib/modules/legal-search/vector-source";
 import { nearestRulingSegments, rulingSegmentVectorsReady } from "@/lib/modules/legal-core/rulings-search";
 import { resolveEntity, type EntityType } from "@/lib/modules/knowledge-graph/relations";
-import { resolveMinScore, wantsType, type LegalEntityType, type RawResult, type SearchProvider, type SearchQuery } from "./search-provider";
+import { resolveMinScore, scopedLawIds, wantsType, type LegalEntityType, type RawResult, type SearchProvider, type SearchQuery } from "./search-provider";
+import { NON_ARTICLE_BIS } from "@/lib/modules/legal-core/article-key";
 
 // مزوّد البحث الدلالي (Semantic). مساران بسقوط آمن:
 //   1) جدول pgvector `embeddings` إن كان موجوداً وفيه متجهات (الأسرع، يشمل كل الأنواع).
@@ -108,6 +109,30 @@ export function versionsSql(segReady: boolean, take: number): string {
      LIMIT ${take}`;
 }
 
+/**
+ * HKM-053: أقرب مواد أنظمة بعينها. المرشحون معرّفات مواد النظام (عشرات إلى مئات) فيُحسب البعد لها مباشرة
+ * («+ 0» يمنع الفهرس العام الذي يرجع أقرب المدونة كلها ثم يسقطها الشرط). أحدث نسخة في embedding_version
+ * تتقدم على متجه الجدول العام للمادة نفسها، كما في المسار العام.
+ */
+export function scopedArticlesSql(take: number): string {
+  return `WITH ids AS MATERIALIZED (
+       SELECT id FROM legal_articles WHERE "legalSystemId" = ANY($2::text[]) AND "articleBis" < ${NON_ARTICLE_BIS}
+     ),
+     vecs AS (
+       SELECT DISTINCT ON (owner_id) owner_id, embedding FROM (
+         SELECT ev.owner_id, ev.embedding, 0 AS pri, ev.created_at FROM embedding_version ev
+          WHERE ev.owner_type = 'article' AND ev.embedding IS NOT NULL AND ev.owner_id IN (SELECT id FROM ids)
+         UNION ALL
+         SELECT e.owner_id, e.embedding, 1 AS pri, NULL::timestamptz FROM embeddings e
+          WHERE e.owner_type = 'article' AND e.embedding IS NOT NULL AND e.owner_id IN (SELECT id FROM ids)
+       ) x ORDER BY owner_id, pri, created_at DESC NULLS LAST
+     )
+     SELECT 'article' AS owner_type, owner_id, (1 - (embedding <=> $1::vector)) AS score
+     FROM vecs
+     ORDER BY (embedding <=> $1::vector) + 0
+     LIMIT ${take}`;
+}
+
 /** المسار المفهرس: أعلى take لكل مصدر ثم الدمج — اتحادها يحوي أعلى take الكلّي. */
 async function nearestViaPartialIndexes(literal: string, take: number, segReady: boolean, want: (t: LegalEntityType) => boolean): Promise<VectorRow[]> {
   const q = (sql: string) => prisma.$queryRawUnsafe<VectorRow[]>(sql, literal);
@@ -136,7 +161,7 @@ async function articleEmbeddingsExist(): Promise<boolean> {
 }
 
 /** المسار الأساسي: استعلام pgvector على جدول `embeddings`. يعيد null إن تعذّر فيُجرَّب الاحتياطي. */
-async function searchViaEmbeddingsTable(vec: number[], limit: number, types?: LegalEntityType[], minScore: number = MIN_SEMANTIC_SCORE): Promise<RawResult[] | null> {
+async function searchViaEmbeddingsTable(vec: number[], limit: number, types?: LegalEntityType[], minScore: number = MIN_SEMANTIC_SCORE, lawIds: string[] | null = null): Promise<RawResult[] | null> {
   const want = (t: LegalEntityType) => wantsType({ types }, t);
   if (!(await embeddingsTableHasRows())) return null;
   try {
@@ -153,14 +178,21 @@ async function searchViaEmbeddingsTable(vec: number[], limit: number, types?: Le
        ORDER BY embedding <=> '${literal}'::vector
        LIMIT ${take}`;
     const partial = await partialIndexesReady();
-    const [baseRows, segHits] = await Promise.all([
-      partial
-        ? nearestViaPartialIndexes(literal, take, segReady, want)
-        : prisma.$queryRawUnsafe<VectorRow[]>(sqlFor(latestVectorSource())).catch(() =>
-            prisma.$queryRawUnsafe<VectorRow[]>(sqlFor("embeddings")),
-          ),
+    // HKM-053: مع الحصر بنظام تأتي المواد من استعلامها المحصور، والمسار العام لغيرها فقط (يُتخطى إن لم يُطلب غيرها).
+    const scoped = lawIds && want("article");
+    const othersWanted = want("principle") || want("ruling");
+    const [generalRows, scopedRows, segHits] = await Promise.all([
+      scoped && !othersWanted
+        ? Promise.resolve([] as VectorRow[])
+        : partial
+          ? nearestViaPartialIndexes(literal, take, segReady, want)
+          : prisma.$queryRawUnsafe<VectorRow[]>(sqlFor(latestVectorSource())).catch(() =>
+              prisma.$queryRawUnsafe<VectorRow[]>(sqlFor("embeddings")),
+            ),
+      scoped ? prisma.$queryRawUnsafe<VectorRow[]>(scopedArticlesSql(take), literal, lawIds) : Promise.resolve([] as VectorRow[]),
       segReady && want("ruling") ? nearestRulingSegments(vec).catch(() => []) : Promise.resolve([]),
     ]);
+    const baseRows = lawIds ? [...generalRows.filter((r) => r.owner_type !== "article"), ...scopedRows] : generalRows;
     console.info(`[search] vector sql ms=${Date.now() - t0} path=${partial ? "partial_hnsw" : "scan"}`);
     // عتبة الأحكام من قياس متجهات الأجزاء (RULINGS_SEMANTIC_MIN، 0.42)؛ وعتبة البقية كما هي.
     const segIds = new Set(segHits.map((h) => h.id));
@@ -206,8 +238,8 @@ async function searchViaEmbeddingsTable(vec: number[], limit: number, types?: Le
  * نأخذ مجموعة مرشّحين معجمية محدودة (بحث النواة) ثم نحسب cosine في الذاكرة —
  * فلا نحمّل كل المتجهات في كل استعلام (حدّ نقل البيانات).
  */
-async function searchViaArticleEmbeddings(q: string, vec: number[], limit: number, minScore: number = MIN_SEMANTIC_SCORE): Promise<RawResult[]> {
-  const lexical = await findRelevantLegalArticles(q, { limit: FALLBACK_CANDIDATE_POOL, semantic: false }).catch(() => []);
+async function searchViaArticleEmbeddings(q: string, vec: number[], limit: number, minScore: number = MIN_SEMANTIC_SCORE, lawIds: string[] | null = null): Promise<RawResult[]> {
+  const lexical = await findRelevantLegalArticles(q, { limit: FALLBACK_CANDIDATE_POOL, semantic: false, systemIds: lawIds ?? undefined }).catch(() => []);
   if (!lexical.length) return [];
 
   const byId = new Map(lexical.map((l) => [l.articleId, l]));
@@ -257,7 +289,8 @@ export const vectorProvider: SearchProvider = {
     return articleEmbeddingsExist();
   },
 
-  async search({ q, limit = 10, types, minScore }: SearchQuery): Promise<RawResult[]> {
+  async search({ q, limit = 10, types, minScore, lawIds: rawLawIds }: SearchQuery): Promise<RawResult[]> {
+    const lawIds = scopedLawIds({ lawIds: rawLawIds });
     if (!semanticSearchEnabled()) return [];
     const query = q.trim();
     if (!query) return [];
@@ -269,11 +302,11 @@ export const vectorProvider: SearchProvider = {
 
       // 1) جدول pgvector إن كان متاحاً.
       const floor = resolveMinScore(minScore, MIN_SEMANTIC_SCORE);
-      const fromTable = await searchViaEmbeddingsTable(vec, limit, types, floor);
+      const fromTable = await searchViaEmbeddingsTable(vec, limit, types, floor, lawIds);
       if (fromTable !== null) return fromTable;
 
       // 2) احتياطي: تضمين المواد المخزَّن (Json) — إعادة ترتيب داخل التطبيق.
-      return await searchViaArticleEmbeddings(query, vec, limit, floor);
+      return await searchViaArticleEmbeddings(query, vec, limit, floor, lawIds);
     } catch {
       return []; // أي تعذّر (امتداد/تضمين/شبكة) لا يكسر البحث
     }
