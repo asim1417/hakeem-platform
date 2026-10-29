@@ -1,0 +1,45 @@
+{
+ "by": "gap019l-official-dates-2026-10-29",
+ "md5": "2b7b9487109e2b6c182e2706983c7ee6",
+ "count": 10,
+ "expect_delta": {},
+ "report": {
+  "corrected": 4,
+  "new_articles": 0,
+  "changed_text": 0,
+  "plan": [
+   {
+    "name": "نظام المنافسات و المشتريات الحكومية",
+    "old": "2019-11-29",
+    "new": "2019-12-01"
+   },
+   {
+    "name": "نظام الأسماء التجارية",
+    "old": "2025-04-02",
+    "new": "2025-04-03"
+   },
+   {
+    "name": "نظام الأسماء التجارية الصادر بالمرسوم الملكي رقم (م/83) وتاريخ 1446/03/19هـ",
+    "old": "2024-10-04",
+    "new": "2025-04-03"
+   },
+   {
+    "name": "نظام السجل التجاري الصادر بالمرسوم الملكي رقم (م/83) وتاريخ 1446/03/19هـ",
+    "old": "2024-10-04",
+    "new": "2025-04-03"
+   }
+  ]
+ },
+ "statements": [
+  "SELECT CASE WHEN (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pp91003xcwg2wx5rgsnx$hk$)=$hk$2019-11-29$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5phhp002ucwg2v6b7zln6$hk$)=$hk$2025-04-02$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$ed25-fc1bd01b88ecdf6cbcf1e250$hk$)=$hk$2024-10-04$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$ed25-71b37d1ec31a497747ed643c$hk$)=$hk$2024-10-04$hk$::date AND (SELECT count(*) FROM legal_text_provenance WHERE id LIKE 'g19lp-%')=0 THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard_before",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19lp-2c805a80b14c02b526879b91$hk$, 'system', $hk$cmpz5pp91003xcwg2wx5rgsnx$hk$, $hk$نظام المنافسات و المشتريات الحكومية$hk$, NULL, 'official', $hk$gap019l-official-dates-2026-10-29$hk$, $hk$https://mof.gov.sa/Knowledgecenter/newGovTendandProcLow/Documents/FAQ.pdf$hk$, $hk$87308157fbb3b1632b7500786d67c74f$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2019-11-29->2019-12-01$hk$, $hk$HKM-052 gap019l-official-dates-2026-10-29: الجهة المختصة أعلنت النفاذ نصًا: «فقد نفذ النظام بتاريخ 1441/4/4هـ (الأول من ديسمبر 2019م)» (وزارة المالية، الأسئلة الشائعة عن النظام). النشر 1440/11/29هـ في بطاقة الهيئة + 120 يومًا = 2019-11-29؛ والمعتمد التاريخ الرسمي المعلن 2019-12-01؛ وكان المخزن 2019-11-29 [قياس مستقل 29/10، تفويض المالك]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19lp-2c805a80b14c02b526879b91$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19lp-0451fec707f78f85be771d61$hk$, 'system', $hk$cmpz5phhp002ucwg2v6b7zln6$hk$, $hk$نظام الأسماء التجارية$hk$, NULL, 'official', $hk$gap019l-official-dates-2026-10-29$hk$, $hk$https://www.eyeofriyadh.com/ar/news/details/new-commercial-register-trade-names-laws-effective-as-of-april-3$hk$, $hk$177fc6485bfc0adc92cbf325b51d9ec8$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2025-04-02->2025-04-03$hk$, $hk$HKM-052 gap019l-official-dates-2026-10-29: الجهة المختصة أعلنت النفاذ نصًا: «أعلنت وزارة التجارة عن بدء تطبيق نظامي السجل التجاري والأسماء التجارية الجديدين اعتبارًا من يوم الخميس الموافق 3 ابريل» 2025. النشر 1446/04/01هـ (أم القرى) + 180 يومًا = 2025-04-02؛ والمعتمد التاريخ الرسمي المعلن 2025-04-03؛ وكان المخزن 2025-04-02 [قياس مستقل 29/10، تفويض المالك]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19lp-0451fec707f78f85be771d61$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19lp-38957676c320dc970c4c7139$hk$, 'system', $hk$ed25-fc1bd01b88ecdf6cbcf1e250$hk$, $hk$نظام الأسماء التجارية الصادر بالمرسوم الملكي رقم (م/83) وتاريخ 1446/03/19هـ$hk$, NULL, 'official', $hk$gap019l-official-dates-2026-10-29$hk$, $hk$https://www.eyeofriyadh.com/ar/news/details/new-commercial-register-trade-names-laws-effective-as-of-april-3$hk$, $hk$85b525d9566d919412b8ca7705ed8371$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2024-10-04->2025-04-03$hk$, $hk$HKM-052 gap019l-official-dates-2026-10-29: الجهة المختصة أعلنت النفاذ نصًا: «أعلنت وزارة التجارة عن بدء تطبيق نظامي السجل التجاري والأسماء التجارية الجديدين اعتبارًا من يوم الخميس الموافق 3 ابريل» 2025. المخزن تاريخ النشر 1446/04/01هـ، والنص «بعد (مائة وثمانين) يومًا من تاريخ نشره»؛ والمعتمد التاريخ الرسمي المعلن 2025-04-03؛ وكان المخزن 2024-10-04 [قياس مستقل 29/10، تفويض المالك]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19lp-38957676c320dc970c4c7139$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19lp-aeb6c2ff42785afbd204456d$hk$, 'system', $hk$ed25-71b37d1ec31a497747ed643c$hk$, $hk$نظام السجل التجاري الصادر بالمرسوم الملكي رقم (م/83) وتاريخ 1446/03/19هـ$hk$, NULL, 'official', $hk$gap019l-official-dates-2026-10-29$hk$, $hk$https://www.eyeofriyadh.com/ar/news/details/new-commercial-register-trade-names-laws-effective-as-of-april-3$hk$, $hk$8bc0398d011cf03922cb8a006da437a5$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2024-10-04->2025-04-03$hk$, $hk$HKM-052 gap019l-official-dates-2026-10-29: الجهة المختصة أعلنت النفاذ نصًا: «أعلنت وزارة التجارة عن بدء تطبيق نظامي السجل التجاري والأسماء التجارية الجديدين اعتبارًا من يوم الخميس الموافق 3 ابريل» 2025. المخزن تاريخ النشر 1446/04/01هـ، والنفاذ بعد مائة وثمانين يومًا من النشر؛ والمعتمد التاريخ الرسمي المعلن 2025-04-03؛ وكان المخزن 2024-10-04 [قياس مستقل 29/10، تفويض المالك]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19lp-aeb6c2ff42785afbd204456d$hk$)",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2019-12-01$hk$::timestamptz WHERE id = $hk$cmpz5pp91003xcwg2wx5rgsnx$hk$ AND preamble_effective_from::date = $hk$2019-11-29$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2025-04-03$hk$::timestamptz WHERE id = $hk$cmpz5phhp002ucwg2v6b7zln6$hk$ AND preamble_effective_from::date = $hk$2025-04-02$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2025-04-03$hk$::timestamptz WHERE id = $hk$ed25-fc1bd01b88ecdf6cbcf1e250$hk$ AND preamble_effective_from::date = $hk$2024-10-04$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2025-04-03$hk$::timestamptz WHERE id = $hk$ed25-71b37d1ec31a497747ed643c$hk$ AND preamble_effective_from::date = $hk$2024-10-04$hk$::date",
+  "SELECT CASE WHEN (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pp91003xcwg2wx5rgsnx$hk$)=$hk$2019-12-01$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5phhp002ucwg2v6b7zln6$hk$)=$hk$2025-04-03$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$ed25-fc1bd01b88ecdf6cbcf1e250$hk$)=$hk$2025-04-03$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$ed25-71b37d1ec31a497747ed643c$hk$)=$hk$2025-04-03$hk$::date AND (SELECT count(*) FROM legal_text_provenance WHERE id LIKE 'g19lp-%')=4 THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard_after"
+ ]
+}
