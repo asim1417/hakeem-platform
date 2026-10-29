@@ -46,10 +46,10 @@ export function groupTerms(g: TermGroup, cap = 12): string[] {
  * مرفوضة يقينًا). صيغ اللفظ الصرفية تتبعه (إن شاع اللفظ لم تُحصر صوره)، وبدائل النظام المنسّقة تُحصر وحدها إن ندرت
  * («رصيد» شائع، و«مقابل وفاء» نادرة). فارغ = لا يُحصر.
  */
-export function probeTerms(g: TermGroup, cap = 12): string[] {
+export function probeTerms(g: TermGroup, cap = 12, withAlts = true): string[] {
   const rareTerm = !isCommonTerm(g.term);
   const own = rareTerm ? [g.term, ...g.forms.filter((f) => !isCommonTerm(f))] : [];
-  return [...new Set([...own, ...g.alts.filter((a) => !isCommonTerm(a))])].slice(0, cap);
+  return [...new Set([...own, ...(withAlts ? g.alts.filter((a) => !isCommonTerm(a)) : [])])].slice(0, cap);
 }
 
 /**
@@ -57,10 +57,10 @@ export function probeTerms(g: TermGroup, cap = 12): string[] {
  * لفظين بكل صيغهما (الصفحة مقبولة مهما كثرت). وفي غيره: ما له صيغ غير شائعة، اللفظ النادر نفسه أولًا ثم الأطول؛
  * كان «أطول لفظين» يحصر «يعتبر» (210 مادة) و«تجاري» (721) ويترك «تستر» (22).
  */
-export function pickProbes(groups: TermGroup[], scopedToLaw: boolean, max = 2): Array<{ group: TermGroup; terms: string[] }> {
+export function pickProbes(groups: TermGroup[], scopedToLaw: boolean, max = 2, withAlts = true): Array<{ group: TermGroup; terms: string[] }> {
   if (scopedToLaw) return [...groups].sort((a, b) => b.term.length - a.term.length).slice(0, max).map((g) => ({ group: g, terms: groupTerms(g) }));
   return groups
-    .map((g) => ({ group: g, terms: probeTerms(g), rare: !isCommonTerm(g.term) }))
+    .map((g) => ({ group: g, terms: probeTerms(g, 12, withAlts), rare: !isCommonTerm(g.term) }))
     .filter((p) => p.terms.length > 0)
     .sort((a, b) => Number(b.rare) - Number(a.rare) || b.group.term.length - a.group.term.length)
     .slice(0, max)

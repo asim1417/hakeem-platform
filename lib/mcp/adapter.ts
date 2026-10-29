@@ -113,6 +113,8 @@ export interface SearchTuning {
   exactCitation?: boolean;
   /** الحصر اللفظي بلا حصر بنظام: يُترك اللفظ الشائع يقينًا (common-terms) لما هو أندر، بدل «أطول لفظين». */
   dfProbes?: boolean;
+  /** ومعه بدائل النظام النادرة («مقابل وفاء») في الحصر، لا ألفاظ السائل وحدها. */
+  probeAlts?: boolean;
 }
 
 const TUNING_DEFAULTS: Required<SearchTuning> = {
@@ -123,6 +125,7 @@ const TUNING_DEFAULTS: Required<SearchTuning> = {
   lexicalSimilarity: true,
   exactCitation: true,
   dfProbes: true,
+  probeAlts: true,
 };
 
 /** ألفاظ السؤال مجموعاتٍ مُجمَّعة (كل مجموعة لفظ بصيغه وبدائله، OR). */
@@ -144,7 +147,7 @@ async function fusedArticleIds(query: string, lawId: string | undefined, limit: 
   const semText2 = tuning.semanticText === "both" && plan.cleaned !== semText ? plan.cleaned : null;
   // حصران كحدٍّ أقصى لضبط الكلفة (كل حصر مسح كامل للمدونة). HKM-062: بلا حصر بنظام لا يُحصر لفظ شائع يقينًا (صفحته
   // مرفوضة)، فيأخذ مقعده لفظ أندر؛ والحصر بصيغ اللفظ وبدائله النادرة («رصيد» ← «مقابل وفاء»). ومع الحصر بنظام كما كان.
-  const probe = tuning.lexicalProbe ? pickProbes(plan.groups, Boolean(lawId) || !tuning.dfProbes) : [];
+  const probe = tuning.lexicalProbe ? pickProbes(plan.groups, Boolean(lawId) || !tuning.dfProbes, 2, tuning.probeAlts) : [];
   // ميزانية زمنية لكل مصدر: البطيء يُسقَط وتبقى نتائج الآخر (كما في المحرك الهجين).
   const budget = providerBudgetMs();
   const bounded = async <T>(work: Promise<T>, fallback: T): Promise<T> => {
