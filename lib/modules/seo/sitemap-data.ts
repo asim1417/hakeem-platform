@@ -9,7 +9,7 @@
 import type { SqlClient } from "@/lib/modules/legal-core/sql-port";
 import { NON_ARTICLE_BIS } from "@/lib/modules/legal-core/article-key";
 import { EDGE_SPACE_PATTERN, systemTextChars, type SystemContentSignal } from "@/lib/modules/seo/indexability";
-import { ARTICLES_PER_SITEMAP, type ArticleChunkPlan } from "@/lib/modules/seo/sitemap";
+import { ARTICLES_PER_SITEMAP, type ArticleChunkPlan, type SitemapPlan } from "@/lib/modules/seo/sitemap";
 
 /** صفوف المواد المعروضة: رقم > 0 ودرجة «مكرر» بين 0 و99 (كما تقبلها صفحة المادة). */
 const ARTICLE_FILTER = `a."articleNumber" > 0 AND a."articleBis" >= 0 AND a."articleBis" < ${NON_ARTICLE_BIS}`;
@@ -107,7 +107,7 @@ function toDate(v: Ts): Date | null {
 }
 
 /** خطة ملفات المواد وتاريخ آخر تغيير للأنظمة — استعلام واحد للفهرس. */
-export async function loadSitemapPlan(db: SqlClient): Promise<{ articleChunks: ArticleChunkPlan[]; systemsLastModified: Date | null }> {
+export async function loadSitemapPlan(db: SqlClient): Promise<SitemapPlan> {
   const rows = await db.query<{ chunk: number; urls: number; lastModified: Ts }>(SQL_ARTICLE_CHUNK_PLAN, [ARTICLES_PER_SITEMAP]);
   const articleChunks: ArticleChunkPlan[] = [];
   let systemsLastModified: Date | null = null;

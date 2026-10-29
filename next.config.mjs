@@ -179,9 +179,15 @@ const nextConfig = {
           { source: "/doc-tool/:path*", destination: `${docToolUrl}/:path*` }
         ]
       : [];
+    // HKM-061: ملفات خريطة الموقع الفرعية في جذر الموقع (قاعدة الموقع في sitemaps.org، يطبّقها Bing)،
+    // تُعاد كتابتها إلى app/sitemaps/[file]. مطابقة لـ SITEMAP_REWRITES في lib/modules/seo/sitemap.ts (يفحصها الاختبار).
+    const sitemapRewrites = [
+      { source: "/sitemap-:kind(static|systems).xml", destination: "/sitemaps/:kind.xml" },
+      { source: "/sitemap-articles-:n(\\d{1,2}).xml", destination: "/sitemaps/articles-:n.xml" }
+    ];
     return {
       beforeFiles: docToolProxy,
-      afterFiles: []
+      afterFiles: sitemapRewrites
     };
   }
 };

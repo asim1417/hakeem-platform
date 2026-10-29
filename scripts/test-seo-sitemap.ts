@@ -19,20 +19,28 @@ import {
   systemTextChars,
   trimmedCharCount,
 } from "../lib/modules/seo/indexability";
+import { pathToFileURL } from "node:url";
 import {
   ARTICLES_PER_SITEMAP,
+  MAX_ARTICLE_SITEMAPS,
+  SITEMAP_MAX_BYTES,
   SITEMAP_PROTOCOL_MAX_URLS,
+  SITEMAP_REWRITES,
   STATIC_SITEMAP_PATHS,
   articlePagePath,
   latestDate,
   parseSitemapFileName,
+  plannedArticleChunks,
   renderSitemapIndex,
   renderUrlset,
   sitemapFileName,
   sitemapIndexEntries,
+  sitemapPublicPath,
+  sitemapStaticParams,
   systemPagePath,
   w3cDatetime,
   xmlEscape,
+  type SitemapPlan,
 } from "../lib/modules/seo/sitemap";
 import {
   SQL_ARTICLE_CHUNK,
@@ -43,7 +51,7 @@ import {
   loadSitemapSystems,
   loadSystemContentSignal,
 } from "../lib/modules/seo/sitemap-data";
-import { PHASE_PRODUCTION_BUILD, buildChildSitemapXml, buildSitemapIndexXml } from "../lib/modules/seo/sitemap-routes";
+import { PHASE_PRODUCTION_BUILD, buildChildSitemapXml, buildSitemapIndexXml, buildSitemapStaticParams } from "../lib/modules/seo/sitemap-routes";
 import { connectLocalTest } from "./hkm-023-b/local-db";
 
 const root = process.cwd();
@@ -112,10 +120,15 @@ function sitemapPureTests() {
   eq(parseSitemapFileName("systems.xml"), { kind: "systems" }, "S-2");
   eq(parseSitemapFileName("articles-0.xml"), { kind: "articles", chunk: 0 }, "S-3");
   eq(parseSitemapFileName("articles-12.xml"), { kind: "articles", chunk: 12 }, "S-4");
-  for (const bad of ["articles-01.xml", "articles--1.xml", "articles-1.xml.gz", "articles-.xml", "articles-10000.xml", "articles-1e3.xml", "../static.xml", "sitemap.xml", "STATIC.xml", ""]) {
+  eq(MAX_ARTICLE_SITEMAPS, 100, "S-4b حد الاسم صغير (100 ملف = 500,000 مادة)");
+  eq(parseSitemapFileName("articles-99.xml"), { kind: "articles", chunk: 99 }, "S-4c آخر رقم مقبول");
+  for (const bad of ["articles-100.xml", "articles-01.xml", "articles--1.xml", "articles-1.xml.gz", "articles-.xml", "articles-10000.xml", "articles-1e3.xml", "../static.xml", "sitemap.xml", "STATIC.xml", ""]) {
     eq(parseSitemapFileName(bad), null, `S-5 مرفوض: ${JSON.stringify(bad)}`);
   }
   eq(sitemapFileName({ kind: "articles", chunk: 7 }), "articles-7.xml", "S-6");
+  eq(sitemapPublicPath({ kind: "articles", chunk: 7 }), "/sitemap-articles-7.xml", "S-6b المسار العام في الجذر");
+  eq(sitemapPublicPath({ kind: "static" }), "/sitemap-static.xml", "S-6c");
+  eq(sitemapPublicPath({ kind: "systems" }), "/sitemap-systems.xml", "S-6d");
 
   eq(systemPagePath("نظام-العمل", "نظام العمل"), `/legal/${encodeURIComponent("نظام-العمل")}`, "S-7 مسار النظام كـ canonical");
   eq(systemPagePath(null, "نظام المعاملات المدنية"), `/legal/${encodeURIComponent(lawSlug("نظام المعاملات المدنية"))}`, "S-8 بلا eli_slug: اشتقاق الاسم (كالصفحة)");
@@ -137,6 +150,11 @@ function sitemapPureTests() {
   assert.throws(() => renderUrlset(Array.from({ length: SITEMAP_PROTOCOL_MAX_URLS + 1 }, () => ({ loc: BASE }))), /50000/);
   passed++;
   ok(ARTICLES_PER_SITEMAP <= SITEMAP_PROTOCOL_MAX_URLS, "S-21 الملف ضمن حد البروتوكول");
+  eq(SITEMAP_MAX_BYTES, 4_000_000, "S-21b حد الحجم ~4MB (تحت 4.5MB لدوال Vercel)");
+  // ملف يتجاوز حد الحجم يُرفض (لا يُخرج مبتورًا): 5,000 رابط بـ slug أطول مما في الإنتاج (~1KB للرابط).
+  const huge = Array.from({ length: ARTICLES_PER_SITEMAP }, (_, i) => ({ loc: `${BASE}${articlePagePath("ن".repeat(160), "x", i + 1)}` }));
+  assert.throws(() => renderUrlset(huge), /تتجاوز الحد 4000000/);
+  passed++; // S-21c
 
   // حجم ملف المواد: 5,000 رابط بـ slug ضعف متوسط الإنتاج (72 بايت ← 144) يبقى أقل كثيرًا من حد Vercel 4.5MB.
   const slug = "ن".repeat(72);
@@ -153,12 +171,25 @@ function sitemapPureTests() {
   });
   eq(
     entries.map((e) => e.loc),
-    [`${BASE}/sitemaps/static.xml`, `${BASE}/sitemaps/systems.xml`, `${BASE}/sitemaps/articles-0.xml`, `${BASE}/sitemaps/articles-1.xml`],
-    "S-23 ترتيب الفهرس، وملف فارغ لا يُدرج"
+    [`${BASE}/sitemap-static.xml`, `${BASE}/sitemap-systems.xml`, `${BASE}/sitemap-articles-0.xml`, `${BASE}/sitemap-articles-1.xml`],
+    "S-23 ترتيب الفهرس (من جذر الموقع)، وملف فارغ لا يُدرج"
   );
   eq(entries[1].lastModified, new Date("2026-10-29T15:37:21Z"), "S-24 الأنظمة تتغير بتغير موادها");
   eq(entries[0].lastModified, undefined, "S-25 الثابتة بلا lastmod");
-  ok(renderSitemapIndex(entries).includes("<sitemap><loc>https://hakeemai.net/sitemaps/articles-1.xml</loc><lastmod>2026-10-29T15:37:21Z</lastmod></sitemap>"), "S-26 فهرس XML");
+  ok(renderSitemapIndex(entries).includes("<sitemap><loc>https://hakeemai.net/sitemap-articles-1.xml</loc><lastmod>2026-10-29T15:37:21Z</lastmod></sitemap>"), "S-26 فهرس XML");
+
+  // ما يُرسم وقت البناء: الثابت دائمًا؛ والأنظمة وملفات المواد غير الفارغة إن عُرفت الخطة.
+  const planOf = (chunks: Array<[number, number]>): SitemapPlan => ({
+    systemsLastModified: null,
+    articleChunks: chunks.map(([chunk, urls]) => ({ chunk, urls, lastModified: null })),
+  });
+  eq(plannedArticleChunks(planOf([[2, 5], [0, 5000], [1, 0], [150, 3]])), [0, 2], "S-27 ملفات الخطة: غير الفارغة وضمن حد الاسم");
+  eq(
+    sitemapStaticParams(planOf([[0, 5000], [1, 5000], [2, 12]])),
+    [{ file: "static.xml" }, { file: "systems.xml" }, { file: "articles-0.xml" }, { file: "articles-1.xml" }, { file: "articles-2.xml" }],
+    "S-28 generateStaticParams من الخطة"
+  );
+  eq(sitemapStaticParams(null), [{ file: "static.xml" }], "S-29 بلا قاعدة: الثابت وحده");
 }
 
 // ───────────── ٣. المساران بعميل مزيّف ─────────────
@@ -177,7 +208,7 @@ async function routeTests() {
     const xml = await buildSitemapIndexXml(db, BASE);
     eq(calls.length, 1, "R-1 الفهرس استعلام واحد");
     eq(calls[0].params, [ARTICLES_PER_SITEMAP], "R-2 حجم الملف معامل");
-    eq(locs(xml), [`${BASE}/sitemaps/static.xml`, `${BASE}/sitemaps/systems.xml`, `${BASE}/sitemaps/articles-0.xml`, `${BASE}/sitemaps/articles-1.xml`], "R-3 ملفات الفهرس");
+    eq(locs(xml), [`${BASE}/sitemap-static.xml`, `${BASE}/sitemap-systems.xml`, `${BASE}/sitemap-articles-0.xml`, `${BASE}/sitemap-articles-1.xml`], "R-3 ملفات الفهرس");
     ok(xml.includes("<sitemapindex"), "R-4 sitemapindex");
   }
   {
@@ -185,7 +216,8 @@ async function routeTests() {
     await assert.rejects(() => buildSitemapIndexXml(db, BASE), /connection refused/);
     passed++; // R-5 وقت التشغيل: يُرمى الخطأ فيبقى ISR على آخر نسخة ناجحة
     const xml = await buildSitemapIndexXml(db, BASE, { phase: PHASE_PRODUCTION_BUILD });
-    eq(locs(xml), [`${BASE}/sitemaps/static.xml`, `${BASE}/sitemaps/systems.xml`], "R-6 وقت البناء بلا قاعدة: فهرس مؤقت ولا يُكسر البناء");
+    eq(locs(xml), [`${BASE}/sitemap-static.xml`, `${BASE}/sitemap-systems.xml`], "R-6 وقت البناء بلا قاعدة: فهرس مؤقت ولا يُكسر البناء");
+    eq(await buildSitemapStaticParams(() => Promise.reject(new Error("connection refused"))), [{ file: "static.xml" }], "R-6b generateStaticParams بلا قاعدة لا يكسر البناء");
     await assert.rejects(() => buildChildSitemapXml(db, BASE, "systems.xml"), /connection refused/);
     await assert.rejects(() => buildChildSitemapXml(db, BASE, "articles-0.xml"), /connection refused/);
     passed++; // R-7 الملفات الفرعية لا تخزّن خريطة فارغة عند العطل
@@ -238,13 +270,25 @@ async function routeTests() {
           : []
         : new Error("unexpected")
     );
-    const r = await buildChildSitemapXml(db, BASE, "articles-2.xml");
+    let planLoads = 0;
+    const loadPlan = async (): Promise<SitemapPlan> => {
+      planLoads++;
+      return { systemsLastModified: null, articleChunks: [0, 1, 2].map((chunk) => ({ chunk, urls: chunk === 2 ? 2 : 5000, lastModified: null })) };
+    };
+    const r = await buildChildSitemapXml(db, BASE, "articles-2.xml", { loadPlan });
     assert.equal(r.status, 200);
     if (r.status !== 200) return;
+    eq(calls.length, 1, "R-16b الخطة من المحمّل (المخزّن)، واستعلام واحد للملف");
     eq(calls[0].params, [2 * ARTICLES_PER_SITEMAP, ARTICLES_PER_SITEMAP], "R-17 OFFSET/LIMIT للملف الثالث");
     eq(locs(r.xml), [`${BASE}${articlePagePath("نظام-العمل", "", 80)}`, `${BASE}${articlePagePath("نظام-العمل", "", 80, 1)}`], "R-18 روابط المواد كـ canonical");
     ok(r.xml.includes("<lastmod>2026-10-29T15:37:21Z</lastmod>"), "R-19 lastmod المادة");
-    eq((await buildChildSitemapXml(db, BASE, "articles-9.xml")).status, 404, "R-20 ملف خارج المدى: 404");
+    const before = calls.length;
+    for (const n of [3, 9, 77, 99]) {
+      eq((await buildChildSitemapXml(db, BASE, `articles-${n}.xml`, { loadPlan })).status, 404, `R-20 ملف خارج الخطة (${n}): 404`);
+    }
+    eq(calls.length, before, "R-20b رقم خارج الخطة لا يصل إلى استعلام الملف");
+    eq((await buildChildSitemapXml(db, BASE, "articles-100.xml", { loadPlan })).status, 404, "R-20c فوق حد الاسم: 404");
+    eq(planLoads, 5, "R-20d حد الاسم يُرفض قبل الخطة نفسها (1 + 4، لا شيء لـ 100)");
   }
   {
     const signalOf = async (row: unknown) => loadSystemContentSignal(fakeDb(() => (row instanceof Error ? row : [row])).db, { id: "s", name: "n", preamble: "نص غير متاح" });
@@ -263,9 +307,27 @@ async function wiringTests() {
   ok(!meta.includes("notFound("), "W-2 النظام الفارغ لا يصير 404 (noindex فقط)");
 
   const index = read("app/sitemap.xml/route.ts");
-  ok(index.includes("export const revalidate = 3600") && index.includes("buildSitemapIndexXml") && index.includes("NEXT_PHASE"), "W-3 الفهرس ISR بساعة");
+  ok(index.includes("export const revalidate = 3600") && index.includes("buildSitemapIndexXml") && index.includes("NEXT_PHASE") && index.includes("loadPlan: cachedSitemapPlan"), "W-3 الفهرس ISR بساعة، بالخطة المخزّنة");
   const child = read("app/sitemaps/[file]/route.ts");
-  ok(child.includes("export const revalidate = 3600") && /function generateStaticParams\(\)[^\n]*\n\s*return \[\];/.test(child), "W-4 الفرعية: لا رسم وقت البناء، ISR عند أول طلب");
+  ok(
+    child.includes("export const revalidate = 3600") &&
+      child.includes("return buildSitemapStaticParams(cachedSitemapPlan)") &&
+      child.includes("loadPlan: cachedSitemapPlan"),
+    "W-4 الفرعية: تُرسم وقت البناء من الخطة (HIT)، وفحص الرقم بالخطة المخزّنة"
+  );
+  const cache = read("lib/modules/seo/sitemap-cache.ts");
+  ok(cache.includes("unstable_cache(") && cache.includes("revalidate: 3600"), "W-4b الخطة مخزّنة ساعة");
+
+  // إعادة الكتابة من الجذر في next.config.mjs الفعلي تطابق SITEMAP_REWRITES.
+  const cfg = (await import(`${pathToFileURL(path.join(root, "next.config.mjs")).href}?seo=1`)) as {
+    default: { rewrites: () => Promise<{ afterFiles: Array<{ source: string; destination: string }> }> };
+  };
+  const after = (await cfg.default.rewrites()).afterFiles;
+  eq(
+    after.filter((r) => r.source.startsWith("/sitemap-")),
+    SITEMAP_REWRITES.map((r) => ({ ...r })),
+    "W-4c next.config.mjs يعيد كتابة /sitemap-*.xml إلى /sitemaps/*"
+  );
   ok(!fs.existsSync(path.join(root, "app/sitemap.ts")), "W-5 لا تعارض مع app/sitemap.ts");
 
   // robots.txt بمتغير قديم على vercel.app: يشير إلى الفهرس على hakeemai.net.
@@ -363,6 +425,9 @@ async function localDbTests() {
     eq(byKey.get("2_0_نظام العمل الاصطناعي"), "2026-10-15T08:00:00.000Z", "L-7 مادة بنسخة article_versions");
     eq(byKey.get("2_1_نظام العمل الاصطناعي"), "2026-10-01T10:00:00.000Z", "L-8 updatedAt بتوقيت UTC رغم منطقة الجلسة");
     eq(await loadArticleChunk(db, 1), [], "L-9 ملف خارج المدى فارغ");
+    const a0 = await buildChildSitemapXml(db, BASE, "articles-0.xml");
+    eq(a0.status === 200 ? locs(a0.xml).length : -1, 4, "L-9b ملف المواد 0 (الخطة مباشرة من القاعدة)");
+    eq((await buildChildSitemapXml(db, BASE, "articles-1.xml")).status, 404, "L-9c ملف خارج الخطة: 404");
 
     const sysRows = await loadSitemapSystems(db);
     const sig = new Map(sysRows.map((r) => [r.name, r.signal]));
