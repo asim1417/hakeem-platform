@@ -114,6 +114,18 @@ export function acceptFill(coverage: number, keywordCount: number): boolean {
 export const MIN_WINDOW_COVERAGE = 0.75;
 export const SEMANTIC_SUPPORT_MIN = 0.5;
 
+/**
+ * HKM-062: حين لا دليل لفظي مميِّز يُقبل مرشح المعنى من هذا الحد (لا من 0.5)، بشرط أن يغطي ثلاثة أرباع ألفاظ السؤال:
+ * المعنى يقترح والألفاظ تؤكد. «كم مكافأة نهاية الخدمة» قصير فلا يبلغ تشابهه 0.5 مع مادته.
+ */
+export const WEAK_EVIDENCE_SEMANTIC_MIN = 0.42;
+
+/** مرشح دلالي دون SEMANTIC_SUPPORT_MIN (من حد الدليل الضعيف) لا يبقى إلا بتغطية كافية؛ وما فوقه كما كان. */
+export function keepLowSemantic(c: { coverage: number; similarity: number }): boolean {
+  if (Number.isFinite(c.similarity) && c.similarity >= SEMANTIC_SUPPORT_MIN) return true;
+  return Number.isFinite(c.coverage) && c.coverage >= MIN_WINDOW_COVERAGE;
+}
+
 export function keepCandidate(c: { coverage: number; similarity: number }, keywordCount: number): boolean {
   if (keywordCount <= 1) return true;
   if (Number.isFinite(c.similarity) && c.similarity >= SEMANTIC_SUPPORT_MIN) return true;

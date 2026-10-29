@@ -26,7 +26,10 @@ export interface TermGroup {
 
 export interface QueryPlan {
   cleaned: string;
+  /** نص البحث الدلالي: لفظ النظام مكان اللفظ الدارج. */
   semanticText: string;
+  /** نص البحث الدلالي: السؤال بلا حشو، وألفاظ النظام ملحقة في آخره (لا مكان اللفظ الدارج). */
+  semanticAppend: string;
   groups: TermGroup[];
   /** هل غيّر الجسر شيئًا (بدائل أو نص دلالي)؟ */
   bridged: boolean;
@@ -147,8 +150,11 @@ export function planQuery(query: string, opts: { bridge?: boolean } = {}): Query
     i++;
   }
   const semanticText = (semParts.join(" ").trim() || cleaned || raw).replace(/\s+/g, " ");
+  const plain = cleanedRaw.filter((_, i) => !COLLOQUIAL_STOP.has(cleanedNorm[i]));
+  const added = [...new Set([...semAt.values()].map((m) => m.entries.find((e) => e.sem)!.sem!))];
+  const semanticAppend = ([...plain, ...added].join(" ").trim() || cleaned || raw).replace(/\s+/g, " ");
   const bridged = groups.some((g) => g.alts.length > 0) || semanticText !== cleaned;
-  return { cleaned: cleaned || raw, semanticText, groups, bridged };
+  return { cleaned: cleaned || raw, semanticText, semanticAppend, groups, bridged };
 }
 
 /** للاختبار: إعادة بناء الفهرس. */

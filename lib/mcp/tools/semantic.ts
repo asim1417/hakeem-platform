@@ -21,6 +21,13 @@ export interface SemanticDeps {
   enabled?: () => boolean;
   /** أقرب المواد بالمتجه: معرّف المادة والتشابه (0..1). */
   vectorSearch?: (q: string, limit: number, lawIds?: string[]) => Promise<Array<{ id: string; score: number }>>;
+  /**
+   * HKM-062: ألفاظ التغطية بدل ألفاظ نص البحث (hakeem_search يرسل للمتجهات نصًّا بلفظ النظام، ويقيس التغطية بمجموعات
+   * سؤال المستخدم نفسه). التغطية على النص الساري كما هي.
+   */
+  coverageTerms?: CompiledTerm[];
+  /** HKM-062: حد التشابه لهذا النداء (الافتراض SEMANTIC_TOOL_MIN_SCORE)؛ hakeem_search يخفضه حين لا دليل لفظي مميِّز. */
+  minScore?: number;
 }
 
 // HKM-062: ألفاظ السؤال (وحذف عبارات الطلب والحوار الدارج) في وحدة صرفة بلا قاعدة: lib/mcp/query-words.ts.
@@ -63,7 +70,7 @@ export async function handleSemanticSearch(db: SqlClient, args: FilterArgs & { q
     deps.vectorSearch ??
     (async (q: string, n: number, lawIds?: string[]) => {
       const { vectorProvider } = await import("@/lib/modules/legal-search/providers/vector-provider");
-      const raw = await vectorProvider.search({ q, limit: n, types: ["article"], minScore: SEMANTIC_TOOL_MIN_SCORE, lawIds });
+      const raw = await vectorProvider.search({ q, limit: n, types: ["article"], minScore: deps.minScore ?? SEMANTIC_TOOL_MIN_SCORE, lawIds });
       return raw.filter((r) => r.type === "article").map((r) => ({ id: r.id, score: r.score }));
     });
   const scope = await lawScopeForFilters(db, filtersFromArgs(args));
@@ -83,7 +90,7 @@ export async function handleSemanticSearch(db: SqlClient, args: FilterArgs & { q
   const eff = deps.effective ?? (async (rs) => (await import("@/lib/modules/legal-core/effective-text")).effectiveArticleTexts(rs));
   const texts = await eff(scoped.map((r) => ({ id: r.id, content: r.content })));
   const keywords = queryKeywords(query);
-  const compiled = keywords.map((k) => compileTerm(k, "derivatives")).filter((c): c is CompiledTerm => c !== null);
+  const compiled = deps.coverageTerms ?? keywords.map((k) => compileTerm(k, "derivatives")).filter((c): c is CompiledTerm => c !== null);
   const hinted = hintedLaws(query, await loadLawCatalog(db));
   const results = scoped
     .map((r) => {
