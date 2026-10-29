@@ -1,0 +1,1074 @@
+{
+ "items": [
+  {
+   "item": "EC-001",
+   "system_id": "cmpwi0bkw001xnxff8zst26lv",
+   "name": "نظام الأحوال الشخصية",
+   "clause": "يعمل بهذا النظام بعد مضي (تسعين) يوماً من تاريخ نشره، ويلغي كل ما يتعارض معه من أحكام.",
+   "boe_published_hijri": "1443/08/15",
+   "nezams_published_hijri": "1443-08-15",
+   "issued_hijri": "1443/08/06",
+   "stored_effective": "2022-03-09"
+  },
+  {
+   "item": "EC-002",
+   "system_id": "cmpz5pbv80021cwg2br8calht",
+   "name": "نظام الإثبات",
+   "clause": "يعمل بهذا النظام بعد (مائة وثمانين) يوماً من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1443/06/04",
+   "nezams_published_hijri": "1443-06-04",
+   "issued_hijri": "1443/05/26",
+   "stored_effective": "2021-12-30"
+  },
+  {
+   "item": "EC-003",
+   "system_id": "cmpz5qixw0084cwg2e4jtdk5z",
+   "name": "نظام التحكيم",
+   "clause": "يعمل بهذا النظام بعد ثلاثين يوماً من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1433/07/18",
+   "nezams_published_hijri": "1433-07-18",
+   "issued_hijri": "1433/05/24",
+   "stored_effective": "2012-04-16"
+  },
+  {
+   "item": "EC-004",
+   "system_id": "cmpwi0c8m0020nxffmobucqkh",
+   "name": "نظام التوثيق",
+   "clause": "يعمل بالنظام بعد مائة وثمانين يوماً من تاريخ نشره في الجريدة الرسمية، ويلغي كل ما يتعارض معه من أحكام.",
+   "boe_published_hijri": "1441/11/26",
+   "nezams_published_hijri": "1441-11-26",
+   "issued_hijri": "1441/11/19",
+   "stored_effective": "2020-07-10"
+  },
+  {
+   "item": "EC-005",
+   "system_id": "cmpz5r8eo00becwg21qt63wx7",
+   "name": "نظام العمل",
+   "clause": "ينشر هذا النظام في الجريدة الرسمية، ويعمل به بعد مائة وثمانين يومًا من تاريخ نشره.",
+   "boe_published_hijri": "1426/09/25",
+   "nezams_published_hijri": "1426-09-25",
+   "issued_hijri": "1426/08/23",
+   "stored_effective": "2005-09-27"
+  },
+  {
+   "item": "EC-006",
+   "system_id": "cmpz5pyd30057cwg2aeeqrvg7",
+   "name": "النظام الأساس لجمعية الكشافة العربية السعودية",
+   "clause": "ينشر هذا النظام في الجريدة الرسمية، ويعمل به بعد (مائة وثمانين) يوماً من تاريخ نشره، ويلغي نظام جمعية الكشافة العربية السعودية، الصادر بالمرسوم الملكي رقم (م/8) وتاريخ 20 / 4 / 1407 هـ، وجميع ما يتعار",
+   "boe_published_hijri": "1439/08/23",
+   "nezams_published_hijri": "1439-08-23",
+   "issued_hijri": "1439/07/25",
+   "stored_effective": "2018-04-11"
+  },
+  {
+   "item": "EC-007",
+   "system_id": "cmpz5p3iv000vcwg2j8yoctxi",
+   "name": "النظام الجزائي لجرائم التزوير",
+   "clause": "يعمل بهذا النظام بعد مضي ثلاثين يوماً من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1435/04/07",
+   "nezams_published_hijri": "1435-04-07",
+   "issued_hijri": "1435/02/18",
+   "stored_effective": "2013-12-21"
+  },
+  {
+   "item": "EC-008",
+   "system_id": "cmpz5qvrv009xcwg2jl97m5li",
+   "name": "نظام أخلاقيات البحث على المخلوقات الحية",
+   "clause": "يعمل بهذا النظام بعد تسعين يومًا من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1431/10/08",
+   "nezams_published_hijri": "1431-10-08",
+   "issued_hijri": "1431/09/14",
+   "stored_effective": "2010-08-24"
+  },
+  {
+   "item": "EC-009",
+   "system_id": "cmpz5qra4009acwg25u2zl7wp",
+   "name": "نظام أندية السيارات والدراجات النارية",
+   "clause": "يعمل بهذا النظام بعد (مائة وعشرين) يومًا من تاريخ نشره.",
+   "boe_published_hijri": "1430/06/26",
+   "nezams_published_hijri": "1430-06-26",
+   "issued_hijri": "1430/06/02",
+   "stored_effective": "2009-05-26"
+  },
+  {
+   "item": "EC-010",
+   "system_id": "cmpz5q4ks0063cwg2hgm8rkmr",
+   "name": "نظام إجراءات التراخيص البلدية",
+   "clause": "يلغي هذا النظام كل ما يتعارض معه، ويعمل به بعد تسعين يوماً من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1435/11/10",
+   "nezams_published_hijri": "1435-11-10",
+   "issued_hijri": "1435/09/23",
+   "stored_effective": "2014-07-20"
+  },
+  {
+   "item": "EC-011",
+   "system_id": "cmpz5q6pi006ecwg2ucqkh1a3",
+   "name": "نظام إدارة النفايات",
+   "clause": "يعمل بالنظام بعد مضي (ستين) يومًا من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1443/02/10",
+   "nezams_published_hijri": "1443-02-10",
+   "issued_hijri": "1443/01/05",
+   "stored_effective": "2021-08-13"
+  },
+  {
+   "item": "EC-012",
+   "system_id": "cmpz5r53300b8cwg2hyqj8zrc",
+   "name": "نظام إمدادات الطاقة",
+   "clause": "يعمل بالنظام بعد (ستين) يوماً من تاريخ نشره في الجريدة الرسمية، ويحل محل نظام إمدادات الغاز وتسعيره الصادر بالمرسوم الملكي رقم (م / 36) وتاريخ 25 / 6 / 1424هـ، ويلغي كل ما يتعارض معه من أحكام.",
+   "boe_published_hijri": "1444/06/13",
+   "nezams_published_hijri": "1444-06-13",
+   "issued_hijri": "1444/06/04",
+   "stored_effective": "2022-12-28"
+  },
+  {
+   "item": "EC-013",
+   "system_id": "cmpz5pwt6004zcwg2175jlssl",
+   "name": "نظام إنتاج المواد التعليمية المساعدة وتسويقها",
+   "clause": "يعمل بهذا النظام بعد مائة وثمانين يومًا من تاريخ نشره.",
+   "boe_published_hijri": "1425/11/26",
+   "nezams_published_hijri": "1425-11-26",
+   "issued_hijri": "1425/10/29",
+   "stored_effective": "2004-12-12"
+  },
+  {
+   "item": "EC-014",
+   "system_id": "cmpz5rn3900cmcwg2t70wevmi",
+   "name": "نظام إيرادات الدولة",
+   "clause": "ينشر هذا النظام في الجريدة الرسمية ، ويعمل به بعد تسعين يوما من تاريخ نشره .",
+   "boe_published_hijri": "1431/12/20",
+   "nezams_published_hijri": "1431-12-20",
+   "issued_hijri": "1431/11/18",
+   "stored_effective": "2010-10-26"
+  },
+  {
+   "item": "EC-015",
+   "system_id": "cmpz5q7hf006icwg2m1ouzs82",
+   "name": "نظام استئجار الدولة للعقار",
+   "clause": "يعمل بالنظام بعد مضي (مائة وثمانين) يومًا من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1444/01/07",
+   "nezams_published_hijri": "1444-01-07",
+   "issued_hijri": "1443/12/28",
+   "stored_effective": "2022-07-27"
+  },
+  {
+   "item": "EC-016",
+   "system_id": "cmpz5pcg70024cwg235dc7j6f",
+   "name": "نظام استخدام كاميرات المراقبة الأمنية",
+   "clause": "يعمل بالنظام بعد (مائة وثمانين) يومًا من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1444/03/11",
+   "nezams_published_hijri": "1444-03-11",
+   "issued_hijri": "1444/03/07",
+   "stored_effective": "2022-10-03"
+  },
+  {
+   "item": "EC-017",
+   "system_id": "cmpz5pa48001scwg210ue3g5g",
+   "name": "نظام استخدام وحماية شارة واسم الهلال الأحمر وما في حكمهما",
+   "clause": "يعمل بالنظام بعد مضي (تسعين) يومًا من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1445/01/17",
+   "nezams_published_hijri": "1445-01-17",
+   "issued_hijri": "1445/01/06",
+   "stored_effective": "2023-07-24"
+  },
+  {
+   "item": "EC-018",
+   "system_id": "cmpz5pinm0030cwg2vb9m262i",
+   "name": "نظام استيراد المواد الكيميائية وإدارتها ( نظام إدارة المواد الكيميائية )",
+   "clause": "يعمل بهذا النظام بعد مائة وثمانين يومًا من تاريخ نشره في الجريدة الرسمية،",
+   "boe_published_hijri": "1427/07/24",
+   "nezams_published_hijri": "1427-07-24",
+   "issued_hijri": "1427/06/16",
+   "stored_effective": "2006-07-12"
+  },
+  {
+   "item": "EC-019",
+   "system_id": "cmpz5qo68008ucwg29x0hiyos",
+   "name": "نظام الآثار والمتاحف والتراث العمراني",
+   "clause": "يعمل بهذا النظام بعد مضي (مائة وعشرين) يوماً من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1436/02/06",
+   "nezams_published_hijri": "1436-02-06",
+   "issued_hijri": "1436/01/09",
+   "stored_effective": "2014-11-02"
+  },
+  {
+   "item": "EC-020",
+   "system_id": "cmpz5qzgp00afcwg264bh8sh6",
+   "name": "نظام الأجهزة والمستلزمات الطبية",
+   "clause": "يعمل بالنظام بعد (مائة وثمانين) يومًا من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1442/07/14",
+   "nezams_published_hijri": "1442-07-14",
+   "issued_hijri": "1442/07/06",
+   "stored_effective": "2021-02-18"
+  },
+  {
+   "item": "EC-021",
+   "system_id": "cmpz5rfi400c0cwg2ltsts5j9",
+   "name": "نظام الأحداث",
+   "clause": "يعمل بالنظام بعد تسعين يوماً من تاريخ نشره في الجريدة الرسمية، ويُلغي كل ما يتعارض معه من إجراءات وأحكام.",
+   "boe_published_hijri": "1440/02/22",
+   "nezams_published_hijri": "1440-02-22",
+   "issued_hijri": "1439/11/19",
+   "stored_effective": "2018-08-01"
+  },
+  {
+   "item": "EC-022",
+   "system_id": "cmpz5p6th001ccwg2fz4ds933",
+   "name": "نظام الأسلحة والذخائر",
+   "clause": "يعمل بهذا النظام و اللائحة بعد مائة وثمانين يوما من تاريخ نشره في الجريدة الرسمية، ويصدر الوزير اللائحة لهذا النظام خلال هذه المدة .",
+   "boe_published_hijri": "1426/09/18",
+   "nezams_published_hijri": "1426-09-18",
+   "issued_hijri": "1426/07/25",
+   "stored_effective": "2005-08-30"
+  },
+  {
+   "item": "EC-023",
+   "system_id": "cmpz5qeof007icwg2nv2r2hch",
+   "name": "نظام الأعلاف",
+   "clause": "يعمل بهذا النظام بعد مائة وثمانين يوماً من تاريخ نشره، ويلغي كل ما يتعارض معه من أحكام.",
+   "boe_published_hijri": "1435/11/10",
+   "nezams_published_hijri": "1435-11-10",
+   "issued_hijri": "1435/09/23",
+   "stored_effective": "2014-07-20"
+  },
+  {
+   "item": "EC-024",
+   "system_id": "cmpz5pv2f004rcwg231jxvfvb",
+   "name": "نظام الأوسمة السعودية",
+   "clause": "يعمل بهذا النظام بعد مائة وثمانين يوماً من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1434/07/21",
+   "nezams_published_hijri": "1434-07-21",
+   "issued_hijri": "1434/06/24",
+   "stored_effective": "2013-05-04"
+  },
+  {
+   "item": "EC-025",
+   "system_id": "cmpz5rkx500cfcwg2kl7mpzda",
+   "name": "نظام الإيداع في المخازن العامة",
+   "clause": "ينشر هذا النظام في الجريدة الرسمية، ويعمل به بعد تسعين يوما من تاريخ نشره، ويلغي كل ما يتعارض مع أحكامه.",
+   "boe_published_hijri": "1428/02/26",
+   "nezams_published_hijri": "1428-02-26",
+   "issued_hijri": "1427/05/10",
+   "stored_effective": "2006-06-06"
+  },
+  {
+   "item": "EC-026",
+   "system_id": "cmpz5rzyy00dmcwg2j18drci6",
+   "name": "نظام الاتصالات وتقنية المعلومات",
+   "clause": "يحل هذا النظام محل نظام الاتصالات الصادر بالمرسوم الملكي رقم (م / 12) وتاريخ 12 / 3 / 1422هـ، ويلغي ما يتعارض معه من أحكام. يعمل بالنظام بعد مضي (180) يومًا من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1443/11/11",
+   "nezams_published_hijri": "1443-11-11",
+   "issued_hijri": "1443/11/02",
+   "stored_effective": "2022-06-01"
+  },
+  {
+   "item": "EC-027",
+   "system_id": "cmpz5pq0x0041cwg2ca51b15b",
+   "name": "نظام الامتياز التجاري",
+   "clause": "يعمل بالنظام بعد مضي (مائة وثمانين) يوماً من تاريخ نشره في الجريدة الرسمية، ويلغي كل ما يتعارض معه من أحكام.",
+   "boe_published_hijri": "1441/02/24",
+   "nezams_published_hijri": "1441-02-24",
+   "issued_hijri": "1441/02/09",
+   "stored_effective": "2019-10-08"
+  },
+  {
+   "item": "EC-028",
+   "system_id": "cmpz5qbcy0071cwg2dtqd49va",
+   "name": "نظام الانضباط الوظيفي",
+   "clause": "يعمل بالنظام بعد (مائة وثمانين) يومًا من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1443/02/17",
+   "nezams_published_hijri": "1443-02-17",
+   "issued_hijri": "1443/02/08",
+   "stored_effective": "2021-09-15"
+  },
+  {
+   "item": "EC-029",
+   "system_id": "cmpz5ro1u00cpcwg2nejhzpz1",
+   "name": "نظام الايجار التمويلي",
+   "clause": "يعمل بهذا النظام بعد مضي (تسعين) يومًا من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1433/10/13",
+   "nezams_published_hijri": "1433-10-13",
+   "issued_hijri": "1433/08/13",
+   "stored_effective": "2012-07-03"
+  },
+  {
+   "item": "EC-030",
+   "system_id": "cmpz5rl8i00cgcwg2ktcgb134",
+   "name": "نظام البنك السعودي للتسليف والادخار ( بنك التنمية الاجتماعية )",
+   "clause": "ينشر هذا النظام في الجريدة الرسمية، ويعمل به بعد تسعين يوما من تاريخ نشره.",
+   "boe_published_hijri": "1427/07/17",
+   "nezams_published_hijri": "1427-07-17",
+   "issued_hijri": "1427/06/01",
+   "stored_effective": "2006-06-27"
+  },
+  {
+   "item": "EC-031",
+   "system_id": "cmpz5qgt5007tcwg20weum23t",
+   "name": "نظام البيئة",
+   "clause": "يعمل بالنظام بعد (مائة وثمانين) يوماً من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1441/11/26",
+   "nezams_published_hijri": "1441-11-26",
+   "issued_hijri": "1441/11/19",
+   "stored_effective": "2020-07-10"
+  },
+  {
+   "item": "EC-032",
+   "system_id": "cmpz5q73g006gcwg211uev9pu",
+   "name": "نظام التسجيل العيني للعقار",
+   "clause": "يعمل بالنظام بعد (تسعين) يوماً من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1443/10/12",
+   "nezams_published_hijri": "1443-10-12",
+   "issued_hijri": "1443/09/19",
+   "stored_effective": "2022-04-20"
+  },
+  {
+   "item": "EC-033",
+   "system_id": "cmpz5qfna007ncwg2oxxnvm1x",
+   "name": "نظام التعامل مع الموارد الوراثية النباتية للأغذية والزراعة",
+   "clause": "يعمل بهذا النظام بعد تسعين يوماً من تاريخ نشره في الجريدة الرسمية، ويلغي كل ما يتعارض معه من أحكام.",
+   "boe_published_hijri": "1439/11/12",
+   "nezams_published_hijri": "1439-11-12",
+   "issued_hijri": "1439/10/27",
+   "stored_effective": "2018-07-11"
+  },
+  {
+   "item": "EC-034",
+   "system_id": "cmpz5qneb008qcwg2uif5zy3a",
+   "name": "نظام التكاليف القضائية",
+   "clause": "يعمل بالنظام بعد (مائة وثمانين) يوماً من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1443/02/10",
+   "nezams_published_hijri": "1443-02-10",
+   "issued_hijri": "1443/01/30",
+   "stored_effective": "2021-09-07"
+  },
+  {
+   "item": "EC-035",
+   "system_id": "cmpz5rnql00cocwg26h3a4y1g",
+   "name": "نظام التمويل العقاري",
+   "clause": "يعمل بهذا النظام بعد مضي (تسعين) يومًا من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1433/10/13",
+   "nezams_published_hijri": "1433-10-13",
+   "issued_hijri": "1433/08/13",
+   "stored_effective": "2012-07-03"
+  },
+  {
+   "item": "EC-036",
+   "system_id": "cmpz5rc4200bpcwg20np662kj",
+   "name": "نظام الجمعيات والمؤسسات الأهلية",
+   "clause": "يعمل بهذا النظام بعد (تسعين) يوماً من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1437/03/07",
+   "nezams_published_hijri": "1437-03-07",
+   "issued_hijri": "1437/02/19",
+   "stored_effective": "2015-12-01"
+  },
+  {
+   "item": "EC-037",
+   "system_id": "cmpz5p6mi001bcwg27ufsl8jw",
+   "name": "نظام الحراسة الأمنية المدنية الخاصة",
+   "clause": "ينشر هذا النظام في الجريدة الرسمية، ويعمل به بعد تسعين يوما من تاريخ نشره، ويلغي كل ما يتعارض معه من أحكام. .",
+   "boe_published_hijri": "1426/08/05",
+   "nezams_published_hijri": "1426-08-05",
+   "issued_hijri": "1426/07/08",
+   "stored_effective": "2005-08-13"
+  },
+  {
+   "item": "EC-038",
+   "system_id": "cmpz5qxir00a5cwg2b6meszdc",
+   "name": "نظام الرعاية الصحية النفسية",
+   "clause": "يعمل بهذا النظام بعد (تسعين) يوماً من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1435/11/03",
+   "nezams_published_hijri": "1435-11-03",
+   "issued_hijri": "1435/09/20",
+   "stored_effective": "2014-07-17"
+  },
+  {
+   "item": "EC-039",
+   "system_id": "cmpz5r3j900b0cwg2apftkobe",
+   "name": "نظام الرقابة على الاستخدامات النووية والاشعاعية",
+   "clause": "يعمل بالنظام بعد (مائة وثمانين) يومًا من تاريخ نشره في الجريدة الرسمية، ويلغى كل ما يتعارض معه من أحكام.",
+   "boe_published_hijri": "1439/08/08",
+   "nezams_published_hijri": "1439-08-08",
+   "issued_hijri": "1439/07/25",
+   "stored_effective": "2018-04-11"
+  },
+  {
+   "item": "EC-040",
+   "system_id": "cmpz5roo700crcwg2i29zu45b",
+   "name": "نظام الرهن العقاري المسجل",
+   "clause": "يعمل بهذا النظام بعد مضي تسعين يومًا من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1433/09/22",
+   "nezams_published_hijri": "1433-09-22",
+   "issued_hijri": "1433/08/13",
+   "stored_effective": "2012-07-03"
+  },
+  {
+   "item": "EC-041",
+   "system_id": "cmpz5qhe2007wcwg2e9oyrkyh",
+   "name": "نظام الزراعة",
+   "clause": "يعمل بالنظام بعد (تسعين) يومًا من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1442/08/20",
+   "nezams_published_hijri": "1442-08-20",
+   "issued_hijri": "1442/08/10",
+   "stored_effective": "2021-03-23"
+  },
+  {
+   "item": "EC-042",
+   "system_id": "cmpz5rg4c00c2cwg22ehsnc7c",
+   "name": "نظام الضمان الاجتماعي",
+   "clause": "يعمل بالنظام بعد (مائة وعشرين) يوماً من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1442/04/12",
+   "nezams_published_hijri": "1442-04-12",
+   "issued_hijri": "1442/04/04",
+   "stored_effective": "2020-11-19"
+  },
+  {
+   "item": "EC-043",
+   "system_id": "cmpz5rtgl00d6cwg2u1ezbkrh",
+   "name": "نظام الطيران المدني",
+   "clause": "يُنشر هذا النظام في الجريدة الرسمية ويعمل به بعد مائة وثمانين يوما من تاريخ نشره، ويلغي كل ما يتعارض معه من أحكام.والله الموفق.",
+   "boe_published_hijri": "1426/09/25",
+   "nezams_published_hijri": "1426-09-25",
+   "issued_hijri": "1426/07/18",
+   "stored_effective": "2005-08-23"
+  },
+  {
+   "item": "EC-044",
+   "system_id": "cmpz5qxpr00a6cwg2yt687eee",
+   "name": "نظام الغذاء",
+   "clause": "يعمل بهذا النظام بعد (مائة وثمانين) يوماً من تاريخ نشره في الجريدة الرسمية، ويلغي كل ما يتعارض معه من أحكام.",
+   "boe_published_hijri": "1436/02/20",
+   "nezams_published_hijri": "1436-02-20",
+   "issued_hijri": "1436/01/06",
+   "stored_effective": "2014-10-30"
+  },
+  {
+   "item": "EC-045",
+   "system_id": "cmpz5r4p500b6cwg2t04bq0yd",
+   "name": "نظام الكهرباء",
+   "clause": "يعمل بالنظام بعد (180) مائة وثمانين يوماً من تاريخ نشره بالجريدة الرسمية. يحل النظام محل نظام الكهرباء الصادر بالمرسوم الملكي رقم (م / 56) وتاريخ 20 / 10 / 1426هـ، وتعديلاته، ويلغي ما يتعارض معه من أح",
+   "boe_published_hijri": "1442/05/24",
+   "nezams_published_hijri": "1442-05-24",
+   "issued_hijri": "1442/05/16",
+   "stored_effective": "2020-12-31"
+  },
+  {
+   "item": "EC-046",
+   "system_id": "cmpz5quly009rcwg2uk382g4o",
+   "name": "نظام المؤسسات الصحية الخاصة",
+   "clause": "ينشر هذا النظام في الجريدة الرسمية ، ويعمل به بعد تسعين يومًا من تاريخ نشره.",
+   "boe_published_hijri": "1423/12/06",
+   "nezams_published_hijri": "1423-12-06",
+   "issued_hijri": "1423/11/03",
+   "stored_effective": "2003-01-06"
+  },
+  {
+   "item": "EC-047",
+   "system_id": "cmpz5p52o0013cwg2sdqmgh59",
+   "name": "نظام المتفجرات والمفرقعات",
+   "clause": "ينشر هذا النظام في الجريدة الرسمية، ويعمل به بعد مائة وعشرين يوما من تاريخ نشره، ويلغي كل ما يتعارض معه من أحكام.",
+   "boe_published_hijri": "1428/05/22",
+   "nezams_published_hijri": "1428-05-22",
+   "issued_hijri": "1428/04/28",
+   "stored_effective": "2007-05-15"
+  },
+  {
+   "item": "EC-048",
+   "system_id": "cmpz5q4rr0064cwg276wf6qoi",
+   "name": "نظام المجالس البلدية",
+   "clause": "يعمل بهذا النظام بعد مضي مائة وثمانين يوماً من تاريخ نشره، على أن تصدر اللوائح اللازمة لهذا النظام خلال هذه المدة.",
+   "boe_published_hijri": "1435/11/03",
+   "nezams_published_hijri": "1435-11-03",
+   "issued_hijri": "1435/10/04",
+   "stored_effective": "2014-07-31"
+  },
+  {
+   "item": "EC-049",
+   "system_id": "cmpz5ptij004jcwg2f5398mcs",
+   "name": "نظام المدفوعات وخدماتها",
+   "clause": "ينشر النظام في الجريدة الرسمية ويعمل به بعد (مائة وثمانين) يوماً من تاريخ نشره.",
+   "boe_published_hijri": "1443/03/30",
+   "nezams_published_hijri": "1443-03-30",
+   "issued_hijri": "1443/03/22",
+   "stored_effective": "2021-10-28"
+  },
+  {
+   "item": "EC-050",
+   "system_id": "cmpz5qwjt00a0cwg2y15pl0z9",
+   "name": "نظام المراقبة الصحية في منافذ الدخول",
+   "clause": "يعمل بهذا النظام بعد تسعين يوماً من تاريخ نشره في الجريدة الرسمية .",
+   "boe_published_hijri": "1433/10/13",
+   "nezams_published_hijri": "1433-10-13",
+   "issued_hijri": "1433/08/07",
+   "stored_effective": "2012-06-27"
+  },
+  {
+   "item": "EC-051",
+   "system_id": "cmpz5r3q800b1cwg2jsfe33uh",
+   "name": "نظام المسؤولية المدنية عن الأضرار النووية",
+   "clause": "يعمل بالنظام بعد (مائة وثمانين) يوماً من تاريخ نشره في الجريدة الرسمية، ويلغي كل ما يتعارض معه من أحكام.",
+   "boe_published_hijri": "1439/08/08",
+   "nezams_published_hijri": "1439-08-08",
+   "issued_hijri": "1439/07/25",
+   "stored_effective": "2018-04-11"
+  },
+  {
+   "item": "EC-052",
+   "system_id": "cmpz5q7oe006jcwg2rb0vzn8c",
+   "name": "نظام المساهمات العقارية",
+   "clause": "ينشر النظام في الجريدة الرسمية، ويعمل به بعد (مائة وعشرين) يوماً من تاريخ نشره، ويلغي كل ما يتعارض معه من أحكام.",
+   "boe_published_hijri": "1445/01/03",
+   "nezams_published_hijri": "1445-01-03",
+   "issued_hijri": "1444/12/28",
+   "stored_effective": "2023-07-16"
+  },
+  {
+   "item": "EC-053",
+   "system_id": "cmpz5r0ti00amcwg2u4oqt9jp",
+   "name": "نظام المعادن الثمينة والأحجار الكريمة",
+   "clause": "يلغى هذا النظام نظام الصاغة الصادر بالأمر السامي رقم 8117 في 28 / 6 / 1360 هـ وكل ما يتعارض مع أحكامه. ويعمل به بعد تسعين يومًا من نشر لائحته التنفيذية في الجريدة الرسمية .",
+   "boe_published_hijri": "1406/04/08",
+   "nezams_published_hijri": "1406-04-08",
+   "issued_hijri": "1403/07/10",
+   "stored_effective": "1983-04-23"
+  },
+  {
+   "item": "EC-054",
+   "system_id": "cmpz5puah004ncwg26nbvbeow",
+   "name": "نظام المعالجات التجارية في التجارة الدولية",
+   "clause": "يعمل بالنظام بعد مضي (تسعين) يوماً من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1444/05/08",
+   "nezams_published_hijri": "1444-05-08",
+   "issued_hijri": "1444/04/29",
+   "stored_effective": "2022-11-23"
+  },
+  {
+   "item": "EC-055",
+   "system_id": "cmpz5pjtg0036cwg27xwfuvbg",
+   "name": "نظام المقيمين المعتمدين",
+   "clause": "ينشر هذا النظام في الجريدة الرسمية، ويعمل به بعد مائة وثمانين يوماً من تاريخ نشره.",
+   "boe_published_hijri": "1433/09/22",
+   "nezams_published_hijri": "1433-09-22",
+   "issued_hijri": "1433/07/09",
+   "stored_effective": "2012-05-30"
+  },
+  {
+   "item": "EC-056",
+   "system_id": "cmpz5q985006qcwg2ha9y1f0d",
+   "name": "نظام الملابس والتجهيزات العسكرية الفردية",
+   "clause": "ينشر هذا النظام في الجريدة الرسمية ، ويعمل به بعد مائة وثمانين يومًا من تاريخ نشره",
+   "boe_published_hijri": "1426/08/12",
+   "nezams_published_hijri": "1426-08-12",
+   "issued_hijri": "1426/07/08",
+   "stored_effective": "2005-08-13"
+  },
+  {
+   "item": "EC-057",
+   "system_id": "cmpz5qz2r00adcwg2tfe62w2s",
+   "name": "نظام المنشآت والمستحضرات الصيدلانية والعشبية",
+   "clause": "يعمل بالنظام بعد (مائة وعشرين) يوماً من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1441/09/01",
+   "nezams_published_hijri": "1441-09-01",
+   "issued_hijri": "1441/08/22",
+   "stored_effective": "2020-04-15"
+  },
+  {
+   "item": "EC-058",
+   "system_id": "cmpz5rcfi00bqcwg2517ubmn0",
+   "name": "نظام الهيئة العامة للأوقاف",
+   "clause": "1- يحل هذا النظام محل نظام مجلس الأوقاف الأعلى الصادر بالمرسوم الملكي رقم (م/35) وتاريخ 18 /7 /1386هـ، ويعمل به بعد تسعين يوماً من تاريخ نشره في الجريدة الرسمية. 2 - تسري على الأوقاف التي تكون الهيئة ",
+   "boe_published_hijri": "1437/03/14",
+   "nezams_published_hijri": "1437-03-14",
+   "issued_hijri": "1437/02/26",
+   "stored_effective": "2015-12-08"
+  },
+  {
+   "item": "EC-059",
+   "system_id": "cmpz5qvkv009wcwg2rhfglw79",
+   "name": "نظام الهيئة العامة للغذاء والدواء",
+   "clause": "يعمل بهذا النظام بعد تسعين يومًا من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1428/02/19",
+   "nezams_published_hijri": "1428-02-19",
+   "issued_hijri": "1428/01/25",
+   "stored_effective": "2007-02-13"
+  },
+  {
+   "item": "EC-060",
+   "system_id": "cmpz5qjws0089cwg2dmf0bb1s",
+   "name": "نظام الهيئة العامة للولاية على أموال القاصرين ومن فى حكمهم",
+   "clause": "ينشر هذا النظام في الجريدة الرسمية ويعمل به بعد مضي تسعين يوما من تاريخ نشره .",
+   "boe_published_hijri": "1427/04/21",
+   "nezams_published_hijri": "1427-04-21",
+   "issued_hijri": "1427/03/13",
+   "stored_effective": "2006-04-11"
+  },
+  {
+   "item": "EC-061",
+   "system_id": "cmpz5q7af006hcwg29r4dpenu",
+   "name": "نظام الوساطة العقارية",
+   "clause": "يعمل بالنظام بعد (مائة وثمانين) يوماً من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1443/12/23",
+   "nezams_published_hijri": "1443-12-23",
+   "issued_hijri": "1443/11/30",
+   "stored_effective": "2022-06-29"
+  },
+  {
+   "item": "EC-062",
+   "system_id": "cmpz5pi2n002xcwg2cbut4twg",
+   "name": "نظام براءات الاختراع والتصميمات التخطيطية للدارات المتكاملة والأصناف النباتية والنماذج الصناعية",
+   "clause": "ينشر هذا النظام فى الجريدة الرسمية، ويعمل به بعد ثلاثين يوما من تاريخ نشره.",
+   "boe_published_hijri": "1425/06/20",
+   "nezams_published_hijri": "1425-06-20",
+   "issued_hijri": "1425/05/29",
+   "stored_effective": "2004-07-17"
+  },
+  {
+   "item": "EC-063",
+   "system_id": "cmpz5q82d006lcwg28paja3t7",
+   "name": "نظام بيع وتأجير مشروعات عقارية على الخارطة",
+   "clause": "يعمل بالنظام بعد (تسعين) يومًا من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1445/06/23",
+   "nezams_published_hijri": "1445-06-23",
+   "issued_hijri": "1445/03/10",
+   "stored_effective": "2023-09-25"
+  },
+  {
+   "item": "EC-064",
+   "system_id": "cmpz5quzx009tcwg2a1i14leh",
+   "name": "نظام تداول بدائل حليب الأم",
+   "clause": "ينشر هذا النظام في الجريدة الرسمية، ويعمل به بعد تسعين يومًا من تاريخ نشره.",
+   "boe_published_hijri": "1425/10/27",
+   "nezams_published_hijri": "1425-10-27",
+   "issued_hijri": "1425/09/21",
+   "stored_effective": "2004-11-04"
+  },
+  {
+   "item": "EC-065",
+   "system_id": "cmpz5psxm004gcwg2zub1ek0a",
+   "name": "نظام تصنيف المقاولين",
+   "clause": "ينشر النظام في الجريدة الرسمية، ويعمل به بعد مضي (تسعين) يومًا من تاريخ نشره.",
+   "boe_published_hijri": "1443/01/26",
+   "nezams_published_hijri": "1443-01-26",
+   "issued_hijri": "1443/01/18",
+   "stored_effective": "2021-08-26"
+  },
+  {
+   "item": "EC-066",
+   "system_id": "cmpz5rhoj00c7cwg2lqnf2ujl",
+   "name": "نظام حقوق الأشخاص ذوي الإعاقة",
+   "clause": "يعمل بالنظام بعد مضي (مائة وعشرين) يومًا من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1445/02/23",
+   "nezams_published_hijri": "1445-02-23",
+   "issued_hijri": "1445/02/11",
+   "stored_effective": "2023-08-27"
+  },
+  {
+   "item": "EC-067",
+   "system_id": "cmpz5qlgj008gcwg2hwyn08pu",
+   "name": "نظام حماية الطفل",
+   "clause": "يعمل بهذا النظام بعد (تسعين) يومًا من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1436/03/04",
+   "nezams_published_hijri": "1436-03-04",
+   "issued_hijri": "1436/02/03",
+   "stored_effective": "2014-11-25"
+  },
+  {
+   "item": "EC-068",
+   "system_id": "cmpz5p8di001kcwg2ol8wrk40",
+   "name": "نظام حماية المبلغين والشهود والخبراء والضحايا",
+   "clause": "يعمل بالنظام بعد مضي (120) يوماً من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1445/08/20",
+   "nezams_published_hijri": "1445-08-20",
+   "issued_hijri": "1445/08/08",
+   "stored_effective": "2024-02-18"
+  },
+  {
+   "item": "EC-069",
+   "system_id": "cmpz5q044005gcwg2glq3hew6",
+   "name": "نظام خدمة حجاج الداخل",
+   "clause": "ينشرهذه النظام في الجريدة الرسمية، ويعمل به بعد تسعين يومًا من تاريخ نشره.",
+   "boe_published_hijri": "1426/11/28",
+   "nezams_published_hijri": "1426-11-28",
+   "issued_hijri": "1426/10/28",
+   "stored_effective": "2005-11-30"
+  },
+  {
+   "item": "EC-070",
+   "system_id": "cmpz5q4yq0065cwg21c3dn066",
+   "name": "نظام رسوم الأراضي البيضاء",
+   "clause": "يعمل بهذا النظام بعد مائة وثمانين يوماً من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1437/02/29",
+   "nezams_published_hijri": "1437-02-29",
+   "issued_hijri": "1437/02/12",
+   "stored_effective": "2015-11-24"
+  },
+  {
+   "item": "EC-071",
+   "system_id": "cmpz5rmhl00ckcwg2h620qxn3",
+   "name": "نظام رسوم تسجيل السفن والوحدات العائمة",
+   "clause": "يعمل بهذا النظام بعد ستين يوما من تاريخ نشره بالجريدة الرسمية، ويلغي كل ما يتعارض معه من أحكام.",
+   "boe_published_hijri": "1419/02/25",
+   "nezams_published_hijri": "1419-02-25",
+   "issued_hijri": "1419/02/02",
+   "stored_effective": "1998-05-27"
+  },
+  {
+   "item": "EC-072",
+   "system_id": "cmpz5qi5z0080cwg20wug3r3n",
+   "name": "نظام صندوق التنمية الزراعية.",
+   "clause": "يحل النظام محل نظام صندوق التنمية الزراعية، الصادر بالمرسوم الملكي رقم (م / 9) وتاريخ 1 / 2 / 1430هـ. ينشر النظام في الجريدة الرسمية، ويعمل به بعد (تسعين) يوماً من تاريخ نشره.",
+   "boe_published_hijri": "1445/02/30",
+   "nezams_published_hijri": "1445-02-30",
+   "issued_hijri": "1445/02/20",
+   "stored_effective": "2023-09-05"
+  },
+  {
+   "item": "EC-073",
+   "system_id": "cmpz5rkah00cdcwg2k7sogfqt",
+   "name": "نظام ضريبة الدخل",
+   "clause": "أ - ينشر هذا النظام في الجريدة الرسمية ويعمل به بعد تسعين يوما من تاريخ نشره.",
+   "boe_published_hijri": "1425/03/11",
+   "nezams_published_hijri": "1425-03-11",
+   "issued_hijri": "1425/01/15",
+   "stored_effective": "2004-03-06"
+  },
+  {
+   "item": "EC-074",
+   "system_id": "cmpz5p0sz000hcwg2bjpaijcw",
+   "name": "نظام عقوبات نشر الوثائق والمعلومات السرية وإفشائها",
+   "clause": "يعمل بهذا النظام بعد تسعين يوما من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1432/06/17",
+   "nezams_published_hijri": "1432-06-17",
+   "issued_hijri": "1432/05/08",
+   "stored_effective": "2011-04-12"
+  },
+  {
+   "item": "EC-075",
+   "system_id": "cmpz5pery002gcwg2patgc9q7",
+   "name": "نظام مراقبة شركات التأمين التعاوني",
+   "clause": "ينشر هذا النظام في الجريدة الرسمية ويعمل به بعد مضي تسعين يومًا من تاريخ نشره .",
+   "boe_published_hijri": "1424/06/24",
+   "nezams_published_hijri": "1424-06-24",
+   "issued_hijri": "1424/06/02",
+   "stored_effective": "2003-07-31"
+  },
+  {
+   "item": "EC-076",
+   "system_id": "cmpz5rod200cqcwg2tswwe4ov",
+   "name": "نظام مراقبة شركات التمويل",
+   "clause": "يعمل بهذا النظام بعد مضي تسعين يومًا من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1433/10/13",
+   "nezams_published_hijri": "1433-10-13",
+   "issued_hijri": "1433/08/13",
+   "stored_effective": "2012-07-03"
+  },
+  {
+   "item": "EC-077",
+   "system_id": "cmpz5qvdw009vcwg2fj9o8f6g",
+   "name": "نظام مزاولة المهن الصحية",
+   "clause": "ينشر هذا النظام بالجريدة الرسمية، ويعمل به بعد ستين يومًا من تاريخ نشرة",
+   "boe_published_hijri": "1426/11/28",
+   "nezams_published_hijri": "1426-11-28",
+   "issued_hijri": "1426/11/04",
+   "stored_effective": "2005-12-06"
+  },
+  {
+   "item": "EC-078",
+   "system_id": "cmpz5plrf003fcwg2cd9cczyu",
+   "name": "نظام مزاولة المهن الهندسية",
+   "clause": "يعمل بهذا النظام بعد ستين يوماً من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1438/05/06",
+   "nezams_published_hijri": "1438-05-06",
+   "issued_hijri": "1438/04/19",
+   "stored_effective": "2017-01-17"
+  },
+  {
+   "item": "EC-079",
+   "system_id": "cmpz5prdr0048cwg21aqs4rrn",
+   "name": "نظام معالجة المنشآت المالية المهمة",
+   "clause": "يعمل بالنظام بعد (مائة وثمانين) يومًا من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1442/05/03",
+   "nezams_published_hijri": "1442-05-03",
+   "issued_hijri": "1442/04/25",
+   "stored_effective": "2020-12-10"
+  },
+  {
+   "item": "EC-080",
+   "system_id": "cmpz5pbaa001ycwg2daw7gsdk",
+   "name": "نظام مكافحة الاحتيال المالي وخيانة الأمانة",
+   "clause": "يعمل بهذا النظام بعد مضي (تسعين) يوماً من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1442/09/18",
+   "nezams_published_hijri": "1442-09-18",
+   "issued_hijri": "1442/09/10",
+   "stored_effective": "2021-04-22"
+  },
+  {
+   "item": "EC-081",
+   "system_id": "cmpz5pqlu0044cwg2dzxmg6u3",
+   "name": "نظام مكافحة التستر",
+   "clause": "يحل النظام محل نظام مكافحة التستر الصادر بالمرسوم الملكي رقم (م/22) وتاريخ 4/5/1425هـ، ويلغي كل ما يتعارض معه من أحكام، ويعمل به بعد مضي (مائة وثمانين) يومًا من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1442/01/09",
+   "nezams_published_hijri": "1442-01-09",
+   "issued_hijri": "1442/01/01",
+   "stored_effective": "2020-08-20"
+  },
+  {
+   "item": "EC-082",
+   "system_id": "cmpz5p4as000zcwg2nx3yo0cj",
+   "name": "نظام مكافحة الرشوة",
+   "clause": "ينشر هذا النظام في الجريدة الرسمية ويعمل به بعد ثلاثين يوما من تاريخ نشره",
+   "boe_published_hijri": "1413/03/03",
+   "nezams_published_hijri": "1413-03-03",
+   "issued_hijri": "1412/12/29",
+   "stored_effective": "1992-06-30"
+  },
+  {
+   "item": "EC-083",
+   "system_id": "cmpz5p4vp0012cwg2oxepo39w",
+   "name": "نظام مكافحة المخدرات والمؤثرات العقلية",
+   "clause": "ينشر هذا النظام في الجريدة الرسمية ، ويعمل به بعد تسعين يوما من تاريخ نشره.",
+   "boe_published_hijri": "1426/08/12",
+   "nezams_published_hijri": "1426-08-12",
+   "issued_hijri": "1426/07/08",
+   "stored_effective": "2005-08-13"
+  },
+  {
+   "item": "EC-084",
+   "system_id": "cmpz5qkvl008dcwg2snth8nil",
+   "name": "نظام مكافحة جرائم الاتجار بالأشخاص",
+   "clause": "يعمل بهذا النظام بعد (تسعين) يوما من تاريخ نشره في الجريدة الرسمية .",
+   "boe_published_hijri": "1430/08/16",
+   "nezams_published_hijri": "1430-08-16",
+   "issued_hijri": "1430/07/21",
+   "stored_effective": "2009-07-14"
+  },
+  {
+   "item": "EC-085",
+   "system_id": "cmpz5q7vd006kcwg2uaelgo7l",
+   "name": "نظام ملكية الوحدات العقارية وفرزها وإدارتها",
+   "clause": "يعمل بالنظام بعد (مائة وثمانين) يوماً من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1441/07/18",
+   "nezams_published_hijri": "1441-07-18",
+   "issued_hijri": "1441/07/02",
+   "stored_effective": "2020-02-26"
+  },
+  {
+   "item": "EC-086",
+   "system_id": "cmpz5qxwq00a7cwg2593x43jn",
+   "name": "نظام منتجات التجميل",
+   "clause": "يعمل بهذا النظام بعد مائة وثمانين يومًا من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1436/07/19",
+   "nezams_published_hijri": "1436-07-19",
+   "issued_hijri": "1436/06/18",
+   "stored_effective": "2015-04-07"
+  },
+  {
+   "item": "EC-087",
+   "system_id": "cmpz5prkq0049cwg2fez2xqdz",
+   "name": "نظام مهنة المحاسبة والمراجعة",
+   "clause": "يعمل بالنظام بعد مضي (تسعين) يوماً من تاريخ نشره في الجريدة الرسمية، ويصدر الوزير اللائحة والقرارات اللازمة لتنفيذه خلال (تسعين) يومًا من تاريخ نشره، ويعمل بها من تاريخ العمل به.",
+   "boe_published_hijri": "1442/08/06",
+   "nezams_published_hijri": "1442-08-06",
+   "issued_hijri": "1442/07/27",
+   "stored_effective": "2021-03-11"
+  },
+  {
+   "item": "EC-088",
+   "system_id": "cmpz5pzwx005fcwg2vfbymsce",
+   "name": "نظام نقل الحجاج إلى المملكة وإعادتهم إلى بلادهم",
+   "clause": "يحل هذا النظام محل نظام نقل الحجاج إلى المملكة وإعادتهم إلى بلادهم الصادر بالمرسوم الملكي ذي الرقم م/26 والتاريخ 9/ 9/ 1390هـ، ويلغي كل ما يتعارض معه من أحكام، ويعمل به بعد مضي مائة وثمانين يومًا من ت",
+   "boe_published_hijri": "1426/02/08",
+   "nezams_published_hijri": "1426-02-08",
+   "issued_hijri": "1425/12/28",
+   "stored_effective": "2005-02-08"
+  },
+  {
+   "item": "EC-089",
+   "system_id": "cmpz5p7zc001icwg2r2ug14re",
+   "name": "نظام نقل معلومات المتعاملين مع المنشآت الخاصة إلكترونياً إلى مركز المعلومات الوطني في وزارة الداخلية (نظام شموس الأمني)",
+   "clause": "يعمل بهذا النظام بعد تسعين يوماً من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1435/07/17",
+   "nezams_published_hijri": "1435-07-17",
+   "issued_hijri": "1435/06/21",
+   "stored_effective": "2014-04-21"
+  },
+  {
+   "item": "EC-090",
+   "system_id": "cmpz5rozq00cscwg2eqnjv8my",
+   "name": "نظام وظائف مباشرة الأموال العامة",
+   "clause": "يعمل بهذا النظام بعد مضي (مائة وثمانين) يومًا من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1436/03/18",
+   "nezams_published_hijri": "1436-03-18",
+   "issued_hijri": "1436/02/23",
+   "stored_effective": "2014-12-15"
+  },
+  {
+   "item": "EC-091",
+   "system_id": "cmpz5rd3700bscwg2zw1okf98",
+   "name": "اللائحة الأساسية للبيوت الاجتماعية",
+   "clause": "يعمل بهذه اللائحة بعد (تسعين) يوماً من تاريخ نشرها في الجريدة الرسمية.",
+   "boe_published_hijri": "1436/03/04",
+   "nezams_published_hijri": "1436-03-04",
+   "issued_hijri": "1436/02/09",
+   "stored_effective": "2014-12-01"
+  },
+  {
+   "item": "EC-092",
+   "system_id": "cmpz5rgf700c3cwg2jmb08zy6",
+   "name": "اللائحة التنفيذية لنظام الأحداث",
+   "clause": "تنشر هذه اللائحة في الجريدة الرسمية، ويعمل بها بعد مضي (ثلاثين) يوماً من تاريخ نشرها.",
+   "boe_published_hijri": "1442/04/26",
+   "nezams_published_hijri": "1442-04-26",
+   "issued_hijri": "1442/04/16",
+   "stored_effective": "2020-12-01"
+  },
+  {
+   "item": "EC-093",
+   "system_id": "cmpz5pjfi0034cwg2pns2vqhi",
+   "name": "تنظيم الجمعية السعودية للجودة",
+   "clause": "ينشر هذا التنظيم في الجريدة الرسمية ، ويعمل به بعد ستين يوماً من تاريخ نشره.",
+   "boe_published_hijri": "1432/08/21",
+   "nezams_published_hijri": "1432-08-21",
+   "issued_hijri": "1432/07/25",
+   "stored_effective": "2011-06-27"
+  },
+  {
+   "item": "EC-094",
+   "system_id": "cmpz5qp58008zcwg2aqrf5ow4",
+   "name": "تنظيم الجمعية السعودية للسفر والسياحة",
+   "clause": "ينشر هذا التنظيم في الجريدة الرسمية ويعمل به بعد ثلاثين يوماً من تاريخ نشره.",
+   "boe_published_hijri": "1435/09/07",
+   "nezams_published_hijri": "1435-09-07",
+   "issued_hijri": "1435/07/27",
+   "stored_effective": "2014-05-26"
+  },
+  {
+   "item": "EC-095",
+   "system_id": "cmpz5qor7008xcwg2hbz6ig6b",
+   "name": "تنظيم الجمعية السعودية للمرشدين السياحيين",
+   "clause": "ينشر هذا التنظيم في الجريدة الرسمية ويعمل به بعد ثلاثين يوماً من تاريخ نشره.",
+   "boe_published_hijri": "1435/09/07",
+   "nezams_published_hijri": "1435-09-07",
+   "issued_hijri": "1435/07/27",
+   "stored_effective": "2014-05-26"
+  },
+  {
+   "item": "EC-096",
+   "system_id": "cmpz5qoy6008ycwg2w9aeccsh",
+   "name": "تنظيم الجمعية السعودية لمرافق الإيواء السياحي",
+   "clause": "ينشر هذا التنظيم في الجريدة الرسمية ويعمل به بعد ثلاثين يوماً من تاريخ نشره.",
+   "boe_published_hijri": "1435/09/07",
+   "nezams_published_hijri": "1435-09-07",
+   "issued_hijri": "1435/07/27",
+   "stored_effective": "2014-05-26"
+  },
+  {
+   "item": "EC-097",
+   "system_id": "cmpz5q4dt0062cwg2w57de2mz",
+   "name": "تنظيم الدعم السكني",
+   "clause": "يعمل بهذا التنظيم بعد مضي ستين يوماً من تاريخ نشره.",
+   "boe_published_hijri": "1435/04/14",
+   "nezams_published_hijri": "1435-04-14",
+   "issued_hijri": "1435/03/05",
+   "stored_effective": "2014-01-06"
+  },
+  {
+   "item": "EC-098",
+   "system_id": "cmpz5pb3a001xcwg2gyp5i7lg",
+   "name": "تنظيم الفحص الفني الدوري للمركبات",
+   "clause": "ينشر التنظيم في الجريدة الرسمية، ويعمل به بعد (مائة وثمانين) يوماً من تاريخ نشره.",
+   "boe_published_hijri": "1442/07/28",
+   "nezams_published_hijri": "1442-07-28",
+   "issued_hijri": "1442/07/11",
+   "stored_effective": "2021-02-23"
+  },
+  {
+   "item": "EC-099",
+   "system_id": "cmpz5p7sd001hcwg2m94ux5ce",
+   "name": "تنظيم المؤسسة العامة للصناعات العسكرية",
+   "clause": "ينشر هذا التنظيم في الجريدة الرسمية، ويعمل به بعد مضي ثلاثين يوماً من تاريخ نشره.",
+   "boe_published_hijri": "1434/09/25",
+   "nezams_published_hijri": "1434-09-25",
+   "issued_hijri": "1434/08/22",
+   "stored_effective": "2013-07-01"
+  },
+  {
+   "item": "EC-100",
+   "system_id": "cmpz5rbi100bncwg2ghr8kt40",
+   "name": "تنظيم المخصص المالي لصعوبة الحصول على عمل",
+   "clause": "يعمل بهذا التنظيم بعد تسعين يوماً من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1435/03/30",
+   "nezams_published_hijri": "1435-03-30",
+   "issued_hijri": "1435/01/29",
+   "stored_effective": "2013-12-02"
+  },
+  {
+   "item": "EC-101",
+   "system_id": "cmpz5qlni008hcwg26lvgevla",
+   "name": "تنظيم الهيئة السعودية للمحامين",
+   "clause": "يعمل بهذا التنظيم بعد ستين يوماً من تاريخ نشره في الجريدة الرسمية.",
+   "boe_published_hijri": "1436/08/04",
+   "nezams_published_hijri": "1436-08-04",
+   "issued_hijri": "1436/07/08",
+   "stored_effective": "2015-04-27"
+  },
+  {
+   "item": "EC-102",
+   "system_id": "cmpz5prrp004acwg2ddbflie0",
+   "name": "تنظيم الهيئة السعودية للمراجعين والمحاسبين",
+   "clause": "ينشر التنظيم في الجريدة الرسمية، ويعمل به بعد مضي (90) يومًا من تاريخ نشره.",
+   "boe_published_hijri": "1442/08/06",
+   "nezams_published_hijri": "1442-08-06",
+   "issued_hijri": "1442/07/25",
+   "stored_effective": "2021-03-09"
+  },
+  {
+   "item": "EC-103",
+   "system_id": "cmpz5pkln003acwg2j9kghq1d",
+   "name": "تنظيم الهيئة السعودية للمقاولين",
+   "clause": "ينشر التنظيم في الجريدة الرسمية، ويعمل به بعد ستين يوماً من تاريخ نشره.",
+   "boe_published_hijri": "1436/12/19",
+   "nezams_published_hijri": "1436-12-19",
+   "issued_hijri": "1436/11/23",
+   "stored_effective": "2015-09-07"
+  },
+  {
+   "item": "EC-104",
+   "system_id": "cmpz5pkzj003bcwg2bdfvfxzw",
+   "name": "تنظيم الهيئة العامة للإحصاء",
+   "clause": "ينشر هذا التنظيم في الجريدة الرسمية، ويعمل به بعد تسعين يوماً من تاريخ نشره، ويلغي كل ما يتعارض معه من أحكام.",
+   "boe_published_hijri": "1437/02/01",
+   "nezams_published_hijri": "1437-02-01",
+   "issued_hijri": "1437/01/13",
+   "stored_effective": "2015-10-26"
+  },
+  {
+   "item": "EC-105",
+   "system_id": "cmpz5qtu2009ncwg2r98qd4t5",
+   "name": "تنظيم هيئة الهلال الأحمر السعودي",
+   "clause": "ينشر هذا التنظيم في الجريدة الرسمية ، ويعمل به بعد تسعين يوماً من تاريخ نشره .",
+   "boe_published_hijri": "1432/07/29",
+   "nezams_published_hijri": "1432-07-29",
+   "issued_hijri": "1432/07/11",
+   "stored_effective": "2011-06-13"
+  },
+  {
+   "item": "EC-106",
+   "system_id": "cmpz5qkom008ccwg2xep4aje1",
+   "name": "تنظيم هيئة حقوق الإنسان",
+   "clause": "ينشر هذا التنظيم في الجريدة الرسمية، ويعمل به بعد ستين يوماً من تاريخ نشره.",
+   "boe_published_hijri": "1426/09/04",
+   "nezams_published_hijri": "1426-09-04",
+   "issued_hijri": "1426/08/08",
+   "stored_effective": "2005-09-12"
+  },
+  {
+   "item": "EC-107",
+   "system_id": "cmpz5p0f1000fcwg2qjypldky",
+   "name": "قواعد تنظيم لوحات الدعاية والإعلان",
+   "clause": "تنشر هذه القواعد في الجريدة الرسمية ويعمل بها بعد تسعين يومًا من تاريخ نشرها.",
+   "boe_published_hijri": "1413/01/24",
+   "nezams_published_hijri": "1413-01-24",
+   "issued_hijri": "1412/12/28",
+   "stored_effective": "1992-06-29"
+  }
+ ]
+}
