@@ -96,6 +96,9 @@ def main() -> int:
         # يُستبدل فقط إذا كانت القيمة الحالية هي القيمة القديمة المذكورة نصًا، ويرافقه صف legal_text_provenance بالقيمة السابقة
         if a.allow_guarded_update and re.match(r"^\s*UPDATE legal_systems SET preamble_effective_from = \$hk\$\d{4}-\d{2}-\d{2}\$hk\$::timestamptz WHERE id = \$hk\$[^$]+\$hk\$ AND preamble_effective_from::date = \$hk\$\d{4}-\d{2}-\d{2}\$hk\$::date\s*$", s):
             return True
+        # تصحيح تاريخ نسخة نصية أُرّخت بتاريخ صدور الأداة لا نشرها (HKM-052، المصدر نفسه): القيمة القديمة نصًا شرط، والنص لا يُمس
+        if a.allow_guarded_update and re.match(r"^\s*UPDATE unit_version SET valid_from = \$hk\$\d{4}-\d{2}-\d{2}\$hk\$::timestamptz WHERE id = \$hk\$[^$]+\$hk\$ AND valid_from::date = \$hk\$\d{4}-\d{2}-\d{2}\$hk\$::date AND md5\(body\) = \$hk\$[0-9a-f]{32}\$hk\$\s*$", s):
+            return True
         # تصنيف النظام: تعبئة حقل فارغ فقط
         if a.allow_guarded_update and re.match(r"^\s*UPDATE legal_systems SET classification = \$hk\$[^$]+\$hk\$ WHERE id = \$hk\$[^$]+\$hk\$ AND coalesce\(classification, ''\) = ''\s*$", s):
             return True
