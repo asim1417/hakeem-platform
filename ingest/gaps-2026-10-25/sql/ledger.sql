@@ -85,6 +85,16 @@ g AS (
   WHERE s.preamble_effective_from::date = l.issued_gregorian::date AND l.published_gregorian::date > l.issued_gregorian::date
     AND EXISTS (SELECT 1 FROM legal_articles x WHERE x."legalSystemId" = cur.sid AND x.content ~ 'يعمل ب[^.]{0,40}بعد[^.]{0,40}(يوم|يومًا|يوماً|سنة)[^.]{0,30}نشر')
   UNION ALL
+  -- M2d: المخزن = تاريخ الصدور، والنص (بعد حذف التشكيل) يجعل النفاذ من النشر أو بعد مدة منه، ولم يصحَّح (gap024). يكمّل M2b الذي فاته «يُعمل» المشكّلة و«من تاريخ نشره»
+  SELECT 'M2d', 'code', cur.prio, cur.sid, cur.name, NULL, NULL, cur.url,
+         jsonb_build_object('stored', s.preamble_effective_from::date, 'issued', l.issued_hijri, 'published', l.published_hijri)
+  FROM cur JOIN legal_systems s ON s.id = cur.sid JOIN boe.law l ON l.id = cur.law_id
+  WHERE s.preamble_effective_from::date = l.issued_gregorian::date AND l.published_gregorian::date > l.issued_gregorian::date
+    AND l.published_hijri !~ '/0?1/0?1$'
+    AND EXISTS (SELECT 1 FROM legal_articles x WHERE x."legalSystemId" = cur.sid
+                AND translate(x.content, 'ًٌٍَُِّْ', '') ~ '(يعمل|ينفذ|يسري)[^.]{0,60}(من تاريخ نشر|من نشر|بعد[^.]{0,60}(يوم|يوما|شهر|أشهر|اشهر|سنة)[^.]{0,30}نشر)')
+    AND NOT EXISTS (SELECT 1 FROM legal_text_provenance p WHERE p.entity_id = cur.sid AND p.action LIKE 'effective_from%')
+  UNION ALL
   -- M2c: تاريخ النفاذ المخزن منقول من تاريخ نائب في بطاقة الهيئة (أول محرم: yyyy/01/01)، وليس تاريخًا حقيقيًا (gap021)
   SELECT 'M2c', 'reader', s.prio, s.id, s.name, NULL, NULL, l.url,
          jsonb_build_object('stored', s.preamble_effective_from::date, 'boe_issued', l.issued_hijri, 'boe_published', l.published_hijri)
