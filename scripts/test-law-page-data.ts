@@ -511,6 +511,11 @@ async function seedHkm063(db: SqlClient) {
   await sys("h63-unbacked", "نظام اصطناعي بنفاذ بلا سند", "2023-06-18 00:00:00");
   await sys("h63-unbacked-nosurf", "نظام اصطناعي بنفاذ بلا سند ولا وجه", "2023-06-18 00:00:00");
   await db.query(`INSERT INTO search_surface (id, work_key, surface_system_id, valid_on, reason, created_by) VALUES ('ss63-unbacked', 'we:h63-unbacked', 'h63-unbacked', '2023-12-16', 'اصطناعي', 'test')`);
+  // مراجعة الجودة على 4db75db: نفاذ مخزّن معقول وليس نائبًا (بطاقة حقيقية)، بلا وجه بحث؛ يختلفان في سجل السند وحده.
+  for (const id of ["h63-snapshot-only", "h63-snapshot-corrected"]) {
+    await sys(id, `نظام اصطناعي ${id}`, "2015-05-01 00:00:00");
+    await card(`lc63-${id}`, id, "1436/06/20", "2015-04-09", "1436/06/28", "2015-04-17", "2026-10-29T10:00:00Z");
+  }
   // نظام تأديب الموظفين: «ملغى مع بقاء أحكام محددة مؤقتًا»، المادة 47 سجلها «ساري»، ومادة بلا سجل.
   await sys("h63-taadib", "نظام تأديب الموظفين اصطناعي", "1971-04-03 00:00:00");
   await db.query(`INSERT INTO legal_articles (id, "legalSystemId", "lawName", "articleNumber", title, content) VALUES
@@ -533,7 +538,10 @@ async function seedHkm063Provenance(db: SqlClient) {
     ('p63-taadib', 'system', 'h63-taadib', 'uqn', 'effective_from_set:1971-04-03'),
     ('p63-pet-other', 'system', 'h63-petroleum', 'boe', 'preamble_issue_date_corrected:1420-01-01->1420-09-27+text:boe.text_block'),
     ('p63-unbacked-art', 'article', 'h63-unbacked', 'boe', 'effective_from_corrected:x->y'),
-    ('p63-pair', 'system', 'h63-pair', 'boe', 'insert:boe_snapshot')`);
+    ('p63-pair', 'system', 'h63-pair', 'boe', 'insert:boe_snapshot'),
+    ('p63-snap-only', 'system', 'h63-snapshot-only', 'boe', 'insert:boe_snapshot'),
+    ('p63-snap-corr-1', 'system', 'h63-snapshot-corrected', 'boe', 'insert:boe_snapshot'),
+    ('p63-snap-corr-2', 'system', 'h63-snapshot-corrected', 'official', 'effective_from_corrected:2015-04-17->2015-05-01')`);
 }
 
 async function hkm063Tests(db: SqlClient) {
@@ -568,6 +576,11 @@ async function hkm063Tests(db: SqlClient) {
   // قرار #961: المخزّن يُعرض بسند provenance (effective_from_*) فقط.
   const unbacked = await getLawPageData(db, "h63-unbacked", { asOf });
   ok(unbacked?.card.dates.effective.gregorian === "2023-12-16" && unbacked.card.dates.effective.source === "search_surface", "HKM-063 بلا سند (وسجل effective_from لكيان «article» لا يُحتسب): يسقط إلى وجه البحث المعقول");
+  // مراجعة الجودة: مرشّح الإجراء (action LIKE 'effective_from_%') وحده يفصل بينهما.
+  const snapOnly = await getLawPageData(db, "h63-snapshot-only", { asOf });
+  ok(snapOnly?.card.dates.effective.gregorian === null && snapOnly.card.dates.effective.source === null && snapOnly.card.dates.published.hijri === "1436/06/28", "HKM-063 نفاذ معقول غير نائب وسجله insert:boe_snapshot وحده (system): لا يُعرض");
+  const snapCorr = await getLawPageData(db, "h63-snapshot-corrected", { asOf });
+  ok(snapCorr?.card.dates.effective.gregorian === "2015-05-01" && snapCorr.card.dates.effective.source === "legal_systems", "HKM-063 النظام نفسه بسجل effective_from_corrected: يُعرض 2015-05-01");
   const unbackedNoSurf = await getLawPageData(db, "h63-unbacked-nosurf", { asOf });
   ok(unbackedNoSurf?.card.dates.effective.gregorian === null && unbackedNoSurf.card.dates.effective.source === null, "HKM-063 بلا سند ولا وجه: فارغ كالسلوك السابق");
 

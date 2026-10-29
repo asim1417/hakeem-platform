@@ -13,6 +13,7 @@ import {
   type CardDates,
 } from "../lib/modules/legal-core/law-card-dates";
 import { isRetainedProvision, RETAINED_PROVISIONS_STATUS } from "../lib/modules/legal-core/verified-status";
+import { dateLine, lawCardDateLines } from "../components/legal/law-card-date-lines";
 
 let failed = 0;
 let passed = 0;
@@ -76,6 +77,15 @@ ok(eq(pickEffectiveDate({ storedBacked: false, stored: "2023-06-18", surfaceFrom
 ok(eq(pickEffectiveDate({ storedBacked: false, stored: "2023-06-18", surfaceFrom: "1391-06-25", card: null }), { gregorian: null, source: null }), "E-6 مخزّن بلا سند ووجه هجري: فارغ");
 ok(eq(pickEffectiveDate({ storedBacked: false, stored: "1999-04-17", surfaceFrom: null, card: petroleum }), { gregorian: null, source: null }), "E-6 مخزّن نائب بلا سند (البترول): لا يُعرض");
 ok(eq(pickEffectiveDate({ storedBacked: true, stored: "1999-04-17", surfaceFrom: null, card: petroleum }), { gregorian: null, source: null }), "E-6 مخزّن نائب ولو بسند: لا يُعرض");
+
+// ── سطرا البطاقة في صفحة /legal (LawCardPanel) ──
+ok(eq(lawCardDateLines(companies), { issued: "1443/12/01 هـ الموافق: 30/06/2022 م", published: "1443/12/23 هـ الموافق: 22/07/2022 م" }), "L-1 الشركات: السطران كما كانا حرفًا");
+ok(eq(lawCardDateLines(petroleum), { issued: "1420/09/27 هـ الموافق: 04/01/2000 م", published: null }), "L-2 البترول: صف النشر النائب (1420/01/01) لا يُعرض، والإصدار باقٍ");
+ok(eq(lawCardDateLines(pair), { issued: null, published: null }), "L-2 الزوج النائب (1372/01/01): لا صف إصدار ولا نشر");
+ok(eq(lawCardDateLines(upload), { issued: "1409/08/20 هـ الموافق: 27/03/1989 م", published: null }), "L-2 نشر 1440/03/21 لنظام 1409: لا صف نشر");
+ok(eq(lawCardDateLines(tasattur), { issued: "1442/01/01 هـ الموافق: 20/08/2020 م", published: "1442/01/09 هـ الموافق: 28/08/2020 م" }), "L-3 التستر (1 محرم حقيقي): يُعرض");
+ok(eq(lawCardDateLines(null), { issued: null, published: null }) && eq(lawCardDateLines(card(null, null, "1443/12/23", null)), { issued: null, published: "1443/12/23 هـ" }), "L-4 بلا بطاقة: لا صفوف؛ وتاريخ هجري وحده يُعرض بلا «الموافق»");
+ok(dateLine(null, null) === null && dateLine(null, "2022-07-22") === "الموافق: 22/07/2022 م", "L-4 dateLine كما كان في المكوّن");
 
 // ── الحكم الباقي ──
 ok(isRetainedProvision(RETAINED_PROVISIONS_STATUS, "ساري"), "R-1 «ملغى مع بقاء أحكام محددة مؤقتًا» + سجل المادة «ساري»: سارية");
