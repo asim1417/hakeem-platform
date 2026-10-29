@@ -10,6 +10,8 @@ import { citationFlagsFromVerification, presentArticle, UNVERIFIED_NOTICE } from
 import { sanitizeDisplayText } from "@/lib/modules/legal-core/display-text";
 import { loadSearchSurface, unitStatusAsOf, workStatusAsOf } from "@/lib/modules/legal-core/search-surface";
 import { LawCardPanel, LawTextBlocks } from "@/components/legal/LawCard";
+import { needsIssuedFallback } from "@/components/legal/law-card-date-lines";
+import { loadIssuedDateFallbacks } from "@/lib/modules/legal-core/issued-date-fallbacks";
 import { resolveWorkKind } from "@/lib/modules/legal-core/work-kind";
 import { AsOfForm } from "@/components/legal/ArticlePresentation";
 import { ARTICLE_ROWS, articleKey, articleLabel } from "@/lib/modules/legal-core/article-key";
@@ -80,6 +82,14 @@ export default async function LegalSystemPage({
     // الإلغاء يُعرض بشريطه الخاص أدناه؛ الوجه هنا للإحالة إلى النسخة السارية فقط.
     loadSearchSurface(asOfRaw || undefined, { includeRepealed: true }),
   ]);
+  // HKM-064: تاريخ الإصدار المجهول في البطاقة (نائب أو غائب) يسقط إلى مصادر صفحة /law التالية، لا يُخفى.
+  const issuedFallbacks = needsIssuedFallback(card)
+    ? await loadIssuedDateFallbacks(prismaSqlClient(prisma), system.id).catch((e: unknown) => {
+        // لا ابتلاع صامت (HKM-059): اسم الخطأ ورسالته فقط، ثم البطاقة بلا صف الإصدار كما كانت.
+        console.error("[legal] loadIssuedDateFallbacks failed", e instanceof Error ? `${e.name}: ${e.message}` : "unknown");
+        return null;
+      })
+    : null;
   const recordedFlags = citationFlagsFromVerification(workVerification);
   // الانتقال بتاريخ السريان من وجه البحث: الصادر يصير ساريًا يوم نفاذه، والسابق يصير مستبدلًا.
   const byDate = workStatusAsOf(system.id, recordedFlags.statusLabel, surfaceState.surface);
@@ -153,6 +163,7 @@ export default async function LegalSystemPage({
         statusDetail={workVerification?.evidenceInstrument ?? null}
         fallbackInstruments={fallbackInstruments}
         archiveNotice={archiveNotice}
+        issuedFallbacks={issuedFallbacks}
       />
 
       <section aria-label="نص النظام" className="mt-8">
