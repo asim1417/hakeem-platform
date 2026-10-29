@@ -1,0 +1,314 @@
+{
+ "items": [
+  {
+   "item": "CD-01",
+   "instrument": "cabinet_decision 111 1434/4/15",
+   "previously_tried_without_agreement": true,
+   "articles": [
+    "تنظيم نفقات المرضى السعوديين ومرافقيهم المحولين للعلاج خارج مناطق إقامتهم م1",
+    "تنظيم نفقات المرضى السعوديين ومرافقيهم المحولين للعلاج خارج مناطق إقامتهم م2"
+   ]
+  },
+  {
+   "item": "CD-02",
+   "instrument": "cabinet_decision 132 1439/3/3",
+   "previously_tried_without_agreement": false,
+   "articles": [
+    "نظام صندوق التنمية الصناعية السعودي م14"
+   ]
+  },
+  {
+   "item": "CD-03",
+   "instrument": "cabinet_decision 237 1437/6/5",
+   "previously_tried_without_agreement": false,
+   "articles": [
+    "تنظيم هيئة حقوق الإنسان م18"
+   ]
+  },
+  {
+   "item": "CD-04",
+   "instrument": "cabinet_decision 440 1437/10/20",
+   "previously_tried_without_agreement": false,
+   "articles": [
+    "نظام صندوق التنمية الصناعية السعودي م14"
+   ]
+  },
+  {
+   "item": "CD-05",
+   "instrument": "cabinet_decision 557 1441/8/28",
+   "previously_tried_without_agreement": true,
+   "articles": [
+    "تنظيم نفقات المرضى السعوديين ومرافقيهم المحولين للعلاج خارج مناطق إقامتهم م1",
+    "تنظيم نفقات المرضى السعوديين ومرافقيهم المحولين للعلاج خارج مناطق إقامتهم م2"
+   ]
+  },
+  {
+   "item": "CD-06",
+   "instrument": "cabinet_decision 565 1438/9/10",
+   "previously_tried_without_agreement": false,
+   "articles": [
+    "تنظيم نفقات المرضى السعوديين ومرافقيهم المحولين للعلاج خارج مناطق إقامتهم م3"
+   ]
+  },
+  {
+   "item": "CD-07",
+   "instrument": "cabinet_decision 74 1438/1/30",
+   "previously_tried_without_agreement": false,
+   "articles": [
+    "تنظيم الدعم السكني م15",
+    "تنظيم الدعم السكني م19",
+    "تنظيم الدعم السكني م3"
+   ]
+  },
+  {
+   "item": "CD-08",
+   "instrument": "cabinet_decision 75 1438/1/30",
+   "previously_tried_without_agreement": false,
+   "articles": [
+    "نظام البنك السعودي للتسليف والادخار ( بنك التنمية الاجتماعية ) م10"
+   ]
+  },
+  {
+   "item": "CD-09",
+   "instrument": "cabinet_decision 82 1437/3/3",
+   "previously_tried_without_agreement": false,
+   "articles": [
+    "تنظيم هيئة تقويم التعليم العام م7"
+   ]
+  },
+  {
+   "item": "CD-10",
+   "instrument": "royal_decree 47 1404/12/22",
+   "previously_tried_without_agreement": false,
+   "articles": [
+    "نظام نقابة السيارات م5"
+   ]
+  },
+  {
+   "item": "CD-11",
+   "instrument": "royal_decree م/113 1438/11/2",
+   "previously_tried_without_agreement": false,
+   "articles": [
+    "نظام ضريبة الدخل م56"
+   ]
+  },
+  {
+   "item": "CD-12",
+   "instrument": "royal_decree م/123 1447/6/10",
+   "previously_tried_without_agreement": false,
+   "articles": [
+    "نظام التسجيل العيني للعقار م6"
+   ]
+  },
+  {
+   "item": "CD-13",
+   "instrument": "royal_decree م/129 1443/11/30",
+   "previously_tried_without_agreement": false,
+   "articles": [
+    "نظام القضاء م9"
+   ]
+  },
+  {
+   "item": "CD-14",
+   "instrument": "royal_decree م/141 1441/10/19",
+   "previously_tried_without_agreement": false,
+   "articles": [
+    "نظام القضاء م9"
+   ]
+  },
+  {
+   "item": "CD-15",
+   "instrument": "royal_decree م/160 1441/11/11",
+   "previously_tried_without_agreement": true,
+   "articles": [
+    "نظام التأمين ضد التعطل عن العمل م7"
+   ]
+  },
+  {
+   "item": "CD-16",
+   "instrument": "royal_decree م/17 1437/4/1",
+   "previously_tried_without_agreement": true,
+   "articles": [
+    "نظام الأسلحة والذخائر م50",
+    "نظام الأسلحة والذخائر م53"
+   ]
+  },
+  {
+   "item": "CD-17",
+   "instrument": "royal_decree م/178 1441/12/2",
+   "previously_tried_without_agreement": true,
+   "articles": [
+    "نظام ديوان المراقبة العامة م1"
+   ]
+  },
+  {
+   "item": "CD-18",
+   "instrument": "royal_decree م/21 1425/4/11",
+   "previously_tried_without_agreement": true,
+   "articles": [
+    "نظام نقابة السيارات م14",
+    "نظام نقابة السيارات م25",
+    "نظام نقابة السيارات م26",
+    "نظام نقابة السيارات م34",
+    "نظام نقابة السيارات م50"
+   ]
+  },
+  {
+   "item": "CD-19",
+   "instrument": "royal_decree م/23 1435/4/11",
+   "previously_tried_without_agreement": false,
+   "articles": [
+    "نظام الخدمة المدنية م20"
+   ]
+  },
+  {
+   "item": "CD-20",
+   "instrument": "royal_decree م/23 1442/2/21",
+   "previously_tried_without_agreement": false,
+   "articles": [
+    "تنظيم الهيئة الملكية للجبيل وينبع م9"
+   ]
+  },
+  {
+   "item": "CD-21",
+   "instrument": "royal_decree م/28 1435/5/1",
+   "previously_tried_without_agreement": false,
+   "articles": [
+    "نظام السجن والتوقيف م4"
+   ]
+  },
+  {
+   "item": "CD-22",
+   "instrument": "royal_decree م/4 1420/2/7",
+   "previously_tried_without_agreement": true,
+   "articles": [
+    "نظام خدمة الأفراد م5"
+   ]
+  },
+  {
+   "item": "CD-23",
+   "instrument": "royal_decree م/48 1403/8/12",
+   "previously_tried_without_agreement": true,
+   "articles": [
+    "نظام التقاعد العسكري م7",
+    "نظام التقاعد المدني م18"
+   ]
+  },
+  {
+   "item": "CD-24",
+   "instrument": "royal_decree م/48 1426/8/2",
+   "previously_tried_without_agreement": true,
+   "articles": [
+    "النظام الجزائي الخاص بتزييف وتقليد النقود م2"
+   ]
+  },
+  {
+   "item": "CD-25",
+   "instrument": "royal_decree م/57 1438/5/24",
+   "previously_tried_without_agreement": false,
+   "articles": [
+    "نظام الخدمة المدنية م29",
+    "نظام الخدمة المدنية م35"
+   ]
+  },
+  {
+   "item": "CD-26",
+   "instrument": "royal_decree م/63 1436/9/13",
+   "previously_tried_without_agreement": false,
+   "articles": [
+    "نظام الدفاع المدني م20",
+    "نظام الدفاع المدني م5",
+    "نظام الدفاع المدني م6",
+    "نظام الدفاع المدني م7",
+    "نظام الدفاع المدني م8",
+    "نظام الدفاع المدني م9"
+   ]
+  },
+  {
+   "item": "CD-27",
+   "instrument": "royal_decree م/70 1437/11/6",
+   "previously_tried_without_agreement": false,
+   "articles": [
+    "نظام المرور م69",
+    "نظام المرور م70",
+    "نظام المرور م78"
+   ]
+  },
+  {
+   "item": "CD-28",
+   "instrument": "royal_decree م/73 1441/5/27",
+   "previously_tried_without_agreement": false,
+   "articles": [
+    "نظام الخدمة المدنية م25"
+   ]
+  },
+  {
+   "item": "CD-29",
+   "instrument": "royal_decree م/81 1440/7/13",
+   "previously_tried_without_agreement": false,
+   "articles": [
+    "نظام القضاء م9"
+   ]
+  },
+  {
+   "item": "CD-30",
+   "instrument": "royal_decree م/9 1407/4/20",
+   "previously_tried_without_agreement": true,
+   "articles": [
+    "نظام نقابة السيارات م38",
+    "نظام نقابة السيارات م54"
+   ]
+  },
+  {
+   "item": "CD-31",
+   "instrument": "royal_order أ/151 1432/9/3",
+   "previously_tried_without_agreement": true,
+   "articles": [
+    "نظام مجلس الوزراء م30"
+   ]
+  },
+  {
+   "item": "CD-32",
+   "instrument": "royal_order أ/181 1428/12/14",
+   "previously_tried_without_agreement": true,
+   "articles": [
+    "نظام مجلس الشورى م10",
+    "نظام مجلس الشورى م21",
+    "نظام مجلس الشورى م29"
+   ]
+  },
+  {
+   "item": "CD-33",
+   "instrument": "royal_order أ/198 1424/10/2",
+   "previously_tried_without_agreement": true,
+   "articles": [
+    "نظام مجلس الشورى م17",
+    "نظام مجلس الشورى م23"
+   ]
+  },
+  {
+   "item": "CD-34",
+   "instrument": "royal_order أ/21 1414/3/30",
+   "previously_tried_without_agreement": true,
+   "articles": [
+    "نظام المناطق م13",
+    "نظام المناطق م37"
+   ]
+  },
+  {
+   "item": "CD-35",
+   "instrument": "royal_order أ/240 1441/4/1",
+   "previously_tried_without_agreement": true,
+   "articles": [
+    "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة) م10",
+    "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة) م11",
+    "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة) م13",
+    "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة) م14",
+    "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة) م18",
+    "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة) م19",
+    "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة) م20",
+    "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة) م21"
+   ]
+  }
+ ]
+}
