@@ -43,8 +43,20 @@ def norm(instr):
     return f"{k} {no} {int(ymd[0])}/{int(ymd[1])}/{int(ymd[2])}"
 
 
+def greg(x):
+    """توحيد حقل date بالميلادي: بعض القراء كتبه بالهجري (السنة < 1700) فيُحوَّل بتقويم أم القرى."""
+    d = x.get('date')
+    if d and int(d[:4]) < 1700:
+        import warnings
+        warnings.filterwarnings('ignore')
+        from hijri_converter import Hijri
+        y, mo, da = map(int, d.split('-'))
+        x = dict(x, date=Hijri(y, mo, da).to_gregorian().isoformat(), date_hijri_as_written=d)
+    return x
+
+
 def load(p):
-    return {x['item']: x for x in (json.loads(l) for l in open(p, encoding='utf-8') if l.strip())} if p.exists() else {}
+    return {x['item']: greg(x) for x in (json.loads(l) for l in open(p, encoding='utf-8') if l.strip())} if p.exists() else {}
 
 
 def agreed(a, b):
