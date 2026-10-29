@@ -1,0 +1,715 @@
+{
+ "by": "gap016b-amended-texts-2026-10-29",
+ "md5": "52f02001ec8e7733d09de8300c347dc7",
+ "count": 3,
+ "expect_delta": {},
+ "report": {
+  "versions": 3,
+  "articles": 3,
+  "new_articles": 0,
+  "changed_text": 3,
+  "skipped": [
+   {
+    "article": "cmpzcv8yy0at6vtrkwl4tgt4z",
+    "law": "نظام العمل",
+    "n": 231,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/46 1436/6/5"
+    ]
+   },
+   {
+    "article": "cmpzcuxfd07l6vtrk7b6kp3dm",
+    "law": "نظام المحاماة",
+    "n": 29,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/66 1443/7/15"
+    ]
+   },
+   {
+    "article": "cmpzcuxfd07l7vtrksnuyipgk",
+    "law": "نظام المحاماة",
+    "n": 30,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/66 1443/7/15"
+    ]
+   },
+   {
+    "article": "cmpzcuxfe07livtrk80uqxn0o",
+    "law": "نظام المحاماة",
+    "n": 41,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/66 1443/7/15"
+    ]
+   },
+   {
+    "article": "cmpz5xq2901zncwg2fy790wc5",
+    "law": "النظام الجزائي الخاص بتزييف وتقليد النقود",
+    "n": 2,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/48 1426/8/2"
+    ]
+   },
+   {
+    "article": "cmpzcv47a09irvtrk2jsso4qc",
+    "law": "النظام الصحي",
+    "n": 4,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/52 1437/8/4"
+    ]
+   },
+   {
+    "article": "cmpzcv47a09isvtrkk4m1jso2",
+    "law": "النظام الصحي",
+    "n": 5,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/52 1437/8/4"
+    ]
+   },
+   {
+    "article": "cmpzcvb5h0bduvtrktivkin7d",
+    "law": "نظام (قانون) الجمارك الموحد لدول مجلس التعاون لدول الخليج العربية",
+    "n": 61,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/81 1444/6/4"
+    ]
+   },
+   {
+    "article": "cmpzcvbtt0bplvtrk52xc9vve",
+    "law": "نظام إيرادات الدولة",
+    "n": 25,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/5 1440/1/2"
+    ]
+   },
+   {
+    "article": "cmpz5ypaz02bvcwg2xsc0y3nv",
+    "law": "نظام الأسلحة والذخائر",
+    "n": 50,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/17 1437/4/1"
+    ]
+   },
+   {
+    "article": "cmpz5ypsl02c1cwg2qz3b7rru",
+    "law": "نظام الأسلحة والذخائر",
+    "n": 53,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/17 1437/4/1"
+    ]
+   },
+   {
+    "article": "cmpzcv8z00ax4vtrkbybnpofs",
+    "law": "نظام التأمين ضد التعطل عن العمل",
+    "n": 7,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/160 1441/11/11"
+    ]
+   },
+   {
+    "article": "cmpz6qlhd0buvcwg2i2qt17if",
+    "law": "نظام التقاعد العسكري",
+    "n": 7,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/48 1403/8/12"
+    ]
+   },
+   {
+    "article": "cmpz8058i0cbn7b6wzm6fmq2a",
+    "law": "نظام التقاعد المدني",
+    "n": 18,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/48 1403/8/12"
+    ]
+   },
+   {
+    "article": "cmpz9elyo0cf5ybvvndmq2da0",
+    "law": "نظام الخدمة المدنية",
+    "n": 37,
+    "why": "الخدمة المدنية م37: ترقيم «37 مكرر» ملتبس"
+   },
+   {
+    "article": "cmpz5wbol01ifcwg27e2c520r",
+    "law": "نظام السجن والتوقيف",
+    "n": 20,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/75 1428/9/14"
+    ]
+   },
+   {
+    "article": "cmpz5tola00mhcwg2inzp65un",
+    "law": "نظام المناطق",
+    "n": 13,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_order ا/21 1414/3/30"
+    ]
+   },
+   {
+    "article": "cmpz5tsle00nvcwg2zx2jjjtz",
+    "law": "نظام المناطق",
+    "n": 37,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_order ا/21 1414/3/30"
+    ]
+   },
+   {
+    "article": "cmpz61tox03cncwg2aage259n",
+    "law": "نظام خدمة الأفراد",
+    "n": 5,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/4 1420/2/7"
+    ]
+   },
+   {
+    "article": "cmpz6220p03ezcwg217k4ytyq",
+    "law": "نظام خدمة الأفراد",
+    "n": 46,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/11 1424/3/10",
+     "royal_decree م/28 1442/3/26"
+    ]
+   },
+   {
+    "article": "cmpz6o7q20b17cwg2z8f8g9tz",
+    "law": "نظام رسوم الأراضي البيضاء",
+    "n": 4,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/244 1446/11/7"
+    ]
+   },
+   {
+    "article": "cmpz6o7vs0b19cwg2qx63rktr",
+    "law": "نظام رسوم الأراضي البيضاء",
+    "n": 5,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/244 1446/11/7"
+    ]
+   },
+   {
+    "article": "cmpz6o81j0b1bcwg2281sjhif",
+    "law": "نظام رسوم الأراضي البيضاء",
+    "n": 6,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/244 1446/11/7"
+    ]
+   },
+   {
+    "article": "cmpz6o8780b1dcwg2goxksvzs",
+    "law": "نظام رسوم الأراضي البيضاء",
+    "n": 7,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/244 1446/11/7"
+    ]
+   },
+   {
+    "article": "cmpz6o8cw0b1fcwg2ihhvnz5r",
+    "law": "نظام رسوم الأراضي البيضاء",
+    "n": 8,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/244 1446/11/7"
+    ]
+   },
+   {
+    "article": "cmpz6o95b0b1ncwg2wen8cu62",
+    "law": "نظام رسوم الأراضي البيضاء",
+    "n": 12,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/244 1446/11/7"
+    ]
+   },
+   {
+    "article": "cmpz6o9b00b1pcwg2st4nwfnc",
+    "law": "نظام رسوم الأراضي البيضاء",
+    "n": 13,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/244 1446/11/7"
+    ]
+   },
+   {
+    "article": "cmpzcvb5k0bizvtrkz55p4agm",
+    "law": "نظام ضريبة الدخل",
+    "n": 67,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/1 1425/1/15"
+    ]
+   },
+   {
+    "article": "cmpz5tdhs00ivcwg2znpi7je6",
+    "law": "نظام مجلس الشورى",
+    "n": 10,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_order ا/181 1428/12/14"
+    ]
+   },
+   {
+    "article": "cmpz5tf9e00jhcwg2u4gyvfob",
+    "law": "نظام مجلس الشورى",
+    "n": 21,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_order ا/181 1428/12/14"
+    ]
+   },
+   {
+    "article": "cmpz5tfqm00jlcwg2g2u2ol2r",
+    "law": "نظام مجلس الشورى",
+    "n": 23,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_order ا/198 1424/10/2"
+    ]
+   },
+   {
+    "article": "cmpz5tgpl00jxcwg22j1npv99",
+    "law": "نظام مجلس الشورى",
+    "n": 29,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_order ا/181 1428/12/14"
+    ]
+   },
+   {
+    "article": "cmpz5tm6w00lncwg2uwbny02v",
+    "law": "نظام مجلس الوزراء",
+    "n": 30,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_order ا/151 1432/9/3",
+     "royal_order ا/141 1440/4/20"
+    ]
+   },
+   {
+    "article": "cmpz5wgu901k5cwg2agtrrufa",
+    "law": "نظام مكافحة الرشوة",
+    "n": 14,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/21 1442/2/14"
+    ]
+   },
+   {
+    "article": "cmpzcvci50bwavtrkhwq2vtqd",
+    "law": "نظام نقابة السيارات",
+    "n": 14,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/21 1425/4/11"
+    ]
+   },
+   {
+    "article": "cmpzcvci50bwlvtrky29197b9",
+    "law": "نظام نقابة السيارات",
+    "n": 25,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/21 1425/4/11"
+    ]
+   },
+   {
+    "article": "cmpzcvci50bwmvtrk8twccb4p",
+    "law": "نظام نقابة السيارات",
+    "n": 26,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/21 1425/4/11"
+    ]
+   },
+   {
+    "article": "cmpzcvci50bwuvtrkgsdhv4pi",
+    "law": "نظام نقابة السيارات",
+    "n": 34,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/21 1425/4/11"
+    ]
+   },
+   {
+    "article": "cmpzcvci60bwyvtrkz319llro",
+    "law": "نظام نقابة السيارات",
+    "n": 38,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/9 1407/4/20"
+    ]
+   },
+   {
+    "article": "cmpzcvci60bxavtrkwi8daycm",
+    "law": "نظام نقابة السيارات",
+    "n": 50,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/21 1425/4/11"
+    ]
+   },
+   {
+    "article": "cmpzcvci60bxevtrkiywy6v6u",
+    "law": "نظام نقابة السيارات",
+    "n": 54,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/9 1407/4/20"
+    ]
+   },
+   {
+    "article": "cmpzcuwl007ctvtrkhax7qngh",
+    "law": "نظام هيئة التحقيق والادعاء العام ( نظام النيابة العامة )",
+    "n": 1,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/4 1433/1/5",
+     "royal_decree م/125 1441/9/14"
+    ]
+   },
+   {
+    "article": "cmpz5ywbl02e5cwg24mzbft0s",
+    "law": "تنظيم اللجنة الوطنية لمكافحة المخدرات",
+    "n": 11,
+    "why": "date_not_agreed",
+    "instr": [
+     "cabinet_decision 211 1443/4/11",
+     "cabinet_decision 471 1446/7/7"
+    ]
+   },
+   {
+    "article": "cmpzcv4vl09sdvtrkmd1nml1o",
+    "law": "تنظيم نفقات المرضى السعوديين ومرافقيهم المحولين للعلاج خارج مناطق إقامتهم",
+    "n": 2,
+    "why": "date_not_agreed",
+    "instr": [
+     "cabinet_decision 111 1434/4/15",
+     "cabinet_decision 557 1441/8/28"
+    ]
+   },
+   {
+    "article": "cmpz6a82g064pcwg2369du58i",
+    "law": "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة)",
+    "n": 10,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_order ا/240 1441/4/1"
+    ]
+   },
+   {
+    "article": "cmpz6a886064rcwg2rh1eblir",
+    "law": "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة)",
+    "n": 11,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_order ا/240 1441/4/1"
+    ]
+   },
+   {
+    "article": "cmpz6a8jl064vcwg280qmm0ik",
+    "law": "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة)",
+    "n": 13,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_order ا/240 1441/4/1"
+    ]
+   },
+   {
+    "article": "cmpz6a8pb064xcwg23pzhqykm",
+    "law": "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة)",
+    "n": 14,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_order ا/240 1441/4/1"
+    ]
+   },
+   {
+    "article": "cmpz6a9c60655cwg284huio0r",
+    "law": "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة)",
+    "n": 18,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_order ا/240 1441/4/1"
+    ]
+   },
+   {
+    "article": "cmpz6a9hw0657cwg2hq61f49r",
+    "law": "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة)",
+    "n": 19,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_order ا/240 1441/4/1"
+    ]
+   },
+   {
+    "article": "cmpz6a9nm0659cwg2h6b3vh7k",
+    "law": "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة)",
+    "n": 20,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_order ا/240 1441/4/1"
+    ]
+   },
+   {
+    "article": "cmpz6a9tb065bcwg2wkux4f6k",
+    "law": "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة)",
+    "n": 21,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_order ا/240 1441/4/1"
+    ]
+   },
+   {
+    "article": "cmpz6a9z1065dcwg2jp7xz0ej",
+    "law": "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة)",
+    "n": 22,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_order ا/240 1441/4/1"
+    ]
+   },
+   {
+    "article": "cmpz6aaah065hcwg2m59rycep",
+    "law": "تنظيم هيئة المدن الاقتصادية ( هيئة المدن والمناطق الاقتصادية الخاصة)",
+    "n": 24,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_order ا/186 1443/4/5"
+    ]
+   },
+   {
+    "article": "cmpzcv7lh0afvvtrkil04iy64",
+    "law": "نــظام الاستــثمار التعديني.",
+    "n": 27,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/220 1447/9/27"
+    ]
+   },
+   {
+    "article": "cmpz5ufsi00vpcwg2pvty3sqs",
+    "law": "نظام المطبوعات والنشر",
+    "n": 38,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/20 1433/4/11"
+    ]
+   },
+   {
+    "article": "cmpzcvahb0bbbvtrk5nslenyq",
+    "law": "نظام ديوان المراقبة العامة",
+    "n": 3,
+    "why": "date_not_agreed",
+    "instr": [
+     "royal_decree م/178 1441/12/2"
+    ]
+   }
+  ],
+  "open_dates": {
+   "royal_decree م/20 1433/4/11": {
+    "m": "2012-04-06",
+    "n": null,
+    "o": null
+   },
+   "royal_decree م/178 1441/12/2": {
+    "m": "2020-07-31",
+    "n": null,
+    "o": null
+   },
+   "royal_decree م/48 1403/8/12": {
+    "a": null,
+    "b": null
+   },
+   "royal_decree م/9 1407/4/20": {
+    "a": null,
+    "b": null
+   },
+   "royal_order ا/21 1414/3/30": {
+    "a": null,
+    "b": null
+   },
+   "royal_decree م/4 1420/2/7": {
+    "a": null,
+    "b": null
+   },
+   "royal_decree م/11 1424/3/10": {
+    "a": null,
+    "b": null
+   },
+   "royal_order ا/198 1424/10/2": {
+    "a": null,
+    "b": null
+   },
+   "royal_decree م/1 1425/1/15": {
+    "a": null,
+    "b": null
+   },
+   "royal_decree م/21 1425/4/11": {
+    "a": null,
+    "b": null
+   },
+   "royal_decree م/48 1426/8/2": {
+    "a": null,
+    "b": null
+   },
+   "royal_decree م/75 1428/9/14": {
+    "a": null,
+    "b": null
+   },
+   "royal_order ا/181 1428/12/14": {
+    "a": null,
+    "b": null
+   },
+   "royal_order ا/151 1432/9/3": {
+    "a": null,
+    "b": null
+   },
+   "royal_decree م/4 1433/1/5": {
+    "a": null,
+    "b": null
+   },
+   "cabinet_decision 111 1434/4/15": {
+    "a": null,
+    "b": null
+   },
+   "royal_decree م/46 1436/6/5": {
+    "a": null,
+    "b": null
+   },
+   "royal_decree م/17 1437/4/1": {
+    "a": null,
+    "b": null
+   },
+   "royal_decree م/52 1437/8/4": {
+    "a": null,
+    "b": null
+   },
+   "royal_decree م/5 1440/1/2": {
+    "a": null,
+    "b": null
+   },
+   "royal_order ا/141 1440/4/20": {
+    "a": null,
+    "b": null
+   },
+   "cabinet_decision 557 1441/8/28": {
+    "a": null,
+    "b": null
+   },
+   "royal_decree م/125 1441/9/14": {
+    "a": null,
+    "b": null
+   },
+   "royal_decree م/139 1441/10/19": {
+    "a": null,
+    "b": null
+   },
+   "royal_decree م/160 1441/11/11": {
+    "a": null,
+    "b": null
+   },
+   "royal_order ا/240 1441/4/1": {
+    "a": null,
+    "b": null
+   },
+   "royal_decree م/21 1442/2/14": {
+    "a": null,
+    "b": null
+   },
+   "royal_decree م/28 1442/3/26": {
+    "a": null,
+    "b": null
+   },
+   "cabinet_decision 211 1443/4/11": {
+    "a": null,
+    "b": null
+   },
+   "royal_decree م/66 1443/7/15": {
+    "a": null,
+    "b": null
+   },
+   "royal_order ا/186 1443/4/5": {
+    "a": null,
+    "b": null
+   },
+   "royal_decree م/81 1444/6/4": {
+    "a": null,
+    "b": null
+   },
+   "cabinet_decision 471 1446/7/7": {
+    "a": null,
+    "b": null
+   },
+   "royal_decree م/244 1446/11/7": {
+    "a": null,
+    "b": null
+   },
+   "royal_decree م/220 1447/9/27": {
+    "a": null,
+    "b": null
+   }
+  },
+  "plan": [
+   {
+    "law": "نظام توزيع الغاز الجاف وغاز البترول السائل للأغراض السكنية والتجارية",
+    "n": 13,
+    "valid_from": "2022-11-19",
+    "instr": "مرسوم ملكي رقم (م/112) وتاريخ 1443/11/9هـ — من 2022-11-19"
+   },
+   {
+    "law": "نظام حماية البيانات الشخصية",
+    "n": 29,
+    "valid_from": "2023-09-14",
+    "instr": "مرسوم ملكي رقم (م/148) وتاريخ 1444/9/5هـ — من 2023-09-14"
+   },
+   {
+    "law": "تنظيم الهيئة العامة للعقار",
+    "n": 13,
+    "valid_from": "2022-03-18",
+    "instr": "قرار مجلس الوزراء رقم (426) وتاريخ 1443/8/5هـ — من 2022-03-18"
+   }
+  ]
+ },
+ "statements": [
+  "SELECT CASE WHEN (SELECT count(*) FROM legal_articles WHERE id=$hk$cmpzcv6wo0aazvtrkdmb77xs3$hk$ AND \"legalSystemId\"=$hk$cmpz5r2rc00awcwg2qgdtqq1u$hk$ AND \"articleNumber\"=13 AND \"articleBis\"=0 AND md5(content)=$hk$a3b3fe5aec6d3f82f8f983dd035f8be3$hk$)=1 AND (SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpzcv6wo0aazvtrkdmb77xs3$hk$)=0 AND coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpzcv6wo0aazvtrkdmb77xs3$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل') AND (SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5r2rc00awcwg2qgdtqq1u$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري' AND (SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-278e1d65d10bfb71488cf270$hk$ AND position($hk$1- إذا رغب المرخص له في التنازل عن رخصته أو جزء من أوجه النشاط المرخص به، أو في منحها لغيره، أو تأجيرها أو مبادلتها، أو نقل ملكية الأصول الأساسية بأي طريق كان، أو رغب في الاندماج مع غيره، أو أن يستحوذ غيره على معظم حصصه أو موجوداته، أو نقل ملكية الحصص والأسهم التي تمثل نسبة مؤثرة؛ فعليه التقدم بطلب للوزارة للحصول على موافقتها المسبقة بحسب الشروط التي تضعها. ويجب على الوزارة أن تبت في الطلب خلال مدة لا تتجاوز (تسعين) يوماً من تاريخ اكتماله. ويُعد مضي المدة دون البت في الطلب إذناً له بالتصرف. فإن رُفض الطلب فيجب أن يكون ذلك مسبباً.\n\n2- يُقصد بالأصول الأساسية -المذكورة في الفقرة (1) من هذه المادة- جميع الأصول التي يترتب على نقل ملكيتها إخلال بأداء النشاط المرخص به، ومنها: شبكة توزيع الغاز الجاف، وشبكة توزيع الغاز المستقلة، ومرافق غاز البترول السائل، وغيرها مما تحدده اللوائح.$hk$ in new_text)>0)=1 AND (SELECT count(*) FROM legal_articles WHERE id=$hk$cmpz62hwc03k9cwg2815msgbm$hk$ AND \"legalSystemId\"=$hk$cmpz5pbo80020cwg2n615nhji$hk$ AND \"articleNumber\"=29 AND \"articleBis\"=0 AND md5(content)=$hk$35a2eb7e7034c769755a4627236ece07$hk$)=1 AND (SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpz62hwc03k9cwg2815msgbm$hk$)=0 AND coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpz62hwc03k9cwg2815msgbm$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل') AND (SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5pbo80020cwg2n615nhji$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري' AND (SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-06a8429ffe18c849124eeca9$hk$ AND position($hk$1- مع مراعاة ما ورد في الفقرة (2) من هذه المادة، يجوز لجهة التحكم نقل البيانات الشخصية إلى خارج المملكة أو الإفصاح عنها لجهة خارج المملكة، وذلك لتحقيق أيٍّ من الأغراض الآتية:\n\nأ- إذا كان ذلك تنفيذاً لالتزام بموجب اتفاقية تكون المملكة طرفاً فيه.\n\nب- إذا كان ذلك لخدمة مصالح المملكة.\n\nج- إذا كان ذلك تنفيذاً لالتزام يكون صاحب البيانات الشخصية طرفاً فيه.\n\nد- إذا كان ذلك تنفيذاً لأغراض أخرى وفق ما تحدده اللوائح.\n\n2- تكون الشروط الواجب توافرها عند نقل البيانات الشخصية أو الإفصاح عنها -وفق ما ورد في الفقرة (1) من هذه المادة- على النحو الآتي:\n\nأ- ألا يترتب على النقل أو الإفصاح مساس بالأمن الوطني أو بمصالح المملكة الحيوية.\n\nب- أن يتوافر مستوى مناسب لحماية البيانات الشخصية في خارج المملكة؛ بما لا يقل عن مستوى الحماية المقرر في النظام واللوائح، وفقاً لنتائج تقويم تجريه الجهة المختصة في هذا الشأن بالتنسيق مع من تراه من الجهات المعنية.\n\nج- أن يقتصر النقل أو الإفصاح على الحد الأدنى من البيانات الشخصية الذي تدعو الحاجة إليه.\n\n3- لا يسري ما ورد في الفقرة (2) من هذه المادة على حالات الضرورة القصوى للمحافظة على حياة صاحب البيانات الشخصية أو مصالحه الحيوية أو الوقاية من عدوى مرضية أو فحصها أو معالجتها.\n\n4- تحدد اللوائح الأحكام والمعايير والإجراءات المتعلقة بتطبيق ما ورد في هذه المادة، بما في ذلك تحديد حالات إعفاء جهات التحكم من الالتزام بأي من الشروط المشار إليها في الفقرتين الفرعيتين (ب) و(ج) من الفقرة (2) من هذه المادة، وكذلك ضوابط وإجراءات ذلك الإعفاء والعدول عنه$hk$ in new_text)>0)=1 AND (SELECT count(*) FROM legal_articles WHERE id=$hk$cmpz6oit30b51cwg2g5qjmlf1$hk$ AND \"legalSystemId\"=$hk$cmpz5q5jn0068cwg2yjxi0ots$hk$ AND \"articleNumber\"=13 AND \"articleBis\"=1 AND md5(content)=$hk$90b5bb1c08bb5365813f2405c4bbe632$hk$)=1 AND (SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpz6oit30b51cwg2g5qjmlf1$hk$)=0 AND coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpz6oit30b51cwg2g5qjmlf1$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل') AND (SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5q5jn0068cwg2yjxi0ots$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري' AND (SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-32d183b0a150082a21e0a0a8$hk$ AND position($hk$يخضع منسوبو الهيئة لأحكام نظام العمل ونظام التأمينات الاجتماعية$hk$ in new_text)>0)=1 AND (SELECT count(*) FROM unit_version WHERE id LIKE 'g16bu-%')=0 THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard_before",
+  "INSERT INTO unit_version (id, unit_id, body, valid_from, evidence_instrument, evidence_url, evidence_quote, created_at) VALUES\n($hk$g16bu-fd2df8f84412e5d105eea5af$hk$, $hk$cmpzcv6wo0aazvtrkdmb77xs3$hk$, $hk$1- إذا رغب المرخص له في التنازل عن رخصته أو جزء من أوجه النشاط المرخص به، أو في منحها لغيره، أو تأجيرها أو مبادلتها، أو نقل ملكية الأصول الأساسية بأي طريق كان، أو رغب في الاندماج مع غيره، أو أن يستحوذ غيره على معظم حصصه أو موجوداته، أو نقل ملكية الحصص والأسهم التي تمثل نسبة مؤثرة؛ فعليه التقدم بطلب للوزارة للحصول على موافقتها المسبقة بحسب الشروط التي تضعها. ويجب على الوزارة أن تبت في الطلب خلال مدة لا تتجاوز (تسعين) يوماً من تاريخ اكتماله. ويُعد مضي المدة دون البت في الطلب إذناً له بالتصرف. فإن رُفض الطلب فيجب أن يكون ذلك مسبباً.\n\n2- يُقصد بالأصول الأساسية -المذكورة في الفقرة (1) من هذه المادة- جميع الأصول التي يترتب على نقل ملكيتها إخلال بأداء النشاط المرخص به، ومنها: شبكة توزيع الغاز الجاف، وشبكة توزيع الغاز المستقلة، ومرافق غاز البترول السائل، وغيرها مما تحدده اللوائح.$hk$, $hk$2022-11-19$hk$::timestamptz, $hk$مرسوم ملكي رقم (م/112) وتاريخ 1443/11/9هـ — من 2022-11-19$hk$, $hk$https://www.uqn.gov.sa/details?p=19761$hk$, $hk$ملاحظة هيئة الخبراء على المادة: «- عدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/112) وتاريخ 1443/11/9هـ، لتكون بالنص الآتي:\n\n1- إذا رغب المرخص له في التنازل عن رخصته أو جزء من أوجه النشاط المرخص به، أو في منحها لغيره، أو تأجيرها أو مبادلتها، أو نقل ملكية الأصول الأساسية بأي طريق كان، أو رغب في الاندماج مع غيره، أو أن يستحوذ غيره على معظم حصصه أو موجوداته، أو نقل ملكية الحصص والأسهم التي تمثل نسبة مؤثرة؛ فعليه التقدم بطلب للوزارة للحصول على موافقتها المسبقة بحسب الشروط التي تضعها. ويجب على الوزارة أن تبت في الطلب خلال مدة لا تتجاوز (تسعين) يوماً من تاريخ اكتماله. ويُعد مضي المدة دون البت في الطلب إذناً له بالتصرف. فإن رُفض الطلب فيجب أن يكون ذلك مسبباً.\n\n2- يُقصد بالأصول الأساسية -المذكورة في الفقرة (1) من هذه المادة- جميع الأصول التي يترتب على نقل ملكيتها إخلال بأداء النشاط المرخص به، ومنها: شبكة توزيع الغاز الجاف، وشبكة توزيع الغاز المستقلة، ومرافق غاز البترول السائل، وغيرها مما تحدده اللوائح.»؛ النفاذ: رابعاً: يعمل بما جاء في البنود (أولاً) و(ثانياً) و(ثالثاً) من هذا المرسوم بعد (مائة وعشرين) يوماً من تاريخ نشره في الجريدة الرسمية. (النشر 1443-12-23هـ، https://www.uqn.gov.sa/details?p=19761) ← 2022-11-19 [قارئان مستقلان متفقان (m/n/o)، HKM-052]$hk$, now()),\n($hk$g16bu-f93967449db9f418f3e9faab$hk$, $hk$cmpz62hwc03k9cwg2815msgbm$hk$, $hk$1- مع مراعاة ما ورد في الفقرة (2) من هذه المادة، يجوز لجهة التحكم نقل البيانات الشخصية إلى خارج المملكة أو الإفصاح عنها لجهة خارج المملكة، وذلك لتحقيق أيٍّ من الأغراض الآتية:\n\nأ- إذا كان ذلك تنفيذاً لالتزام بموجب اتفاقية تكون المملكة طرفاً فيه.\n\nب- إذا كان ذلك لخدمة مصالح المملكة.\n\nج- إذا كان ذلك تنفيذاً لالتزام يكون صاحب البيانات الشخصية طرفاً فيه.\n\nد- إذا كان ذلك تنفيذاً لأغراض أخرى وفق ما تحدده اللوائح.\n\n2- تكون الشروط الواجب توافرها عند نقل البيانات الشخصية أو الإفصاح عنها -وفق ما ورد في الفقرة (1) من هذه المادة- على النحو الآتي:\n\nأ- ألا يترتب على النقل أو الإفصاح مساس بالأمن الوطني أو بمصالح المملكة الحيوية.\n\nب- أن يتوافر مستوى مناسب لحماية البيانات الشخصية في خارج المملكة؛ بما لا يقل عن مستوى الحماية المقرر في النظام واللوائح، وفقاً لنتائج تقويم تجريه الجهة المختصة في هذا الشأن بالتنسيق مع من تراه من الجهات المعنية.\n\nج- أن يقتصر النقل أو الإفصاح على الحد الأدنى من البيانات الشخصية الذي تدعو الحاجة إليه.\n\n3- لا يسري ما ورد في الفقرة (2) من هذه المادة على حالات الضرورة القصوى للمحافظة على حياة صاحب البيانات الشخصية أو مصالحه الحيوية أو الوقاية من عدوى مرضية أو فحصها أو معالجتها.\n\n4- تحدد اللوائح الأحكام والمعايير والإجراءات المتعلقة بتطبيق ما ورد في هذه المادة، بما في ذلك تحديد حالات إعفاء جهات التحكم من الالتزام بأي من الشروط المشار إليها في الفقرتين الفرعيتين (ب) و(ج) من الفقرة (2) من هذه المادة، وكذلك ضوابط وإجراءات ذلك الإعفاء والعدول عنه$hk$, $hk$2023-09-14$hk$::timestamptz, $hk$مرسوم ملكي رقم (م/148) وتاريخ 1444/9/5هـ — من 2023-09-14$hk$, $hk$https://www.uqn.gov.sa/details?p=21671$hk$, $hk$ملاحظة هيئة الخبراء على المادة: «- عُدلت هذه المادة وذلك بموجب المرسوم الملكي رقم (م/148) وتاريخ 1444/9/5هـ، لتكون بالنص الآتي:\n\n\"1- مع مراعاة ما ورد في الفقرة (2) من هذه المادة، يجوز لجهة التحكم نقل البيانات الشخصية إلى خارج المملكة أو الإفصاح عنها لجهة خارج المملكة، وذلك لتحقيق أيٍّ من الأغراض الآتية:\n\nأ- إذا كان ذلك تنفيذاً لالتزام بموجب اتفاقية تكون المملكة طرفاً فيه.\n\nب- إذا كان ذلك لخدمة مصالح المملكة.\n\nج- إذا كان ذلك تنفيذاً لالتزام يكون صاحب البيانات الشخصية طرفاً فيه.\n\nد- إذا كان ذلك تنفيذاً لأغراض أخرى وفق ما تحدده اللوائح.\n\n2- تكون الشروط الواجب توافرها عند نقل البيانات الشخصية أو الإفصاح عنها -وفق ما ورد في الفقرة (1) من هذه المادة- على النحو الآتي:\n\nأ- ألا يترتب على النقل أو الإفصاح مساس بالأمن الوطني أو بمصالح المملكة الحيوية.\n\nب- أن يتوافر مستوى مناسب لحماية البيانات الشخصية في خارج المملكة؛ بما لا يقل عن مستوى الحماية المقرر في النظام واللوائح، وفقاً لنتائج تقويم تجريه الجهة المختصة في هذا الشأن بالتنسيق مع من تراه من الجهات المعنية.\n\nج- أن يقتصر النقل أو الإفصاح على الحد الأدنى من البيانات الشخصية الذي تدعو الحاجة إليه.\n\n3- لا يسري ما ورد في الفقرة (2) من هذه المادة على حالات الضرورة القصوى للمحافظة على حياة صاحب البيانات الشخصية أو مصالحه الحيوية أو الوقاية من عدوى مرضية أو فحصها أو معالجتها.\n\n4- تحدد اللوائح الأحكام والمعايير والإجراءات المتعلقة بتطبيق ما ورد في هذه المادة، بما في ذلك تحديد حالات إعفاء جهات التحكم من الالتزام بأي من الشروط المشار إليها في الفقرتين الفرعيتين (ب) و(ج) من الفقرة (2) من هذه المادة، وكذلك ضوابط وإجراءات ذلك الإعفاء والعدول عنه\".»؛ النفاذ: ثالثاً: تسري تعديلات النظام -المشار إليها في البند (أولاً) من هذا المرسوم- اعتباراً من تاريخ نفاذه. + المادة 43 المعدلة: «يُعمل بالنظام بعد (سبعمائة وعشرين) يوماً من التاريخ الذي نشر به في الجريدة الرسمية». (النشر 1444-09-16هـ، https://www.uqn.gov.sa/details?p=21671) ← 2023-09-14 [قارئان مستقلان متفقان (m/n/o)، HKM-052]$hk$, now()),\n($hk$g16bu-8b5532d5846e7c007976cc34$hk$, $hk$cmpz6oit30b51cwg2g5qjmlf1$hk$, $hk$يخضع منسوبو الهيئة لأحكام نظام العمل ونظام التأمينات الاجتماعية$hk$, $hk$2022-03-18$hk$::timestamptz, $hk$قرار مجلس الوزراء رقم (426) وتاريخ 1443/8/5هـ — من 2022-03-18$hk$, $hk$https://www.uqn.gov.sa/details?p=19133$hk$, $hk$ملاحظة هيئة الخبراء على المادة: «- عُدلت هذه المادة وذلك بموجب قرار مجلس الوزراء رقم (426) وتاريخ 1443/8/5هـ، لتكون بالنص الآتي: \"يخضع منسوبو الهيئة لأحكام نظام العمل ونظام التأمينات الاجتماعية\".»؛ النفاذ: سكتت الأداة: م71 من النظام الأساسي (النشر 1443-08-15هـ، https://www.uqn.gov.sa/details?p=19133) ← 2022-03-18 [قارئان مستقلان متفقان (m/n/o)، HKM-052]$hk$, now())",
+  "SELECT CASE WHEN (SELECT count(*) FROM unit_version WHERE id LIKE 'g16bu-%')=3 AND (SELECT md5(string_agg(unit_id||':'||valid_from::date||':'||encode(sha256(convert_to(body,'UTF8')),'hex'), '|' ORDER BY unit_id, valid_from)) FROM unit_version WHERE id LIKE 'g16bu-%')=$hk$0bbee21cc9d4b6f6cd68e73b8cc605f0$hk$ THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard_after"
+ ],
+ "diag_guards": [
+  "(SELECT count(*) FROM legal_articles WHERE id=$hk$cmpzcv6wo0aazvtrkdmb77xs3$hk$ AND \"legalSystemId\"=$hk$cmpz5r2rc00awcwg2qgdtqq1u$hk$ AND \"articleNumber\"=13 AND \"articleBis\"=0 AND md5(content)=$hk$a3b3fe5aec6d3f82f8f983dd035f8be3$hk$)=1",
+  "(SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpzcv6wo0aazvtrkdmb77xs3$hk$)=0",
+  "coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpzcv6wo0aazvtrkdmb77xs3$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل')",
+  "(SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5r2rc00awcwg2qgdtqq1u$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري'",
+  "(SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-278e1d65d10bfb71488cf270$hk$ AND position($hk$1- إذا رغب المرخص له في التنازل عن رخصته أو جزء من أوجه النشاط المرخص به، أو في منحها لغيره، أو تأجيرها أو مبادلتها، أو نقل ملكية الأصول الأساسية بأي طريق كان، أو رغب في الاندماج مع غيره، أو أن يستحوذ غيره على معظم حصصه أو موجوداته، أو نقل ملكية الحصص والأسهم التي تمثل نسبة مؤثرة؛ فعليه التقدم بطلب للوزارة للحصول على موافقتها المسبقة بحسب الشروط التي تضعها. ويجب على الوزارة أن تبت في الطلب خلال مدة لا تتجاوز (تسعين) يوماً من تاريخ اكتماله. ويُعد مضي المدة دون البت في الطلب إذناً له بالتصرف. فإن رُفض الطلب فيجب أن يكون ذلك مسبباً.\n\n2- يُقصد بالأصول الأساسية -المذكورة في الفقرة (1) من هذه المادة- جميع الأصول التي يترتب على نقل ملكيتها إخلال بأداء النشاط المرخص به، ومنها: شبكة توزيع الغاز الجاف، وشبكة توزيع الغاز المستقلة، ومرافق غاز البترول السائل، وغيرها مما تحدده اللوائح.$hk$ in new_text)>0)=1",
+  "(SELECT count(*) FROM legal_articles WHERE id=$hk$cmpz62hwc03k9cwg2815msgbm$hk$ AND \"legalSystemId\"=$hk$cmpz5pbo80020cwg2n615nhji$hk$ AND \"articleNumber\"=29 AND \"articleBis\"=0 AND md5(content)=$hk$35a2eb7e7034c769755a4627236ece07$hk$)=1",
+  "(SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpz62hwc03k9cwg2815msgbm$hk$)=0",
+  "coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpz62hwc03k9cwg2815msgbm$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل')",
+  "(SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5pbo80020cwg2n615nhji$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري'",
+  "(SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-06a8429ffe18c849124eeca9$hk$ AND position($hk$1- مع مراعاة ما ورد في الفقرة (2) من هذه المادة، يجوز لجهة التحكم نقل البيانات الشخصية إلى خارج المملكة أو الإفصاح عنها لجهة خارج المملكة، وذلك لتحقيق أيٍّ من الأغراض الآتية:\n\nأ- إذا كان ذلك تنفيذاً لالتزام بموجب اتفاقية تكون المملكة طرفاً فيه.\n\nب- إذا كان ذلك لخدمة مصالح المملكة.\n\nج- إذا كان ذلك تنفيذاً لالتزام يكون صاحب البيانات الشخصية طرفاً فيه.\n\nد- إذا كان ذلك تنفيذاً لأغراض أخرى وفق ما تحدده اللوائح.\n\n2- تكون الشروط الواجب توافرها عند نقل البيانات الشخصية أو الإفصاح عنها -وفق ما ورد في الفقرة (1) من هذه المادة- على النحو الآتي:\n\nأ- ألا يترتب على النقل أو الإفصاح مساس بالأمن الوطني أو بمصالح المملكة الحيوية.\n\nب- أن يتوافر مستوى مناسب لحماية البيانات الشخصية في خارج المملكة؛ بما لا يقل عن مستوى الحماية المقرر في النظام واللوائح، وفقاً لنتائج تقويم تجريه الجهة المختصة في هذا الشأن بالتنسيق مع من تراه من الجهات المعنية.\n\nج- أن يقتصر النقل أو الإفصاح على الحد الأدنى من البيانات الشخصية الذي تدعو الحاجة إليه.\n\n3- لا يسري ما ورد في الفقرة (2) من هذه المادة على حالات الضرورة القصوى للمحافظة على حياة صاحب البيانات الشخصية أو مصالحه الحيوية أو الوقاية من عدوى مرضية أو فحصها أو معالجتها.\n\n4- تحدد اللوائح الأحكام والمعايير والإجراءات المتعلقة بتطبيق ما ورد في هذه المادة، بما في ذلك تحديد حالات إعفاء جهات التحكم من الالتزام بأي من الشروط المشار إليها في الفقرتين الفرعيتين (ب) و(ج) من الفقرة (2) من هذه المادة، وكذلك ضوابط وإجراءات ذلك الإعفاء والعدول عنه$hk$ in new_text)>0)=1",
+  "(SELECT count(*) FROM legal_articles WHERE id=$hk$cmpz6oit30b51cwg2g5qjmlf1$hk$ AND \"legalSystemId\"=$hk$cmpz5q5jn0068cwg2yjxi0ots$hk$ AND \"articleNumber\"=13 AND \"articleBis\"=1 AND md5(content)=$hk$90b5bb1c08bb5365813f2405c4bbe632$hk$)=1",
+  "(SELECT count(*) FROM unit_version WHERE unit_id=$hk$cmpz6oit30b51cwg2g5qjmlf1$hk$)=0",
+  "coalesce((SELECT verified_status FROM verification WHERE object_type='unit' AND object_id=$hk$cmpz6oit30b51cwg2g5qjmlf1$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1),'') NOT IN ('ملغاة','ملغى','مستبدل')",
+  "(SELECT verified_status FROM verification WHERE object_type='work' AND object_id=$hk$cmpz5q5jn0068cwg2yjxi0ots$hk$ ORDER BY verified_at DESC, id DESC LIMIT 1)='ساري'",
+  "(SELECT count(*) FROM boe.amendment_note WHERE id=$hk$boe26-32d183b0a150082a21e0a0a8$hk$ AND position($hk$يخضع منسوبو الهيئة لأحكام نظام العمل ونظام التأمينات الاجتماعية$hk$ in new_text)>0)=1"
+ ]
+}
