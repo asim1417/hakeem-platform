@@ -18,6 +18,11 @@
  *   2) وإلا أول يوم صار فيه النظام وجه عمله في search_surface، إن كان ميلاديًا معقولًا (سنة ≥ 1900):
  *      search_surface للإضافة فقط، وفيه صفوف كُتب فيها تاريخ هجري في العمود الميلادي (1391-06-25 مثلًا).
  *   3) وإلا فارغ («غير متوفر»).
+ *
+ * ── HKM-064: الإصدار بمصادره التالية، ونفاذ الخلف ──────────────────────────────────────
+ *   pickIssuedDate: ترتيب صفحة النظام /law نفسه، يستعمله أيضًا hakeem_get_article وبطاقة /legal:
+ *     البطاقة إن لم يكن تاريخها نائبًا ← تاريخ أول أداة إصدار في وحدات المقدمة ← آخر صف legal_system_issuance ← فارغ.
+ *   backedEffectiveDate: النفاذ الموثّق وحده (الوجه 1 أعلاه، بلا وجه البحث)؛ به يُؤرَّخ إحلال الخلف محل سلفه في صفحة السلف.
  */
 
 export const BOE_UPLOAD_DATE_HIJRI = "1440/03/21";
@@ -93,4 +98,47 @@ export function pickEffectiveDate(input: {
   const surface = input.surfaceFrom ? String(input.surfaceFrom).slice(0, 10) : null;
   if (surface && isPlausibleGregorian(surface)) return { gregorian: surface, source: "search_surface" };
   return { gregorian: null, source: null };
+}
+
+/**
+ * HKM-064: تاريخ النفاذ الموثّق وحده (الوجه 1 من pickEffectiveDate، بلا السقوط إلى وجه البحث)، أو null.
+ * صفحة السلف تؤرّخ به إحلال خلفه محله، فيتفق «أُلغي منذ» في السلف مع «تاريخ النفاذ» في الخلف.
+ */
+export function backedEffectiveDate(input: { stored: string | null | undefined; storedBacked: boolean; card: CardDates | null | undefined }): string | null {
+  const picked = pickEffectiveDate({ ...input, surfaceFrom: null });
+  return picked.source === "legal_systems" ? picked.gregorian : null;
+}
+
+// ── HKM-064: تاريخ الإصدار بمصادره التالية (ترتيب صفحة النظام /law) ─────────────────────
+
+export type IssuedDateSource = "law_card" | "preamble_units" | "legal_system_issuance";
+
+/** مصادر الإصدار بعد البطاقة، كما تقرؤها صفحة النظام. */
+export interface IssuedDateFallbacks {
+  /** تاريخ أول أداة إصدار في آخر نسخة مقدمة (preamble_unit.instrument_date_hijri)، أو null. */
+  preambleHijri: string | null;
+  /** آخر صف legal_system_issuance (الهجري والميلادي YYYY-MM-DD)، أو null. */
+  issuanceHijri: string | null;
+  issuanceGregorian: string | null;
+}
+
+export interface IssuedDate {
+  hijri: string | null;
+  gregorian: string | null;
+  source: IssuedDateSource | null;
+}
+
+/** الإصدار بعد البطاقة: وحدات المقدمة ← legal_system_issuance ← فارغ. */
+export function issuedDateFallback(fb: IssuedDateFallbacks | null | undefined): IssuedDate {
+  if (fb?.preambleHijri) return { hijri: fb.preambleHijri, gregorian: null, source: "preamble_units" };
+  if (fb?.issuanceHijri || fb?.issuanceGregorian) return { hijri: fb.issuanceHijri ?? null, gregorian: fb.issuanceGregorian ?? null, source: "legal_system_issuance" };
+  return { hijri: null, gregorian: null, source: null };
+}
+
+/** تاريخ الإصدار المعروض: البطاقة إن كان لها تاريخ غير نائب، وإلا issuedDateFallback. */
+export function pickIssuedDate(card: CardDates | null | undefined, fb: IssuedDateFallbacks | null | undefined): IssuedDate {
+  if (card && !cardDatePlaceholders(card).issued && (card.issuedHijri || card.issuedGregorian)) {
+    return { hijri: card.issuedHijri, gregorian: card.issuedGregorian, source: "law_card" };
+  }
+  return issuedDateFallback(fb);
 }

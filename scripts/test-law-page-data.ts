@@ -18,6 +18,10 @@ import { getLawTool, toMcpLaw, looseInstrumentKey, MCP_BODY_LEAK_MAX_CHARS, MCP_
 import { articleLabel } from "../lib/modules/legal-core/article-key";
 import { mergeArticleAndPreambleHits, searchPreambleUnits } from "../lib/modules/legal-core/preamble-search";
 import { connectLocalTest } from "./hkm-023-b/local-db";
+import { articleIssuance, loadLawCardIssuance } from "../lib/mcp/tools/article-issuance";
+import { loadIssuedDateFallbacks } from "../lib/modules/legal-core/issued-date-fallbacks";
+import { REPEAL_TYPE_LABEL, repealBannerHeading, retainedRepealSentence } from "../lib/modules/legal-core/law-page-view";
+import { lawCardDateLines, needsIssuedFallback } from "../components/legal/law-card-date-lines";
 import type { SqlClient } from "../lib/modules/legal-core/sql-port";
 
 let failed = 0;
@@ -591,9 +595,9 @@ async function hkm063Tests(db: SqlClient) {
   const tArts = taadib?.body.divisions.flatMap((d) => d.articles) ?? [];
   const a47 = tArts.find((a) => a.number === 47);
   const a46 = tArts.find((a) => a.number === 46);
-  ok(taadib?.card.status.hakeem === "ملغى مع بقاء أحكام محددة مؤقتًا" && taadib.card.status.boe === "لاغي" && taadib.card.repeal?.type === "express_total", "HKM-063 تأديب الموظفين: حالة النظام وبيان إلغائه كما هما");
+  ok(taadib?.card.status.hakeem === "ملغى مع بقاء أحكام محددة مؤقتًا" && taadib.card.status.boe === "لاغي" && taadib.card.repeal?.type === "express_total_with_retained", "HKM-063 تأديب الموظفين: حالة النظام كما هي، ونوع إلغائه «مع بقاء أحكام» (HKM-064، كان express_total)");
   ok(a47?.status === "ساري" && a47.statusSource === "verification" && !a47.inheritedFromWork && a47.repeal === null && a47.statusLabel === "ساري", "HKM-063 المادة 47 (سجلها «ساري»): سارية، لا ملغاة بالتبعية");
-  ok(a46?.status === "ملغى" && a46.inheritedFromWork && a46.repeal?.type === "express_total", "HKM-063 مادة بلا سجل في النظام نفسه: ملغاة بالتبعية كما كانت");
+  ok(a46?.status === "ملغى" && a46.inheritedFromWork && a46.repeal?.type === "express_total_with_retained", "HKM-063 مادة بلا سجل في النظام نفسه: ملغاة بالتبعية كما كانت (بيان إلغاء النظام نفسه، HKM-064)");
   ok(taadib?.body.counts.inForce === 1 && taadib.body.counts.repealed === 1 && taadib.body.counts.total === 2, "HKM-063 العدّادات: 1 ساري + 1 ملغى");
   ok(taadib?.card.dates.effective.gregorian === "1971-04-03" && taadib.card.dates.effective.source === "legal_systems", "HKM-063 تأديب الموظفين: النفاذ المخزّن بسند effective_from_set يُعرض");
 
@@ -603,6 +607,202 @@ async function hkm063Tests(db: SqlClient) {
   ok("law_id" in mcpCompanies && mcpCompanies.dates.effective.gregorian === "2023-01-19" && mcpCompanies.dates.effective.source === "legal_systems", "HKM-063 hakeem_get_law: dates.effective من legal_systems");
   const mcpPair = await getLawTool(db, { lawId: "h63-pair" }, { asOf });
   ok("law_id" in mcpPair && mcpPair.issue_date_h === "1372/03/15" && mcpPair.dates.published.hijri === null, "HKM-063 hakeem_get_law: issue_date_h من المصدر التالي لا 1372/01/01");
+}
+
+/**
+ * HKM-064: فجوات العرض بعد HKM-063، على نمط حالات الإنتاج 29–30/10 (قراءة فقط):
+ *   (1) «ملغى مع بقاء أحكام محددة مؤقتًا» نوع إلغاء مستقل يسمّي الأحكام الباقية (تأديب الموظفين، المادة 47).
+ *   (2) hakeem_get_article: تاريخ الإصدار النائب (نقابة السيارات 1372/01/01) مجهول ويسقط إلى مصادر الصفحة.
+ *   (3) يوم إحلال الخلف = نفاذه الموثّق (التسجيل العيني: وجه 2022-04-20 ونفاذ 2022-08-11؛ الأسماء التجارية 2025-04-02/03).
+ *   (4) بطاقة /legal: الإصدار المجهول يسقط إلى مصادر /law (مصدر الدالة النقية نفسها).
+ */
+async function seedHkm064(db: SqlClient) {
+  const sys = (id: string, name: string, pef: string | null = null) =>
+    db.query(`INSERT INTO legal_systems (id, name, "articleCount", preamble_effective_from) VALUES ($1, $2, 1, $3)`, [id, name, pef]);
+  const card = (id: string, systemId: string, ih: string, ig: string, ph: string, pg: string, instruments: unknown[] = []) =>
+    db.query(
+      `INSERT INTO law_card (id, system_id, official_name, issued_hijri, issued_gregorian, published_hijri, published_gregorian, instruments, text_blocks, source_name, source_url, retrieved_on, created_by)
+       VALUES ($1, $2, 'اصطناعي', $3, $4, $5, $6, $7::jsonb, '[]'::jsonb, 'هيئة الخبراء بمجلس الوزراء', 'https://laws.boe.gov.sa/اصطناعي', '2026-10-30', 'test-hkm064')`,
+      [id, systemId, ih, ig, ph, pg, JSON.stringify(instruments)],
+    );
+  const ver = (id: string, type: "work" | "unit", objectId: string, status: string, instrument: string | null = null) =>
+    db.query(`INSERT INTO verification (id, object_type, object_id, verified_status, evidence_instrument, evidence_url, method, verified_by) VALUES ($1, $2, $3, $4, $5, 'https://www.uqn.gov.sa/اصطناعي', 'manual', 'test-hkm064')`, [
+      id, type, objectId, status, instrument,
+    ]);
+  const art = (id: string, systemId: string, n: number, bis = 0) =>
+    db.query(`INSERT INTO legal_articles (id, "legalSystemId", "lawName", "articleNumber", "articleBis", title, content) VALUES ($1, $2, $3, $4, $5, $6, $7)`, [
+      id, systemId, `اصطناعي ${systemId}`, n, bis, `المادة ${n}${bis ? " مكرر" : ""} (اصطناعي)`, `نص اصطناعي ${n}/${bis}.`,
+    ]);
+
+  // (1) نظام «ملغى» بلا خلف: express_total كما كان. ونظام «ملغى مع بقاء أحكام» له خلف في وجه البحث، وحكماه الباقيان 12 و12 مكرر.
+  await sys("h64-repealed", "نظام ملغى اصطناعي");
+  await art("a64-rep-1", "h64-repealed", 1);
+  await ver("v64-rep", "work", "h64-repealed", "ملغى", "م/1 وتاريخ 1440/1/1هـ (اصطناعي)");
+  await sys("h64-rr", "نظام اصطناعي ملغى مع بقاء أحكام وله خلف");
+  await sys("h64-rr-new", "نظام اصطناعي خلف");
+  await art("a64-rr-12", "h64-rr", 12);
+  await art("a64-rr-12b", "h64-rr", 12, 1);
+  await art("a64-rr-13", "h64-rr", 13);
+  await ver("v64-rr", "work", "h64-rr", "ملغى مع بقاء أحكام محددة مؤقتًا", "م/2 وتاريخ 1445/1/1هـ (اصطناعي)");
+  await ver("v64-rr-new", "work", "h64-rr-new", "ساري");
+  await ver("v64-rr-12", "unit", "a64-rr-12", "ساري");
+  await ver("v64-rr-12b", "unit", "a64-rr-12b", "ساري");
+
+  // (2) نقابة السيارات: بطاقة نائبة (1372/01/01 للإصدار والنشر) بلا مقدمة ولا legal_system_issuance.
+  await sys("h64-naqaba", "نظام نقابة السيارات اصطناعي");
+  await card("lc64-naqaba", "h64-naqaba", "1372/01/01", "1952-09-20", "1372/01/01", "1952-09-20");
+  // بطاقة نائبة ونسخة مقدمة (أدواتها من نص الإثبات): الإصدار من وحدات المقدمة.
+  await sys("h64-pre", "نظام اصطناعي بمقدمة وبطاقة نائبة");
+  await card("lc64-pre", "h64-pre", "1443/01/01", "2021-08-09", "1443/01/01", "2021-08-09", [{ kind: "royal_decree", text: "مرسوم ملكي" }]);
+  // بلا بطاقة، وسطر legal_system_issuance وحده.
+  await sys("h64-nocard", "نظام اصطناعي بلا بطاقة");
+  await db.query(`INSERT INTO legal_system_issuance (id, system_id, issue_date_hijri, issue_date_greg, instrument, source_url) VALUES ('iss64-nocard', 'h64-nocard', '1428/05/10', '2007-05-27', 'مرسوم ملكي رقم (م/0) وتاريخ 1428/5/10هـ (اصطناعي)', 'https://www.uqn.gov.sa/اصطناعي')`);
+
+  // (3) التسجيل العيني: السلف 1423 (مستبدل) ووجه الخلف من 2022-04-20، ونفاذ الخلف الموثّق 2022-08-11 وبطاقته حقيقية.
+  await sys("h64-tasjil-old", "نظام التسجيل العيني للعقار اصطناعي 1423هـ", "2002-03-15 00:00:00");
+  await sys("h64-tasjil-new", "نظام التسجيل العيني للعقار اصطناعي", "2022-08-11 00:00:00");
+  await art("a64-tasjil-old-1", "h64-tasjil-old", 1);
+  await card("lc64-tasjil-new", "h64-tasjil-new", "1443/09/19", "2022-04-20", "1443/10/12", "2022-05-13");
+  await ver("v64-tasjil-old", "work", "h64-tasjil-old", "مستبدل", "م/91 وتاريخ 1443/9/19هـ (اصطناعي)");
+  await ver("v64-tasjil-new", "work", "h64-tasjil-new", "ساري", "م/91 وتاريخ 1443/9/19هـ (اصطناعي)");
+  // الأسماء التجارية: وجه 2025-04-02 والنفاذ الموثّق 2025-04-03 (بلا بطاقة للخلف).
+  await sys("h64-asma-old", "نظام الأسماء التجارية اصطناعي 1420هـ", "2000-03-09 00:00:00");
+  await sys("h64-asma-new", "نظام الأسماء التجارية اصطناعي 1446هـ", "2025-04-03 00:00:00");
+  await ver("v64-asma-old", "work", "h64-asma-old", "مستبدل", "م/83 وتاريخ 1446/3/19هـ (اصطناعي)");
+  await ver("v64-asma-new", "work", "h64-asma-new", "ساري");
+  // خلف بنفاذ مخزّن بلا سند: يبقى يوم الوجه.
+  await sys("h64-unb-old", "نظام اصطناعي سلف لخلف بلا سند");
+  await sys("h64-unb-new", "نظام اصطناعي خلف بلا سند", "2025-09-01 00:00:00");
+  await ver("v64-unb-old", "work", "h64-unb-old", "مستبدل");
+  // خلف بسند لكن نفاذه المخزّن نسخة من بطاقة نائبة (1446/01/01): لا يُعتمد، ويبقى يوم الوجه.
+  await sys("h64-ph-old", "نظام اصطناعي سلف لخلف نائب");
+  await sys("h64-ph-new", "نظام اصطناعي خلف نائب", "2024-07-07 00:00:00");
+  await card("lc64-ph-new", "h64-ph-new", "1446/01/01", "2024-07-07", "1446/01/01", "2024-07-07");
+  await ver("v64-ph-old", "work", "h64-ph-old", "مستبدل");
+
+  await db.query(`INSERT INTO search_surface (id, work_key, surface_system_id, valid_on, reason, created_by) VALUES
+    ('ss64-rr-1', 'we:h64-rr', 'h64-rr', '2010-01-01', 'اصطناعي', 'test'),
+    ('ss64-rr-2', 'we:h64-rr', 'h64-rr-new', '2024-11-07', 'اصطناعي', 'test'),
+    ('ss64-tasjil-1', 'we:h64-tasjil', 'h64-tasjil-old', '2002-03-15', 'اصطناعي', 'test'),
+    ('ss64-tasjil-2', 'we:h64-tasjil', 'h64-tasjil-new', '2022-04-20', 'اصطناعي', 'test'),
+    ('ss64-asma-1', 'we:h64-asma', 'h64-asma-old', '1999-11-20', 'اصطناعي', 'test'),
+    ('ss64-asma-2', 'we:h64-asma', 'h64-asma-new', '2025-04-02', 'اصطناعي', 'test'),
+    ('ss64-unb-1', 'we:h64-unb', 'h64-unb-old', '2000-01-01', 'اصطناعي', 'test'),
+    ('ss64-unb-2', 'we:h64-unb', 'h64-unb-new', '2025-04-02', 'اصطناعي', 'test'),
+    ('ss64-ph-1', 'we:h64-ph', 'h64-ph-old', '2000-01-01', 'اصطناعي', 'test'),
+    ('ss64-ph-2', 'we:h64-ph', 'h64-ph-new', '2024-08-01', 'اصطناعي', 'test')`);
+  await db.query(`INSERT INTO search_surface_member (id, work_key, system_id, role, created_by) VALUES
+    ('m64-rr-1', 'we:h64-rr', 'h64-rr', 'edition_old', 'test'), ('m64-rr-2', 'we:h64-rr', 'h64-rr-new', 'edition_new', 'test'),
+    ('m64-tasjil-1', 'we:h64-tasjil', 'h64-tasjil-old', 'edition_old', 'test'), ('m64-tasjil-2', 'we:h64-tasjil', 'h64-tasjil-new', 'edition_new', 'test'),
+    ('m64-asma-1', 'we:h64-asma', 'h64-asma-old', 'edition_old', 'test'), ('m64-asma-2', 'we:h64-asma', 'h64-asma-new', 'edition_new', 'test'),
+    ('m64-unb-1', 'we:h64-unb', 'h64-unb-old', 'edition_old', 'test'), ('m64-unb-2', 'we:h64-unb', 'h64-unb-new', 'edition_new', 'test'),
+    ('m64-ph-1', 'we:h64-ph', 'h64-ph-old', 'edition_old', 'test'), ('m64-ph-2', 'we:h64-ph', 'h64-ph-new', 'edition_new', 'test')`);
+  // سند النفاذ (الجدول أنشأه seedHkm063Provenance): للتسجيل العيني والأسماء والنائب؛ لا سند لـ h64-unb-new.
+  await db.query(`INSERT INTO legal_text_provenance (id, entity_type, entity_id, source, action) VALUES
+    ('p64-tasjil', 'system', 'h64-tasjil-new', 'boe', 'effective_from_corrected:2022-04-20->2022-08-11'),
+    ('p64-asma', 'system', 'h64-asma-new', 'official', 'effective_from_corrected:2025-04-02->2025-04-03'),
+    ('p64-ph', 'system', 'h64-ph-new', 'boe', 'effective_from_set:2024-07-07'),
+    ('p64-unb', 'system', 'h64-unb-new', 'boe', 'insert:boe_snapshot')`);
+}
+
+async function hkm064Tests(db: SqlClient) {
+  await seedHkm064(db);
+  const asOf = "2026-10-30";
+
+  // ── (1) «ملغى مع بقاء أحكام محددة مؤقتًا» ──
+  const taadib = await getLawPageData(db, "h63-taadib", { asOf });
+  const tr = taadib?.card.repeal;
+  ok(tr?.type === "express_total_with_retained" && tr.retainedArticles?.map((a) => a.number).join() === "47", "HKM-064 (1) تأديب الموظفين: نوع الإلغاء express_total_with_retained (لا express_total)، والحكم الباقي المادة 47");
+  ok(tr?.retainedArticles?.[0]?.anchor === "art-47" && tr.retainedArticles[0].label === "47" && tr.retainedArticles[0].id === "a63-taadib-47", "HKM-064 (1) الحكم الباقي بمرساته ووسمه ومعرّفه");
+  ok(Boolean(tr) && retainedRepealSentence(tr!) === "أُلغي هذا النظام مع استمرار العمل بأحكام محددة منه مؤقتًا: المادة (47)" && repealBannerHeading(tr!) === retainedRepealSentence(tr!), "HKM-064 (1) عنوان الشريط: «أُلغي هذا النظام مع استمرار العمل بأحكام محددة منه مؤقتًا: المادة (47)» لا «هذا النظام لاغٍ»");
+  ok(Boolean(tr) && !repealBannerHeading(tr!).includes("لاغٍ") && REPEAL_TYPE_LABEL[tr!.type!] !== "إلغاء صريح كلي", "HKM-064 (1) لا «لاغٍ» ولا «إلغاء صريح كلي» في شريط نظام باقية أحكامه");
+  const mcpT = await getLawTool(db, { lawId: "h63-taadib" }, { asOf });
+  const mr = "law_id" in mcpT ? (mcpT.repeal as Record<string, unknown> | null) : null;
+  ok(mr?.type === "express_total_with_retained" && JSON.stringify(mr.retained_articles) === JSON.stringify([{ article_id: "a63-taadib-47", number: 47, key: "47", label: "47" }]), "HKM-064 (1) hakeem_get_law: repeal.type الجديد وretained_articles");
+  ok(mr?.note === "أُلغي هذا النظام مع استمرار العمل بأحكام محددة منه مؤقتًا: المادة (47)", "HKM-064 (1) hakeem_get_law: repeal.note سطر الصفحة نفسه");
+  ok(Boolean(mr) && ["type", "type_derived", "instrument", "url", "effective_date", "repealing_law"].every((k) => k in mr!), "HKM-064 (1) hakeem_get_law: الحقول القديمة كلها باقية بأسمائها");
+  const rep = await getLawPageData(db, "h64-repealed", { asOf });
+  ok(rep?.card.repeal?.type === "express_total" && rep.card.repeal.retainedArticles === undefined && repealBannerHeading(rep.card.repeal) === "هذا النظام لاغٍ", "HKM-064 (1) نظام «ملغى» بلا خلف: express_total و«هذا النظام لاغٍ» كما كان، بلا retainedArticles");
+  const mcpRep = await getLawTool(db, { lawId: "h64-repealed" }, { asOf });
+  ok("law_id" in mcpRep && mcpRep.repeal?.type === "express_total" && !("retained_articles" in (mcpRep.repeal ?? {})) && !("note" in (mcpRep.repeal ?? {})), "HKM-064 (1) hakeem_get_law لنظام «ملغى»: بلا retained_articles ولا note");
+  const rr = await getLawPageData(db, "h64-rr", { asOf });
+  ok(rr?.card.repeal?.type === "express_total_with_retained" && rr.card.replacedBy?.id === "h64-rr-new" && rr.card.repeal.repealingSystem?.id === "h64-rr-new", "HKM-064 (1) باقية أحكامه وله خلف في وجه البحث: النوع «مع بقاء أحكام» لا «إحلال»، والخلف باقٍ");
+  ok(rr?.card.repeal?.retainedArticles?.map((a) => a.key).join() === "12,12_bis" && retainedRepealSentence(rr.card.repeal) === "أُلغي هذا النظام مع استمرار العمل بأحكام محددة منه مؤقتًا: المادتان (12) و(12 مكرر)", "HKM-064 (1) حكمان باقيان أحدهما مكرر: «المادتان (12) و(12 مكرر)»، والمادة بلا سجل ليست منهما");
+  const rrArts = rr?.body.divisions.flatMap((d) => d.articles) ?? [];
+  ok(rrArts.find((a) => a.key === "13")?.status === "ملغى" && rrArts.find((a) => a.key === "12_bis")?.status === "ساري" && rr?.body.counts.inForce === 2, "HKM-064 (1) الحالات متسقة مع القائمة: 12 و12 مكرر ساريتان و13 ملغاة بالتبعية");
+  const mcpRr = await getLawTool(db, { lawId: "h64-rr" }, { asOf });
+  const rrOut = "law_id" in mcpRr ? (mcpRr.repeal as Record<string, unknown> | null) : null;
+  ok(JSON.stringify(rrOut?.retained_articles) === JSON.stringify([{ article_id: "a64-rr-12", number: 12, key: "12", label: "12" }, { article_id: "a64-rr-12b", number: 12, bis: 1, key: "12_bis", label: "12 مكرر" }]), "HKM-064 (1) hakeem_get_law: المكرر في retained_articles بـ bis وkey");
+
+  // ── (2) hakeem_get_article: تاريخ الإصدار ──
+  await db.query(`INSERT INTO legal_system_issuance (id, system_id, issue_date_hijri, instrument) VALUES ('iss64-pre-decoy', 'h64-pre', '1400/02/02', 'اصطناعي')`);
+  const preMeta = {
+    systemId: "h64-pre",
+    sourceName: "هيئة الخبراء بمجلس الوزراء" as const,
+    sourceUrl: prod.law_card_samples[0].source.source_url as string,
+    sourceRetrievedOn: "2026-10-30",
+    changeRef: "chg-h64-pre",
+    preparedBy: "editor-test",
+    approvedBy: "reviewer-test",
+  };
+  const preRows = buildPreambleEditionRows(ITHBAT_TEXT, preMeta);
+  await db.query("BEGIN");
+  await insertPreambleEdition(db, preRows);
+  await db.query("COMMIT");
+  const preFirst = preRows.units.find((u) => u.unit_type === "issuing_instrument")?.instrument_date_hijri ?? null;
+
+  const issuedH = async (id: string) => articleIssuance(null, await loadLawCardIssuance(db, id)).issuedDateH;
+  ok((await issuedH("h64-naqaba")) === null, "HKM-064 (2) نقابة السيارات: issued_date_h = null لا 1372/01/01 (بطاقة نائبة بلا مصدر تالٍ)");
+  ok((await issuedH("h63-pair")) === "1372/03/15", "HKM-064 (2) الزوج النائب: issued_date_h من legal_system_issuance (1372/03/15)، كصفحة النظام");
+  ok(Boolean(preFirst) && (await issuedH("h64-pre")) === preFirst, `HKM-064 (2) بطاقة نائبة ومقدمة: من أول أداة في وحدات المقدمة (${preFirst}) قبل legal_system_issuance`);
+  ok((await issuedH("h64-nocard")) === "1428/05/10", "HKM-064 (2) بلا بطاقة: legal_system_issuance كصفحة النظام (كان null)");
+  ok((await issuedH("h63-companies")) === "1443/12/01" && (await issuedH("h63-petroleum")) === "1420/09/27", "HKM-064 (2) بطاقة حقيقية (أو إصدار مصحّح بعد نشر نائب): كما كانت");
+  const parity: string[] = [];
+  for (const id of ["h64-naqaba", "h63-pair", "h64-pre", "h64-nocard", "h63-companies", "h63-petroleum", "h63-pif-old", "h63-upload", "sys-ithbat", "sys-murafaat", "sys-none"]) {
+    const page = await getLawPageData(db, id, { asOf });
+    if ((await issuedH(id)) !== (page?.card.dates.issued.hijri ?? null)) parity.push(id);
+  }
+  ok(parity.length === 0, `HKM-064 (2) issued_date_h = dates.issued.hijri في صفحة النظام وhakeem_get_law لكل الحالات${parity.length ? ` (خالف: ${parity.join("، ")})` : ""}`);
+  const cap = capturing(db);
+  await loadLawCardIssuance(cap.db, "h63-companies");
+  ok(cap.log.length === 1 && !cap.log.some((q) => /legal_system_issuance|preamble_/.test(q)), "HKM-064 (2) بطاقة بتاريخ حقيقي: استعلام واحد كما كان (لا قراءة للمصادر التالية)");
+  const naqabaRow = await loadLawCardIssuance(db, "h64-naqaba");
+  ok(naqabaRow !== null && articleIssuance(null, naqabaRow).issuedBy === null && (await loadLawCardIssuance(db, "sys-none")) === null, "HKM-064 (2) بلا أداة ولا مصدر: issued_by null، والنظام بلا بطاقة ولا مصدر يبقى null");
+
+  // ── (4) بطاقة /legal: سطر الإصدار ──
+  const lineFor = async (id: string) => {
+    const c = (await db.query<{ ih: string | null; ig: string | null; ph: string | null; pg: string | null }>(
+      `SELECT issued_hijri AS ih, issued_gregorian::text AS ig, published_hijri AS ph, published_gregorian::text AS pg FROM law_card WHERE system_id = $1 ORDER BY created_at DESC, id DESC LIMIT 1`,
+      [id],
+    ))[0];
+    const cardDates = c ? { issuedHijri: c.ih, issuedGregorian: c.ig, publishedHijri: c.ph, publishedGregorian: c.pg } : null;
+    return lawCardDateLines(cardDates, needsIssuedFallback(cardDates) ? await loadIssuedDateFallbacks(db, id) : null);
+  };
+  ok((await lineFor("h63-pair")).issued === "1372/03/15 هـ" && (await lineFor("h63-pair")).published === null, "HKM-064 (4) /legal الزوج النائب: صف الإصدار «1372/03/15 هـ» من legal_system_issuance (كان مخفيًا)، والنشر النائب مخفي");
+  ok((await lineFor("h64-pre")).issued === `${preFirst} هـ`, "HKM-064 (4) /legal بطاقة نائبة ومقدمة: الإصدار من وحدات المقدمة");
+  ok((await lineFor("h64-nocard")).issued === "1428/05/10 هـ الموافق: 27/05/2007 م", "HKM-064 (4) /legal بلا بطاقة: الإصدار من legal_system_issuance بهجريه وميلاديه");
+  ok((await lineFor("h64-naqaba")).issued === null, "HKM-064 (4) /legal نقابة السيارات: لا صف إصدار (لا مصدر تالٍ)");
+  ok((await lineFor("h63-companies")).issued === "1443/12/01 هـ الموافق: 30/06/2022 م", "HKM-064 (4) /legal بطاقة حقيقية: كما كانت");
+
+  // ── (3) يوم إحلال الخلف = نفاذه الموثّق ──
+  const tOld = await getLawPageData(db, "h64-tasjil-old", { asOf });
+  const tNew = await getLawPageData(db, "h64-tasjil-new", { asOf });
+  ok(tOld?.card.repeal?.effectiveDate === "2022-08-11" && tOld.card.repeal.effectiveDateSource === "legal_systems", "HKM-064 (3) التسجيل العيني 1423: أُلغي منذ 2022-08-11 (نفاذ الخلف الموثّق) لا 2022-04-20 (وجه البحث)");
+  ok(tNew?.card.dates.effective.gregorian === tOld?.card.repeal?.effectiveDate, "HKM-064 (3) يتفق «أُلغي منذ» في السلف مع «تاريخ النفاذ» في الخلف");
+  ok(tOld?.card.replacedBy?.id === "h64-tasjil-new" && tOld.card.repeal?.type === "replacement", "HKM-064 (3) الخلف ونوع الإحلال كما هما (لا تغيير في وجه البحث)");
+  const aOld = await getLawPageData(db, "h64-asma-old", { asOf });
+  const aNew = await getLawPageData(db, "h64-asma-new", { asOf });
+  ok(aOld?.card.repeal?.effectiveDate === "2025-04-03" && aNew?.card.dates.effective.gregorian === "2025-04-03", "HKM-064 (3) الأسماء التجارية 1420: 2025-04-03 في السلف والخلف (كان 2025-04-02)");
+  const mcpOld = await getLawTool(db, { lawId: "h64-tasjil-old" }, { asOf });
+  ok("law_id" in mcpOld && mcpOld.repeal?.effective_date === "2022-08-11", "HKM-064 (3) hakeem_get_law: repeal.effective_date = 2022-08-11");
+  const inherited = tOld?.body.divisions.flatMap((d) => d.articles) ?? [];
+  ok(inherited.length === 1 && inherited.every((a) => a.status === "مستبدل" && a.inheritedFromWork && a.repeal?.effectiveDate === "2022-08-11"), "HKM-064 (3) مواد السلف المستبدلة بالتبعية تحمل التاريخ نفسه");
+  const unb = await getLawPageData(db, "h64-unb-old", { asOf });
+  ok(unb?.card.repeal?.effectiveDate === "2025-04-02" && unb.card.repeal.effectiveDateSource === "search_surface", "HKM-064 (3) خلف بنفاذ مخزّن بلا سند effective_from_*: يبقى يوم الوجه");
+  const ph = await getLawPageData(db, "h64-ph-old", { asOf });
+  ok(ph?.card.repeal?.effectiveDate === "2024-08-01" && ph.card.repeal.effectiveDateSource === "search_surface", "HKM-064 (3) خلف بسند ونفاذه نسخة بطاقة نائبة (1446/01/01): لا يُعتمد، ويبقى يوم الوجه");
+  const ssOld = await getLawPageData(db, "sys-ss-old", { asOf: "2026-10-17" });
+  ok(ssOld?.card.repeal?.effectiveDate === "2021-06-01" && ssOld.card.repeal.effectiveDateSource === "search_surface", "HKM-064 (3) خلف بلا نفاذ مخزّن: يوم الوجه كما كان");
 }
 
 async function main() {
@@ -623,6 +823,7 @@ async function main() {
       await mcpTests(db);
       await searchTests(db);
       await hkm063Tests(db);
+      await hkm064Tests(db);
       // لا جداول وحدات: سقوط آمن.
       await db.query(`DROP VIEW preamble_unit_current`);
       ok((await searchPreambleUnits(db, "بعون الله")).length === 0, "S-14 قبل تطبيق الترحيل (لا عرض): لا نتائج ولا خطأ");

@@ -2,10 +2,15 @@
  * HKM-063: اختبارات نقية لتواريخ بطاقة النظام (law-card-dates) وقاعدة الحكم الباقي (verified-status).
  * الحالات من قراءة الإنتاج 29/10/2026 (قراءة فقط): نظام الشركات، تنظيم المجلس الأعلى لشؤون البترول والمعادن،
  * نظام صندوق الاستثمارات العامة (م/24) طبعته القديمة، نظام مكافحة التستر (1 محرم حقيقي)، ونظام نقابة السيارات.
+ * HKM-064: الإصدار بمصادره التالية (pickIssuedDate) في /law وhakeem_get_article وبطاقة /legal، ونفاذ الخلف الموثّق.
  */
+import fs from "node:fs";
 import {
+  backedEffectiveDate,
   cardDatePlaceholders,
   hijriParts,
+  issuedDateFallback,
+  pickIssuedDate,
   isMuharramFirst,
   isPlaceholderEffectiveDate,
   isPlausibleGregorian,
@@ -13,7 +18,8 @@ import {
   type CardDates,
 } from "../lib/modules/legal-core/law-card-dates";
 import { isRetainedProvision, RETAINED_PROVISIONS_STATUS } from "../lib/modules/legal-core/verified-status";
-import { dateLine, lawCardDateLines } from "../components/legal/law-card-date-lines";
+import { dateLine, lawCardDateLines, needsIssuedFallback } from "../components/legal/law-card-date-lines";
+import { articleIssuance, issuanceFromCard } from "../lib/mcp/tools/article-issuance";
 
 let failed = 0;
 let passed = 0;
@@ -86,6 +92,43 @@ ok(eq(lawCardDateLines(upload), { issued: "1409/08/20 هـ الموافق: 27/03
 ok(eq(lawCardDateLines(tasattur), { issued: "1442/01/01 هـ الموافق: 20/08/2020 م", published: "1442/01/09 هـ الموافق: 28/08/2020 م" }), "L-3 التستر (1 محرم حقيقي): يُعرض");
 ok(eq(lawCardDateLines(null), { issued: null, published: null }) && eq(lawCardDateLines(card(null, null, "1443/12/23", null)), { issued: null, published: "1443/12/23 هـ" }), "L-4 بلا بطاقة: لا صفوف؛ وتاريخ هجري وحده يُعرض بلا «الموافق»");
 ok(dateLine(null, null) === null && dateLine(null, "2022-07-22") === "الموافق: 22/07/2022 م", "L-4 dateLine كما كان في المكوّن");
+
+// ── HKM-064: الإصدار بمصادره التالية (ترتيب صفحة /law) ──
+const fbPre = { preambleHijri: "1443/5/26", issuanceHijri: "1400/02/02", issuanceGregorian: null };
+const fbIss = { preambleHijri: null, issuanceHijri: "1372/03/15", issuanceGregorian: "1952-12-04" };
+const fbNone = { preambleHijri: null, issuanceHijri: null, issuanceGregorian: null };
+ok(eq(pickIssuedDate(companies, fbPre), { hijri: "1443/12/01", gregorian: "2022-06-30", source: "law_card" }), "I-1 بطاقة حقيقية: من البطاقة ولو وُجدت مصادر تالية");
+ok(eq(pickIssuedDate(petroleum, fbIss), { hijri: "1420/09/27", gregorian: "2000-01-04", source: "law_card" }), "I-1 نشر نائب وإصدار حقيقي (البترول): الإصدار من البطاقة");
+ok(eq(pickIssuedDate(pair, fbPre), { hijri: "1443/5/26", gregorian: null, source: "preamble_units" }), "I-2 الزوج النائب: وحدات المقدمة أولًا");
+ok(eq(pickIssuedDate(pair, fbIss), { hijri: "1372/03/15", gregorian: "1952-12-04", source: "legal_system_issuance" }), "I-2 الزوج النائب بلا مقدمة: legal_system_issuance");
+ok(eq(pickIssuedDate(pair, fbNone), { hijri: null, gregorian: null, source: null }) && eq(pickIssuedDate(pair, null), { hijri: null, gregorian: null, source: null }), "I-2 الزوج النائب بلا مصدر تالٍ (نقابة السيارات): فارغ لا 1372/01/01");
+ok(eq(pickIssuedDate(null, fbIss), { hijri: "1372/03/15", gregorian: "1952-12-04", source: "legal_system_issuance" }) && eq(pickIssuedDate(card(null, null, "1443/12/23", null), fbPre).source, "preamble_units"), "I-3 بلا بطاقة أو بطاقة بلا تاريخ إصدار: المصادر التالية");
+ok(eq(issuedDateFallback({ preambleHijri: null, issuanceHijri: null, issuanceGregorian: "2007-05-27" }), { hijri: null, gregorian: "2007-05-27", source: "legal_system_issuance" }), "I-3 legal_system_issuance بميلادي وحده");
+ok(needsIssuedFallback(pair) && needsIssuedFallback(null) && !needsIssuedFallback(companies) && !needsIssuedFallback(tasattur), "I-4 needsIssuedFallback: لا بطاقة أو تاريخها نائب فقط");
+// بطاقة /legal: السطر يسقط إلى المصادر التالية بدل الإخفاء.
+ok(eq(lawCardDateLines(pair, fbIss), { issued: "1372/03/15 هـ الموافق: 04/12/1952 م", published: null }), "L-5 /legal الزوج النائب: صف الإصدار من legal_system_issuance، والنشر النائب مخفي");
+ok(eq(lawCardDateLines(pair, fbPre), { issued: "1443/5/26 هـ", published: null }), "L-5 /legal الزوج النائب ومقدمة: صف الإصدار من وحدات المقدمة");
+ok(eq(lawCardDateLines(null, fbIss), { issued: "1372/03/15 هـ الموافق: 04/12/1952 م", published: null }), "L-5 /legal بلا بطاقة: صف الإصدار من legal_system_issuance");
+ok(eq(lawCardDateLines(companies, fbIss), lawCardDateLines(companies)) && eq(lawCardDateLines(pair, fbNone), { issued: null, published: null }), "L-5 بطاقة حقيقية لا تتأثر، والنائب بلا مصدر يبقى مخفيًا");
+// hakeem_get_article (نقي): البطاقة النائبة كما يقرؤها loadLawCardIssuance.
+const naqaba = { issued_hijri: "1372/01/01", issued_gregorian: "1952-09-20", published_hijri: "1372/01/01", published_gregorian: "1952-09-20", instruments: [] };
+ok(articleIssuance(null, naqaba).issuedDateH === null, "A-1 نقابة السيارات: issued_date_h = null لا 1372/01/01");
+ok(articleIssuance(null, { ...naqaba, fallback: fbIss }).issuedDateH === "1372/03/15" && articleIssuance(null, { ...naqaba, fallback: fbPre }).issuedDateH === "1443/5/26", "A-1 النائب يسقط إلى مصادر الصفحة (المقدمة ← legal_system_issuance)");
+ok(issuanceFromCard({ issued_hijri: null, instruments: [], fallback: fbIss }).issuedDateH === "1372/03/15", "A-2 بلا بطاقة (صف المصادر وحدها): legal_system_issuance");
+ok(issuanceFromCard({ issued_hijri: "1443/12/01", instruments: [], published_hijri: "1443/12/23", fallback: fbIss }).issuedDateH === "1443/12/01", "A-2 بطاقة حقيقية: تاريخها لا المصادر التالية");
+ok(issuanceFromCard({ issued_hijri: null, instruments: [{ text: "مرسوم ملكي رقم (م/43) وتاريخ 1443/5/26هـ" }], fallback: fbIss }).issuedDateH?.includes("1443") === true, "A-2 HKM-053 باقٍ: بطاقة بلا تاريخ إصدار ← من نص أول أداة قبل المصادر التالية");
+// النفاذ الموثّق للخلف.
+ok(backedEffectiveDate({ stored: "2022-08-11", storedBacked: true, card: card("1443/09/19", "2022-04-20", "1443/10/12", "2022-05-13") }) === "2022-08-11", "B-1 نفاذ الخلف بسند: يُعتمد (التسجيل العيني 2022-08-11)");
+ok(backedEffectiveDate({ stored: "2025-09-01", storedBacked: false, card: null }) === null && backedEffectiveDate({ stored: null, storedBacked: true, card: null }) === null, "B-1 بلا سند أو بلا مخزّن: null (لا سقوط إلى وجه البحث)");
+ok(backedEffectiveDate({ stored: "1952-09-20", storedBacked: true, card: pair }) === null && backedEffectiveDate({ stored: "1391-06-25", storedBacked: true, card: null }) === null, "B-1 نائب أو سنة < 1900: null");
+
+// ── HKM-064: الربط في الصفحات (مصدر الكود): البطاقة تمرّر المصادر التالية، والشريط يقرأ عنوانه من الدالة النقية ──
+const legalPage = fs.readFileSync("app/legal/[slug]/page.tsx", "utf8");
+const lawCardTsx = fs.readFileSync("components/legal/LawCard.tsx", "utf8");
+const lawDocument = fs.readFileSync("components/law/LawDocument.tsx", "utf8");
+ok(/needsIssuedFallback\(card\)/.test(legalPage) && /loadIssuedDateFallbacks\(prismaSqlClient\(prisma\), system\.id\)/.test(legalPage) && /issuedFallbacks=\{issuedFallbacks\}/.test(legalPage), "W-1 /legal/<slug>: يقرأ مصادر الإصدار التالية حين يلزم ويمرّرها إلى البطاقة");
+ok(/lawCardDateLines\(card, issuedFallbacks\)/.test(lawCardTsx), "W-1 LawCardPanel: السطر من lawCardDateLines(card, issuedFallbacks)");
+ok(/\{repealBannerHeading\(r\)\}/.test(lawDocument) && !/<Ban aria-hidden size=\{20\} \/> هذا النظام لاغٍ/.test(lawDocument), "W-2 شريط /law: العنوان من repealBannerHeading لا «هذا النظام لاغٍ» ثابتًا");
 
 // ── الحكم الباقي ──
 ok(isRetainedProvision(RETAINED_PROVISIONS_STATUS, "ساري"), "R-1 «ملغى مع بقاء أحكام محددة مؤقتًا» + سجل المادة «ساري»: سارية");

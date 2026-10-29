@@ -188,9 +188,32 @@ export const REPEAL_TYPE_LABEL: Record<RepealType, string> = {
   express_partial: "إلغاء صريح جزئي",
   replacement: "إحلال نظام محل نظام",
   express_total: "إلغاء صريح كلي",
+  express_total_with_retained: "إلغاء مع بقاء أحكام محددة مؤقتًا",
   temporal: "انتهاء مدة",
   implicit: "إلغاء ضمني معتمد",
 };
+
+// ── HKM-064: نظام «ملغى مع بقاء أحكام محددة مؤقتًا» ─────────────────────────────────
+export const RETAINED_REPEAL_HEADLINE = "أُلغي هذا النظام مع استمرار العمل بأحكام محددة منه مؤقتًا";
+
+/** «المادة (47)»، «المادتان (5) و(7)»، «المواد (5) و(7) و(9)» بوسم المادة (المكررة «(12 مكرر)»)؛ [] = "". */
+export function retainedArticlesPhrase(list: ReadonlyArray<{ label: string }>): string {
+  const refs = list.map((a) => `(${a.label})`);
+  if (!refs.length) return "";
+  if (refs.length === 1) return `المادة ${refs[0]}`;
+  return `${refs.length === 2 ? "المادتان" : "المواد"} ${refs.join(" و")}`;
+}
+
+/** سطر النظام الباقية أحكامه: «أُلغي هذا النظام مع استمرار العمل بأحكام محددة منه مؤقتًا: المادة (47)». بلا قائمة: بنقطة. */
+export function retainedRepealSentence(r: Pick<RepealInfo, "retainedArticles">): string {
+  const phrase = retainedArticlesPhrase(r.retainedArticles ?? []);
+  return phrase ? `${RETAINED_REPEAL_HEADLINE}: ${phrase}` : `${RETAINED_REPEAL_HEADLINE}.`;
+}
+
+/** عنوان شريط إلغاء النظام: «هذا النظام لاغٍ»، إلا الباقية أحكامه فسطرها كاملًا (لا يناقض المادة الباقية «ساري»). */
+export function repealBannerHeading(r: Pick<RepealInfo, "type" | "retainedArticles">): string {
+  return r.type === "express_total_with_retained" ? retainedRepealSentence(r) : "هذا النظام لاغٍ";
+}
 
 /** سطر بيان الإلغاء (ع-٧أ): لا يُخترع ما لا تحمله البيانات. */
 export function repealSentence(r: RepealInfo): string {
