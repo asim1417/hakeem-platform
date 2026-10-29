@@ -3,13 +3,25 @@
 /**
  * أصل الروابط القانونية (canonical وغيرها) وقت البناء.
  * NEXT_PUBLIC_ يُحسم عند build — مصدر canonical فقط، لا يتحكم وحده بـ Server Actions.
+ * HKM-061: نفس قاعدة lib/modules/config/site-url.ts — قيمة على *.vercel.app تُتجاوز كأنها
+ * غير مضبوطة، والاحتياط https://hakeemai.net.
  */
 function resolveSiteUrl() {
-  const raw = (process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXTAUTH_URL || "").trim();
-  const fallback = "https://hakeem-platform.vercel.app";
-  const normalized = (raw || fallback).replace(/\/+$/, "");
-  if (!/^https?:\/\//i.test(normalized)) return `https://${normalized}`;
-  return normalized;
+  const fallback = "https://hakeemai.net";
+  for (const candidate of [process.env.NEXT_PUBLIC_SITE_URL, process.env.NEXTAUTH_URL]) {
+    const trimmed = (candidate || "").trim();
+    if (!trimmed) continue;
+    const withProto = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+    let host = "";
+    try {
+      host = new URL(withProto).hostname.toLowerCase();
+    } catch {
+      continue;
+    }
+    if (!host || host === "vercel.app" || host.endsWith(".vercel.app")) continue;
+    return withProto.replace(/\/+$/, "");
+  }
+  return fallback;
 }
 
 function hostFromUrlOrHost(raw) {
@@ -34,6 +46,8 @@ function resolveServerActionOrigins() {
   const base = [
     "localhost:3000",
     "hakeem-platform.vercel.app",
+    "hakeemai.net",
+    "www.hakeemai.net",
     "hakeemsa.com",
     "www.hakeemsa.com",
   ];

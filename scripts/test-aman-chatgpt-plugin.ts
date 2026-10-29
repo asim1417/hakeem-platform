@@ -39,8 +39,19 @@ const defaultPolicies = buildAmanServiceCard({
 });
 assert.deepEqual(
   defaultPolicies.policy_links.map((link) => link.href),
-  ["https://hakeem-platform.vercel.app/privacy", "https://hakeem-platform.vercel.app/terms"]
+  ["https://hakeemai.net/privacy", "https://hakeemai.net/terms"]
 );
+
+// HKM-061: قيمة بيئة قديمة على نطاق Vercel تبقى مقبولة (مضيف حكيم معروف)، ونطاق غريب يسقط للافتراضي.
+process.env.AMAN_PRIVACY_URL = "https://hakeem-platform.vercel.app/privacy";
+process.env.AMAN_TERMS_URL = "https://evil.example/terms";
+const legacyPolicies = buildAmanServiceCard({ legal_area: "general", urgency: "normal" });
+assert.deepEqual(
+  legacyPolicies.policy_links.map((link) => link.href),
+  ["https://hakeem-platform.vercel.app/privacy", "https://hakeemai.net/terms"]
+);
+process.env.AMAN_PRIVACY_URL = "";
+process.env.AMAN_TERMS_URL = "";
 
 assert.match(AMAN_TRIAGE_WIDGET_HTML, /ui\/initialize/);
 assert.match(AMAN_TRIAGE_WIDGET_HTML, /ui\/notifications\/tool-result/);
