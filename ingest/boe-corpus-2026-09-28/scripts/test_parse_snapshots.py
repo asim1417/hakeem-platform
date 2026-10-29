@@ -1,4 +1,4 @@
-"""HKM-056: محلل لقطات الهيئة — التاريخ الوهمي /01/01، وإسناد الملاحظة لمادتها، والبطاقة من رأس النسخة الحالية.
+"""HKM-056 (وتعديلات HKM-057): محلل لقطات الهيئة — التاريخ الوهمي /01/01، وإسناد الملاحظة لمادتها، والبطاقة من رأس النسخة الحالية.
 python3 -m unittest scripts/test_parse_snapshots.py (من مجلد اللقطة). صفحات اصطناعية بصيغة الهيئة؛ لا شبكة ولا قاعدة.
 """
 import pathlib
@@ -39,10 +39,25 @@ class IssueDate(unittest.TestCase):
         self.assertEqual(instrument_date_hijri(["مرسوم ملكي رقم ( م/50) وتاريخ 1439/5/28هـ"]), "1439/05/28")
         self.assertEqual(instrument_date_hijri(["مرسوم ملكي رقم م/٤٥ بتاريخ ٥ / ٨ / ١٣٩٢"]), "1392/08/05")
 
-    def test_instrument_prefers_decree_and_skips_placeholder(self):
-        got = instrument_date_hijri(["ملحق بتاريخ 1 / 1 / 1400", "مرسوم ملكي رقم م/1 بتاريخ 1 / 1 / 1400", "قرار مجلس الوزراء رقم 9 بتاريخ 7 / 2 / 1400"])
-        self.assertEqual(got, "1400/02/07")
+    def test_instrument_prefers_decree_then_order_then_cabinet(self):
+        # HKM-057: الأولوية بنوع السند لا بترتيبه في البطاقة؛ وأداة بلا «مرسوم/أمر/قرار … رقم» لا تحدد تاريخ الإصدار.
+        got = instrument_date_hijri(["قرار مجلس الوزراء رقم 9 بتاريخ 7 / 2 / 1400", "ملحق بتاريخ 2 / 2 / 1400", "مرسوم ملكي رقم م/1 بتاريخ 9 / 3 / 1400"])
+        self.assertEqual(got, "1400/03/09")
+        self.assertEqual(instrument_date_hijri(["أمر ملكي رقم أ/1 بتاريخ 3 / 4 / 1400", "قرار مجلس الوزراء رقم 9 بتاريخ 7 / 2 / 1400"]), "1400/04/03")
+        self.assertIsNone(instrument_date_hijri(["ملحق بتاريخ 2 / 2 / 1400"]))
         self.assertIsNone(instrument_date_hijri(["بلا تاريخ"]))
+
+    def test_instrument_jan1_is_a_real_date(self):
+        # سند الإصدار نفسه بتاريخ 1/1 (نظام مكافحة التستر م/4 وتاريخ 1442/1/1هـ) تاريخ حقيقي لا يُتخطى.
+        self.assertEqual(instrument_date_hijri(["مرسوم ملكي رقم (م/4) وتاريخ 1442/1/1هـ", "قرار مجلس الوزراء رقم (785) وتاريخ 1441/12/28هـ."]), "1442/01/01")
+
+    def test_instrument_number_is_not_read_as_date(self):
+        self.assertEqual(instrument_date_hijri(["مرسوم ملكي رقم 17 /2 /28 /8634 بتاريخ 29 / 6 / 1370"]), "1370/06/29")
+
+    def test_placeholder_confirmed_by_real_jan1_instrument(self):
+        law = parse_page(page("1442/01/01 هـ الموافق : 20/08/2020 مـ", ["مرسوم ملكي رقم (م/4) وتاريخ 1442/1/1هـ", "قرار مجلس الوزراء رقم (785) وتاريخ 1441/12/28هـ."]), None)["law"]
+        self.assertEqual((law["issued_hijri"], law["issued_gregorian"]), ("1442/01/01", "2020-08-20"))
+        self.assertIn("issued_placeholder:confirmed_by_instrument", law["parse_flags"])
 
     def test_placeholder_replaced_from_instrument(self):
         law = parse_page(page("1423/01/01 هـ  الموافق : 15/03/2002 مـ", ["قرار مجلس الوزراء رقم 78 بتاريخ 29 / 3 / 1423"]), None)["law"]
