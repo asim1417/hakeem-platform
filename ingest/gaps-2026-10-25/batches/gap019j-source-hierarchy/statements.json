@@ -1,0 +1,161 @@
+{
+ "by": "gap019j-source-hierarchy-2026-10-29",
+ "md5": "92939d3032bb9f63876b9d616c00e7fa",
+ "count": 34,
+ "expect_delta": {},
+ "report": {
+  "corrected": 16,
+  "new_articles": 0,
+  "changed_text": 0,
+  "plan": [
+   {
+    "item": "EH-04",
+    "name": "نظام الأحوال المدنية",
+    "old": "1986-12-21",
+    "new": "1987-12-29",
+    "src": "boe"
+   },
+   {
+    "item": "EH-05",
+    "name": "نظام التجارة الإلكترونية",
+    "old": "2019-07-10",
+    "new": "2019-10-22",
+    "src": "boe"
+   },
+   {
+    "item": "EH-06",
+    "name": "نظام التعاملات الإلكترونية",
+    "old": "2007-03-27",
+    "new": "2007-08-15",
+    "src": "boe"
+   },
+   {
+    "item": "EH-08",
+    "name": "نظام السياحة",
+    "old": "2022-08-24",
+    "new": "2022-12-01",
+    "src": "boe"
+   },
+   {
+    "item": "EH-10",
+    "name": "نظام المشاركة بالوقت فى الوحدات العقارية السياحية",
+    "old": "2006-09-13",
+    "new": "2007-01-04",
+    "src": "boe"
+   },
+   {
+    "item": "EH-11",
+    "name": "نظام المنافسات و المشتريات الحكومية",
+    "old": "2019-07-16",
+    "new": "2019-11-29",
+    "src": "boe"
+   },
+   {
+    "item": "EH-12",
+    "name": "نظام مزاولة نقل النقود والمعادن الثمينة والمستندات ذات القيمة",
+    "old": "2007-10-30",
+    "new": "2008-02-07",
+    "src": "boe"
+   },
+   {
+    "item": "EH-13",
+    "name": "نظام مقدمي خدمة حجاج الخارج",
+    "old": "2019-05-22",
+    "new": "2019-09-04",
+    "src": "boe"
+   },
+   {
+    "item": "EH-14",
+    "name": "نظام مكافحة التدخين",
+    "old": "2015-05-17",
+    "new": "2016-06-07",
+    "src": "boe"
+   },
+   {
+    "item": "EH-15",
+    "name": "نظام وحدات الإخصاب والأجنة وعلاج العقم",
+    "old": "2004-01-13",
+    "new": "2005-04-23",
+    "src": "boe"
+   },
+   {
+    "item": "EH-17",
+    "name": "اللائحة التنظيمية للخيل العربية الأصيلة",
+    "old": "2021-02-02",
+    "new": "2021-04-13",
+    "src": "boe"
+   },
+   {
+    "item": "EH-21",
+    "name": "تنظيم المركز الوطني للوقاية من الآفات النباتية والأمراض الحيوانية ومكافحتها",
+    "old": "2020-10-20",
+    "new": "2020-12-29",
+    "src": "boe"
+   },
+   {
+    "item": "EH-26",
+    "name": "لائحة المحافظة على الذوق العام",
+    "old": "2019-04-09",
+    "new": "2019-05-24",
+    "src": "boe"
+   },
+   {
+    "item": "EH-22",
+    "name": "تنظيم مجمع الملك عبدالعزيز للمكتبات الوقفية",
+    "old": "2016-06-20",
+    "new": "2016-10-06",
+    "src": "nezams"
+   },
+   {
+    "item": "EH-29",
+    "name": "لائحة دور الرعاية الاجتماعية",
+    "old": "2013-07-22",
+    "new": "2013-11-28",
+    "src": "nezams"
+   },
+   {
+    "item": "EH-30",
+    "name": "لائحة ضوابط دخول القوارب (السنابيك) إلى موانئ المملكة العربية السعودية والغرامات المترتبة",
+    "old": "1989-03-27",
+    "new": "1989-08-17",
+    "src": "nezams"
+   }
+  ]
+ },
+ "statements": [
+  "SELECT CASE WHEN (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p6fi001acwg2ehow43p6$hk$)=$hk$1986-12-21$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pp22003wcwg2im4anrwe$hk$)=$hk$2019-07-10$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rukt00d8cwg2rfcui7dx$hk$)=$hk$2007-03-27$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qpx60093cwg2s61a70w1$hk$)=$hk$2022-08-24$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pfcu002jcwg26jwpyb8r$hk$)=$hk$2006-09-13$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pp91003xcwg2wx5rgsnx$hk$)=$hk$2019-07-16$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p70g001dcwg21qthrdfd$hk$)=$hk$2007-10-30$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q131005lcwg2dfyk010b$hk$)=$hk$2019-05-22$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qy3p00a8cwg26w5c4r7j$hk$)=$hk$2015-05-17$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qusx009scwg2n2mjrh6v$hk$)=$hk$2004-01-13$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qqp70097cwg2sfu5iv9m$hk$)=$hk$2021-02-02$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qh04007ucwg2yvj0u1ev$hk$)=$hk$2020-10-20$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qod8008vcwg2a32ppc5d$hk$)=$hk$2019-04-09$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q0w2005kcwg2pnygdwuf$hk$)=$hk$2016-06-20$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rdoh00bucwg2shyeh0uw$hk$)=$hk$2013-07-22$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rwtp00decwg205jpy10g$hk$)=$hk$1989-03-27$hk$::date AND (SELECT count(*) FROM legal_text_provenance WHERE id LIKE 'g19jp-%')=0 THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard_before",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19jp-8498b8235b27f67d53bda0f1$hk$, 'system', $hk$cmpz5p6fi001acwg2ehow43p6$hk$, $hk$نظام الأحوال المدنية$hk$, NULL, $hk$boe$hk$, $hk$gap019j-source-hierarchy-2026-10-29$hk$, $hk$https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/7e2b99b1-0e84-4dd1-90c7-a9a700f18cdf/1$hk$, $hk$bd351f4f457fe48e1408320c3e7ca70b$hk$, DATE '2026-10-29', $hk$effective_from_corrected:1986-12-21->1987-12-29$hk$, $hk$HKM-052 gap019j-source-hierarchy-2026-10-29: عبارة النفاذ: «ينشر هذا النظام في الجريدة الرسمية، ويعمل به بعد مضي سنة من تاريخ نشره في الجريدة الرسمية» — النشر 1407/05/09هـ (بطاقة هيئة الخبراء (فُتحت في كروم 29/10)) + سنة هجرية = 1987-12-29؛ وكان المخزن 1986-12-21 (تاريخ الصدور) [ترتيب المصادر بقرار المالك 29/10]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19jp-8498b8235b27f67d53bda0f1$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19jp-3dd45250dd1fb26fe9ac22bb$hk$, 'system', $hk$cmpz5pp22003wcwg2im4anrwe$hk$, $hk$نظام التجارة الإلكترونية$hk$, NULL, $hk$boe$hk$, $hk$gap019j-source-hierarchy-2026-10-29$hk$, $hk$https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/360de590-0286-4fa5-a243-aa9100c31979/1$hk$, $hk$73a8b6bda4ac267d8c11dc25265bd251$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2019-07-10->2019-10-22$hk$, $hk$HKM-052 gap019j-source-hierarchy-2026-10-29: عبارة النفاذ: «يعمل بالنظام بعد مضي (تسعين) يوماً من تاريخ نشره في الجريدة الرسمية.» — النشر 1440/11/21هـ (بطاقة هيئة الخبراء (فُتحت في كروم 29/10)) + 90 يومًا = 2019-10-22؛ وكان المخزن 2019-07-10 (تاريخ الصدور) [ترتيب المصادر بقرار المالك 29/10]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19jp-3dd45250dd1fb26fe9ac22bb$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19jp-4740f7fea211e7690fe2b23a$hk$, 'system', $hk$cmpz5rukt00d8cwg2rfcui7dx$hk$, $hk$نظام التعاملات الإلكترونية$hk$, NULL, $hk$boe$hk$, $hk$gap019j-source-hierarchy-2026-10-29$hk$, $hk$https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/6f509360-2c39-4358-ae2a-a9a700f2ed16/1$hk$, $hk$6276f7a73c5aa5cbbe51d7e3e2b28e5d$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2007-03-27->2007-08-15$hk$, $hk$HKM-052 gap019j-source-hierarchy-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام بعد (مائة وعشرين) يوما من تاريخ نشره في الجريدة الرسمية.» — النشر 1428/03/29هـ (بطاقة هيئة الخبراء (فُتحت في كروم 29/10)) + 120 يومًا = 2007-08-15؛ وكان المخزن 2007-03-27 (تاريخ الصدور) [ترتيب المصادر بقرار المالك 29/10]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19jp-4740f7fea211e7690fe2b23a$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19jp-1194bc3f100d226eece04178$hk$, 'system', $hk$cmpz5qpx60093cwg2s61a70w1$hk$, $hk$نظام السياحة$hk$, NULL, $hk$boe$hk$, $hk$gap019j-source-hierarchy-2026-10-29$hk$, $hk$https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/7d777c66-d28b-43de-9305-af23013b1738/1$hk$, $hk$6cc278f42a72a66fff2d461d9d9c95fc$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2022-08-24->2022-12-01$hk$, $hk$HKM-052 gap019j-source-hierarchy-2026-10-29: عبارة النفاذ: «يعمل بالنظام بعد مضي (تسعين) يوماً من تاريخ نشره في الجريدة الرسمية.» — النشر 1444/02/06هـ (بطاقة هيئة الخبراء (فُتحت في كروم 29/10)) + 90 يومًا = 2022-12-01؛ وكان المخزن 2022-08-24 (تاريخ الصدور) [ترتيب المصادر بقرار المالك 29/10]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19jp-1194bc3f100d226eece04178$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19jp-7a3358586691ba8107087709$hk$, 'system', $hk$cmpz5pfcu002jcwg26jwpyb8r$hk$, $hk$نظام المشاركة بالوقت فى الوحدات العقارية السياحية$hk$, NULL, $hk$boe$hk$, $hk$gap019j-source-hierarchy-2026-10-29$hk$, $hk$https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/3ab82e3c-de46-4463-a939-a9a700f1b2af/1$hk$, $hk$fc12b8b596b5b8e17909ba33d0dcd8fb$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2006-09-13->2007-01-04$hk$, $hk$HKM-052 gap019j-source-hierarchy-2026-10-29: عبارة النفاذ: «6– ينشر هذا النظام في الجريدة الرسمية، ويعمل به بعد تسعين يومًا من تاريخ نشره.» — النشر 1427/09/13هـ (بطاقة هيئة الخبراء (فُتحت في كروم 29/10)) + 90 يومًا = 2007-01-04؛ وكان المخزن 2006-09-13 (تاريخ الصدور) [ترتيب المصادر بقرار المالك 29/10]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19jp-7a3358586691ba8107087709$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19jp-3f10d8265c25ce3e3bb03a09$hk$, 'system', $hk$cmpz5pp91003xcwg2wx5rgsnx$hk$, $hk$نظام المنافسات و المشتريات الحكومية$hk$, NULL, $hk$boe$hk$, $hk$gap019j-source-hierarchy-2026-10-29$hk$, $hk$https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/24c563f9-7292-49c8-b0fb-aa9800b999f1/1$hk$, $hk$07ce7c9aa6ac1014c2f8ce0878d1ab0e$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2019-07-16->2019-11-29$hk$, $hk$HKM-052 gap019j-source-hierarchy-2026-10-29: عبارة النفاذ: «يعمل بالنظام بعد مضي (مائة وعشرين) يوماً من تاريخ نشره في الجريدة الرسمية.» — النشر 1440/11/29هـ (بطاقة هيئة الخبراء (فُتحت في كروم 29/10)) + 120 يومًا = 2019-11-29؛ وكان المخزن 2019-07-16 (تاريخ الصدور) [ترتيب المصادر بقرار المالك 29/10]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19jp-3f10d8265c25ce3e3bb03a09$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19jp-c4db73b9fe855ef09503146c$hk$, 'system', $hk$cmpz5p70g001dcwg21qthrdfd$hk$, $hk$نظام مزاولة نقل النقود والمعادن الثمينة والمستندات ذات القيمة$hk$, NULL, $hk$boe$hk$, $hk$gap019j-source-hierarchy-2026-10-29$hk$, $hk$https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/2640f5ff-1f7b-49fc-a57c-a9a700f192c9/1$hk$, $hk$7da4f4270e190986e4e645f70d6808d3$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2007-10-30->2008-02-07$hk$, $hk$HKM-052 gap019j-source-hierarchy-2026-10-29: عبارة النفاذ: «ينشر هذا النظام في الجريدة الرسمية، ويعمل به بعد تسعين يوما من تاريخ نشره، ويلغي كل ما يتعارض معه من أحكام.» — النشر 1428/10/28هـ (بطاقة هيئة الخبراء (فُتحت في كروم 29/10)) + 90 يومًا = 2008-02-07؛ وكان المخزن 2007-10-30 (تاريخ الصدور) [ترتيب المصادر بقرار المالك 29/10]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19jp-c4db73b9fe855ef09503146c$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19jp-31892f9dbdcb200cdfd16e52$hk$, 'system', $hk$cmpz5q131005lcwg2dfyk010b$hk$, $hk$نظام مقدمي خدمة حجاج الخارج$hk$, NULL, $hk$boe$hk$, $hk$gap019j-source-hierarchy-2026-10-29$hk$, $hk$https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/962235c2-9fa8-4c1a-b835-aa6400dd851e/1$hk$, $hk$72c7eab5b72b38bbcb50c7e65b07c520$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2019-05-22->2019-09-04$hk$, $hk$HKM-052 gap019j-source-hierarchy-2026-10-29: عبارة النفاذ: «يعمل بالنظام بعد تسعين يوماً من تاريخ نشره في الجريدة الرسمية.» — النشر 1440/10/03هـ (بطاقة هيئة الخبراء (فُتحت في كروم 29/10)) + 90 يومًا = 2019-09-04؛ وكان المخزن 2019-05-22 (تاريخ الصدور) [ترتيب المصادر بقرار المالك 29/10]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19jp-31892f9dbdcb200cdfd16e52$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19jp-7f4abc00784f03619a699f8d$hk$, 'system', $hk$cmpz5qy3p00a8cwg26w5c4r7j$hk$, $hk$نظام مكافحة التدخين$hk$, NULL, $hk$boe$hk$, $hk$gap019j-source-hierarchy-2026-10-29$hk$, $hk$https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/93b6f7f3-1083-46e7-b30e-a9a700f291b0/1$hk$, $hk$1ab7affa78ad991f8b1667baa5846adc$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2015-05-17->2016-06-07$hk$, $hk$HKM-052 gap019j-source-hierarchy-2026-10-29: عبارة النفاذ: «يعمل بهذا النظام بعد سنة من تاريخ نشره في الجريدة الرسمية.» — النشر 1436/09/02هـ (بطاقة هيئة الخبراء (فُتحت في كروم 29/10)) + سنة هجرية = 2016-06-07؛ وكان المخزن 2015-05-17 (تاريخ الصدور) [ترتيب المصادر بقرار المالك 29/10]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19jp-7f4abc00784f03619a699f8d$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19jp-ba85e9689353e9def2d8f3c2$hk$, 'system', $hk$cmpz5qusx009scwg2n2mjrh6v$hk$, $hk$نظام وحدات الإخصاب والأجنة وعلاج العقم$hk$, NULL, $hk$boe$hk$, $hk$gap019j-source-hierarchy-2026-10-29$hk$, $hk$https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/4943163b-a079-4beb-b544-a9a700f286b1/1$hk$, $hk$071b85783f8e40994a095343c45222ac$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2004-01-13->2005-04-23$hk$, $hk$HKM-052 gap019j-source-hierarchy-2026-10-29: عبارة النفاذ: «ينشر هذا النظام في الجريدة الرسمية، ويعمل به بعد مئة وعشرين يومًا من تاريخ نشره، وعلى وحدات الإخصاب والأجنة وعلاج العقم القائمة وقت صدوره استكمال الشروط والمتطلبات اللازمة وتصحيح أوضاعها خلال مئة وعشر» — النشر 1425/11/12هـ (بطاقة هيئة الخبراء (فُتحت في كروم 29/10)) + 120 يومًا = 2005-04-23؛ وكان المخزن 2004-01-13 (تاريخ الصدور) [ترتيب المصادر بقرار المالك 29/10]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19jp-ba85e9689353e9def2d8f3c2$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19jp-d7e97cec410e4b7cb8c57477$hk$, 'system', $hk$cmpz5qqp70097cwg2sfu5iv9m$hk$, $hk$اللائحة التنظيمية للخيل العربية الأصيلة$hk$, NULL, $hk$boe$hk$, $hk$gap019j-source-hierarchy-2026-10-29$hk$, $hk$https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/0b5b0f37-b2c9-4b3f-8657-acce001690f5/1$hk$, $hk$f093050331d75a6d1e26012d05dd9561$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2021-02-02->2021-04-13$hk$, $hk$HKM-052 gap019j-source-hierarchy-2026-10-29: عبارة النفاذ: «تنشر اللائحة في الجريدة الرسمية، ويعمل بها بعد (ستين) يوماً من تاريخ نشرها.» — النشر 1442/06/30هـ (بطاقة هيئة الخبراء (فُتحت في كروم 29/10)) + 60 يومًا = 2021-04-13؛ وكان المخزن 2021-02-02 (تاريخ الصدور) [ترتيب المصادر بقرار المالك 29/10]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19jp-d7e97cec410e4b7cb8c57477$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19jp-e1c4adbc0113ff313609aaf9$hk$, 'system', $hk$cmpz5qh04007ucwg2yvj0u1ev$hk$, $hk$تنظيم المركز الوطني للوقاية من الآفات النباتية والأمراض الحيوانية ومكافحتها$hk$, NULL, $hk$boe$hk$, $hk$gap019j-source-hierarchy-2026-10-29$hk$, $hk$https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/82e66c29-bff3-4e5e-abfd-ac6d00a50895/1$hk$, $hk$b377bdf77579c95af11b668ef62de5f3$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2020-10-20->2020-12-29$hk$, $hk$HKM-052 gap019j-source-hierarchy-2026-10-29: عبارة النفاذ: «ينشر التنظيم في الجريدة الرسمية، ويعمل به بعد مضي (60) يوماً من تاريخ نشره.» — النشر 1442/03/13هـ (بطاقة هيئة الخبراء (فُتحت في كروم 29/10)) + 60 يومًا = 2020-12-29؛ وكان المخزن 2020-10-20 (تاريخ الصدور) [ترتيب المصادر بقرار المالك 29/10]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19jp-e1c4adbc0113ff313609aaf9$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19jp-9dda9fd1c2cb6385809f4d79$hk$, 'system', $hk$cmpz5qod8008vcwg2a32ppc5d$hk$, $hk$لائحة المحافظة على الذوق العام$hk$, NULL, $hk$boe$hk$, $hk$gap019j-source-hierarchy-2026-10-29$hk$, $hk$https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/3b96a591-47c8-4469-9abb-aa4700f1aa52/1$hk$, $hk$8f52e2d30d450e8b96f4f1e122b5d96d$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2019-04-09->2019-05-24$hk$, $hk$HKM-052 gap019j-source-hierarchy-2026-10-29: عبارة النفاذ: «تُنشر اللائحة في الجريدة الرسمية، ويعمل بها بعد (ثلاثين) يوماً من تاريخ نشرها.» — النشر 1440/08/19هـ (بطاقة هيئة الخبراء (فُتحت في كروم 29/10)) + 30 يومًا = 2019-05-24؛ وكان المخزن 2019-04-09 (تاريخ الصدور) [ترتيب المصادر بقرار المالك 29/10]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19jp-9dda9fd1c2cb6385809f4d79$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19jp-bd3ac291c5852b1c8217d6e9$hk$, 'system', $hk$cmpz5q0w2005kcwg2pnygdwuf$hk$, $hk$تنظيم مجمع الملك عبدالعزيز للمكتبات الوقفية$hk$, NULL, $hk$nezams$hk$, $hk$gap019j-source-hierarchy-2026-10-29$hk$, $hk$nezams.com$hk$, $hk$bb359fca3d5cbd7ccf9113642156d915$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2016-06-20->2016-10-06$hk$, $hk$HKM-052 gap019j-source-hierarchy-2026-10-29: عبارة النفاذ: «يعمل بهذا التنظيم بعد تسعين يوماً من تاريخ نشره في الجريدة الرسمية.» — النشر 1437-10-03هـ (نظما (تاريخ الهيئة نائب، وبحث المركز الوطني للوثائق لم يستجب، وأم القرى لا تفهرس العدد)) + 90 يومًا = 2016-10-06؛ وكان المخزن 2016-06-20 (تاريخ الصدور) [ترتيب المصادر بقرار المالك 29/10]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19jp-bd3ac291c5852b1c8217d6e9$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19jp-e03c30abd73853c4d550b8c3$hk$, 'system', $hk$cmpz5rdoh00bucwg2shyeh0uw$hk$, $hk$لائحة دور الرعاية الاجتماعية$hk$, NULL, $hk$nezams$hk$, $hk$gap019j-source-hierarchy-2026-10-29$hk$, $hk$nezams.com$hk$, $hk$e337455c9dff967beadeb61544e06d14$hk$, DATE '2026-10-29', $hk$effective_from_corrected:2013-07-22->2013-11-28$hk$, $hk$HKM-052 gap019j-source-hierarchy-2026-10-29: عبارة النفاذ: «تنشر هذه اللائحة في الجريدة الرسمية، ويعمل بها بعد تسعين يوماً من تاريخ نشرها، وتلغي كل ما يتعارض معها من أحكام.» — النشر 1434-10-23هـ (نظما (تاريخ الهيئة نائب، وبحث المركز الوطني للوثائق لم يستجب، وأم القرى لا تفهرس العدد)) + 90 يومًا = 2013-11-28؛ وكان المخزن 2013-07-22 (تاريخ الصدور) [ترتيب المصادر بقرار المالك 29/10]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19jp-e03c30abd73853c4d550b8c3$hk$)",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) SELECT $hk$g19jp-17e5f815ebbd4fb290ec50cc$hk$, 'system', $hk$cmpz5rwtp00decwg205jpy10g$hk$, $hk$لائحة ضوابط دخول القوارب (السنابيك) إلى موانئ المملكة العربية السعودية والغرامات المترتبة$hk$, NULL, $hk$nezams$hk$, $hk$gap019j-source-hierarchy-2026-10-29$hk$, $hk$nezams.com$hk$, $hk$3c236b748127b041588a6d23fbc7d94c$hk$, DATE '2026-10-29', $hk$effective_from_corrected:1989-03-27->1989-08-17$hk$, $hk$HKM-052 gap019j-source-hierarchy-2026-10-29: عبارة النفاذ: «ثالثا : احكام ختامية :\n١ - تتولى المؤسسة العامة للموانىء متابعة ومراقبة جميع حالات القوارب (السنابيك) وفقا للضوابط السابقة على ان يتم ضبط الوقائع والتحقيق فيها ومحاكمة المخالفين والتظلم من قرارات توقي» — النشر 1409-10-14هـ (نظما (تاريخ الهيئة نائب، وبحث المركز الوطني للوثائق لم يستجب، وأم القرى لا تفهرس العدد)) + 90 يومًا = 1989-08-17؛ وكان المخزن 1989-03-27 (تاريخ الصدور) [ترتيب المصادر بقرار المالك 29/10]$hk$ WHERE NOT EXISTS (SELECT 1 FROM legal_text_provenance WHERE id = $hk$g19jp-17e5f815ebbd4fb290ec50cc$hk$)",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$1987-12-29$hk$::timestamptz WHERE id = $hk$cmpz5p6fi001acwg2ehow43p6$hk$ AND preamble_effective_from::date = $hk$1986-12-21$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2019-10-22$hk$::timestamptz WHERE id = $hk$cmpz5pp22003wcwg2im4anrwe$hk$ AND preamble_effective_from::date = $hk$2019-07-10$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2007-08-15$hk$::timestamptz WHERE id = $hk$cmpz5rukt00d8cwg2rfcui7dx$hk$ AND preamble_effective_from::date = $hk$2007-03-27$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2022-12-01$hk$::timestamptz WHERE id = $hk$cmpz5qpx60093cwg2s61a70w1$hk$ AND preamble_effective_from::date = $hk$2022-08-24$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2007-01-04$hk$::timestamptz WHERE id = $hk$cmpz5pfcu002jcwg26jwpyb8r$hk$ AND preamble_effective_from::date = $hk$2006-09-13$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2019-11-29$hk$::timestamptz WHERE id = $hk$cmpz5pp91003xcwg2wx5rgsnx$hk$ AND preamble_effective_from::date = $hk$2019-07-16$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2008-02-07$hk$::timestamptz WHERE id = $hk$cmpz5p70g001dcwg21qthrdfd$hk$ AND preamble_effective_from::date = $hk$2007-10-30$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2019-09-04$hk$::timestamptz WHERE id = $hk$cmpz5q131005lcwg2dfyk010b$hk$ AND preamble_effective_from::date = $hk$2019-05-22$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2016-06-07$hk$::timestamptz WHERE id = $hk$cmpz5qy3p00a8cwg26w5c4r7j$hk$ AND preamble_effective_from::date = $hk$2015-05-17$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2005-04-23$hk$::timestamptz WHERE id = $hk$cmpz5qusx009scwg2n2mjrh6v$hk$ AND preamble_effective_from::date = $hk$2004-01-13$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2021-04-13$hk$::timestamptz WHERE id = $hk$cmpz5qqp70097cwg2sfu5iv9m$hk$ AND preamble_effective_from::date = $hk$2021-02-02$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2020-12-29$hk$::timestamptz WHERE id = $hk$cmpz5qh04007ucwg2yvj0u1ev$hk$ AND preamble_effective_from::date = $hk$2020-10-20$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2019-05-24$hk$::timestamptz WHERE id = $hk$cmpz5qod8008vcwg2a32ppc5d$hk$ AND preamble_effective_from::date = $hk$2019-04-09$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2016-10-06$hk$::timestamptz WHERE id = $hk$cmpz5q0w2005kcwg2pnygdwuf$hk$ AND preamble_effective_from::date = $hk$2016-06-20$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2013-11-28$hk$::timestamptz WHERE id = $hk$cmpz5rdoh00bucwg2shyeh0uw$hk$ AND preamble_effective_from::date = $hk$2013-07-22$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$1989-08-17$hk$::timestamptz WHERE id = $hk$cmpz5rwtp00decwg205jpy10g$hk$ AND preamble_effective_from::date = $hk$1989-03-27$hk$::date",
+  "SELECT CASE WHEN (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p6fi001acwg2ehow43p6$hk$)=$hk$1987-12-29$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pp22003wcwg2im4anrwe$hk$)=$hk$2019-10-22$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rukt00d8cwg2rfcui7dx$hk$)=$hk$2007-08-15$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qpx60093cwg2s61a70w1$hk$)=$hk$2022-12-01$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pfcu002jcwg26jwpyb8r$hk$)=$hk$2007-01-04$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pp91003xcwg2wx5rgsnx$hk$)=$hk$2019-11-29$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p70g001dcwg21qthrdfd$hk$)=$hk$2008-02-07$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q131005lcwg2dfyk010b$hk$)=$hk$2019-09-04$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qy3p00a8cwg26w5c4r7j$hk$)=$hk$2016-06-07$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qusx009scwg2n2mjrh6v$hk$)=$hk$2005-04-23$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qqp70097cwg2sfu5iv9m$hk$)=$hk$2021-04-13$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qh04007ucwg2yvj0u1ev$hk$)=$hk$2020-12-29$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qod8008vcwg2a32ppc5d$hk$)=$hk$2019-05-24$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q0w2005kcwg2pnygdwuf$hk$)=$hk$2016-10-06$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rdoh00bucwg2shyeh0uw$hk$)=$hk$2013-11-28$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rwtp00decwg205jpy10g$hk$)=$hk$1989-08-17$hk$::date AND (SELECT count(*) FROM legal_text_provenance WHERE id LIKE 'g19jp-%')=16 THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard_after"
+ ]
+}
