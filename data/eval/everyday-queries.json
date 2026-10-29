@@ -1,0 +1,176 @@
+{
+  "_about": "HKM-062: مجموعة ذهبية لأسئلة الناس (فصحى وعامية خليجية) لقياس hakeem_search عبر searchArticles نفسها (lib/mcp/adapter.ts). لكل سؤال المادة أو المواد التي تجيبه بمعرّفها في القاعدة، تحقق منها بقراءة نص المادة (SELECT قراءة فقط على Neon misty-base-66693229، الفرع br-rapid-salad-aq782ea2، 29/10/2026) لا من الذاكرة. expected: أي مادة منها في الترتيب k تُعدّ إصابة (hit@k)، وMRR من رتبة أول مادة متوقعة. gates: بوابات تسليم #943 التي لا يجوز أن تتراجع (لا تدخل في المتوسط العام). لا تُحذف حالة فاشلة؛ تُضاف حالات جديدة بإصدار جديد.",
+  "version": 1,
+  "verified_at": "2026-10-29",
+  "verified_by": "Claude (HKM-062)، قراءة نص المادة من legal_articles.content",
+  "queries": [
+    { "id": "labor-dismissal-no-reason", "query": "ابحث لي عن حق العامل اذا فصلوه بدون سبب", "register": "gulf", "domain": "عمل", "expected": [
+      { "article_id": "cmpzcv89s0aonvtrkog9eg9du", "law": "نظام العمل", "article": 77, "why": "إنهاء العقد لسبب غير مشروع: تعويض للطرف المتضرر" },
+      { "article_id": "cmpzcv89s0aoqvtrkvtuetnbq", "law": "نظام العمل", "article": 80, "why": "حالات فسخ صاحب العمل العقد دون مكافأة أو تعويض" } ] },
+    { "id": "labor-eos-award", "query": "كم مكافأة نهاية الخدمة", "register": "msa", "domain": "عمل", "expected": [
+      { "article_id": "cmpzcv89s0aouvtrkpaxwxu0a", "law": "نظام العمل", "article": 84, "why": "حساب مكافأة نهاية الخدمة" } ] },
+    { "id": "labor-resignation-award", "query": "اذا استقلت من الشغل وش استحق من المكافأة", "register": "gulf", "domain": "عمل", "expected": [
+      { "article_id": "cmpzcv89s0aovvtrkwl9o5bkv", "law": "نظام العمل", "article": 85, "why": "استحقاق المكافأة عند استقالة العامل" } ] },
+    { "id": "labor-annual-leave", "query": "كم يوم الإجازة السنوية للموظف في القطاع الخاص", "register": "msa", "domain": "عمل", "expected": [
+      { "article_id": "cmpzcv89s0apjvtrkxrn1m2d3", "law": "نظام العمل", "article": 109, "why": "الإجازة السنوية 21 يومًا ثم 30" } ] },
+    { "id": "labor-ramadan-hours", "query": "كم ساعات الدوام في رمضان", "register": "gulf", "domain": "عمل", "expected": [
+      { "article_id": "cmpzcv89s0ap8vtrkb60xp1ov", "law": "نظام العمل", "article": 98, "why": "تخفيض ساعات العمل في رمضان" } ] },
+    { "id": "labor-salary-deduction", "query": "هل يحق للشركة تخصم من راتبي بدون موافقتي", "register": "gulf", "domain": "عمل", "expected": [
+      { "article_id": "cmpzcv89s0ap2vtrkrk6t2c1m", "law": "نظام العمل", "article": 92, "why": "لا يجوز حسم مبلغ من أجر العامل دون موافقة خطية إلا في حالات" } ] },
+    { "id": "labor-probation", "query": "فترة التجربة في عقد العمل كم مدتها", "register": "msa", "domain": "عمل", "expected": [
+      { "article_id": "cmpzcv89r0anzvtrk2g05zwvu", "law": "نظام العمل", "article": 53, "why": "فترة التجربة لا تزيد على تسعين يومًا" } ] },
+    { "id": "labor-maternity-leave", "query": "إجازة الوضع للموظفة كم أسبوع", "register": "msa", "domain": "عمل", "expected": [
+      { "article_id": "cmpzcv89t0aqpvtrkltjps1uc", "law": "نظام العمل", "article": 151, "why": "إجازة الوضع للمرأة العاملة" } ] },
+    { "id": "labor-overtime-pay", "query": "أبغى أعرف كم أجر الساعات الإضافية", "register": "gulf", "domain": "عمل", "expected": [
+      { "article_id": "cmpzcv89s0aphvtrk829m6eux", "law": "نظام العمل", "article": 107, "why": "أجر ساعات العمل الإضافية: أجر الساعة + 50%" } ] },
+    { "id": "labor-dismissal-maternity", "query": "هل يقدر صاحب العمل يفصل الموظفة وهي في إجازة الولادة", "register": "gulf", "domain": "عمل", "expected": [
+      { "article_id": "cmpzcv89t0aqtvtrkim954vnt", "law": "نظام العمل", "article": 155, "why": "لا يجوز فصل العاملة أثناء إجازة الوضع" } ] },
+    { "id": "labor-unused-leave", "query": "تركت العمل وعندي إجازات ما أخذتها هل أستحق بدلها", "register": "gulf", "domain": "عمل", "expected": [
+      { "article_id": "cmpzcv89s0aplvtrkwo1p28e2", "law": "نظام العمل", "article": 111, "why": "أجرة أيام الإجازة المستحقة إذا ترك العمل قبل استعمالها" } ] },
+    { "id": "labor-leave-without-notice", "query": "متى يحق للعامل يترك الشغل بدون إشعار", "register": "gulf", "domain": "عمل", "expected": [
+      { "article_id": "cmpzcv89s0aorvtrk9jnewriu", "law": "نظام العمل", "article": 81, "why": "حالات ترك العامل العمل دون إشعار مع حقوقه" } ] },
+
+    { "id": "proc-appeal-deadline", "query": "كم مهلة الاستئناف", "register": "gulf", "domain": "مرافعات", "expected": [
+      { "article_id": "cmpwibhcj01x5nxffp1x6eoeh", "law": "نظام المرافعات الشرعية", "article": 187, "why": "مدة الاعتراض بطلب الاستئناف ثلاثون يومًا" },
+      { "article_id": "cmpwibepn01wpnxffv37mnsp0", "law": "نظام المرافعات الشرعية", "article": 179, "why": "بدء موعد الاعتراض على الحكم" } ] },
+    { "id": "proc-defendant-absent", "query": "وش يصير اذا ما حضر المدعى عليه الجلسة", "register": "gulf", "domain": "مرافعات", "expected": [
+      { "article_id": "cmpwiaa0w01pxnxffm5o7c8yq", "law": "نظام المرافعات الشرعية", "article": 57, "why": "غياب المدعى عليه عن الجلسة الأولى" } ] },
+    { "id": "proc-plaintiff-absent", "query": "اذا غاب المدعي عن الجلسة هل تنشطب القضية", "register": "gulf", "domain": "مرافعات", "expected": [
+      { "article_id": "cmpwia9d501ptnxffcwsf7w94", "law": "نظام المرافعات الشرعية", "article": 55, "why": "غياب المدعي: شطب الدعوى" } ] },
+    { "id": "proc-statement-of-claim", "query": "وش البيانات اللي لازم تكون في صحيفة الدعوى", "register": "gulf", "domain": "مرافعات", "expected": [
+      { "article_id": "cmpwia4l801p1nxff4246r3yk", "law": "نظام المرافعات الشرعية", "article": 41, "why": "رفع الدعوى بصحيفة وبياناتها" } ] },
+    { "id": "proc-reconsideration", "query": "متى أقدر أطلب التماس إعادة النظر في حكم نهائي", "register": "gulf", "domain": "مرافعات", "expected": [
+      { "article_id": "cmpwiblsm01xvnxffhbwinrep", "law": "نظام المرافعات الشرعية", "article": 200, "why": "أحوال التماس إعادة النظر" },
+      { "article_id": "cmpwibm4h01xxnxff089vyh0j", "law": "نظام المرافعات الشرعية", "article": 201, "why": "مدة التماس إعادة النظر" } ] },
+    { "id": "proc-objection-methods", "query": "وش طرق الاعتراض على الحكم", "register": "gulf", "domain": "مرافعات", "expected": [
+      { "article_id": "cmpwibdq401wjnxffh5uzuqex", "law": "نظام المرافعات الشرعية", "article": 176, "why": "طرق الاعتراض: الاستئناف والنقض والتماس إعادة النظر" } ] },
+
+    { "id": "civil-defect-car", "query": "اشتريت سيارة وطلع فيها عيب وش حقي", "register": "gulf", "domain": "معاملات مدنية", "expected": [
+      { "article_id": "cmpwif7gm02iznxffp0e1hlll", "law": "نظام المعاملات المدنية", "article": 338, "why": "ضمان البائع سلامة المبيع من العيب" } ] },
+    { "id": "civil-defect-limitation", "query": "كم مدة رفع دعوى ضمان العيب في المبيع", "register": "msa", "domain": "معاملات مدنية", "expected": [
+      { "article_id": "cmpwif9no02jbnxffgmuxtitm", "law": "نظام المعاملات المدنية", "article": 344, "why": "لا تسمع دعوى ضمان العيب بعد 180 يومًا" } ] },
+    { "id": "civil-ghabn", "query": "وش حكم الغبن في البيع", "register": "gulf", "domain": "معاملات مدنية", "expected": [
+      { "article_id": "cmpwicmuo0241nxffor8hhs2d", "law": "نظام المعاملات المدنية", "article": 69, "why": "تعريف الغبن وحكم الإبطال لمجرده" },
+      { "article_id": "cmpwicmiu023znxffkt8lgaf8", "law": "نظام المعاملات المدنية", "article": 68, "why": "الاستغلال المؤدي إلى غبن" } ] },
+    { "id": "civil-tort-car", "query": "واحد صدم سيارتي هل يلزمه التعويض", "register": "gulf", "domain": "معاملات مدنية", "expected": [
+      { "article_id": "cmpwid4r6026vnxff9lb1iezg", "law": "نظام المعاملات المدنية", "article": 120, "why": "كل خطأ سبب ضررًا للغير يلزم فاعله بالتعويض" } ] },
+    { "id": "civil-limitation-10y", "query": "الدين اللي له أكثر من عشر سنين هل تسمع الدعوى فيه", "register": "gulf", "domain": "معاملات مدنية", "expected": [
+      { "article_id": "cmpwiesqd02glnxfffsh59319", "law": "نظام المعاملات المدنية", "article": 295, "why": "عدم سماع الدعوى بانقضاء عشر سنوات" } ] },
+    { "id": "civil-penalty-clause", "query": "الشرط الجزائي في العقد هل تقدر المحكمة تخفضه", "register": "gulf", "domain": "معاملات مدنية", "expected": [
+      { "article_id": "cmpwidnt402a5nxff25apx50j", "law": "نظام المعاملات المدنية", "article": 179, "why": "للمحكمة إنقاص التعويض الاتفاقي المبالغ فيه" },
+      { "article_id": "cmpwidnbe02a3nxfflsc4qnxk", "law": "نظام المعاملات المدنية", "article": 178, "why": "تحديد مقدار التعويض مقدمًا في العقد" } ] },
+    { "id": "civil-rescission-breach", "query": "الطرف الثاني ما نفذ العقد هل أقدر أفسخ", "register": "gulf", "domain": "معاملات مدنية", "expected": [
+      { "article_id": "cmpwid0l10265nxfftz52wto1", "law": "نظام المعاملات المدنية", "article": 107, "why": "طلب تنفيذ العقد أو فسخه عند إخلال المتعاقد" } ] },
+    { "id": "civil-deposit-arboun", "query": "دفعت عربون وتراجعت عن الشراء هل أسترده", "register": "gulf", "domain": "معاملات مدنية", "expected": [
+      { "article_id": "cmpwiceg7022nnxffgemo4vt9", "law": "نظام المعاملات المدنية", "article": 44, "why": "دفع العربون وحق العدول وعدم استرداده" } ] },
+    { "id": "civil-area-excess", "query": "اشتريت أرض وطلعت مساحتها أكثر من المكتوب في العقد", "register": "gulf", "domain": "معاملات مدنية", "expected": [
+      { "article_id": "cmpwif2dq02i5nxff2p9tmpdx", "law": "نظام المعاملات المدنية", "article": 323, "why": "نقص المبيع أو زيادته عن المقدار المعين في العقد" } ] },
+    { "id": "rent-tenant-unpaid", "query": "المستأجر ما دفع الإيجار وش أسوي", "register": "gulf", "domain": "إيجار", "expected": [
+      { "article_id": "cmpwig1im02o1nxffmb9miju3", "law": "نظام المعاملات المدنية", "article": 429, "why": "التزام المستأجر بأداء الأجرة في مواعيدها" },
+      { "article_id": "cmpwid0l10265nxfftz52wto1", "law": "نظام المعاملات المدنية", "article": 107, "why": "الفسخ لإخلال المتعاقد بالتزامه" } ] },
+    { "id": "rent-landlord-repairs", "query": "المؤجر ما صلح الخراب في الشقة", "register": "gulf", "domain": "إيجار", "expected": [
+      { "article_id": "cmpwify5o02nhnxfftmblb0b4", "law": "نظام المعاملات المدنية", "article": 419, "why": "التزام المؤجر بالإصلاحات الضرورية" } ] },
+
+    { "id": "family-iddah", "query": "كم عدة المطلقة", "register": "msa", "domain": "أحوال شخصية", "expected": [
+      { "article_id": "cmpwi1hpk008vnxfftbngbrnn", "law": "نظام الأحوال الشخصية", "article": 121, "why": "عدة غير الحامل المفارقة بغير الوفاة" },
+      { "article_id": "cmpwi1hdn008tnxff0ntzsypx", "law": "نظام الأحوال الشخصية", "article": 120, "why": "عدة الحامل" },
+      { "article_id": "cmpwi1gq1008pnxffzvevcrvt", "law": "نظام الأحوال الشخصية", "article": 118, "why": "بدء احتساب العدة" } ] },
+    { "id": "family-custody", "query": "الحضانة لمين بعد الطلاق", "register": "gulf", "domain": "أحوال شخصية", "expected": [
+      { "article_id": "cmpwi1joe0097nxffz3ytq2l4", "law": "نظام الأحوال الشخصية", "article": 127, "why": "الحضانة للأم ثم الترتيب" } ] },
+    { "id": "family-wife-maintenance", "query": "هل الزوج ملزم بنفقة زوجته حتى لو كانت غنية", "register": "gulf", "domain": "أحوال شخصية", "expected": [
+      { "article_id": "cmpwi0rzz004lnxffqrjl968r", "law": "نظام الأحوال الشخصية", "article": 44, "why": "نفقة الزوجة على زوجها ولو كانت موسرة" },
+      { "article_id": "cmpwi0ual004znxffqj3xm8n1", "law": "نظام الأحوال الشخصية", "article": 51, "why": "وجوب النفقة للزوجة على زوجها" } ] },
+    { "id": "family-khul", "query": "كيف تطلب الزوجة الخلع", "register": "msa", "domain": "أحوال شخصية", "expected": [
+      { "article_id": "cmpwi190f007fnxffgqvr1miu", "law": "نظام الأحوال الشخصية", "article": 95, "why": "الخلع فراق بطلب الزوجة مقابل عوض" },
+      { "article_id": "cmpwi19o2007jnxffkhnitm02", "law": "نظام الأحوال الشخصية", "article": 97, "why": "وقوع الخلع وأثره" } ] },
+    { "id": "family-visitation", "query": "حق الأب في زيارة عياله بعد الطلاق", "register": "gulf", "domain": "أحوال شخصية", "expected": [
+      { "article_id": "cmpwi1lz5009lnxffonzufmro", "law": "نظام الأحوال الشخصية", "article": 134, "why": "زيارة المحضون واستزارته" } ] },
+    { "id": "family-mahr", "query": "المهر ملك مين", "register": "gulf", "domain": "أحوال شخصية", "expected": [
+      { "article_id": "cmpwi0q120049nxffs9hiqggf", "law": "نظام الأحوال الشخصية", "article": 38, "why": "المهر ملك للمرأة" } ] },
+
+    { "id": "com-bounced-cheque", "query": "وش عقوبة الشيك بدون رصيد", "register": "gulf", "domain": "تجاري", "expected": [
+      { "article_id": "cmpz65k2004kjcwg2fopadkq8", "law": "نظام الأوراق التجارية", "article": 118, "why": "سحب شيك لا يكون له مقابل وفاء" } ] },
+    { "id": "com-online-return", "query": "اشتريت من متجر الكتروني وأبغى أرجع المنتج", "register": "gulf", "domain": "تجاري", "expected": [
+      { "article_id": "cmpz6eg9o07k1cwg25hy8g3wm", "law": "نظام التجارة الإلكترونية", "article": 13, "why": "فسخ العقد خلال سبعة أيام من تسلم المنتج" } ] },
+    { "id": "com-online-delay", "query": "المتجر تأخر في توصيل الطلب أكثر من أسبوعين", "register": "gulf", "domain": "تجاري", "expected": [
+      { "article_id": "cmpz6egfm07k3cwg2tql6rbre", "law": "نظام التجارة الإلكترونية", "article": 14, "why": "فسخ العقد إذا تأخر التسليم أكثر من 15 يومًا" } ] },
+    { "id": "com-trademark-term", "query": "كم مدة حماية العلامة التجارية بعد تسجيلها", "register": "msa", "domain": "تجاري", "expected": [
+      { "article_id": "cmpz63vsp040fcwg23pnfc968", "law": "نظام العلامات التجارية", "article": 22, "why": "حقوق التسجيل عشر سنوات" } ] },
+    { "id": "com-installment-acceleration", "query": "اشتريت بالتقسيط وتأخرت عن قسط هل يحق للبائع يطالبني بكل الباقي", "register": "gulf", "domain": "تجاري", "expected": [
+      { "article_id": "nz26-d7013124fe7c760af2e0e7a6", "law": "نظام البيع بالتقسيط", "article": 8, "why": "حلول باقي الثمن لا ينفذ إلا بتخلف قسطين متتالين" },
+      { "article_id": "nz26-65ec737f99143b214e0476e0", "law": "نظام البيع بالتقسيط", "article": 7, "why": "لا فسخ لتأخر قسط واحد بعد تنفيذ الجزء الأكبر" } ] },
+
+    { "id": "co-llc-liability", "query": "هل الشريك في الشركة ذات المسؤولية المحدودة يتحمل ديون الشركة من ماله", "register": "msa", "domain": "شركات", "expected": [
+      { "article_id": "cmpwi7kso019rnxffq9742xya", "law": "نظام الشركات", "article": 156, "why": "ذمة الشركة مستقلة وهي وحدها المسؤولة عن ديونها" } ] },
+    { "id": "co-dissolution", "query": "متى تنتهي الشركة وتنحل", "register": "msa", "domain": "شركات", "expected": [
+      { "article_id": "cmpwi8dxa01elnxffjo4k3m89", "law": "نظام الشركات", "article": 243, "why": "أسباب انقضاء الشركة" } ] },
+
+    { "id": "bk-protect-from-creditors", "query": "شركتي متعثرة أبغى أحميها من الدائنين وش الإجراء", "register": "gulf", "domain": "إفلاس", "expected": [
+      { "article_id": "cmpz6cl3906xrcwg291nw2xqx", "law": "نظام الإفلاس", "article": 13, "why": "طلب المدين افتتاح التسوية الوقائية" },
+      { "article_id": "cmpz6clww06xzcwg2fant11wv", "law": "نظام الإفلاس", "article": 17, "why": "طلب تعليق المطالبات عند التسوية الوقائية" },
+      { "article_id": "cmpz6cq1l06zdcwg2ls7oqnyz", "law": "نظام الإفلاس", "article": 42, "why": "طلب افتتاح إعادة التنظيم المالي" } ] },
+    { "id": "bk-creditor-liquidation", "query": "هل يقدر الدائن يطلب تصفية أموال المدين المفلس", "register": "gulf", "domain": "إفلاس", "expected": [
+      { "article_id": "cmpz6cygx0725cwg2bvdnjq05", "law": "نظام الإفلاس", "article": 92, "why": "للمدين أو الدائن طلب افتتاح إجراء التصفية" } ] },
+
+    { "id": "crim-detention-hours", "query": "الشرطة قبضت علي كم ساعة يقدرون يحجزوني قبل التحقيق", "register": "gulf", "domain": "إجراءات جزائية", "expected": [
+      { "article_id": "cmpwi30y600i1nxff2ljz2n7k", "law": "نظام الإجراءات الجزائية", "article": 34, "why": "إرسال المقبوض عليه إلى المحقق خلال 24 ساعة" },
+      { "article_id": "cmpwi3poh00m7nxff9ooulkin", "law": "نظام الإجراءات الجزائية", "article": 109, "why": "ألا تزيد مدة الإيداع دون استجواب على 24 ساعة" } ] },
+    { "id": "crim-right-to-lawyer", "query": "هل يحق للمتهم يوكل محامي وقت التحقيق", "register": "gulf", "domain": "إجراءات جزائية", "expected": [
+      { "article_id": "cmpwi2qs800gdnxffcd9zven6", "law": "نظام الإجراءات الجزائية", "article": 4, "why": "حق المتهم في الاستعانة بوكيل أو محام" } ] },
+    { "id": "crim-home-search", "query": "هل يحق للشرطة تفتش بيتي بدون إذن", "register": "gulf", "domain": "إجراءات جزائية", "expected": [
+      { "article_id": "cmpwi33la00ihnxffdbtvwui7", "law": "نظام الإجراءات الجزائية", "article": 42, "why": "لا دخول لمكان مسكون أو تفتيشه إلا بأمر مسبب" },
+      { "article_id": "cmpwi3g9w00klnxffcilmmarr", "law": "نظام الإجراءات الجزائية", "article": 80, "why": "تفتيش المساكن عمل من أعمال التحقيق" } ] },
+
+    { "id": "traffic-accident-duty", "query": "صار علي حادث مروري وش الواجب علي", "register": "gulf", "domain": "مرور", "expected": [
+      { "article_id": "cmpz5xhpf01wncwg24gxbyw8b", "law": "نظام المرور", "article": 63, "why": "واجب السائق في الحادث: الوقوف والإبلاغ والمساعدة" } ] },
+    { "id": "traffic-licence-age", "query": "كم العمر المطلوب لاستخراج رخصة القيادة", "register": "msa", "domain": "مرور", "expected": [
+      { "article_id": "cmpz5xd2o01v5cwg2lhk8eqs0", "law": "نظام المرور", "article": 36, "why": "شروط رخصة القيادة ومنها السن" } ] },
+    { "id": "traffic-drifting", "query": "وش عقوبة التفحيط", "register": "gulf", "domain": "مرور", "expected": [
+      { "article_id": "cmpz5xims01wzcwg2qka8cmgf", "law": "نظام المرور", "article": 69, "why": "عقوبات مخالفة التفحيط" } ] },
+    { "id": "traffic-unlicensed-driver", "query": "عطيت سيارتي واحد ما عنده رخصة وسوى حادث", "register": "gulf", "domain": "مرور", "expected": [
+      { "article_id": "cmpz5xjvb01xfcwg2e07g7cwo", "law": "نظام المرور", "article": 77, "why": "السماح لمن لا يحمل رخصة بالقيادة وتضامنه في الحادث" } ] },
+
+    { "id": "evid-whatsapp", "query": "هل رسائل الواتساب تعتبر دليل في المحكمة", "register": "gulf", "domain": "إثبات", "expected": [
+      { "article_id": "cmpz62tbo03o1cwg2r8kox16f", "law": "نظام الإثبات", "article": 54, "why": "الدليل الرقمي يشمل المراسلات ووسائل الاتصال" },
+      { "article_id": "cmpz62thm03o3cwg2tfv5w1po", "law": "نظام الإثبات", "article": 55, "why": "للإثبات بالدليل الرقمي حكم الكتابة" },
+      { "article_id": "cmpz62tti03o7cwg2yowh39mm", "law": "نظام الإثبات", "article": 57, "why": "حجية الدليل الرقمي غير الرسمي" } ] },
+    { "id": "evid-loan-witnesses", "query": "سلفت واحد مبلغ كبير بدون ورق هل أقدر أثبته بالشهود", "register": "gulf", "domain": "إثبات", "expected": [
+      { "article_id": "cmpz62vb303opcwg2eh4pg1e3", "law": "نظام الإثبات", "article": 66, "why": "ما زاد على مائة ألف يثبت بالكتابة لا بالشهود" },
+      { "article_id": "cmpz62vmz03otcwg23d4i4sr1", "law": "نظام الإثبات", "article": 68, "why": "جواز الشهادة فيما يجب إثباته بالكتابة لمانع" } ] },
+
+    { "id": "crime-extortion", "query": "واحد يبتزني بصوري وش عقوبته", "register": "gulf", "domain": "جزائي", "expected": [
+      { "article_id": "cmpzcvduf0c6lvtrk9zlfebps", "law": "نظام مكافحة جرائم المعلوماتية", "article": 3, "why": "الابتزاز والمساس بالحياة الخاصة بالكاميرا" } ] },
+    { "id": "crime-harassment", "query": "وش عقوبة التحرش", "register": "gulf", "domain": "جزائي", "expected": [
+      { "article_id": "cmpz618ua035xcwg2c58ax03x", "law": "نظام مكافحة جريمة التحرش", "article": 6, "why": "عقوبة جريمة التحرش" } ] },
+    { "id": "crime-fraud", "query": "نصب علي واحد وأخذ فلوسي وش عقوبة الاحتيال", "register": "gulf", "domain": "جزائي", "expected": [
+      { "article_id": "cmpz629sh03hjcwg2a41bi24h", "law": "نظام مكافحة الاحتيال المالي وخيانة الأمانة", "article": 1, "why": "عقوبة الاستيلاء على مال الغير بالاحتيال" } ] },
+    { "id": "crime-bribery", "query": "موظف حكومي طلب مني رشوة وش عقوبته", "register": "gulf", "domain": "جزائي", "expected": [
+      { "article_id": "cmpz5wel401jfcwg2l3i2qdce", "law": "نظام مكافحة الرشوة", "article": 1, "why": "الموظف العام الذي يطلب عطية يعد مرتشيًا وعقوبته" } ] },
+    { "id": "crime-tasattur", "query": "وش يعتبر تستر تجاري", "register": "gulf", "domain": "جزائي", "expected": [
+      { "article_id": "cmpz6fohk07zdcwg2r342t71k", "law": "نظام مكافحة التستر", "article": 2, "why": "تعريف التستر" } ] },
+
+    { "id": "data-rights", "query": "وش حقوقي على بياناتي الشخصية", "register": "gulf", "domain": "بيانات", "expected": [
+      { "article_id": "cmpz62drh03ivcwg224kqp4i1", "law": "نظام حماية البيانات الشخصية", "article": 4, "why": "حقوق صاحب البيانات الشخصية" } ] },
+    { "id": "lawyer-fees-no-agreement", "query": "المحامي وموكله ما اتفقوا على الأتعاب مين يحددها", "register": "gulf", "domain": "محاماة", "expected": [
+      { "article_id": "cmpzcuxfd07l3vtrkqgle2g7y", "law": "نظام المحاماة", "article": 26, "why": "تقدير الأتعاب عند عدم الاتفاق" } ] },
+    { "id": "arb-appeal-award", "query": "هل أقدر أستأنف حكم التحكيم", "register": "gulf", "domain": "تحكيم", "expected": [
+      { "article_id": "cmpzcuwl007cjvtrkpz1jbu6c", "law": "نظام التحكيم", "article": 49, "why": "لا طعن في حكم التحكيم إلا بدعوى البطلان" },
+      { "article_id": "cmpzcuwl007ckvtrkwtu8g82l", "law": "نظام التحكيم", "article": 50, "why": "أحوال قبول دعوى البطلان" } ] },
+    { "id": "arb-annulment-deadline", "query": "كم مدة رفع دعوى بطلان حكم التحكيم", "register": "msa", "domain": "تحكيم", "expected": [
+      { "article_id": "cmpzcuwl007clvtrkjfovltt3", "law": "نظام التحكيم", "article": 51, "why": "رفع دعوى البطلان خلال ستين يومًا" } ] }
+  ],
+  "gates": [
+    { "id": "gate-taghrir", "query": "ما هو التغرير في العقد", "kind": "rank1", "expected": [
+      { "article_id": "cmpwick7h023lnxffqazjq2ny", "law": "نظام المعاملات المدنية", "article": 61 } ], "note": "تسليم #943 البند 4: م61 أولًا" },
+    { "id": "gate-objection-period", "query": "مدة الاعتراض على الحكم", "kind": "rank1_and_all_top3", "expected": [
+      { "article_id": "cmpwibepn01wpnxffv37mnsp0", "law": "نظام المرافعات الشرعية", "article": 179 },
+      { "article_id": "cmpwibhcj01x5nxffp1x6eoeh", "law": "نظام المرافعات الشرعية", "article": 187 } ], "note": "تسليم #943: م179 ثم 187" },
+    { "id": "gate-appeal-period", "query": "كم مدة الاستئناف", "kind": "top3", "expected": [
+      { "article_id": "cmpwibhcj01x5nxffp1x6eoeh", "law": "نظام المرافعات الشرعية", "article": 187 } ], "note": "سجل HKM-045 (29/10): مدة الاستئناف ← المرافعات 187 في أول 3" },
+    { "id": "gate-liquidation-bankruptcy", "query": "التصفية", "law_id": "cmpz5pmxa003lcwg2gvi5rlyr", "kind": "term_precision10", "term": "التصفية", "min": 1, "note": "تسليم #943: 10 مواد كلها في التصفية (#922 و#936)" },
+    { "id": "gate-resolve-civil", "query": "المعاملات المدنيه", "kind": "resolve_first", "law_id_expected": "cmpwi0d250025nxffj3fp7zfu", "note": "hakeem_resolve يرجع نظام المعاملات المدنية أولًا" },
+    { "id": "gate-labor-55", "query": "المادة 55 من نظام العمل", "kind": "rank1", "expected": [
+      { "article_id": "cmpzcv89r0ao1vtrkcfdvcmdl", "law": "نظام العمل", "article": 55 } ], "note": "سجل HKM-045: العمل م55 أولًا" },
+    { "id": "gate-installment-sale", "query": "البيع بالتقسيط", "kind": "law_top3", "law_id_expected": "nz26-572270a48d5e94462c03c359", "note": "سجل HKM-045: البيع بالتقسيط يعيد مواد النظام الجديد" }
+  ]
+}

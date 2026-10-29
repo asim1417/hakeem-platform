@@ -5,6 +5,7 @@ name: Eval Search (read-only)
 #
 # يفضّل سرّ NEON_DATABASE_URL (قراءة) لقياس الإنتاج الحقيقي؛ وإلا يعود إلى DATABASE_URL.
 # اضبط gate=true لجعل المهمّة تفشل إن نزل systemHit@3 عن العتبة (افتراضي 0.6).
+# suite=everyday (HKM-062): أسئلة الناس عبر searchArticles (مسار hakeem_search) من data/eval/everyday-queries.json.
 
 on:
   workflow_dispatch:
@@ -32,6 +33,15 @@ on:
         type: choice
         options: ["1", "0"]
         default: "1"
+      suite:
+        description: "المجموعة: search (eval-search على النواة/الهجين) أو everyday (HKM-062: أسئلة الناس عبر searchArticles التي يستعملها hakeem_search)"
+        type: choice
+        options: ["search", "everyday"]
+        default: "search"
+      everyday_variants:
+        description: "everyday فقط (اختياري): JSON لتشغيل أكثر من إعداد في تشغيل واحد، مثل [{\"name\":\"default\"}]"
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -54,6 +64,7 @@ jobs:
       EVAL_MIN_SYSTEMHIT3: ${{ inputs.min_systemhit3 }}
       EVAL_PROVIDER: ${{ inputs.provider }}
       IN_DB_RECALL: ${{ inputs.in_db_recall }}
+      EVAL_EVERYDAY_VARIANTS: ${{ inputs.everyday_variants }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node
@@ -69,8 +80,11 @@ jobs:
         run: |
           export DATABASE_URL="${NEON_DATABASE_URL:-$FALLBACK_DATABASE_URL}"
           if [ -z "$DATABASE_URL" ]; then echo "::error::لا اتصال (اضبط NEON_DATABASE_URL أو DATABASE_URL)."; exit 1; fi
+          SCRIPT="eval:search"
+          if [ "${{ inputs.suite }}" = "everyday" ]; then SCRIPT="eval:everyday"; fi
+          if [ -z "$EVAL_EVERYDAY_VARIANTS" ]; then unset EVAL_EVERYDAY_VARIANTS; fi
           if [ "${{ inputs.gate }}" = "true" ]; then
-            npm run eval:search -- --gate
+            npm run "$SCRIPT" -- --gate
           else
-            npm run eval:search
+            npm run "$SCRIPT"
           fi
