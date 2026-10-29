@@ -6,6 +6,7 @@ import { randomUUID } from "node:crypto";
 import { mcpToolPolicy } from "@/config/mcp-tools";
 import { mcpUserRateLimit } from "@/lib/mcp/config";
 import { principalFromContext, type McpPrincipal } from "@/lib/mcp/principal";
+import { getSiteUrl } from "@/lib/modules/config/site-url";
 import type { AccessDecision } from "@/lib/modules/billing/access-gate";
 import type { UsageServiceCode } from "@/config/usage-credits";
 
@@ -88,10 +89,8 @@ const defaultDeps: ToolRunnerDeps = {
       },
     });
   },
-  siteUrl() {
-    const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim() || "https://hakeemai.net";
-    return raw.replace(/\/+$/, "");
-  },
+  // HKM-061: الأصل الموحّد (يتجاوز قيمة *.vercel.app القديمة في البيئة).
+  siteUrl: getSiteUrl,
 };
 
 let depsOverride: Partial<ToolRunnerDeps> | null = null;
