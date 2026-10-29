@@ -118,24 +118,48 @@ export function buildArabicSearchVariants(query: string, searchType: ArabicSearc
 /**
  * HKM-062 — صور بديلة للفظ السؤال (جهة السؤال وحدها): السؤال بلغة الناس يكتب الفعل بضميره («فصلوه»، «يحجزوني»)
  * أو بحرف المضارعة («أفسخ»، «تخصم») أو الجمع («إجازات»)، والمطابقة في النص (word-match) تتسع للسوابق واللواحق
- * من جهة النص لا من جهة اللفظ: «فصلوه» لا تطابق «فُصل». فتُولَّد هنا صور أقصر تدخل بدائلَ (OR) للفظ، لا بدلًا منه:
- *   • سابقة الجر والعطف مع «ال»: بالتقسيط ← تقسيط.
- *   • ضمير متصل في آخر الفعل أو الاسم: فصلوه ← فصل، يطالبني ← يطالب، زوجته ← زوجه (التاء المربوطة).
- *   • حرف المضارعة (أ، ي، ت، ن) في فعل من أربعة أحرف (يفعل): تخصم ← خصم، أفسخ ← فسخ؛ لا في الأطول («تجاري» اسم لا فعل).
- *   • الجمع السالم: إجازات ← إجازه، الموظفين ← موظف؛ ومؤنث النسبة: نهائي ← نهائية.
- *   • ضمير الفاعل في الماضي (ت، تم، وا): تركت ← ترك، نفذوا ← نفذ؛ وحرف العطف أو الجر المتصل: وتراجعت ← تراجعت، بصوري ← صوري.
- * لا يبقى أقل من ثلاثة أحرف، ولا تُمسّ الكلمة المعرّفة إلا بتجريد «ال». الدخل والخرج مطبَّعان (normalizeAr في word-match):
- * الهمزات ألف، والتاء المربوطة هاء. صورة لا ترد في المدونة لا تضر (لا تطابق شيئًا).
+ * من جهة النص لا من جهة اللفظ: «فصلوه» لا تطابق «فُصل». فتُولَّد هنا صور تدخل بدائلَ (OR) للفظ في التغطية، لا بدلًا منه
+ * ولا في الحصر اللفظي (adapter: الحصر بلفظ السائل وحده).
+ *
+ * الوضع المحافظ (الافتراض، للسؤال الفصيح الدقيق): ما لا يغيّر الكلمة نفسها فقط —
+ *   • سابقة الجر والعطف مع «ال» (بال، وال، فال، كال، ولل): بالتقسيط ← تقسيط (word-match تجرّد «ال» و«لل» وحدهما).
+ *   • مؤنث النسبة: نهائي ← نهائية، صوري ← صورية (الصفة نفسها).
+ * الوضع الكامل (`full`، للسؤال الدارج):
+ *   • ضمير متصل في آخر الفعل أو الاسم: فصلوه ← فصل، زوجته ← زوجه (التاء المربوطة).
+ *   • حرف المضارعة (أ، ي، ت، ن) في فعل من أربعة أحرف (يفعل): تخصم ← خصم، أفسخ ← فسخ؛ لا في الأطول («تجاري» اسم لا فعل)،
+ *     ولا في ما ينتهي بالتاء المربوطة («أجرة» اسم).
+ *   • الجمع السالم: إجازات ← إجازه، الموظفين ← موظف.
+ *   • ضمير الفاعل في الماضي (ت، تم، وا): تركت ← ترك؛ وحرف العطف أو الجر المتصل: وتراجعت ← تراجعت.
+ * الياء الأخيرة في كلمة من أربعة أحرف فأكثر لا تُجرَّد (ضميرًا أو مع النون والتاء) إلا إن كانت الصورة الناتجة معروفة
+ * (`known`: من الجسر وجمع التكسير): «مادي» لا تصير «مادة»، و«رسمي» لا «رسوم»، و«عيني» لا «عين»؛ و«حقوقي» ← حقوق.
+ * لا يبقى أقل من ثلاثة أحرف. الدخل والخرج مطبَّعان (normalizeAr في word-match): الهمزات ألف، والتاء المربوطة هاء.
  */
 const STEM_MIN = 3;
 const OBJECT_SUFFIXES = ["وهم", "وها", "وني", "وكم", "هما", "وه", "ني", "ها", "هم", "كم", "تم", "وا", "ه", "ك", "ي", "ت"];
 
-export function queryStemVariants(normalizedWord: string): string[] {
+export interface QueryStemOptions {
+  /** الصور الصرفية كلها (السؤال الدارج)؛ وإلا سابقة «ال» المركبة ومؤنث النسبة وحدهما. */
+  full?: boolean;
+  /** صورة معروفة تُقبل بعد تجريد الياء الأخيرة. */
+  known?: (stem: string) => boolean;
+}
+
+export function queryStemVariants(normalizedWord: string, opts: QueryStemOptions = {}): string[] {
   const w = (normalizedWord ?? "").trim();
   const out = new Set<string>();
   if (w.length < STEM_MIN + 1) return [];
+  const full = opts.full === true;
+  const known = opts.known ?? (() => false);
   const add = (x: string) => {
     if (x.length >= STEM_MIN && x !== w) out.add(x);
+  };
+  // تجريد ينتهي بالياء من كلمة طويلة: لا يُقبل إلا بصورة معروفة.
+  const addStripped = (from: string, stem: string, suffix: string) => {
+    if (suffix.endsWith("ي") && from.length >= STEM_MIN + 1 && !known(stem)) return;
+    add(stem);
+  };
+  const nisba = (x: string) => {
+    if (x.endsWith("ي") && x.length >= STEM_MIN + 1) add(`${x}ه`);
   };
   const plural = (x: string) => {
     if (x.endsWith("ات") && x.length - 2 >= STEM_MIN) {
@@ -149,26 +173,28 @@ export function queryStemVariants(normalizedWord: string): string[] {
   if (def) {
     const core = def[1];
     if (core.length >= STEM_MIN && !w.startsWith("ال")) add(core);
-    plural(core);
+    nisba(core);
+    if (full) plural(core);
     return [...out];
   }
+  nisba(w);
+  if (!full) return [...out];
   const inflections = (x: string, verbPrefix: boolean) => {
     add(x);
     // ٢) ضمير متصل: «ته/تها/تي/تك/تهم» على اسم مؤنث ← التاء المربوطة.
-    const ta = x.match(/^(.{2,})ت(?:هما|هم|ها|ه|ي|ك|كم)$/);
-    if (ta && ta[1].length + 1 >= STEM_MIN) add(`${ta[1]}ه`);
-    // كل ضمير محتمل يُجرَّد (لا الأطول وحده): «قانوني» ← قانون (ي) وقان (وني)؛ الصورة الزائدة لا تطابق شيئًا غالبًا.
+    const ta = x.match(/^(.{2,})ت(هما|هم|ها|ه|ي|ك|كم)$/);
+    if (ta && ta[1].length + 1 >= STEM_MIN) addStripped(x, `${ta[1]}ه`, ta[2]);
+    // كل ضمير محتمل يُجرَّد (لا الأطول وحده)؛ الصورة الزائدة لا تطابق شيئًا غالبًا.
     for (const suf of OBJECT_SUFFIXES) {
       if (!x.endsWith(suf) || x.length - suf.length < STEM_MIN) continue;
       const b = x.slice(0, -suf.length);
-      add(b);
+      addStripped(x, b, suf);
       // ٣) حرف المضارعة: وزن «يفعل» وحده، وبعد ضمير لا يلتبس بالنسبة أو التاء («تجاري» ← لا «جار»).
-      if (verbPrefix && suf !== "ي" && suf !== "ت" && b.length === STEM_MIN + 1 && /^[ايتن]/.test(b)) add(b.slice(1));
+      if (verbPrefix && suf !== "ي" && suf !== "ت" && b.length === STEM_MIN + 1 && /^[ايتن]/.test(b) && !suf.endsWith("ي")) add(b.slice(1));
     }
-    if (verbPrefix && x.length === STEM_MIN + 1 && /^[ايتن]/.test(x)) add(x.slice(1));
-    // ٤) الجمع السالم، ومؤنث النسبة (نهائي ← نهائيه).
+    if (verbPrefix && x.length === STEM_MIN + 1 && /^[ايتن]/.test(x) && !x.endsWith("ه")) add(x.slice(1));
+    // ٤) الجمع السالم.
     plural(x);
-    if (x.endsWith("ي") && x.length >= STEM_MIN + 1) add(`${x}ه`);
   };
   inflections(w, true);
   // ١-ب) واو العطف أو باء الجر المتصلة (ولام الجر قبل مصدر بالألف: لاستخراج)، وما بعدها أربعة أحرف فأكثر.

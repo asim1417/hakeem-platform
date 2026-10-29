@@ -4,8 +4,9 @@
  */
 import assert from "node:assert/strict";
 import { queryStemVariants } from "../lib/modules/legal-core/arabic-morphology";
-import { groupTerms, planQuery } from "../lib/mcp/query-plan";
-import { dropRequestPhrases, queryKeywords } from "../lib/mcp/query-words";
+import { explicitArticleCitation } from "../lib/mcp/article-citation";
+import { groupTerms, planQuery, probeTerms } from "../lib/mcp/query-plan";
+import { dropRequestPhrases, hasColloquialMarker, queryKeywords } from "../lib/mcp/query-words";
 import { fusionScore, WEIGHTS_DISTINCTIVE, WEIGHTS_WEAK_LEXICAL } from "../lib/mcp/search-fusion";
 import { compileAny, matchesText, normalizeAr } from "../lib/mcp/tools/word-match";
 
@@ -20,6 +21,7 @@ function check(name: string, fn: () => void) {
   }
 }
 const n = (s: string) => normalizeAr(s);
+const full = { full: true } as const;
 const group = (q: string, term: string) => {
   const g = planQuery(q).groups.find((x) => x.term === n(term));
   assert.ok(g, `لا مجموعة للفظ ${term} في «${q}»: ${planQuery(q).groups.map((x) => x.term).join("، ")}`);
@@ -42,40 +44,58 @@ check("حذف العبارة متتالية الكلمات فقط، والكلم
 });
 
 // ── الصرف من جهة السؤال ──
-check("الضمير المتصل في العامية: فصلوه ← فصل، يحجزوني ← حجز", () => {
-  assert.ok(queryStemVariants(n("فصلوه")).includes("فصل"));
-  assert.ok(queryStemVariants(n("يحجزوني")).includes("حجز"));
+check("الضمير المتصل في العامية (الوضع الكامل): فصلوه ← فصل، يحجزونه ← حجز", () => {
+  assert.ok(queryStemVariants(n("فصلوه"), full).includes("فصل"));
+  assert.ok(queryStemVariants(n("يحجزونه"), full).includes("يحجزون"));
 });
-check("حرف المضارعة: تخصم ← خصم، أفسخ ← فسخ", () => {
-  assert.ok(queryStemVariants(n("تخصم")).includes("خصم"));
-  assert.ok(queryStemVariants(n("أفسخ")).includes("فسخ"));
+check("حرف المضارعة (الوضع الكامل): تخصم ← خصم، أفسخ ← فسخ؛ لا في الاسم بالتاء المربوطة", () => {
+  assert.ok(queryStemVariants(n("تخصم"), full).includes("خصم"));
+  assert.ok(queryStemVariants(n("أفسخ"), full).includes("فسخ"));
+  assert.equal(queryStemVariants(n("أجرة"), full).includes(n("جرة")), false, "«أجرة» اسم");
 });
-check("الجمع السالم والتاء مع الضمير: إجازات ← إجازة، الموظفين ← موظف، زوجته ← زوجة", () => {
-  assert.ok(queryStemVariants(n("إجازات")).includes(n("اجازة")));
-  assert.ok(queryStemVariants(n("الموظفين")).includes("موظف"));
-  assert.ok(queryStemVariants(n("زوجته")).includes(n("زوجة")));
+check("الجمع السالم والتاء مع الضمير (الوضع الكامل): إجازات ← إجازة، الموظفين ← موظف، زوجته ← زوجة", () => {
+  assert.ok(queryStemVariants(n("إجازات"), full).includes(n("اجازة")));
+  assert.ok(queryStemVariants(n("الموظفين"), full).includes("موظف"));
+  assert.ok(queryStemVariants(n("زوجته"), full).includes(n("زوجة")));
 });
-check("ضمير الفاعل في الماضي وحرف العطف أو الجر المتصل ومؤنث النسبة", () => {
-  assert.ok(queryStemVariants(n("تركت")).includes("ترك"));
-  assert.ok(queryStemVariants(n("نفذوا")).includes("نفذ"));
-  assert.ok(queryStemVariants(n("وتراجعت")).includes("تراجعت"));
-  assert.ok(queryStemVariants(n("بصوري")).includes("صوري"));
-  assert.ok(queryStemVariants(n("لاستخراج")).includes("استخراج"));
+check("ضمير الفاعل في الماضي وحرف العطف أو الجر المتصل (الوضع الكامل)، ومؤنث النسبة (كل وضع)", () => {
+  assert.ok(queryStemVariants(n("تركت"), full).includes("ترك"));
+  assert.ok(queryStemVariants(n("نفذوا"), full).includes("نفذ"));
+  assert.ok(queryStemVariants(n("وتراجعت"), full).includes("تراجعت"));
+  assert.ok(queryStemVariants(n("بصوري"), full).includes("صوري"));
+  assert.ok(queryStemVariants(n("لاستخراج"), full).includes("استخراج"));
   assert.ok(queryStemVariants(n("نهائي")).includes(n("نهائية")));
-  assert.equal(queryStemVariants(n("تجاري")).includes("جار"), false, "«تجاري» اسم لا فعل");
+  assert.equal(queryStemVariants(n("تجاري"), full).includes("جار"), false, "«تجاري» اسم لا فعل");
+});
+check("الوضع المحافظ (السؤال الفصيح): سابقة «ال» المركبة ومؤنث النسبة وحدهما", () => {
+  assert.deepEqual(queryStemVariants(n("بالتقسيط")), [n("تقسيط")]);
+  assert.deepEqual(queryStemVariants(n("التأمين")), [], "لا «تام» من «التأمين»");
+  assert.deepEqual(queryStemVariants(n("تركة")), [], "لا «ترك» من «تركة»");
+  for (const w of ["يمين", "أمين", "أجرة", "البيانات", "فصلوه", "تخصم"]) assert.deepEqual(queryStemVariants(n(w)), [], w);
+});
+check("الياء الأخيرة في كلمة من أربعة أحرف فأكثر لا تُجرَّد إلا إلى صورة معروفة (مراجعة الجودة)", () => {
+  const none = (w: string, bad: string) => assert.equal(queryStemVariants(n(w), full).includes(n(bad)), false, `${w} ← ${bad}`);
+  none("مادي", "ماد");
+  none("رسمي", "رسم");
+  none("عيني", "عين");
+  none("نهائي", "نهاي");
+  none("قانوني", "قانون");
+  none("يطالبني", "يطالب");
+  assert.ok(queryStemVariants(n("حقوقي"), { full: true, known: (s) => s === "حقوق" }).includes("حقوق"));
 });
 check("واو العطف مع الحشو حشو: «وعندي» و«وهي» لا تدخل الألفاظ", () => {
   assert.deepEqual(queryKeywords("تركت العمل وعندي إجازات"), ["تركت", "العمل", "اجازات"]);
   assert.deepEqual(queryKeywords("يفصل الموظفة وهي في إجازة"), ["يفصل", "الموظفه", "اجازه"]);
 });
-check("المدخل يُعرف من صورة اللفظ: «وتراجعت» ← العدول، و«تنشطب القضية» تبقي «القضية ← الدعوى»", () => {
+check("المدخل يُعرف من صورة اللفظ: «وتراجعت» ← العدول، و«تنشطب القضية» (دارج) تبقي «القضية ← الدعوى»", () => {
   assert.ok(group("دفعت عربون وتراجعت عن الشراء", "وتراجعت").alts.includes(n("العدول")));
   const p = planQuery("هل تنشطب القضية");
+  assert.ok(p.colloquial);
   assert.ok(p.groups.find((x) => x.term === n("القضية"))!.alts.includes(n("الدعوى")));
 });
 check("لا صورة أقصر من ثلاثة أحرف، والكلمة القصيرة بلا صور", () => {
-  assert.deepEqual(queryStemVariants(n("حق")), []);
-  for (const w of ["فصلوه", "يحجزوني", "تخصم", "بالتقسيط", "قانوني"]) assert.ok(queryStemVariants(n(w)).every((v) => v.length >= 3), w);
+  assert.deepEqual(queryStemVariants(n("حق"), full), []);
+  for (const w of ["فصلوه", "يحجزوني", "تخصم", "بالتقسيط", "قانوني"]) assert.ok(queryStemVariants(n(w), full).every((v) => v.length >= 3), w);
 });
 
 // ── الجسر وجمع التكسير ──
@@ -128,6 +148,98 @@ check("compileAny: صيغة واحدة = compileTerm، ولا صيغ = null", ()
   assert.equal(compileAny("x", []), null);
   const one = compileAny("الغبن", ["الغبن"])!;
   assert.ok(one.literal.length > 0 && matchesText("بالغبن", one));
+});
+
+// ── السجل: السؤال الفصيح الدقيق بلا جسر ملتبس (مراجعة الجودة على #984، B1) ──
+check("السؤال الفصيح الدقيق لا تُضاف له بدائل بمعنى آخر ولا صور كاملة", () => {
+  const cases: Array<[string, string[]]> = [
+    ["الخصم", ["حسم"]],
+    ["السجن", ["توقيف", "ايداع"]],
+    ["الصلح", ["اصلاح"]],
+    ["الدفع بعدم الاختصاص", ["اداء", "الوفاء", "سداد"]],
+    ["متى ينفذ النظام", ["الاخلال", "تنفيذ"]],
+    ["حضور الخصوم في الجلسة", ["غاب", "غياب"]],
+    ["حضانة الأم", ["الاب", "الوالد"]],
+    ["تأديب الموظف العام", ["العامل"]],
+    ["الأوراق التجارية", ["الكتابه"]],
+    ["عقد السلف", ["قرض", "دين"]],
+    ["رخصة استخراج المعادن", ["الحصول"]],
+    ["عقد صوري", ["الكاميرا", "صوره", "صور"]],
+    ["الولادة", ["الوضع"]],
+    ["الشقة", ["الماجور", "المسكن"]],
+    ["تفصل المحكمة في الدعوى", ["فسخ", "انهاء"]],
+    ["نصاب الجمعية العامة", ["احتيال"]],
+    ["تخفيض رأس المال", ["انقاص"]],
+    ["بدل السكن", ["اجره", "مقابل"]],
+  ];
+  for (const [q, bad] of cases) {
+    const p = planQuery(q);
+    assert.equal(p.colloquial, false, `«${q}» فصيح`);
+    const terms = p.groups.flatMap((g) => groupTerms(g));
+    for (const b of bad) assert.equal(terms.includes(n(b)), false, `«${q}» ← ${b}: ${terms.join("، ")}`);
+    assert.equal(p.semanticAppend, q, `نص المعنى للسؤال الفصيح هو السؤال: ${p.semanticAppend}`);
+  }
+});
+check("«عقد صوري»: الحصر بلفظ السائل وحده، والصيغ للتغطية", () => {
+  const p = planQuery("عقد صوري");
+  assert.deepEqual(probeTerms(p), ["صوري", "عقد"]);
+  assert.deepEqual(groupTerms(p.groups.find((g) => g.term === "صوري")!), ["صوري", "صوريه"]);
+});
+check("السؤال الدارج: المدخل الملتبس يعمل («ما صلح الشقة» ← المسكن)، واللفظ ذو البديل لا يُحصر", () => {
+  assert.ok(planQuery("المؤجر ما صلح الخراب في الشقة").colloquial, "«ما صلح» دارجة");
+  assert.ok(group("المؤجر ما صلح الخراب في الشقة", "الشقة").alts.includes(n("المسكن")));
+  const p = planQuery("العامل اذا فصلوه بدون سبب");
+  assert.ok(p.colloquial, "«فصلوه» صيغة دارجة");
+  assert.ok(!probeTerms(p).includes(n("فصلوه")));
+  assert.ok(probeTerms(p, { probeBridged: true }).includes(n("فصلوه")));
+  assert.deepEqual(group("موظف حكومي طلب مني رشوة وش عقوبته", "موظف").alts, [], "الموظف العام ليس العامل");
+  assert.ok(planQuery("هل يقدر صاحب العمل يفصل الموظفة").colloquial, "«هل يقدر» دارجة");
+  assert.ok(planQuery("ابي محامي يحضر معي التحقيق").colloquial, "«أبي» أول السؤال طلب");
+  assert.ok(planQuery("وش حقي اذا الشركة خصموا من راتبي").colloquial);
+  assert.ok(!planQuery("خصم الأجر").colloquial);
+});
+check("النفي الدارج عبارةً: «ما حضر» ← غياب، و«ما نفذ» ← الإخلال؛ و«حضر» وحدها بلا بديل", () => {
+  assert.ok(group("المدعي ما حضر الجلسة", "حضر").alts.includes(n("غياب")));
+  assert.ok(group("الطرف الثاني ما نفذ العقد", "نفذ").alts.includes(n("الإخلال")));
+  assert.deepEqual(group("حضر المدعى عليه", "حضر").alts, []);
+});
+check("«لازم» و«أبي» و«شيء» حشو في الدارج وحده", () => {
+  assert.ok(queryKeywords("عقد لازم").includes("لازم"));
+  assert.ok(queryKeywords("ميراث أبي").includes("ابي"));
+  assert.equal(queryKeywords("وش لازم اسوي اذا انفصلت").includes("لازم"), false);
+  assert.equal(queryKeywords("هل لازم ادفع العربون").includes("لازم"), false, "«هل لازم» عبارة طلب");
+  assert.ok(hasColloquialMarker(["وش", "حكم"].map(n)));
+  assert.equal(hasColloquialMarker(["صار", "الحكم", "نهائيا"].map(n)), false, "«صار» فصيح أيضًا");
+});
+
+// ── الإحالة الصريحة إلى مادة (B2) ──
+check("الإحالة الصريحة: «المادة/مادة» أو «م» مستقلة", () => {
+  const yes: Array<[string, number]> = [
+    ["المادة 55 من نظام العمل", 55],
+    ["ما نص المادة 55 من نظام العمل", 55],
+    ["مادة (77) نظام العمل", 77],
+    ["م 80 نظام العمل", 80],
+    ["م80 من نظام العمل", 80],
+    ["المادة ٧٤ من نظام العمل", 74],
+    ["بالمادة 74 من نظام العمل", 74],
+    ["المادة رقم 3 من نظام الإثبات", 3],
+    ["المادة 55 من نظام العمل الصادر بالمرسوم الملكي رقم م/51", 55],
+  ];
+  for (const [q, num] of yes) assert.equal(explicitArticleCitation(q)?.articleNumber, num, q);
+  assert.ok(!/م\s*\/|51/.test(explicitArticleCitation("المادة 55 من نظام العمل الصادر بالمرسوم الملكي رقم م/51")!.systemHint));
+});
+check("ليست إحالة: «كم 60 يوم»، «رقم 120»، «م/53» والمرسوم، و«مكرر»", () => {
+  for (const q of [
+    "كم 60 يوم مهلة الاعتراض في نظام المرافعات الشرعية",
+    "قرار مجلس الوزراء رقم 120 بشأن نظام العمل",
+    "كم 30 يوم إجازة في نظام العمل",
+    "نظام العمل الصادر بالمرسوم الملكي (م/51)",
+    "نظام المرافعات الشرعية (م/1) الاستئناف",
+    "المرسوم الملكي رقم م 51 نظام العمل",
+    "حكم 55 العمل",
+    "المادة 12 مكرر من نظام الإجراءات الجزائية",
+    "نظام العمل",
+  ]) assert.equal(explicitArticleCitation(q), null, q);
 });
 
 // ── أوزان الدمج ──
