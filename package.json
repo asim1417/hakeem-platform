@@ -181,6 +181,7 @@
     "eval:search": "tsx scripts/eval-search.ts",
     "eval:known-item": "tsx scripts/eval-known-item.ts",
     "eval:everyday": "tsx scripts/eval-everyday.ts",
+    "eval:precise": "tsx scripts/eval-precise.ts",
     "clean:keywords": "tsx scripts/clean-keywords.ts",
     "backfill:search-norm": "tsx scripts/backfill-search-norm.ts",
     "backfill:rulings-search-norm": "tsx scripts/backfill-rulings-search-norm.ts",

@@ -18,41 +18,9 @@
 import { normalizeArabicText } from "@/lib/modules/legal-core/arabic-morphology";
 import { searchLegalCore } from "@/lib/modules/legal-core/legal-retrieval";
 import { prisma } from "@/lib/prisma";
+import { loadUsableKnownItems, strideSample, type KnownItem, type LightArticle } from "./known-item-sample";
 
-type LightArticle = { id: string; title: string; lawName: string; articleNumber: number; keywords: string[] };
-
-// عنوان المادة في هذا الكوربوس **تسمية رقمية غالباً** («المادة الثالثة»، «المادة (89):») لا
-// عنوانًا وصفيًا — فاستعلام العنصر المعروف من العنوان الخام ملتبس (لكلّ نظام «مادة ثالثة»).
-// لذا نبني الاستعلام من إشارة مميِّزة: (١) الموضوع بعد النقطتين، (٢) الكلمات المفتاحية، وإلا نتجاوز.
-
-// «تسمية رقمية بحتة» = تبدأ بـ «المادة/مادة» وليس بعد رقمها/ترتيبها نصّ وصفي.
-// ملاحظة: \b لا يصلح للعربية في JS (\w لاتيني)، فنكتشف الوصف عبر النقطتين لا حدود الكلمة.
-function subjectAfterColon(title: string): string | null {
-  const idx = title.search(/[:：]/);
-  if (idx < 0) return null;
-  const subject = title.slice(idx + 1).trim();
-  return subject.length ? subject : null;
-}
-
-// يبني استعلام عنصر معروف مميِّزًا من المادة، أو null إن تعذّر (تسمية رقمية بلا موضوع ولا كلمات).
-function buildKnownItemQuery(a: LightArticle, minLen: number): { query: string; source: "colon" | "keywords" } | null {
-  const title = (a.title ?? "").trim();
-  const subject = title.length ? subjectAfterColon(title) : null;
-  if (subject && subject.length >= minLen && !/^[\d\s٠-٩().,-]+$/.test(subject)) {
-    return { query: subject, source: "colon" };
-  }
-  // نُصفّي «كلمات» ملوّثة بميتاداتا الاستيراد (source:hoqoqi_sql / review:needs_review / article:…):
-  // أيّ رمز يحوي حروفًا لاتينية أو «:» أو «_» ليس كلمةً مفتاحية عربية مميِّزة، فنُسقطه كي لا
-  // يصنع استعلامًا شبه دائري يطابق المادة عبر ميتاداتاها المفهرسة.
-  const kw = (a.keywords ?? [])
-    .map((k) => (k ?? "").trim())
-    .filter((k) => k.length >= 2 && !/[A-Za-z:_]/.test(k));
-  if (kw.length) {
-    const q = kw.slice(0, 6).join(" ");
-    if (q.length >= minLen) return { query: q, source: "keywords" };
-  }
-  return null;
-}
+// HKM-062: بناء الاستعلام والعيّنة في known-item-sample.ts (مصدر واحد مع eval-precise.ts، مسار hakeem_search).
 
 function pct(x: number): string {
   return `${(x * 100).toFixed(1)}%`;
@@ -121,18 +89,9 @@ async function main() {
   console.log("═".repeat(82));
 
   // مسح خفيف مرتّب بالمعرّف (حتمي)، ثم انتقاء المواد التي يمكن بناء استعلام مميِّز منها.
-  let usable: Array<{ a: LightArticle; q: string; source: "colon" | "keywords" }>;
+  let usable: KnownItem[];
   try {
-    const rows = await prisma.legalArticle.findMany({
-      orderBy: { id: "asc" },
-      select: { id: true, title: true, lawName: true, articleNumber: true, keywords: true },
-    });
-    usable = rows
-      .map((r) => {
-        const built = buildKnownItemQuery(r, minTitle);
-        return built ? { a: r, q: built.query, source: built.source } : null;
-      })
-      .filter((x): x is { a: LightArticle; q: string; source: "colon" | "keywords" } => x !== null);
+    usable = await loadUsableKnownItems(minTitle);
   } catch (error) {
     console.error("✗ تعذّر مسح المواد — غالبًا لا اتصال بقاعدة البيانات.");
     console.error("  شغّل عبر workflow «Eval Known-Item (read-only)» مع NEON_DATABASE_URL.");
@@ -146,16 +105,7 @@ async function main() {
   }
 
   // أخذ حتمي متباعد عبر الكوربوس (لا عشوائية): كل stride-ة، ونزيل تكرار الاستعلام (التباس عبر الأنظمة).
-  const stride = Math.max(1, Math.floor(usable.length / sampleSize));
-  const seen = new Set<string>();
-  const sample: typeof usable = [];
-  for (let i = 0; i < usable.length && sample.length < sampleSize; i += stride) {
-    const item = usable[i];
-    const key = normalizeArabicText(item.q);
-    if (seen.has(key)) continue; // استعلام مكرّر عبر أنظمة → عنصر معروف ملتبس، نتجاوزه
-    seen.add(key);
-    sample.push(item);
-  }
+  const { sample, stride } = strideSample(usable, sampleSize);
   const colonCount = usable.filter((u) => u.source === "colon").length;
   console.log(
     `مواد قابلة للاختبار: ${usable.length.toLocaleString("en-US")} (${colonCount.toLocaleString("en-US")} موضوع بعد النقطتين · ${(usable.length - colonCount).toLocaleString("en-US")} كلمات مفتاحية) · العيّنة الفعلية: ${sample.length} (stride=${stride})\n`

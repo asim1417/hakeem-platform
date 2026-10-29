@@ -136,7 +136,7 @@ async function main() {
   const CONCURRENCY = Math.min(Math.max(Number(process.env.EVAL_EVERYDAY_CONCURRENCY) || 1, 1), 4);
   for (const v of variants()) {
     type Per = { id: string; rank: number | null; ms: number; top3: string; error: string | null; heldout: boolean };
-    // المجموعة المحجوزة (heldout) تُقاس بالمسار نفسه وتُلخَّص منفصلة: كُتبت بعد بناء الجسر، فلا ضبط عليها.
+    // المجموعة المحجوزة (heldout) تُقاس بالمسار نفسه وتُلخَّص منفصلة: كُتبت بعد النسخة الأولى من الجسر (انظر _about في الملف).
     const all: Array<Query & { heldout: boolean }> = [...fx.queries.map((q) => ({ ...q, heldout: false })), ...(fx.heldout ?? []).map((q) => ({ ...q, heldout: true }))];
     const per: Per[] = new Array(all.length);
     let next = 0;
