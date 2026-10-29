@@ -3,6 +3,7 @@
 //   ثم «نص النظام»: العنوان، السنة، البسملة، نص المرسوم، نص قرار مجلس الوزراء، عنوان النظام، ثم المواد.
 // لا يعرض إلا ما له مصدر: الحقل الغائب يُحذف ولا يُخمَّن. الحالة من سجل التحقق وحده.
 import type { LawCardBlock, LawCardRecord } from "@/lib/modules/legal-core/verification-read";
+import { cardDatePlaceholders } from "@/lib/modules/legal-core/law-card-dates";
 
 const INSTRUMENT_LABEL: Record<string, string> = {
   royal_decree: "مرسوم ملكي",
@@ -42,8 +43,10 @@ export function LawCardPanel({
   fallbackInstruments: string[];
   archiveNotice?: { label: string; href: string | null } | null;
 }) {
-  const issued = card ? dateLine(card.issuedHijri, card.issuedGregorian) : null;
-  const published = card ? dateLine(card.publishedHijri, card.publishedGregorian) : null;
+  // HKM-063: تاريخ البطاقة النائب (1 محرم، أو 1440/03/21 رفع الهيئة) مجهول فلا يُعرض.
+  const placeholder = cardDatePlaceholders(card);
+  const issued = card && !placeholder.issued ? dateLine(card.issuedHijri, card.issuedGregorian) : null;
+  const published = card && !placeholder.published ? dateLine(card.publishedHijri, card.publishedGregorian) : null;
   const instruments = card?.instruments.length ? card.instruments.map((i) => i.text) : fallbackInstruments;
   const tone =
     statusTone === "retired"

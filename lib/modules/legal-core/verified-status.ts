@@ -62,6 +62,17 @@ export const isRepealedStatus = (value: string | null | undefined): boolean => R
 /** «مستبدل» ليس إلغاءً: المادة تُعرض باهتة بنصها (قرار المالك HKM-026/028). */
 export const isReplacedStatus = (value: string | null | undefined): boolean => String(value ?? "") === "مستبدل";
 
+/** حالة النظام الملغى الذي بقيت منه أحكام محددة مؤقتًا. */
+export const RETAINED_PROVISIONS_STATUS = "ملغى مع بقاء أحكام محددة مؤقتًا";
+
+/**
+ * HKM-063: في نظام «ملغى مع بقاء أحكام محددة مؤقتًا»، المادة التي آخر سجل تحقق لها «ساري» من الأحكام الباقية:
+ * تُعدّ سارية بسجلها، لا ملغاة بتبعية إلغاء النظام. ما سواها من مواد هذا النظام يبقى ملغى بالتبعية.
+ */
+export function isRetainedProvision(workStatus: string | null | undefined, unitStatus: string | null | undefined): boolean {
+  return workStatus === RETAINED_PROVISIONS_STATUS && unitStatus === "ساري";
+}
+
 /** «… — من 2024-06-13» في نص الأداة (سجلات fix-2026-09-25): يوم نفاذ الإلغاء أو الاستبدال. */
 export function effectiveDateFromEvidence(instrument: string | null | undefined): string | null {
   const m = String(instrument ?? "").match(/من\s+(\d{4}-\d{2}-\d{2})/);
