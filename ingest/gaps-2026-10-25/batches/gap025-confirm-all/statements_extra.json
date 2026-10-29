@@ -1,0 +1,90 @@
+{
+ "by": "gap025b-fixed-patterns-2026-10-30",
+ "md5": "9a83c731adfe6dc08fbb300676ff9769",
+ "count": 9,
+ "expect_delta": {},
+ "report": {
+  "documented": 13,
+  "corrected": 6,
+  "new_articles": 0,
+  "changed_text": 0,
+  "plan": [
+   {
+    "name": "تنظيم الهيئة السعودية لتسويق الاستثمار",
+    "old": "2025-03-04",
+    "new": "2025-03-04"
+   },
+   {
+    "name": "تنظيم هيئات تطوير المناطق والمدن واللائحة المالية لهيئات تطوير المناطق والمدن واللائحة الإدارية لهيئات تطوير المناطق والمدن",
+    "old": "2018-05-22",
+    "new": "2018-07-07"
+   },
+   {
+    "name": "الترتيبات التنظيمية للمعهد الملكي للفنون التقليدية",
+    "old": "2021-03-30",
+    "new": "2021-03-30"
+   },
+   {
+    "name": "الترتيبات التنظيمية للهيئة الملكية لمدينة مكة المكرمة والمشاعر المقدسة",
+    "old": "2018-12-18",
+    "new": "2018-12-18"
+   },
+   {
+    "name": "تنظيم المركز السعودي لاعتماد المنشآت الصحية",
+    "old": "2015-05-11",
+    "new": "2015-06-20"
+   },
+   {
+    "name": "تنظيم المركز السعودي لزراعة الأعضاء",
+    "old": "2012-12-10",
+    "new": "2013-01-12"
+   },
+   {
+    "name": "تنظيم المركز الوطني للمعلومات الصحية",
+    "old": "2013-08-26",
+    "new": "2013-10-12"
+   },
+   {
+    "name": "تنظيم المنطقة الخاصة اللوجستية المتكاملة",
+    "old": "2018-10-10",
+    "new": "2018-10-10"
+   },
+   {
+    "name": "تنظيم مركز الإقامة المميزة",
+    "old": "2022-05-17",
+    "new": "2022-05-17"
+   },
+   {
+    "name": "نظام التقاعد المدني",
+    "old": "1973-08-27",
+    "new": "1973-07-30"
+   },
+   {
+    "name": "نظام مدينة الملك عبد العزيز للعلوم والتقنية",
+    "old": "1985-12-31",
+    "new": "1985-12-31"
+   },
+   {
+    "name": "نظام التأمينات الاجتماعية الصادر بالمرسوم الملكي رقم (م/273) وتاريخ 1445/12/26هـ",
+    "old": "2024-07-03",
+    "new": "2024-07-03"
+   },
+   {
+    "name": "القواعد المنظمة للتخصيص",
+    "old": "2021-10-01",
+    "new": "2021-09-21"
+   }
+  ]
+ },
+ "statements": [
+  "SELECT CASE WHEN (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$boe26-970129b497157f8b28961b8d$hk$)=$hk$2025-03-04$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q6wh006fcwg26khgt4yb$hk$)=$hk$2018-05-22$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p2jw000qcwg2nonkj7lk$hk$)=$hk$2021-03-30$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qt95009kcwg2m091d9ly$hk$)=$hk$2018-12-18$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qyaq00a9cwg2r19tubyc$hk$)=$hk$2015-05-11$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qwqs00a1cwg2pjqt063b$hk$)=$hk$2012-12-10$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qwxs00a2cwg2f5hqyrbn$hk$)=$hk$2013-08-26$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rx5c00dfcwg2wmbqk6yw$hk$)=$hk$2018-10-10$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pc270022cwg2sb0330jy$hk$)=$hk$2022-05-17$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q9t3006tcwg24vnjmcml$hk$)=$hk$1973-08-27$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pw89004xcwg2mdbv957p$hk$)=$hk$1985-12-31$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$boe26-fc756d56e044a8c0d2272c52$hk$)=$hk$2024-07-03$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$1d803161ac864b12be802173f685505c$hk$)=$hk$2021-10-01$hk$::date AND (SELECT count(*) FROM legal_text_provenance WHERE id LIKE 'g25bp-%')=0 THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard_before",
+  "INSERT INTO legal_text_provenance (id, entity_type, entity_id, law_name, article_number, source, source_id, source_url, text_sha, retrieved_on, action, previous_text) VALUES\n($hk$g25bp-524f6d8fd924a6b596a315f5$hk$, 'system', $hk$boe26-970129b497157f8b28961b8d$hk$, $hk$تنظيم الهيئة السعودية لتسويق الاستثمار$hk$, NULL, 'boe', $hk$gap025b-fixed-patterns-2026-10-30$hk$, $hk$https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/43151145-3b31-47d1-8a6c-b2db00a871d0/1$hk$, $hk$984fe462bf7f2fcc68707aec5f670055$hk$, DATE '2026-10-30', $hk$effective_from_confirmed:2025-03-04$hk$, $hk$HKM-052 gap025b-fixed-patterns-2026-10-30: من تاريخ الموافقة (تاريخ الأداة) — «يعمل بالتنظيم من تاريخ الموافقة عليه»؛ بطاقة هيئة الخبراء = 2025-03-04؛ وهو المخزن نفسه [مراجع مستقل]$hk$),\n($hk$g25bp-fe52b5840c87d5c103699e90$hk$, 'system', $hk$cmpz5q6wh006fcwg26khgt4yb$hk$, $hk$تنظيم هيئات تطوير المناطق والمدن واللائحة المالية لهيئات تطوير المناطق والمدن واللائحة الإدارية لهيئات تطوير المناطق والمدن$hk$, NULL, 'boe', $hk$gap025b-fixed-patterns-2026-10-30$hk$, $hk$https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/2ae2b616-e5c9-4b81-b55e-ae3d00acbf1a/1$hk$, $hk$c69d0ab54d44e1537905f9f4a9b9bf9b$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2018-05-22->2018-07-07$hk$, $hk$HKM-052 gap025b-fixed-patterns-2026-10-30: من اليوم التالي للنشر — «ينشر التنظيم في الجريدة الرسمية، ويعمل به من اليوم التالي لنشره»؛ بطاقة هيئة الخبراء = 2018-07-07؛ وكان المخزن 2018-05-22 [مراجع مستقل]$hk$),\n($hk$g25bp-cbea4cdcbfa19f3018c855f3$hk$, 'system', $hk$cmpz5p2jw000qcwg2nonkj7lk$hk$, $hk$الترتيبات التنظيمية للمعهد الملكي للفنون التقليدية$hk$, NULL, 'boe', $hk$gap025b-fixed-patterns-2026-10-30$hk$, $hk$https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/99f64251-7873-4627-80c5-ad3f009a3bb5/1$hk$, $hk$7f836deb03bf1a0ebf272fb7dec1357a$hk$, DATE '2026-10-30', $hk$effective_from_confirmed:2021-03-30$hk$, $hk$HKM-052 gap025b-fixed-patterns-2026-10-30: من تاريخ الموافقة (تاريخ الأداة) — «يعمل بالترتيبات من تاريخ الموافقة عليها»؛ بطاقة هيئة الخبراء = 2021-03-30؛ وهو المخزن نفسه [مراجع مستقل]$hk$),\n($hk$g25bp-8b15cdc1930230e447c59b9c$hk$, 'system', $hk$cmpz5qt95009kcwg2m091d9ly$hk$, $hk$الترتيبات التنظيمية للهيئة الملكية لمدينة مكة المكرمة والمشاعر المقدسة$hk$, NULL, 'boe', $hk$gap025b-fixed-patterns-2026-10-30$hk$, $hk$https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/58b1d864-0d14-4ed7-9c5e-ac4e00b5aff9/1$hk$, $hk$3d5618f21b758e819151e47c3698ea47$hk$, DATE '2026-10-30', $hk$effective_from_confirmed:2018-12-18$hk$, $hk$HKM-052 gap025b-fixed-patterns-2026-10-30: من تاريخ الموافقة (تاريخ الأداة) — «يعمل بالترتيبات من تاريخ الموافقة عليها، وتلغي كل ما يتعارض معها من أحكام»؛ بطاقة هيئة الخبراء = 2018-12-18؛ وهو المخزن نفسه [مراجع مستقل]$hk$),\n($hk$g25bp-307184fc688d968d126701c0$hk$, 'system', $hk$cmpz5qyaq00a9cwg2r19tubyc$hk$, $hk$تنظيم المركز السعودي لاعتماد المنشآت الصحية$hk$, NULL, 'boe', $hk$gap025b-fixed-patterns-2026-10-30$hk$, $hk$https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/6383fcba-9d26-428a-8b5a-a9a700f29275/1$hk$, $hk$e86ab3867a620b4d505da1bb509618ec$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2015-05-11->2015-06-20$hk$, $hk$HKM-052 gap025b-fixed-patterns-2026-10-30: من اليوم التالي للنشر — «ينشر هذا التنظيم في الجريدة الرسمية، ويعمل به من اليوم التالي لنشره»؛ بطاقة هيئة الخبراء = 2015-06-20؛ وكان المخزن 2015-05-11 [مراجع مستقل]$hk$),\n($hk$g25bp-59c5ab64f34aaed24936f740$hk$, 'system', $hk$cmpz5qwqs00a1cwg2pjqt063b$hk$, $hk$تنظيم المركز السعودي لزراعة الأعضاء$hk$, NULL, 'boe', $hk$gap025b-fixed-patterns-2026-10-30$hk$, $hk$https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/d4a9cc4c-61cb-4053-8fe5-a9a700f28d1a/1$hk$, $hk$631191be011685576d106962db64d1b7$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2012-12-10->2013-01-12$hk$, $hk$HKM-052 gap025b-fixed-patterns-2026-10-30: من اليوم التالي للنشر — «ينشر هذا التنظيم في الجريدة الرسمية، ويعمل به من اليوم التالي لنشره»؛ بطاقة هيئة الخبراء = 2013-01-12؛ وكان المخزن 2012-12-10 [مراجع مستقل]$hk$),\n($hk$g25bp-ac5408280f3b7e5f0cd85c63$hk$, 'system', $hk$cmpz5qwxs00a2cwg2f5hqyrbn$hk$, $hk$تنظيم المركز الوطني للمعلومات الصحية$hk$, NULL, 'boe', $hk$gap025b-fixed-patterns-2026-10-30$hk$, $hk$https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/9d091f8f-5de0-4603-9adc-a9a700f28d86/1$hk$, $hk$52b94ef4d5a7d69aaa29476fb0fe9b41$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2013-08-26->2013-10-12$hk$, $hk$HKM-052 gap025b-fixed-patterns-2026-10-30: من اليوم التالي للنشر — «ينشر هذا التنظيم في الجريدة الرسمية، ويعمل به من اليوم التالي لنشره»؛ بطاقة هيئة الخبراء = 2013-10-12؛ وكان المخزن 2013-08-26 [مراجع مستقل]$hk$),\n($hk$g25bp-59972c6ffb22d85556289bfe$hk$, 'system', $hk$cmpz5rx5c00dfcwg2wmbqk6yw$hk$, $hk$تنظيم المنطقة الخاصة اللوجستية المتكاملة$hk$, NULL, 'boe', $hk$gap025b-fixed-patterns-2026-10-30$hk$, $hk$https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/e4e5f15c-9728-4ed1-b1b9-a9fc00b15fef/1$hk$, $hk$ec2bd320b63624741ff4b9b96d52897c$hk$, DATE '2026-10-30', $hk$effective_from_confirmed:2018-10-10$hk$, $hk$HKM-052 gap025b-fixed-patterns-2026-10-30: من تاريخ الموافقة (تاريخ الأداة) — «ينشر التنظيم في الجريدة الرسمية، ويعمل به من تاريخ الموافقة عليه»؛ بطاقة هيئة الخبراء = 2018-10-10؛ وهو المخزن نفسه [مراجع مستقل]$hk$),\n($hk$g25bp-fc26fe8f5831447a32951162$hk$, 'system', $hk$cmpz5pc270022cwg2sb0330jy$hk$, $hk$تنظيم مركز الإقامة المميزة$hk$, NULL, 'boe', $hk$gap025b-fixed-patterns-2026-10-30$hk$, $hk$https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/bc27d6e4-560a-4778-9364-aeac00ca7e3b/1$hk$, $hk$7c145ffc4e870383a6825b94d4ffb63d$hk$, DATE '2026-10-30', $hk$effective_from_confirmed:2022-05-17$hk$, $hk$HKM-052 gap025b-fixed-patterns-2026-10-30: من تاريخ الموافقة (تاريخ الأداة) — «يعمل بالتنظيم من تاريخ الموافقة عليه»؛ بطاقة هيئة الخبراء = 2022-05-17؛ وهو المخزن نفسه [مراجع مستقل]$hk$),\n($hk$g25bp-d13af4a6d72bd419b5f13f42$hk$, 'system', $hk$cmpz5q9t3006tcwg24vnjmcml$hk$, $hk$نظام التقاعد المدني$hk$, NULL, 'boe', $hk$gap025b-fixed-patterns-2026-10-30$hk$, $hk$https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/859d4e56-627b-4766-a7aa-a9a700f23975/1$hk$, $hk$8c6497b914d6e44936e009a415d1fbc5$hk$, DATE '2026-10-30', $hk$effective_from_corrected:1973-08-27->1973-07-30$hk$, $hk$HKM-052 gap025b-fixed-patterns-2026-10-30: تاريخ منصوص — «الأداة: ثالثا - ينفذ هذا النظام اعتبارا من 1 /7 /1393ه»؛ بطاقة هيئة الخبراء = 1973-07-30؛ وكان المخزن 1973-08-27 [مراجع مستقل]$hk$),\n($hk$g25bp-15994b02e42c09ab2aac8df7$hk$, 'system', $hk$cmpz5pw89004xcwg2mdbv957p$hk$, $hk$نظام مدينة الملك عبد العزيز للعلوم والتقنية$hk$, NULL, 'boe', $hk$gap025b-fixed-patterns-2026-10-30$hk$, $hk$https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/4033de9e-45f5-406f-9b3c-a9a700f1fbf0/1$hk$, $hk$3a50587f83420fc1777289371e822eb6$hk$, DATE '2026-10-30', $hk$effective_from_confirmed:1985-12-31$hk$, $hk$HKM-052 gap025b-fixed-patterns-2026-10-30: من تاريخ صدور المرسوم — «الأداة: ثانيا - الموافقة على نظام مدينة الملك عبد العزيز للعلوم والتقنية بالصيغة المرفقة بهذا ويعمل به من تاريخ صدور هذا المرسوم»؛ بطاقة هيئة الخبراء = 1985-12-31؛ وهو المخزن نفسه [مراجع مستقل]$hk$),\n($hk$g25bp-c7df3ce83ba7f13957e01425$hk$, 'system', $hk$boe26-fc756d56e044a8c0d2272c52$hk$, $hk$نظام التأمينات الاجتماعية الصادر بالمرسوم الملكي رقم (م/273) وتاريخ 1445/12/26هـ$hk$, NULL, 'boe', $hk$gap025b-fixed-patterns-2026-10-30$hk$, $hk$https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/eaee8a20-3a54-4aaf-b0d9-b1ad00998962/1$hk$, $hk$af81a9ba369ceff75a60425b821ee479$hk$, DATE '2026-10-30', $hk$effective_from_confirmed:2024-07-03$hk$, $hk$HKM-052 gap025b-fixed-patterns-2026-10-30: من اليوم التالي للصدور — «ينشر النظام في الجريدة الرسمية، ويعمل به من اليوم التالي لتاريخ صدوره»؛ بطاقة هيئة الخبراء = 2024-07-03؛ وهو المخزن نفسه [مراجع مستقل]$hk$),\n($hk$g25bp-d85be2f951f38737a148b2b1$hk$, 'system', $hk$1d803161ac864b12be802173f685505c$hk$, $hk$القواعد المنظمة للتخصيص$hk$, NULL, 'boe', $hk$gap025b-fixed-patterns-2026-10-30$hk$, $hk$https://laws.boe.gov.sa/BoeLaws/Laws/LawDetails/f95abff1-7f8b-4aea-9e97-adb900a2576e/1$hk$, $hk$88cef084e291ecb67ad0d5c6631150c2$hk$, DATE '2026-10-30', $hk$effective_from_corrected:2021-10-01->2021-09-21$hk$, $hk$HKM-052 gap025b-fixed-patterns-2026-10-30: من تاريخ الموافقة (تاريخ الأداة) — «يعمل بالقواعد من تاريخ الموافقة عليها»؛ بطاقة هيئة الخبراء = 2021-09-21؛ وكان المخزن 2021-10-01 [مراجع مستقل]$hk$)",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2018-07-07$hk$::timestamptz WHERE id = $hk$cmpz5q6wh006fcwg26khgt4yb$hk$ AND preamble_effective_from::date = $hk$2018-05-22$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2015-06-20$hk$::timestamptz WHERE id = $hk$cmpz5qyaq00a9cwg2r19tubyc$hk$ AND preamble_effective_from::date = $hk$2015-05-11$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2013-01-12$hk$::timestamptz WHERE id = $hk$cmpz5qwqs00a1cwg2pjqt063b$hk$ AND preamble_effective_from::date = $hk$2012-12-10$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2013-10-12$hk$::timestamptz WHERE id = $hk$cmpz5qwxs00a2cwg2f5hqyrbn$hk$ AND preamble_effective_from::date = $hk$2013-08-26$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$1973-07-30$hk$::timestamptz WHERE id = $hk$cmpz5q9t3006tcwg24vnjmcml$hk$ AND preamble_effective_from::date = $hk$1973-08-27$hk$::date",
+  "UPDATE legal_systems SET preamble_effective_from = $hk$2021-09-21$hk$::timestamptz WHERE id = $hk$1d803161ac864b12be802173f685505c$hk$ AND preamble_effective_from::date = $hk$2021-10-01$hk$::date",
+  "SELECT CASE WHEN (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$boe26-970129b497157f8b28961b8d$hk$)=$hk$2025-03-04$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q6wh006fcwg26khgt4yb$hk$)=$hk$2018-07-07$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5p2jw000qcwg2nonkj7lk$hk$)=$hk$2021-03-30$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qt95009kcwg2m091d9ly$hk$)=$hk$2018-12-18$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qyaq00a9cwg2r19tubyc$hk$)=$hk$2015-06-20$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qwqs00a1cwg2pjqt063b$hk$)=$hk$2013-01-12$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5qwxs00a2cwg2f5hqyrbn$hk$)=$hk$2013-10-12$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5rx5c00dfcwg2wmbqk6yw$hk$)=$hk$2018-10-10$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pc270022cwg2sb0330jy$hk$)=$hk$2022-05-17$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5q9t3006tcwg24vnjmcml$hk$)=$hk$1973-07-30$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$cmpz5pw89004xcwg2mdbv957p$hk$)=$hk$1985-12-31$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$boe26-fc756d56e044a8c0d2272c52$hk$)=$hk$2024-07-03$hk$::date AND (SELECT preamble_effective_from::date FROM legal_systems WHERE id=$hk$1d803161ac864b12be802173f685505c$hk$)=$hk$2021-09-21$hk$::date AND (SELECT count(*) FROM legal_text_provenance WHERE id LIKE 'g25bp-%')=13 THEN 'ok' ELSE (1/(SELECT count(*) FROM legal_systems WHERE false))::text END AS guard_after"
+ ]
+}
