@@ -32,6 +32,8 @@ def clean(t):
     t = t.strip().strip('"“”').strip()
     assert not re.search(r'وذلك بموجب (المرسوم|الأمر|قرار)', t) and 'ضيفت مادة يكون ترتيبها' not in t and '•' not in t, t[-200:]
     return t
+# ملاحظة «تعديل مادة كاملة» في اللقطة وهي في الحقيقة إضافة فقرة أو تعديل عبارة (النظام الصحي م4 وم5، وخدمة الأفراد م46، وهيئة التحقيق م1)
+PARTIAL = re.compile(r'(إضافة فقرة|بإضافة فقرة|إضافة بند|بإضافة بند|تعديل عبارة)')
 DEAD = "('ملغاة','ملغى','مستبدل')"
 
 
@@ -80,11 +82,16 @@ for x in json.load(open(G16 / 'date_packets.json', encoding='utf-8'))['items']:
     d = agreed(a, b) or agreed(a, c) or agreed(b, c)
     (dates.__setitem__(norm(x['instrument']), dict(d, readers='m/n/o')) if d else open_dates.__setitem__(norm(x['instrument']), {'m': a.get('date'), 'n': b.get('date'), 'o': c.get('date')}))
 # gap016b (r، s للنصف A؛ t، u للنصف B)
+HOLD = {'BD-15': 'نظام العمل م231 (م/46 لعام 1436): نقلت واس بدء تطبيق التعديلات 1437/1/5 أي بعد النشر بستة أشهر، فيُحتمل بند نفاذ فات القارئين',
+        'BD-34': 'رسوم الأراضي البيضاء (م/244 لعام 1446): المرسوم يعلّق العمل بأحكام الرسوم على نفاذ لائحتها، فلا يكفي تاريخ النشر'}
 r, s, t, u = (load(RD / 'amend_dates_b' / f'reader_{q}.jsonl') for q in 'rstu')
 for x in json.load(open(D / 'date_packets.json', encoding='utf-8'))['items']:
     a, b = ((r, s) if x['half'] == 'A' else (t, u))
     a, b = a.get(x['item']) or {}, b.get(x['item']) or {}
     d = agreed(a, b)
+    if d and (x['item'] in HOLD or 'low' in (a.get('confidence'), b.get('confidence'))):
+        open_dates[x['instrument']] = {'a': a.get('date'), 'b': b.get('date'), 'held': HOLD.get(x['item'], 'ثقة دنيا عند أحد القارئين')}
+        continue
     (dates.__setitem__(x['instrument'], dict(d, readers='r/s' if x['half'] == 'A' else 't/u')) if d else open_dates.__setitem__(x['instrument'], {'a': a.get('date'), 'b': b.get('date')}))
 
 pre = {x['id']: x for x in json.load(open(D / 'precheck.json', encoding='utf-8'))}
@@ -104,6 +111,9 @@ for a in arts:
         skipped.append({'article': a['article_id'], 'law': a['law'], 'n': a['n'], 'why': EXCLUDE_ARTICLES[a['article_id']]}); continue
     pc = pre[a['article_id']]
     assert pc['uv'] == 0 and pc['wst'] == 'ساري' and (pc['ust'] or '') not in ('ملغاة', 'ملغى', 'مستبدل'), pc
+    part = [z['instr'] for z in a['notes'] if PARTIAL.search(z['note'][:400])]
+    if part:
+        skipped.append({'article': a['article_id'], 'law': a['law'], 'n': a['n'], 'why': 'partial_note', 'instr': part}); continue
     miss = [z['instr'] for z in a['notes'] if z['instr'] not in dates]
     if miss:
         skipped.append({'article': a['article_id'], 'law': a['law'], 'n': a['n'], 'why': 'date_not_agreed', 'instr': miss}); continue
