@@ -31,6 +31,7 @@ import {
   rankFused,
   RARE_TERM_MAX,
   keepLowSemantic,
+  pinnableExact,
   WEAK_EVIDENCE_SEMANTIC_MIN,
   WEIGHTS_DISTINCTIVE,
   WEIGHTS_WEAK_LEXICAL,
@@ -235,7 +236,9 @@ async function exactCitationHit(query: string, lawId: string | undefined): Promi
   const hit = await findExactArticleMatch(`المادة ${cite.articleNumber} ${cite.systemHint}`).catch(() => null);
   if (!hit || hit.type !== "article") return null;
   if (lawId && String(hit.meta?.systemId ?? "") !== lawId) return null;
-  return { id: hit.id, type: "article" };
+  // مادة نظام ملغى أو مستبدل لا تُثبَّت أولًا (مراجعة الجودة الثانية): مرشح الوجه نفسه الذي تمر به بقية النتائج.
+  const allowed = await filterArticleIdsToSurface([hit.id]).catch(() => null);
+  return pinnableExact({ id: hit.id, type: "article" }, allowed);
 }
 
 // ١) البحث في المواد — HKM-048: دمج دليلين مستقلين (اللفظ النادر + المعنى) بترتيب تغطية الألفاظ،

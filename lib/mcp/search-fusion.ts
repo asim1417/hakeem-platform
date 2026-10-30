@@ -131,3 +131,13 @@ export function keepCandidate(c: { coverage: number; similarity: number }, keywo
   if (Number.isFinite(c.similarity) && c.similarity >= SEMANTIC_SUPPORT_MIN) return true;
   return Number.isFinite(c.coverage) && c.coverage >= MIN_WINDOW_COVERAGE;
 }
+
+/**
+ * HKM-062 (مراجعة الجودة الثانية على #984): مطابقة «المادة N من نظام X» التامة تشمل الأنظمة الملغاة والمستبدلة
+ * (الوصول المباشر يجيب «موجودة وملغاة»)، فلا تتصدر نتائج البحث إلا إن كانت في وجه البحث الساري كبقية المرشحين
+ * (`allowed` من filterArticleIdsToSurface، كما يفعل المحرك الهجين في main). تعذّر قراءة الوجه (null) = لا تثبيت.
+ */
+export function pinnableExact<T extends { id: string }>(exact: T | null, allowed: Set<string> | null): T | null {
+  if (!exact || !allowed) return null;
+  return allowed.has(exact.id) ? exact : null;
+}

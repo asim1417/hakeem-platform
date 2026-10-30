@@ -189,12 +189,15 @@ export function queryStemVariants(normalizedWord: string, opts: QueryStemOptions
     // كل ضمير محتمل يُجرَّد (لا الأطول وحده)؛ الصورة الزائدة لا تطابق شيئًا غالبًا.
     for (const suf of OBJECT_SUFFIXES) {
       if (!x.endsWith(suf) || x.length - suf.length < STEM_MIN) continue;
+      // كاف الخطاب على كلمة من أربعة أحرف («اترك» ← «اتر») جزء من الفعل غالبًا.
+      if (suf === "ك" && x.length - 1 < STEM_MIN + 1) continue;
       const b = x.slice(0, -suf.length);
       addStripped(x, b, suf);
       // ٣) حرف المضارعة: وزن «يفعل» وحده، وبعد ضمير لا يلتبس بالنسبة أو التاء («تجاري» ← لا «جار»).
-      if (verbPrefix && suf !== "ي" && suf !== "ت" && b.length === STEM_MIN + 1 && /^[ايتن]/.test(b) && !suf.endsWith("ي")) add(b.slice(1));
+      if (verbPrefix && suf !== "ي" && suf !== "ت" && b.length === STEM_MIN + 1 && /^[ايتن]/.test(b) && !suf.endsWith("ي") && !b.slice(1).includes("ا")) add(b.slice(1));
     }
-    if (verbPrefix && x.length === STEM_MIN + 1 && /^[ايتن]/.test(x) && !x.endsWith("ه")) add(x.slice(1));
+    // ولا إن كان في الباقي ألف («نصاب» ← «صاب»، «احنا» ← «حنا»): وزن «يفعل» بلا ألف.
+    if (verbPrefix && x.length === STEM_MIN + 1 && /^[ايتن]/.test(x) && !x.endsWith("ه") && !x.slice(1).includes("ا")) add(x.slice(1));
     // وزن «يُفاعِل» (أعارض، يطالب، نراجع) ← فاعل؛ لا في المصدر بالتاء المربوطة («إعادة» لا «عادة»).
     if (verbPrefix && x.length === STEM_MIN + 2 && /^[ايتن].ا/.test(x) && !x.endsWith("ه")) add(x.slice(1));
     // ٤) الجمع السالم.
@@ -203,7 +206,8 @@ export function queryStemVariants(normalizedWord: string, opts: QueryStemOptions
   inflections(w, true);
   // ضمير المتكلم على المؤنث وجمعه: «موافقتي» ← موافقه، «بياناتي» ← بيانات (ثم صوره).
   const poss = w.match(/^(.{2,}?)(ات|ت)ي$/);
-  if (poss && poss[1].length + poss[2].length >= STEM_MIN) {
+  // «بيتي» ← لا «بيه»: الاسم قبل تاء التأنيث ثلاثة أحرف فأكثر.
+  if (poss && (poss[2] === "ات" ? poss[1].length >= 2 : poss[1].length >= STEM_MIN)) {
     if (poss[2] === "ات") {
       add(`${poss[1]}ات`);
       plural(`${poss[1]}ات`);

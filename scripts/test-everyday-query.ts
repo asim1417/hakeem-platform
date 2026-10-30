@@ -7,7 +7,7 @@ import { queryStemVariants } from "../lib/modules/legal-core/arabic-morphology";
 import { explicitArticleCitation } from "../lib/mcp/article-citation";
 import { groupTerms, planQuery, probeTerms } from "../lib/mcp/query-plan";
 import { dropRequestPhrases, hasColloquialMarker, queryKeywords } from "../lib/mcp/query-words";
-import { fusionScore, WEIGHTS_DISTINCTIVE, WEIGHTS_WEAK_LEXICAL } from "../lib/mcp/search-fusion";
+import { fusionScore, pinnableExact, WEIGHTS_DISTINCTIVE, WEIGHTS_WEAK_LEXICAL } from "../lib/mcp/search-fusion";
 import { compileAny, matchesText, normalizeAr } from "../lib/mcp/tools/word-match";
 
 let failures = 0;
@@ -196,16 +196,18 @@ check("«عقد صوري»: الحصر بلفظ السائل وحده، والص
   assert.deepEqual(probeTerms(p), ["صوري", "عقد"]);
   assert.deepEqual(groupTerms(p.groups.find((g) => g.term === "صوري")!), ["صوري", "صوريه"]);
 });
-check("السؤال الدارج: المدخل الملتبس يعمل («ما صلح الشقة» ← المسكن)، واللفظ ذو البديل لا يُحصر", () => {
-  assert.ok(planQuery("المؤجر ما صلح الخراب في الشقة").colloquial, "«ما صلح» دارجة");
-  assert.ok(group("المؤجر ما صلح الخراب في الشقة", "الشقة").alts.includes(n("المسكن")));
+check("السؤال الدارج: المدخل الملتبس يعمل («ما صلحه وش أسوي» ← المسكن)، واللفظ ذو البديل لا يُحصر", () => {
+  assert.ok(planQuery("المؤجر ما صلحه وش أسوي في الشقة").colloquial, "«وش» دارجة");
+  assert.ok(group("المؤجر ما صلحه وش أسوي في الشقة", "الشقة").alts.includes(n("المسكن")));
+  assert.equal(planQuery("المؤجر ما صلح الخراب في الشقة").colloquial, false, "«ما صلح» فصيحة أيضًا");
   const p = planQuery("العامل اذا فصلوه بدون سبب");
   assert.ok(p.colloquial, "«فصلوه» صيغة دارجة");
   assert.ok(!probeTerms(p).includes(n("فصلوه")));
   assert.ok(probeTerms(p, { probeBridged: true }).includes(n("فصلوه")));
   assert.deepEqual(group("موظف حكومي طلب مني رشوة وش عقوبته", "موظف").alts, [], "الموظف العام ليس العامل");
   assert.ok(planQuery("هل يقدر صاحب العمل يفصل الموظفة").colloquial, "«هل يقدر» دارجة");
-  assert.ok(planQuery("ابي محامي يحضر معي التحقيق").colloquial, "«أبي» أول السؤال طلب");
+  assert.ok(planQuery("ابغى محامي يحضر معي التحقيق").colloquial, "«أبغى» أول السؤال طلب دارج");
+  assert.ok(queryKeywords("أبي توفي وترك ديونا").includes("ابي"), "«أبي» أول السؤال والد لا طلب");
   assert.ok(planQuery("وش حقي اذا الشركة خصموا من راتبي").colloquial);
   assert.ok(!planQuery("خصم الأجر").colloquial);
 });
@@ -223,6 +225,72 @@ check("«لازم» و«أبي» و«شيء» حشو في الدارج وحده"
   assert.equal(hasColloquialMarker(["صار", "الحكم", "نهائيا"].map(n)), false, "«صار» فصيح أيضًا");
 });
 
+// ── مراجعة الجودة الثانية (BLK-1): الافتتاح الفصيح لا يجعل السؤال دارجًا، والألفاظ الفصيحة لا تُقرأ دارجة ──
+check("الافتتاح الفصيح يُحذف ولا يغيّر السجل: «ما حكم عقد صوري» كـ«عقد صوري»", () => {
+  const bare = planQuery("عقد صوري");
+  for (const q of ["ما حكم عقد صوري", "ما هو حكم عقد صوري", "من فضلك عقد صوري", "لو سمحت ما حكم عقد صوري", "قل لي عقد صوري", "عندي سؤال عن عقد صوري", "ابحث عن عقد صوري", "ابحث لي عن عقد صوري", "أريد أن أعرف عقد صوري"]) {
+    const p = planQuery(q);
+    assert.equal(p.colloquial, false, q);
+    assert.deepEqual(probeTerms(p), probeTerms(bare), `${q}: ${probeTerms(p)}`);
+    assert.deepEqual(p.groups.map((g) => groupTerms(g)), bare.groups.map((g) => groupTerms(g)), q);
+  }
+  assert.equal(planQuery("ما حكم عقد صوري").cleaned, "عقد صوري");
+});
+check("الافتتاح الفصيح مع ألفاظ المراجعة: لا بدائل بمعنى آخر ولا صور زائدة", () => {
+  const cases: Array<[string, string[]]> = [
+    ["ما هو حكم صورية العقد", ["الكاميرا", "صور"]],
+    ["ما حكم نصاب الجمعية العامة", ["احتيال", "صاب"]],
+    ["ما حكم تخفيض رأس المال", ["انقاص"]],
+    ["ما حكم القاضي الذي يفصل في الدعوى", ["فسخ", "انهاء"]],
+    ["ما حكم البيع إذا سلمت البضاعة متأخرة", ["سمح"]],
+    ["ما حكم بيع الشقة على الخارطة", ["الماجور", "المسكن"]],
+    ["من فضلك ما حكم الخصم في الدعوى", ["حسم"]],
+    ["عندي سؤال عن الصلح", ["اصلاح"]],
+  ];
+  for (const [q, bad] of cases) {
+    const p = planQuery(q);
+    assert.equal(p.colloquial, false, `«${q}» فصيح`);
+    const terms = p.groups.flatMap((g) => groupTerms(g));
+    for (const b of bad) assert.equal(terms.includes(n(b)), false, `«${q}» ← ${b}: ${terms.join("، ")}`);
+    assert.ok(!/سمح|احتيال|انقاص/.test(normalizeAr(p.semanticAppend)), `نص المعنى: ${p.semanticAppend}`);
+  }
+});
+check("ألفاظ فصيحة لا تُقرأ دارجة: «قبض على»، «يطلع على»، «حل ودي»، «عامل منزلي»، «تزوجت أمه»، «تولد عن»", () => {
+  const formal = [
+    "القبض على المتهم",
+    "يحق للخصم أن يطلع على المستندات",
+    "حل ودي للنزاع",
+    "عقد العامل المنزلي",
+    "عقد عمل منزلي",
+    "حضانة الطفل إذا تزوجت أمه",
+    "الضرر الذي تولد عن الخطأ",
+    "كما أسلفت في المذكرة",
+    "النظام لم ينفذ بعد",
+    "هل تقدر المحكمة التعويض عن الضرر الأدبي",
+  ];
+  for (const q of formal) assert.equal(planQuery(q).colloquial, false, q);
+  assert.ok(queryKeywords("يحق للخصم أن يطلع على المستندات").includes("يطلع"), "«يطلع» لفظ");
+  assert.ok(queryKeywords("حل ودي للنزاع").includes("ودي"), "«ودي» لفظ");
+  assert.deepEqual(group("القبض على المتهم", "القبض").alts, []);
+  assert.deepEqual(group("الضرر الذي تولد عن الخطأ", "تولد").alts, []);
+  assert.deepEqual(group("عقد العامل المنزلي", "المنزلي").alts, []);
+  // «علي» بالياء (عليَّ) دارجة: «نصب علي واحد».
+  assert.ok(planQuery("نصب علي واحد وأخذ فلوسي").colloquial);
+  assert.ok(group("نصب علي واحد واخذ مبلغ", "نصب").alts.includes(n("الاحتيال")));
+  assert.equal(planQuery("نصب على المشتري").colloquial, false, "«على» بالألف المقصورة");
+});
+check("علامات دارجة إضافية: «يبي»، «احنا»، «عطتني»", () => {
+  for (const q of ["الشركة يبي يفصلني", "احنا شركاء في محل", "عطتني الشركة إنذار"]) assert.ok(planQuery(q).colloquial, q);
+});
+check("صور زائدة في الدارج: «اترك» لا «اتر»، «احنا» لا «حنا»، «نصاب» لا «صاب»، «بيتي» لا «بيه»", () => {
+  assert.equal(queryStemVariants(n("اترك"), full).includes("اتر"), false);
+  assert.ok(queryStemVariants(n("اترك"), full).includes("ترك"));
+  assert.equal(queryStemVariants(n("احنا"), full).includes("حنا"), false);
+  assert.equal(queryStemVariants(n("نصاب"), full).includes("صاب"), false);
+  assert.equal(queryStemVariants(n("بيتي"), full).includes("بيه"), false);
+  assert.ok(queryStemVariants(n("زوجتي"), full).includes(n("زوجة")));
+});
+
 // ── الإحالة الصريحة إلى مادة (B2) ──
 check("الإحالة الصريحة: «المادة/مادة» أو «م» مستقلة", () => {
   const yes: Array<[string, number]> = [
@@ -235,6 +303,7 @@ check("الإحالة الصريحة: «المادة/مادة» أو «م» مس
     ["بالمادة 74 من نظام العمل", 74],
     ["المادة رقم 3 من نظام الإثبات", 3],
     ["المادة 55 من نظام العمل الصادر بالمرسوم الملكي رقم م/51", 55],
+    ["كالمادة 80 من نظام العمل", 80],
   ];
   for (const [q, num] of yes) assert.equal(explicitArticleCitation(q)?.articleNumber, num, q);
   assert.ok(!/م\s*\/|51/.test(explicitArticleCitation("المادة 55 من نظام العمل الصادر بالمرسوم الملكي رقم م/51")!.systemHint));
@@ -250,7 +319,16 @@ check("ليست إحالة: «كم 60 يوم»، «رقم 120»، «م/53» وا
     "حكم 55 العمل",
     "المادة 12 مكرر من نظام الإجراءات الجزائية",
     "نظام العمل",
+    "تقرير 2019م 15 حالة في نظام العمل",
+    "قرار رقم 5 م 12 نظام العمل",
   ]) assert.equal(explicitArticleCitation(q), null, q);
+});
+check("مطابقة المادة التامة لا تُثبَّت أولًا إلا داخل وجه البحث (BLK-2)", () => {
+  const hit = { id: "a1", type: "article" };
+  assert.deepEqual(pinnableExact(hit, new Set(["a1", "b2"])), hit, "مادة نظام ساري");
+  assert.equal(pinnableExact(hit, new Set(["b2"])), null, "مادة نظام ملغى أو مستبدل (خارج الوجه)");
+  assert.equal(pinnableExact(hit, null), null, "تعذّر قراءة الوجه: لا تثبيت");
+  assert.equal(pinnableExact(null, new Set(["a1"])), null);
 });
 
 // ── أوزان الدمج ──

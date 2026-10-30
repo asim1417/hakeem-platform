@@ -16,7 +16,7 @@
  */
 import { queryStemVariants } from "../modules/legal-core/arabic-morphology";
 import { BROKEN_PLURALS, EVERYDAY_ENTRIES, type EverydayEntry } from "./everyday-lexicon";
-import { COLLOQUIAL_STOP, dropRequestPhrases, isDialectWord, isStopWord, queryKeywords, SOFT_STOP } from "./query-words";
+import { COLLOQUIAL_STOP, isDialectWord, isStopWord, queryKeywords, scanRequestPhrases, SOFT_STOP } from "./query-words";
 import { normalizeAr } from "./tools/word-match";
 
 export interface TermGroup {
@@ -47,7 +47,14 @@ export function groupTerms(g: TermGroup, cap = 12): string[] {
 }
 
 
-const normWord = (w: string) => normalizeAr(w).replace(/[^ء-يa-zA-Z0-9]/g, "");
+/**
+ * الكلمة مطبَّعة للمطابقة. «على» (حرف الجر) تبقى بالألف المقصورة فلا تطابق «علي» (عليَّ) في مداخل الجسر الدارجة
+ * («قبض علي»، «نصب علي»): مراجعة الجودة الثانية على #984 — «القبض على المتهم» فصيح. القرار من النص الخام.
+ */
+const normWord = (w: string) => {
+  const t = normalizeAr(w).replace(/[^ء-يa-zA-Z0-9]/g, "");
+  return /^[وف]?على$/.test(String(w ?? "").replace(/[^ء-ي]/g, "")) ? `${t.slice(0, -1)}ى` : t;
+};
 
 type IndexedEntry = { words: string[]; entry: EverydayEntry };
 let INDEX: { phrases: IndexedEntry[]; single: Map<string, EverydayEntry[]>; plural: Map<string, string[]>; known: Set<string> } | null = null;
@@ -155,31 +162,22 @@ export function planQuery(query: string, opts: PlanOptions = {}): QueryPlan {
   // الكلمات بصورتها الأصلية (للنص الدلالي) ومطبَّعة (للمطابقة)، بلا عبارات الطلب.
   const rawWords = raw.split(/\s+/).filter(Boolean);
   const normWords = rawWords.map(normWord);
-  const keptIdx: number[] = [];
-  {
-    // dropRequestPhrases على المطبَّع، ثم استعادة المواضع الباقية.
-    const kept = dropRequestPhrases(normWords);
-    let k = 0;
-    for (let i = 0; i < normWords.length && k < kept.length; i++) {
-      if (normWords[i] === kept[k]) {
-        keptIdx.push(i);
-        k++;
-      }
-    }
-  }
+  // عبارات الطلب تُحذف؛ والدارجة منها وحدها علامة سجل (الفصيحة «ما حكم»، «من فضلك» لا تغيّره).
+  const scan = scanRequestPhrases(normWords);
+  const keptIdx = scan.kept;
   const cleanedRaw = keptIdx.map((i) => rawWords[i]);
   const cleanedNorm = keptIdx.map((i) => normWords[i]);
   const cleaned = cleanedRaw.join(" ");
 
-  // السجل: عبارة طلب حُذفت، أو لفظ دارج، أو صيغة دارجة من الجسر («فصلوه»، «فلوسي»).
-  const all = bridge ? matchEntries(cleanedNorm, true) : { spans: [], alts: [] };
+  // السجل: عبارة طلب دارجة، أو لفظ دارج، أو صيغة دارجة من الجسر («فصلوه»، «فلوسي») بصورتها لا بصورها الصرفية الكاملة.
+  const conservative = bridge ? matchEntries(cleanedNorm, false) : { spans: [], alts: [] };
   const colloquial =
     !gate ||
-    keptIdx.length !== normWords.length ||
+    scan.dialect ||
     cleanedNorm.some(isDialectWord) ||
-    all.spans.some((m) => m.entries.some((e) => e.dialect)) ||
-    all.alts.some((m) => m.entries.some((e) => e.dialect));
-  const { spans: rawSpans, alts: rawAlts } = bridge && !colloquial ? matchEntries(cleanedNorm, false) : all;
+    conservative.spans.some((m) => m.entries.some((e) => e.dialect)) ||
+    conservative.alts.some((m) => m.entries.some((e) => e.dialect));
+  const { spans: rawSpans, alts: rawAlts } = bridge && colloquial ? matchEntries(cleanedNorm, true) : conservative;
   const matches = forRegister(rawSpans, colloquial);
   const altMatches = forRegister(rawAlts, colloquial);
   const keywords = queryKeywords(cleaned, { colloquial: gate ? colloquial : true });
