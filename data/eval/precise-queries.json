@@ -368,14 +368,15 @@
   },
   "baseline": {
     "ref": "aman/hkm-062-baseline (main eaa1611 + أداة القياس وحدها)",
-    "sha": "666b555",
-    "run": "41002817251",
+    "sha": "a8666b5",
+    "run": "41010706006",
     "runs_agree": [
       "40974158151",
       "40978922582",
-      "40994905879"
+      "40994905879",
+      "41002817251"
     ],
-    "at": "2026-10-30T04:20Z",
+    "at": "2026-10-30T05:45Z",
     "note": "أعلى ثلاث لكل لفظ (terms) ورتبة الهدف لكل مادة في عيّنة known-item (known_item، null = خارج العشر) على main عبر searchArticles. ما سبق من الأسئلة وعيّنة known-item مطابق لتشغيلات runs_agree.",
     "terms": {
       "p-simulated-contract": [
@@ -690,6 +691,21 @@
         "cmpwif1p802i1nxffbd4p80pn",
         "nz26-6d3f84a55a5b0d9cbc965927",
         "nz26-06f8dc33a2a1acee8490a713"
+      ],
+      "r4-assess-repair": [
+        "cmpwid9j5027rnxffe6ctjuys",
+        "cmpwid4r6026vnxff9lb1iezg",
+        "cmpz6gci30885cwg2tpula5ez"
+      ],
+      "r4-arsh-defect": [
+        "cmpz5yrlc02cncwg2i553ccjq",
+        "cmpz5yrr802cpcwg2yaydp3xj",
+        "cmpz5ys2w02crcwg2ephwhtdh"
+      ],
+      "r4-solvency": [
+        "cmpzcv8yz0av7vtrkpjjglu0i",
+        "cmpzcv8yz0av8vtrkugoa8on5",
+        "cmpzcv8yz0av9vtrkr5tit9c3"
       ]
     },
     "known_item": {
