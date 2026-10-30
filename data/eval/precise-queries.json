@@ -1,6 +1,6 @@
 {
-  "version": 2,
-  "description": "HKM-062 (مراجعة الجودة على #984، B1): أسئلة نظامية دقيقة بصياغة المحامي عبر searchArticles (مسار hakeem_search)، لكشف التراجع في السؤال الفصيح بعد جسر لغة الناس. لكل سؤال لفظ فيه معنى نظامي غير معناه الدارج، أو صورة صرفية ملتبسة. المرجع: أعلى ثلاث نتائج للإنتاج (main) في baseline؛ البوابة: لا تراجع (أولى main في ثلاث الفرع). وتُضاف إليها عيّنة eval-known-item نفسها (scripts/known-item-sample.ts) بهدفها الذهبي. الإصدار 2 (مراجعة الجودة الثانية): 16 سؤالًا بافتتاح فصيح («ما حكم»، «من فضلك»، «ابحث عن»…) و10 بألفاظ فصيحة كانت تُقرأ دارجة («القبض على»، «يطلع على»، «حل ودي»، «عامل منزلي»…) ومادة لائحة مستبدلة.",
+  "description": "HKM-062 (مراجعة الجودة على #984، B1): أسئلة نظامية دقيقة بصياغة المحامي عبر searchArticles (مسار hakeem_search)، لكشف التراجع في السؤال الفصيح بعد جسر لغة الناس. لكل سؤال لفظ فيه معنى نظامي غير معناه الدارج، أو صورة صرفية ملتبسة. المرجع: أعلى ثلاث نتائج للإنتاج (main) في baseline؛ البوابة: لا تراجع (أولى main في ثلاث الفرع). وتُضاف إليها عيّنة eval-known-item نفسها (scripts/known-item-sample.ts) بهدفها الذهبي. الإصدار 2 (مراجعة الجودة الثانية): 16 سؤالًا بافتتاح فصيح («ما حكم»، «من فضلك»، «ابحث عن»…) و10 بألفاظ فصيحة كانت تُقرأ دارجة («القبض على»، «يطلع على»، «حل ودي»، «عامل منزلي»…) ومادة لائحة مستبدلة. الإصدار 3 (مراجعة الجودة الثالثة): أربعة أسئلة «هل يقدر/ما يقدر» بمعنى يُقدَّر، وأربعة بـ«ما دفع/ما نفذ/بدلها» بمعناها الفصيح؛ و«negative»: مواد يجب ألا تظهر في أعلى عشر (مادة اللائحة المستبدلة) بدل استثناء المراجعة.",
+  "version": 3,
   "terms": [
     {
       "id": "p-simulated-contract",
@@ -301,14 +301,66 @@
       "id": "m-repealed-regulation",
       "query": "المادة 7 من لائحة عمال الخدمة المنزلية",
       "note": "BLK-2: لائحة مستبدلة لا تُثبَّت أولًا"
+    },
+    {
+      "id": "r3-assess-damage",
+      "query": "هل يقدر التعويض عن الضرر الذي تولد عن الخطأ",
+      "note": "«هل يقدر» = يُقدَّر، و«تولد» = نشأ"
+    },
+    {
+      "id": "r3-assess-defect",
+      "query": "هل يقدر التعويض عن عيب الشقة المبيعة",
+      "note": "«هل يقدر» فصيحة + الشقة"
+    },
+    {
+      "id": "r3-assess-forgery",
+      "query": "ما يقدر به التعويض عن صور المحررات المزورة",
+      "note": "«ما يقدر به» فصيحة + صور المحررات"
+    },
+    {
+      "id": "r3-assess-maintenance",
+      "query": "هل يقدر القاضي نفقة الأطفال",
+      "note": "«هل يقدر» فصيحة + الأطفال"
+    },
+    {
+      "id": "r3-plea-reply",
+      "query": "الرد على ما دفع به المدعى عليه",
+      "note": "«ما دفع به» = الدفع الإجرائي"
+    },
+    {
+      "id": "r3-formal-pleas",
+      "query": "ما حكم ما دفع به الخصم من دفوع شكلية",
+      "note": "«ما دفع به» + افتتاح فصيح"
+    },
+    {
+      "id": "r3-performed-obligations",
+      "query": "ما نفذ من الالتزامات قبل الفسخ",
+      "note": "«ما نفذ» = الذي نُفّذ"
+    },
+    {
+      "id": "r3-substitute-goods",
+      "query": "التزام البائع بتسليم سلعة بدلها",
+      "note": "«بدلها» = عوضها"
     }
   ],
+  "negative": {
+    "m-repealed-regulation": {
+      "ids": [
+        "cmpzcv9t50b23vtrk7mu74nm7"
+      ],
+      "why": "المادة 7 من «لائحة عمال الخدمة المنزلية ومن في حكمهم» وحالة عملها «مستبدل» (verification)؛ لا تُعرض في أعلى عشر (BLK-2)."
+    }
+  },
   "baseline": {
     "ref": "aman/hkm-062-baseline (main eaa1611 + أداة القياس وحدها)",
-    "sha": "0f8a3f9",
-    "run": "40974158151",
-    "at": "2026-10-29T23:35Z",
-    "note": "أعلى ثلاث لكل لفظ (terms) ورتبة الهدف لكل مادة في عيّنة known-item (known_item، null = خارج العشر) على main عبر searchArticles. عيّنة known-item تتغير إن تغيّرت المواد؛ ما لم يرد هنا لا يُقارن.",
+    "sha": "0b9025b",
+    "run": "40994905879",
+    "runs_agree": [
+      "40974158151",
+      "40978922582"
+    ],
+    "at": "2026-10-30T02:45Z",
+    "note": "أعلى ثلاث لكل لفظ (terms) ورتبة الهدف لكل مادة في عيّنة known-item (known_item، null = خارج العشر) على main عبر searchArticles. الأسئلة الأربعة والثلاثون الأولى وعيّنة known-item مطابقة لتشغيلي runs_agree.",
     "terms": {
       "p-simulated-contract": [
         "cmpwidr3k02apnxfft114zp7i"
@@ -465,6 +517,125 @@
         "11c149df24714b3db3a23d7a5d69e90d",
         "cmpwii8fz030vnxffomz4d6xa",
         "cmpwiic61031hnxff2f0im4ga"
+      ],
+      "o-simulated-contract": [
+        "cmpwidr3k02apnxfft114zp7i"
+      ],
+      "o-simulation": [
+        "cmpwidr3k02apnxfft114zp7i",
+        "64d134ca5dbc47748f8c6f96a0e80caf"
+      ],
+      "o-quorum": [
+        "cmpz6ghgm089xcwg2faz7r5iw",
+        "cmpz66hyb04vrcwg22p1hksi2",
+        "cmpz6k99l09njcwg2x4rexxm7"
+      ],
+      "o-capital-reduction": [
+        "a47c884108b34813bc6e845d8d2c2fd7",
+        "cmpwi7brb018hnxffdr9r7z5e",
+        "cmpwi7c37018jnxffqh67tqnw"
+      ],
+      "o-judge-decides": [
+        "cmpwi4bw200q5nxffwhtx4v2v",
+        "cmpwi8x5n01htnxffmhec162t",
+        "cmpwi3x8f00njnxffy7biy7zi"
+      ],
+      "o-late-delivery": [
+        "cmpwicgr60231nxfftps185jj",
+        "cmpwicqss024pnxff6ijcppk5",
+        "cmpwidb0t0281nxffgu44vxr6"
+      ],
+      "o-off-plan": [
+        "cmpz6qfsj0bsxcwg21in3nyll",
+        "cmpz6qgl20bt7cwg2yx389l60",
+        "cmpz6qiye0bu1cwg2pndhp7yf"
+      ],
+      "o-opponent-absent": [
+        "9e972641da1a4ce383070ca75e5a855e",
+        "cmpwiapzx01slnxff20gfrbhm"
+      ],
+      "o-settlement": [
+        "cmpwie71602d3nxff8zhpg5qy",
+        "cmpwif5fe02innxff4ogema8b",
+        "cmpwifp6702lxnxff5jkjisp4"
+      ],
+      "o-entry-into-force": [
+        "cmpz6fddm07vbcwg2n7s6to3m",
+        "cmpz6fdj107vdcwg2lex8y42y",
+        "cmpz6fdog07vfcwg2lshrp6vu"
+      ],
+      "o-jurisdiction-plea": [
+        "cmpwi75pb017hnxff5g1v0z4k",
+        "cmpwi8l5v01ftnxffyrwy5fvd",
+        "cmpzcvdue0c6avtrkxbkq1mv6"
+      ],
+      "o-mother-custody": [
+        "cmpz5wl1d01llcwg2bhvr0ull",
+        "cmpz5wlir01lrcwg24koa4y2a",
+        "cmpz5wloj01ltcwg245uv7s29"
+      ],
+      "o-prison": [
+        "cmpz5w8m901hdcwg23t2z89nw",
+        "cmpz5w8s201hfcwg2plpe1328",
+        "cmpz5w8xu01hhcwg21uje9lqc"
+      ],
+      "o-commercial-papers": [
+        "cmpz65jw104khcwg2qorvy5nd",
+        "cmpz67ih9057vcwg27e84gzg3",
+        "cmpz69f9705v5cwg2cld3cvlw"
+      ],
+      "o-maternity": [
+        "cmpz6plwt0bijcwg21vxiimdz",
+        "cmpzcv89s0apnvtrkay56epfe",
+        "cmpz5y6bl025dcwg264h5fpbj"
+      ],
+      "o-binding-contract": [
+        "cmpz6ew4307ozcwg2u8xpspd1",
+        "889a30e7bd774877a9fc51df5e91871f",
+        "cmpwicvez025hnxff380l63ht"
+      ],
+      "m-arrest": [
+        "cmpz602yv02sdcwg2kcrqevas",
+        "cmpz5zt3k02p1cwg2f47iiw9d",
+        "cmpz5zt9h02p3cwg2ye4nig8g"
+      ],
+      "m-inspect-documents": [
+        "cmr4qm6ao00479vd1o7qkhu1f",
+        "cmpwib4nh01v1nxffb90xilyn"
+      ],
+      "m-amicable": [
+        "hk45c-0beb56ef6ec2359c764e36f6"
+      ],
+      "m-domestic-worker": [
+        "8b33f2d0f3aa4e39b18b03e9c0ecbe88",
+        "5932257c40b74868972b9f882f2edbcb",
+        "054a12cdc016455dbad43b37835c6535"
+      ],
+      "m-mother-remarried": [
+        "cmpzcv47b09lbvtrkwkz214gm"
+      ],
+      "m-damage-arising": [
+        "cmpwi776b017pnxff8kyzxvs9",
+        "cmpzcvdue0c5fvtrk19sq1gbu",
+        "cmpzcvdue0c5gvtrkcukd6a37"
+      ],
+      "m-court-assesses": [
+        "cmpwida4m027vnxffw2dlwrpd",
+        "4427ca865b4542449598abe3b24cff1d",
+        "cmr4qm6ap004k9vd1iqav4uje"
+      ],
+      "m-father-debts": [
+        "cmpz5zebt02k5cwg2kvregotb"
+      ],
+      "m-not-in-force": [
+        "boe26-d4dcd01ef587ce4fad86e8b4",
+        "boe26-f891266aa6a0fd66400ba661",
+        "cmpwi7v6k01bhnxffrsp2b1rh"
+      ],
+      "m-repealed-regulation": [
+        "c3dbee9b006646d78eb8e4ed678100b9",
+        "7f59dd288bc7463ebcfb95a012157626",
+        "84bfa0c1c46043e69712a70073354218"
       ]
     },
     "known_item": {
@@ -588,6 +759,9 @@
       "cmpwi95jj01j7nxffkgrj5ez7": 9,
       "cmpwi9baf01k5nxffv789nq3r": 1,
       "cmpwi9hji01l7nxffg6319klv": null
+    },
+    "reviewed": {
+      "o-mother-custody": "أولى main («ابحث عن حضانة الأم») نظام مكافحة غسل الأموال م1 (تعريفات) لأن «ابحث» لفظ في main؛ والفرع الأحوال الشخصية م131 ثم م127 (حضانة الأم) — قُرئ نص المواد الثلاث."
     }
   }
 }
