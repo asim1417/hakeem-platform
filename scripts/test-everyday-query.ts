@@ -83,6 +83,14 @@ check("الياء الأخيرة في كلمة من أربعة أحرف فأكث
   none("يطالبني", "يطالب");
   assert.ok(queryStemVariants(n("حقوقي"), { full: true, known: (s) => s === "حقوق" }).includes("حقوق"));
 });
+check("ضمير المتكلم على المؤنث وجمعه (الوضع الكامل): موافقتي ← موافقة، سيارتي ← سيارة، بياناتي ← بيانات؛ لا في الفصيح", () => {
+  assert.ok(queryStemVariants(n("موافقتي"), full).includes(n("موافقة")));
+  assert.ok(queryStemVariants(n("سيارتي"), full).includes(n("سيارة")));
+  assert.ok(queryStemVariants(n("بياناتي"), full).includes("بيانات"));
+  assert.ok(queryStemVariants(n("بياناتي"), full).includes("بيان"));
+  assert.equal(queryStemVariants(n("موافقتي")).includes(n("موافقة")), false, "الفصيح بلا تجريد الضمير");
+  assert.equal(queryStemVariants(n("نهائي"), full).some((v) => v.endsWith("ه") && v !== n("نهائية")), false);
+});
 check("واو العطف مع الحشو حشو: «وعندي» و«وهي» لا تدخل الألفاظ", () => {
   assert.deepEqual(queryKeywords("تركت العمل وعندي إجازات"), ["تركت", "العمل", "اجازات"]);
   assert.deepEqual(queryKeywords("يفصل الموظفة وهي في إجازة"), ["يفصل", "الموظفه", "اجازه"]);
