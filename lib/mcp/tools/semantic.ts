@@ -12,6 +12,7 @@ import type { SqlClient } from "../../modules/legal-core/sql-port";
 import { articleLabel, NON_ARTICLE_BIS } from "../../modules/legal-core/article-key";
 import { normalizeLawName } from "../../modules/legal-core/law-name-match";
 import { compileTerm, matchesNormalized, normalizeAr, type CompiledTerm } from "./word-match";
+import { queryKeywords } from "../query-words";
 import { filtersFromArgs, lawScopeForFilters, loadLawCatalog, type LawScope } from "./catalog";
 import { snippetAround, type EffectiveFn, type FilterArgs } from "./text-search";
 
@@ -20,23 +21,17 @@ export interface SemanticDeps {
   enabled?: () => boolean;
   /** أقرب المواد بالمتجه: معرّف المادة والتشابه (0..1). */
   vectorSearch?: (q: string, limit: number, lawIds?: string[]) => Promise<Array<{ id: string; score: number }>>;
+  /**
+   * HKM-062: ألفاظ التغطية بدل ألفاظ نص البحث (hakeem_search يرسل للمتجهات نصًّا بلفظ النظام، ويقيس التغطية بمجموعات
+   * سؤال المستخدم نفسه). التغطية على النص الساري كما هي.
+   */
+  coverageTerms?: CompiledTerm[];
+  /** HKM-062: حد التشابه لهذا النداء (الافتراض SEMANTIC_TOOL_MIN_SCORE)؛ hakeem_search يخفضه حين لا دليل لفظي مميِّز. */
+  minScore?: number;
 }
 
-const QUERY_STOP = new Set(
-  [
-    "ما", "ماذا", "هل", "كيف", "متي", "كم", "اين", "لماذا", "من", "في", "على", "علي", "الى", "الي", "عن", "او", "و", "ثم", "ان",
-    "اذا", "لو", "التي", "الذي", "هذا", "هذه", "ذلك", "تلك", "هو", "هي", "مع", "بين", "عند", "كل", "اي", "لا", "لم", "لن", "قد",
-    "بعد", "قبل", "حتي", "غير", "عليه", "فيه", "له", "به", "نظام", "النظام", "الماده", "ماده", "حكم", "يجب", "يحق",
-  ].map(normalizeAr),
-);
-
-/** ألفاظ السؤال ذات المعنى (بلا أدوات الاستفهام والحروف). */
-export function queryKeywords(q: string): string[] {
-  const words = normalizeAr(q)
-    .split(/[^ء-يa-zA-Z0-9]+/)
-    .filter((w) => w.length >= 2 && !QUERY_STOP.has(w));
-  return [...new Set(words)].slice(0, 12);
-}
+// HKM-062: ألفاظ السؤال (وحذف عبارات الطلب والحوار الدارج) في وحدة صرفة بلا قاعدة: lib/mcp/query-words.ts.
+export { queryKeywords };
 
 /** حد التشابه لهذه الأداة (العتبة العامة 0.6 تقطع الأسئلة القصيرة الحوارية: م84 عمل لا تظهر)؛ التحمية بتغطية الألفاظ في الترتيب. */
 export const SEMANTIC_TOOL_MIN_SCORE = 0.5;
@@ -75,7 +70,7 @@ export async function handleSemanticSearch(db: SqlClient, args: FilterArgs & { q
     deps.vectorSearch ??
     (async (q: string, n: number, lawIds?: string[]) => {
       const { vectorProvider } = await import("@/lib/modules/legal-search/providers/vector-provider");
-      const raw = await vectorProvider.search({ q, limit: n, types: ["article"], minScore: SEMANTIC_TOOL_MIN_SCORE, lawIds });
+      const raw = await vectorProvider.search({ q, limit: n, types: ["article"], minScore: deps.minScore ?? SEMANTIC_TOOL_MIN_SCORE, lawIds });
       return raw.filter((r) => r.type === "article").map((r) => ({ id: r.id, score: r.score }));
     });
   const scope = await lawScopeForFilters(db, filtersFromArgs(args));
@@ -95,7 +90,7 @@ export async function handleSemanticSearch(db: SqlClient, args: FilterArgs & { q
   const eff = deps.effective ?? (async (rs) => (await import("@/lib/modules/legal-core/effective-text")).effectiveArticleTexts(rs));
   const texts = await eff(scoped.map((r) => ({ id: r.id, content: r.content })));
   const keywords = queryKeywords(query);
-  const compiled = keywords.map((k) => compileTerm(k, "derivatives")).filter((c): c is CompiledTerm => c !== null);
+  const compiled = deps.coverageTerms ?? keywords.map((k) => compileTerm(k, "derivatives")).filter((c): c is CompiledTerm => c !== null);
   const hinted = hintedLaws(query, await loadLawCatalog(db));
   const results = scoped
     .map((r) => {

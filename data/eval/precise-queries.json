@@ -1,0 +1,837 @@
+{
+  "description": "HKM-062 (مراجعة الجودة على #984، B1): أسئلة نظامية دقيقة بصياغة المحامي عبر searchArticles (مسار hakeem_search)، لكشف التراجع في السؤال الفصيح بعد جسر لغة الناس. لكل سؤال لفظ فيه معنى نظامي غير معناه الدارج، أو صورة صرفية ملتبسة. المرجع: أعلى ثلاث نتائج للإنتاج (main) في baseline؛ البوابة: لا تراجع (أولى main في ثلاث الفرع). وتُضاف إليها عيّنة eval-known-item نفسها (scripts/known-item-sample.ts) بهدفها الذهبي. الإصدار 2 (مراجعة الجودة الثانية): 16 سؤالًا بافتتاح فصيح («ما حكم»، «من فضلك»، «ابحث عن»…) و10 بألفاظ فصيحة كانت تُقرأ دارجة («القبض على»، «يطلع على»، «حل ودي»، «عامل منزلي»…) ومادة لائحة مستبدلة. الإصدار 3 (مراجعة الجودة الثالثة): أربعة أسئلة «هل يقدر/ما يقدر» بمعنى يُقدَّر، وأربعة بـ«ما دفع/ما نفذ/بدلها» بمعناها الفصيح؛ و«negative»: مواد يجب ألا تظهر في أعلى عشر (مادة اللائحة المستبدلة) بدل استثناء المراجعة. الإصدار 4 (مراجعة الجودة الرابعة): ثلاث جمل «يقدر» بمعنى يُقدَّر يليها موصول أو اسم بالياء.",
+  "version": 4,
+  "terms": [
+    {
+      "id": "p-simulated-contract",
+      "query": "عقد صوري",
+      "note": "صوري = الصورية، لا «صورة/صوري» (صوري)"
+    },
+    {
+      "id": "p-childbirth",
+      "query": "الولادة",
+      "note": "لا «الوضع» في الحصر"
+    },
+    {
+      "id": "p-apartment",
+      "query": "الشقة",
+      "note": "لا «المأجور/المسكن»"
+    },
+    {
+      "id": "p-opponent",
+      "query": "الخصم",
+      "note": "خصم الدعوى لا الحسم"
+    },
+    {
+      "id": "p-jurisdiction-plea",
+      "query": "الدفع بعدم الاختصاص",
+      "note": "الدفع الإجرائي لا الأداء"
+    },
+    {
+      "id": "p-mother-custody",
+      "query": "حضانة الأم",
+      "note": "لا «الأب/الوالد»"
+    },
+    {
+      "id": "p-prison",
+      "query": "السجن",
+      "note": "عقوبة السجن لا التوقيف"
+    },
+    {
+      "id": "p-settlement",
+      "query": "الصلح",
+      "note": "الصلح لا الإصلاح"
+    },
+    {
+      "id": "p-entry-into-force",
+      "query": "متى ينفذ النظام",
+      "note": "ينفذ = يسري، لا الإخلال"
+    },
+    {
+      "id": "p-attendance",
+      "query": "حضور الخصوم في الجلسة",
+      "note": "حضر لا غاب"
+    },
+    {
+      "id": "p-public-servant",
+      "query": "تأديب الموظف العام",
+      "note": "الموظف لا العامل"
+    },
+    {
+      "id": "p-commercial-papers",
+      "query": "الأوراق التجارية",
+      "note": "أوراق لا الكتابة"
+    },
+    {
+      "id": "p-salam",
+      "query": "عقد السلم",
+      "note": "عقد فقهي مسمى"
+    },
+    {
+      "id": "p-mining-licence",
+      "query": "رخصة استخراج المعادن",
+      "note": "استخراج لا «الحصول على»"
+    },
+    {
+      "id": "p-final-judgment",
+      "query": "الحكم النهائي",
+      "note": "نهائي لا نهاية"
+    },
+    {
+      "id": "p-material-damage",
+      "query": "الضرر المادي",
+      "note": "مادي لا مادة"
+    },
+    {
+      "id": "p-official-instrument",
+      "query": "المحرر الرسمي",
+      "note": "رسمي لا رسوم"
+    },
+    {
+      "id": "p-real-registration",
+      "query": "التسجيل العيني للعقار",
+      "note": "عيني لا العين"
+    },
+    {
+      "id": "p-insurance",
+      "query": "التأمين الإلزامي",
+      "note": "التأمين لا تام"
+    },
+    {
+      "id": "p-estate",
+      "query": "قسمة التركة",
+      "note": "التركة لا ترك"
+    },
+    {
+      "id": "p-trustee",
+      "query": "أمين الإفلاس",
+      "note": "أمين لا مين"
+    },
+    {
+      "id": "p-decisive-oath",
+      "query": "اليمين الحاسمة",
+      "note": "اليمين لا مين"
+    },
+    {
+      "id": "p-personal-data",
+      "query": "معالجة البيانات الشخصية",
+      "note": "البيانات لا بيان"
+    },
+    {
+      "id": "p-quorum",
+      "query": "نصاب انعقاد الجمعية العامة",
+      "note": "نصاب لا احتيال"
+    },
+    {
+      "id": "p-document-copies",
+      "query": "صور المحررات الرسمية",
+      "note": "صور المستندات لا الكاميرا"
+    },
+    {
+      "id": "p-capital-reduction",
+      "query": "تخفيض رأس المال",
+      "note": "تخفيض لا إنقاص"
+    },
+    {
+      "id": "p-court-decides",
+      "query": "تفصل المحكمة في الدعوى",
+      "note": "يفصل = يقضي لا الفسخ"
+    },
+    {
+      "id": "p-binding-contract",
+      "query": "العقد اللازم",
+      "note": "لازم لفظ لا حشو"
+    },
+    {
+      "id": "p-housing-allowance",
+      "query": "بدل السكن",
+      "note": "بدل لا أجرة"
+    },
+    {
+      "id": "p-forgery-challenge",
+      "query": "الطعن بالتزوير",
+      "note": "الطعن لا الاعتراض"
+    },
+    {
+      "id": "p-receive-price",
+      "query": "قبض الثمن",
+      "note": "القبض المدني لا القبض الجنائي"
+    },
+    {
+      "id": "p-commercial-business",
+      "query": "الأعمال التجارية",
+      "note": "الأعمال لا العمل"
+    },
+    {
+      "id": "p-cheque",
+      "query": "الشيك بدون رصيد",
+      "note": "عبارة الجسر الدقيقة نفسها"
+    },
+    {
+      "id": "p-preemption",
+      "query": "الأخذ بالشفعة",
+      "note": "مصطلح مدني"
+    },
+    {
+      "id": "o-simulated-contract",
+      "query": "ما حكم عقد صوري",
+      "note": "افتتاح فصيح + صوري"
+    },
+    {
+      "id": "o-simulation",
+      "query": "ما هو حكم صورية العقد",
+      "note": "افتتاح فصيح + الصورية"
+    },
+    {
+      "id": "o-quorum",
+      "query": "ما حكم نصاب الجمعية العامة",
+      "note": "افتتاح فصيح + نصاب"
+    },
+    {
+      "id": "o-capital-reduction",
+      "query": "ما حكم تخفيض رأس المال",
+      "note": "افتتاح فصيح + تخفيض"
+    },
+    {
+      "id": "o-judge-decides",
+      "query": "ما حكم القاضي الذي يفصل في الدعوى",
+      "note": "افتتاح فصيح + يفصل = يقضي"
+    },
+    {
+      "id": "o-late-delivery",
+      "query": "ما حكم البيع إذا سلمت البضاعة متأخرة",
+      "note": "افتتاح فصيح + سلمت لا سمح"
+    },
+    {
+      "id": "o-off-plan",
+      "query": "ما حكم بيع الشقة على الخارطة",
+      "note": "افتتاح فصيح + الشقة"
+    },
+    {
+      "id": "o-opponent-absent",
+      "query": "من فضلك ما حكم الخصم إذا غاب عن الجلسة",
+      "note": "افتتاح فصيح + الخصم"
+    },
+    {
+      "id": "o-settlement",
+      "query": "لو سمحت ما هي شروط الصلح",
+      "note": "افتتاح فصيح + الصلح"
+    },
+    {
+      "id": "o-entry-into-force",
+      "query": "قل لي متى ينفذ النظام",
+      "note": "افتتاح فصيح + ينفذ = يسري"
+    },
+    {
+      "id": "o-jurisdiction-plea",
+      "query": "عندي سؤال عن الدفع بعدم الاختصاص",
+      "note": "افتتاح فصيح + الدفع"
+    },
+    {
+      "id": "o-mother-custody",
+      "query": "ابحث عن حضانة الأم",
+      "note": "افتتاح فصيح + الأم"
+    },
+    {
+      "id": "o-prison",
+      "query": "ابحث لي عن عقوبة السجن",
+      "note": "افتتاح فصيح + السجن"
+    },
+    {
+      "id": "o-commercial-papers",
+      "query": "أريد أن أعرف أحكام الأوراق التجارية",
+      "note": "افتتاح فصيح + الأوراق"
+    },
+    {
+      "id": "o-maternity",
+      "query": "ما حكم إجازة الولادة",
+      "note": "افتتاح فصيح + الولادة"
+    },
+    {
+      "id": "o-binding-contract",
+      "query": "ما حكم العقد اللازم",
+      "note": "افتتاح فصيح + لازم"
+    },
+    {
+      "id": "m-arrest",
+      "query": "القبض على المتهم",
+      "note": "«على» لا «علي» (عليَّ)"
+    },
+    {
+      "id": "m-inspect-documents",
+      "query": "يحق للخصم أن يطلع على المستندات",
+      "note": "يطلع = يطّلع"
+    },
+    {
+      "id": "m-amicable",
+      "query": "حل ودي للنزاع",
+      "note": "ودي = الودي"
+    },
+    {
+      "id": "m-domestic-worker",
+      "query": "عقد العامل المنزلي",
+      "note": "منزلي صفة"
+    },
+    {
+      "id": "m-mother-remarried",
+      "query": "حضانة الطفل إذا تزوجت أمه",
+      "note": "أمه فصيحة"
+    },
+    {
+      "id": "m-damage-arising",
+      "query": "الضرر الذي تولد عن الخطأ",
+      "note": "تولد = نشأ"
+    },
+    {
+      "id": "m-court-assesses",
+      "query": "هل تقدر المحكمة التعويض عن الضرر الأدبي",
+      "note": "تقدر = تقدّر"
+    },
+    {
+      "id": "m-father-debts",
+      "query": "أبي توفي وترك ديونا فهل يلزمني سدادها",
+      "note": "أبي = والدي، لا طلب"
+    },
+    {
+      "id": "m-not-in-force",
+      "query": "النظام لم ينفذ بعد",
+      "note": "لم ينفذ = لم يسرِ"
+    },
+    {
+      "id": "m-repealed-regulation",
+      "query": "المادة 7 من لائحة عمال الخدمة المنزلية",
+      "note": "BLK-2: لائحة مستبدلة لا تُثبَّت أولًا"
+    },
+    {
+      "id": "r3-assess-damage",
+      "query": "هل يقدر التعويض عن الضرر الذي تولد عن الخطأ",
+      "note": "«هل يقدر» = يُقدَّر، و«تولد» = نشأ"
+    },
+    {
+      "id": "r3-assess-defect",
+      "query": "هل يقدر التعويض عن عيب الشقة المبيعة",
+      "note": "«هل يقدر» فصيحة + الشقة"
+    },
+    {
+      "id": "r3-assess-forgery",
+      "query": "ما يقدر به التعويض عن صور المحررات المزورة",
+      "note": "«ما يقدر به» فصيحة + صور المحررات"
+    },
+    {
+      "id": "r3-assess-maintenance",
+      "query": "هل يقدر القاضي نفقة الأطفال",
+      "note": "«هل يقدر» فصيحة + الأطفال"
+    },
+    {
+      "id": "r3-plea-reply",
+      "query": "الرد على ما دفع به المدعى عليه",
+      "note": "«ما دفع به» = الدفع الإجرائي"
+    },
+    {
+      "id": "r3-formal-pleas",
+      "query": "ما حكم ما دفع به الخصم من دفوع شكلية",
+      "note": "«ما دفع به» + افتتاح فصيح"
+    },
+    {
+      "id": "r3-performed-obligations",
+      "query": "ما نفذ من الالتزامات قبل الفسخ",
+      "note": "«ما نفذ» = الذي نُفّذ"
+    },
+    {
+      "id": "r3-substitute-goods",
+      "query": "التزام البائع بتسليم سلعة بدلها",
+      "note": "«بدلها» = عوضها"
+    },
+    {
+      "id": "r4-assess-repair",
+      "query": "هل يقدر التعويض بما يجبر الضرر الذي تولد عن الخطأ",
+      "note": "«يقدر … بما يجبر»: الموصول يقطع البحث عن فعل «يستطيع»"
+    },
+    {
+      "id": "r4-arsh-defect",
+      "query": "هل يقدر الأرش بما ينقص من قيمة الشقة المعيبة",
+      "note": "«بما ينقص» + الشقة"
+    },
+    {
+      "id": "r4-solvency",
+      "query": "ما يقدر به يسار المنفق على الأطفال",
+      "note": "«يسار» اسم لا مضارع + الأطفال"
+    }
+  ],
+  "negative": {
+    "m-repealed-regulation": {
+      "ids": [
+        "cmpzcv9t50b23vtrk7mu74nm7"
+      ],
+      "why": "المادة 7 من «لائحة عمال الخدمة المنزلية ومن في حكمهم» وحالة عملها «مستبدل» (verification)؛ لا تُعرض في أعلى عشر (BLK-2)."
+    }
+  },
+  "baseline": {
+    "ref": "aman/hkm-062-baseline (main eaa1611 + أداة القياس وحدها)",
+    "sha": "a8666b5",
+    "run": "41010706006",
+    "runs_agree": [
+      "40974158151",
+      "40978922582",
+      "40994905879",
+      "41002817251"
+    ],
+    "at": "2026-10-30T05:45Z",
+    "note": "أعلى ثلاث لكل لفظ (terms) ورتبة الهدف لكل مادة في عيّنة known-item (known_item، null = خارج العشر) على main عبر searchArticles. ما سبق من الأسئلة وعيّنة known-item مطابق لتشغيلات runs_agree.",
+    "terms": {
+      "p-simulated-contract": [
+        "cmpwidr3k02apnxfft114zp7i"
+      ],
+      "p-childbirth": [
+        "cmpz5y6bl025dcwg264h5fpbj",
+        "boe26-3013bed2995b8074acf6240e",
+        "cmpz5y4rq024tcwg2019o9ntt"
+      ],
+      "p-apartment": [
+        "hk45c-1a174ea646bce740aca11bb3",
+        "89d5a89cdc0e448c94f76299126e64a6",
+        "cmpz6qaez0br1cwg2wbxip5hv"
+      ],
+      "p-opponent": [
+        "cmpzcv8z00axyvtrkgbni8ctd",
+        "56d640b37b7c412d945c7b9575cf5c0e",
+        "cmpz6ca0t06u1cwg2alw4ap7b"
+      ],
+      "p-jurisdiction-plea": [
+        "cmpwiafy201qxnxffzbtf5wuo",
+        "cmpwi8wi001hpnxffezq8fvcq"
+      ],
+      "p-mother-custody": [
+        "cmpwi1kzq009fnxffctm2q8hv",
+        "cmpz5wavj01i5cwg2whfqzsmn",
+        "cmpwi1joe0097nxffz3ytq2l4"
+      ],
+      "p-prison": [
+        "cmpz5wa8b01hxcwg2emoqwqtb",
+        "cmpz5w3sg01frcwg2xdh5rfo3",
+        "cmpz5w20k01f5cwg2aekegode"
+      ],
+      "p-settlement": [
+        "cmpwie71602d3nxff8zhpg5qy",
+        "07347ec59bf0434bb08cf67cc39d98d0",
+        "1cc3434e288f4ea99008440533a536f3"
+      ],
+      "p-entry-into-force": [
+        "cmpz6fddm07vbcwg2n7s6to3m",
+        "cmpz6fdj107vdcwg2lex8y42y",
+        "cmpz6fdog07vfcwg2lshrp6vu"
+      ],
+      "p-attendance": [
+        "cmpwiafm701qvnxffc18k3o95",
+        "cmpwiapzx01slnxff20gfrbhm"
+      ],
+      "p-public-servant": [
+        "cmpwi7xz801bxnxffsyp57r1x",
+        "cmpzcuwl007d3vtrka4am49t8",
+        "cmpzcuwl007ddvtrkyf2zg7fr"
+      ],
+      "p-commercial-papers": [
+        "cmpz65jw104khcwg2qorvy5nd",
+        "cmpz68vyb05ojcwg2qbayh2zi"
+      ],
+      "p-salam": [
+        "cmpwi6y600167nxff179xfe75",
+        "cmpwi6yht0169nxffswadk8ry",
+        "cmpwi6fhr0133nxffxg9i12hb"
+      ],
+      "p-mining-licence": [
+        "9fce5f8ad40a446690997fb1d736eb0c",
+        "82a0dba6213b4e5a9d7c6d723ed92497",
+        "cmpzcv6wn0a9dvtrk3mdnkkha"
+      ],
+      "p-final-judgment": [
+        "04726c0c1cef41fa9c2949da0a3afd3a",
+        "064434714c434258a9dba05d4bf05d09",
+        "0fd5795983394eeca2eaa405ee4e0c19"
+      ],
+      "p-material-damage": [
+        "3c74a363b1dc46bab2a7cb3b5c705bc4",
+        "439fb865c3b54081ab3f44dfcd779ad2",
+        "91c1c9eba3e84b1496ddb43465e31d1b"
+      ],
+      "p-official-instrument": [
+        "cmr4rvlms004g1j0ufk61ux4j"
+      ],
+      "p-real-registration": [
+        "5be444c155ef490f9ed54c92117ec20a",
+        "3f8be0bd666a484290a3f4ce7195cdd3",
+        "cmpz6ptco0bl5cwg29xqe1ckb"
+      ],
+      "p-insurance": [
+        "boe26-b571baede4ea95a6ac7846e8"
+      ],
+      "p-estate": [
+        "4605d3ce535044ceae47a34991cd31de",
+        "af87e27e0439457f88d0f021422c7b0f",
+        "b53f15ad676349fea590905fab1eee17"
+      ],
+      "p-trustee": [
+        "cmpz6dhg3078hcwg2l2rbyt6h",
+        "cmpz6cj3x06x3cwg2o6yufnpe",
+        "0d1ca83d01ad4ee0ac586fef72f4b7ee"
+      ],
+      "p-decisive-oath": [
+        "cmr4rvm11007f1j0u67bk9hwz",
+        "cmpz62zrr03q5cwg207sb8fxn",
+        "cmpz62stu03nvcwg2yu6pcikv"
+      ],
+      "p-personal-data": [
+        "cmpz62jvw03kxcwg2tkufor9i",
+        "cmpz62dfl03ircwg2rgyv8uub",
+        "cmpz62hke03k5cwg2u5cchi60"
+      ],
+      "p-quorum": [
+        "4408f00621b74fe2ba8d8827bdb77283",
+        "cmpz6ghgm089xcwg2faz7r5iw",
+        "cmpz66hyb04vrcwg22p1hksi2"
+      ],
+      "p-document-copies": [
+        "64d134ca5dbc47748f8c6f96a0e80caf"
+      ],
+      "p-capital-reduction": [
+        "a47c884108b34813bc6e845d8d2c2fd7",
+        "cmpwi7brb018hnxffdr9r7z5e",
+        "3d3008abae5b4e7788e33f9dd14ffcc5"
+      ],
+      "p-court-decides": [
+        "cmpwi4bw200q5nxffwhtx4v2v",
+        "cmpz604ly02svcwg202z5iwai",
+        "cmpwi49q600prnxffz008gdhw"
+      ],
+      "p-binding-contract": [
+        "cmpz6ew4307ozcwg2u8xpspd1",
+        "cmpwicvez025hnxff380l63ht",
+        "cmpwi6y600167nxff179xfe75"
+      ],
+      "p-housing-allowance": [
+        "cmpz6piwo0bhjcwg2odjj52yp",
+        "08886133f190497b8e2f56734e893ce0",
+        "1f8555e952284f8ab685a00919d88b42"
+      ],
+      "p-forgery-challenge": [
+        "cmpz60ad102utcwg2fk2r2i1x",
+        "cmpwi4a1900ptnxffck709u9y",
+        "cmpwi4acl00pvnxffki2pejte"
+      ],
+      "p-receive-price": [
+        "cmpwi2aa300dnnxffw6asbuhu",
+        "cmpwi2b9q00dtnxffgwc3k4cq",
+        "cmpwi30ma00hznxffs45cmdbj"
+      ],
+      "p-commercial-business": [
+        "cmpz67aoc0559cwg2spowzslx",
+        "6281c7367ab74f58bd0ffd7b00b6514e"
+      ],
+      "p-cheque": [
+        "cmpzcvdue0c63vtrk9u4jo2vk"
+      ],
+      "p-preemption": [
+        "11c149df24714b3db3a23d7a5d69e90d",
+        "cmpwii8fz030vnxffomz4d6xa",
+        "cmpwiic61031hnxff2f0im4ga"
+      ],
+      "o-simulated-contract": [
+        "cmpwidr3k02apnxfft114zp7i"
+      ],
+      "o-simulation": [
+        "cmpwidr3k02apnxfft114zp7i",
+        "64d134ca5dbc47748f8c6f96a0e80caf"
+      ],
+      "o-quorum": [
+        "cmpz6ghgm089xcwg2faz7r5iw",
+        "cmpz66hyb04vrcwg22p1hksi2",
+        "cmpz6k99l09njcwg2x4rexxm7"
+      ],
+      "o-capital-reduction": [
+        "a47c884108b34813bc6e845d8d2c2fd7",
+        "cmpwi7brb018hnxffdr9r7z5e",
+        "cmpwi7c37018jnxffqh67tqnw"
+      ],
+      "o-judge-decides": [
+        "cmpwi4bw200q5nxffwhtx4v2v",
+        "cmpwi8x5n01htnxffmhec162t",
+        "cmpwi3x8f00njnxffy7biy7zi"
+      ],
+      "o-late-delivery": [
+        "cmpwicgr60231nxfftps185jj",
+        "cmpwicqss024pnxff6ijcppk5",
+        "cmpwidb0t0281nxffgu44vxr6"
+      ],
+      "o-off-plan": [
+        "cmpz6qfsj0bsxcwg21in3nyll",
+        "cmpz6qgl20bt7cwg2yx389l60",
+        "cmpz6qiye0bu1cwg2pndhp7yf"
+      ],
+      "o-opponent-absent": [
+        "9e972641da1a4ce383070ca75e5a855e",
+        "cmpwiapzx01slnxff20gfrbhm"
+      ],
+      "o-settlement": [
+        "cmpwie71602d3nxff8zhpg5qy",
+        "cmpwif5fe02innxff4ogema8b",
+        "cmpwifp6702lxnxff5jkjisp4"
+      ],
+      "o-entry-into-force": [
+        "cmpz6fddm07vbcwg2n7s6to3m",
+        "cmpz6fdj107vdcwg2lex8y42y",
+        "cmpz6fdog07vfcwg2lshrp6vu"
+      ],
+      "o-jurisdiction-plea": [
+        "cmpwi75pb017hnxff5g1v0z4k",
+        "cmpwi8l5v01ftnxffyrwy5fvd",
+        "cmpzcvdue0c6avtrkxbkq1mv6"
+      ],
+      "o-mother-custody": [
+        "cmpz5wl1d01llcwg2bhvr0ull",
+        "cmpz5wlir01lrcwg24koa4y2a",
+        "cmpz5wloj01ltcwg245uv7s29"
+      ],
+      "o-prison": [
+        "cmpz5w8m901hdcwg23t2z89nw",
+        "cmpz5w8s201hfcwg2plpe1328",
+        "cmpz5w8xu01hhcwg21uje9lqc"
+      ],
+      "o-commercial-papers": [
+        "cmpz65jw104khcwg2qorvy5nd",
+        "cmpz67ih9057vcwg27e84gzg3",
+        "cmpz69f9705v5cwg2cld3cvlw"
+      ],
+      "o-maternity": [
+        "cmpz6plwt0bijcwg21vxiimdz",
+        "cmpzcv89s0apnvtrkay56epfe",
+        "cmpz5y6bl025dcwg264h5fpbj"
+      ],
+      "o-binding-contract": [
+        "cmpz6ew4307ozcwg2u8xpspd1",
+        "889a30e7bd774877a9fc51df5e91871f",
+        "cmpwicvez025hnxff380l63ht"
+      ],
+      "m-arrest": [
+        "cmpz602yv02sdcwg2kcrqevas",
+        "cmpz5zt3k02p1cwg2f47iiw9d",
+        "cmpz5zt9h02p3cwg2ye4nig8g"
+      ],
+      "m-inspect-documents": [
+        "cmr4qm6ao00479vd1o7qkhu1f",
+        "cmpwib4nh01v1nxffb90xilyn"
+      ],
+      "m-amicable": [
+        "hk45c-0beb56ef6ec2359c764e36f6"
+      ],
+      "m-domestic-worker": [
+        "8b33f2d0f3aa4e39b18b03e9c0ecbe88",
+        "5932257c40b74868972b9f882f2edbcb",
+        "054a12cdc016455dbad43b37835c6535"
+      ],
+      "m-mother-remarried": [
+        "cmpzcv47b09lbvtrkwkz214gm"
+      ],
+      "m-damage-arising": [
+        "cmpwi776b017pnxff8kyzxvs9",
+        "cmpzcvdue0c5fvtrk19sq1gbu",
+        "cmpzcvdue0c5gvtrkcukd6a37"
+      ],
+      "m-court-assesses": [
+        "cmpwida4m027vnxffw2dlwrpd",
+        "4427ca865b4542449598abe3b24cff1d",
+        "cmr4qm6ap004k9vd1iqav4uje"
+      ],
+      "m-father-debts": [
+        "cmpz5zebt02k5cwg2kvregotb"
+      ],
+      "m-not-in-force": [
+        "boe26-d4dcd01ef587ce4fad86e8b4",
+        "boe26-f891266aa6a0fd66400ba661",
+        "cmpwi7v6k01bhnxffrsp2b1rh"
+      ],
+      "m-repealed-regulation": [
+        "c3dbee9b006646d78eb8e4ed678100b9",
+        "7f59dd288bc7463ebcfb95a012157626",
+        "84bfa0c1c46043e69712a70073354218"
+      ],
+      "r3-assess-damage": [
+        "cmpwid4r6026vnxff9lb1iezg",
+        "cmpz6gci30885cwg2tpula5ez",
+        "cmpzcvf6p0cmdvtrkoqj9sj56"
+      ],
+      "r3-assess-defect": [
+        "c65825cddaaf4e70bddc5faec3019203",
+        "29d36533f5bc475e827f039b86f25be9",
+        "cmpz6qbu60brjcwg2a2v4a6jn"
+      ],
+      "r3-assess-forgery": [
+        "cmpwi776b017pnxff8kyzxvs9",
+        "cmpzcvb5k0bi0vtrkf5wk0209",
+        "cmpzcvd6a0c3cvtrk2wwch2mh"
+      ],
+      "r3-assess-maintenance": [
+        "cmpzcv8yz0av7vtrkpjjglu0i",
+        "cmpzcv8yz0av8vtrkugoa8on5",
+        "cmpzcv8yz0av9vtrkr5tit9c3"
+      ],
+      "r3-plea-reply": [
+        "cmpzcv05d08blvtrkgi75sqjw",
+        "cmpwianov01s7nxff87d3z88n",
+        "cmr4qm70t00fl9vd1v4worw4o"
+      ],
+      "r3-formal-pleas": [
+        "cmpwiay2n01txnxffrhjff3vf"
+      ],
+      "r3-performed-obligations": [
+        "cmpwi742d0177nxffzypdde6x",
+        "cmpwi8h7p01f5nxffepzb4ve8",
+        "cmpz6pf9s0bg9cwg2csy3qbum"
+      ],
+      "r3-substitute-goods": [
+        "cmpwif1p802i1nxffbd4p80pn",
+        "nz26-6d3f84a55a5b0d9cbc965927",
+        "nz26-06f8dc33a2a1acee8490a713"
+      ],
+      "r4-assess-repair": [
+        "cmpwid9j5027rnxffe6ctjuys",
+        "cmpwid4r6026vnxff9lb1iezg",
+        "cmpz6gci30885cwg2tpula5ez"
+      ],
+      "r4-arsh-defect": [
+        "cmpz5yrlc02cncwg2i553ccjq",
+        "cmpz5yrr802cpcwg2yaydp3xj",
+        "cmpz5ys2w02crcwg2ephwhtdh"
+      ],
+      "r4-solvency": [
+        "cmpzcv8yz0av7vtrkpjjglu0i",
+        "cmpzcv8yz0av8vtrkugoa8on5",
+        "cmpzcv8yz0av9vtrkr5tit9c3"
+      ]
+    },
+    "known_item": {
+      "cmpz6fmu607yrcwg2fxsyjzgc": null,
+      "cmpz6fse6080tcwg2isaysvzi": 4,
+      "cmpzcuyse082jvtrkeq9i62i4": 5,
+      "cmpzcv05c08auvtrkyj95o0hl": null,
+      "cmpzcv47a09i5vtrk1phgirio": null,
+      "cmpzcv47c09mivtrkafbblon6": 1,
+      "cmpzcv4vm09tevtrkxkfhh4zf": 1,
+      "cmpzcv5jt09y4vtrk2txpf2jb": null,
+      "cmpzcv6860a3mvtrke0l7jqh2": null,
+      "cmpzcv8yz0avdvtrknrkukmqf": 4,
+      "cmpzcv8yz0avrvtrkf2l14idp": null,
+      "cmpzcvb5j0bh6vtrkg44radag": 3,
+      "cmpzcvb5k0bhmvtrkgl3r4auw": 1,
+      "cmpzcvb5k0bi2vtrkee4r7i83": 1,
+      "cmpzcvb5k0bitvtrkib3pdbs7": 1,
+      "cmpzcvb5k0bj7vtrk5opqlm8u": 3,
+      "cmpzcvci60by0vtrksyhgnhd5": 4,
+      "cmpzcvd690c1qvtrkob11h828": 1,
+      "cmpzcvd690c24vtrknqf65bh0": 1,
+      "cmpzcvd690c2ivtrk56wazwoh": 1,
+      "cmpzcvd6a0c2wvtrkjx2vmqhr": 1,
+      "cmpzcvd6a0c3avtrkw75tng4y": 1,
+      "cmpzcvd6a0c3pvtrkfo0fv75f": 2,
+      "cmpzcvd6a0c43vtrkw57y35p7": 1,
+      "cmpzcvd6a0c4hvtrk21l17lu3": null,
+      "cmpzcvd6b0c4vvtrkmcp45ugr": null,
+      "cmpzcvd6b0c5avtrk1ofdhxec": 1,
+      "cmpzcvdue0c5ovtrk9qlh63oa": 4,
+      "cmpwi9oa301mbnxffgn2fy3l7": null,
+      "cmpwi9v7j01nhnxffxukssump": 3,
+      "cmpwia3lo01ovnxffw5ktpzvj": 1,
+      "cmpwia91b01prnxffpt18cdhs": 2,
+      "cmpwiamdh01rznxffj3x2l4kn": null,
+      "cmpwibdea01whnxffd2tc43xd": null,
+      "cmpwibjbn01xhnxffdn4j6qns": null,
+      "cmpwibp3e01yfnxffh3jihkc9": 2,
+      "cmpwiby5s01zxnxfft0imttj1": 4,
+      "cmpwickjc023nnxffc69oldoj": 4,
+      "cmpwicr4o024rnxff7eumq0ga": 1,
+      "cmpwicz720263nxffjsbdefbv": null,
+      "cmpwid7g0027dnxffjfs8gch0": null,
+      "cmpwidiph029bnxffkokp9mu1": 5,
+      "cmpwidnt402a5nxff25apx50j": 1,
+      "cmpwidy8j02bnnxff439fatxj": null,
+      "cmpwiefno02ehnxffwb13xo5w": null,
+      "cmpwielww02fhnxffndbmemxs": 6,
+      "cmpwievft02h1nxffjtj2n88o": null,
+      "cmpwif0oq02hvnxffavl2uqyk": 1,
+      "cmpwif63q02irnxffordkq8cg": null,
+      "cmpwifbcs02jlnxffc32bncm1": 5,
+      "cmpwifk8w02l5nxffdnw4d5z0": null,
+      "cmpwifwkc02n7nxffxjs44iql": null,
+      "cmpwig2h002o7nxffgo562wvm": null,
+      "cmpwigcet02ptnxff8y9d11k4": null,
+      "cmpwigkcn02r5nxff5oswlinn": null,
+      "cmpwigtu802spnxfflv42huee": null,
+      "cmpwih2t202u5nxffbv368hyt": 2,
+      "cmpwiha3a02vbnxffbusihsxq": null,
+      "cmpwihhve02wlnxffv4voioi9": null,
+      "cmpwihngk02xhnxffezce13uy": null,
+      "cmpwihygh02z9nxffxzy602ev": null,
+      "cmpwii7fe030pnxffag88fgba": 1,
+      "cmpwiie7b031tnxffv5pyn9te": null,
+      "cmpwiip74033lnxffpsbath0t": null,
+      "cmpz5umwt00y7cwg225ih7sb7": null,
+      "cmpz5upje00z3cwg21bik4sam": null,
+      "cmpz63enp03v3cwg2gd9jbz70": 1,
+      "cmpz66aca04t9cwg2dqz2n808": 1,
+      "cmpz66ig504vxcwg208kzfc2e": 4,
+      "cmpz674mt0539cwg2osnase3a": null,
+      "cmpz6ap2p06ajcwg2szfw4yl9": 2,
+      "cmpz6b10a06encwg2kxqh6ck7": 2,
+      "cmpz6b38g06ffcwg20dguubud": null,
+      "cmpz6ds6407c1cwg2l7zgivj1": null,
+      "cmpwi0f12002fnxffbkpyvktv": null,
+      "cmpwi0opv0041nxffuzxpdso3": null,
+      "cmpwi100z005xnxffsrshzyuh": 3,
+      "cmpwi19c9007hnxff3ebcrdmz": 3,
+      "cmpwi1gq1008pnxffzvevcrvt": 2,
+      "cmpwi1rem00ahnxffvy6cns81": 4,
+      "cmpwi231z00cfnxffcsn45s2c": 3,
+      "cmpwi2u2w00gxnxffa6vrwkvy": null,
+      "cmpwi30af00hxnxffdmzmc67m": null,
+      "cmpwi3bns00jtnxffmciccibg": 2,
+      "cmpwi3j8x00l3nxffp16jic4u": 2,
+      "cmpwi3qls00mdnxffuiipv1vp": 1,
+      "cmpwi3wxc00nhnxffshf62wkc": null,
+      "cmpwi42h900ohnxffljtjtah4": null,
+      "cmpwi481500phnxffvkfkzq2m": 1,
+      "cmpwi4ecz00qlnxffikklu19f": 1,
+      "cmpwi4ioq00rdnxffpne4w70m": 1,
+      "cmpwi4oea00sdnxfflin472rd": null,
+      "cmpwi5g5x00xbnxffv9scurl0": null,
+      "cmpwi5ppg00yznxff1akpiaue": null,
+      "cmpwi5zxh010hnxffdihu4nev": null,
+      "cmpwi665n011jnxffz57j42xy": 1,
+      "cmpwi6awt012bnxff5dlwlwvg": 6,
+      "cmpwi6fhr0133nxffxg9i12hb": 3,
+      "cmpwi6k8p013vnxffjjqt1vdn": 1,
+      "cmpwi6oto014nnxfffqe2spv7": 1,
+      "cmpwi6tep015fnxffra5ng0yp": 1,
+      "cmpwi6y600167nxff179xfe75": 1,
+      "cmpwi72r4016znxffz8wnn051": 1,
+      "cmpwi77i3017rnxfft4xuqt05": 2,
+      "cmpwi7c37018jnxffqh67tqnw": 2,
+      "cmpwi7i5t019bnxffbjzciclh": null,
+      "cmpwi7mrv01a3nxffhp6np3xn": 2,
+      "cmpwi7re501avnxff0hfn474y": 8,
+      "cmpwi7w6401bnnxffojqwca53": 1,
+      "cmpwi819r01chnxffd4z73uni": 1,
+      "cmpwi85vd01d9nxff8v04avnb": 2,
+      "cmpwi8amz01e1nxffee7g70ha": 2,
+      "cmpwi8f8p01etnxffx5b1k0eh": 2,
+      "cmpwi8jub01flnxfflkykbuio": null,
+      "cmpwi8om201gdnxffs133qnrk": 5,
+      "cmpwi8t7p01h5nxffdobwmsvb": null,
+      "cmpwi8ymt01i1nxfflwry8fwb": null,
+      "cmpwi95jj01j7nxffkgrj5ez7": 9,
+      "cmpwi9baf01k5nxffv789nq3r": 1,
+      "cmpwi9hji01l7nxffg6319klv": null
+    },
+    "reviewed": {
+      "o-mother-custody": "أولى main («ابحث عن حضانة الأم») نظام مكافحة غسل الأموال م1 (تعريفات) لأن «ابحث» لفظ في main؛ والفرع الأحوال الشخصية م131 ثم م127 (حضانة الأم) — قُرئ نص المواد الثلاث."
+    }
+  }
+}

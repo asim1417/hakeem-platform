@@ -173,6 +173,31 @@ export async function loadSearchSurface(
   return { surface: hideRepealed(base.surface, base.repealed), hiddenNames: base.hiddenNames };
 }
 
+/**
+ * HKM-062 (مراجعة الجودة الثالثة على #984): الوجه لقرار يفشل مغلقًا (تثبيت مطابقة المادة التامة أولًا). يعيد null إن
+ * فشلت قراءة جدولي الوجه أو سجل الإلغاء، لا وجهًا فارغًا كما يفعل loadSearchSurface (الذي يبقى مفتوحًا عند الفشل
+ * للبحث العام). نقيّ.
+ */
+export function strictSurface(
+  tables: { surface: SearchSurface; hiddenNames: Set<string>; ok: boolean },
+  repealed: { ids: string[]; ok: boolean },
+): { surface: SearchSurface; hiddenNames: Set<string> } | null {
+  if (!tables.ok || !repealed.ok) return null;
+  return { surface: hideRepealed(tables.surface, repealed.ids), hiddenNames: tables.hiddenNames };
+}
+
+/** الوجه الساري مع الملغى، أو null إن تعذّرت قراءته (يفشل مغلقًا). يستعمل الذاكرة إن كانت من قراءة ناجحة. */
+export async function loadSearchSurfaceStrict(asOf: string = todayRiyadh()): Promise<{ surface: SearchSurface; hiddenNames: Set<string> } | null> {
+  const now = Date.now();
+  if (_cache && _cache.asOf === asOf && now - _cache.at < TTL_MS) {
+    return strictSurface({ surface: _cache.surface, hiddenNames: _cache.hiddenNames, ok: true }, { ids: _cache.repealed, ok: true });
+  }
+  const tables = await loadSurfaceTables(asOf);
+  const repealed = asOf >= todayRiyadh() ? await repealedWorkIds() : { ids: [], ok: true };
+  if (tables.ok && repealed.ok) _cache = { asOf, at: now, surface: tables.surface, hiddenNames: tables.hiddenNames, repealed: repealed.ids };
+  return strictSurface(tables, repealed);
+}
+
 async function loadSurfaceTables(asOf: string): Promise<{ surface: SearchSurface; hiddenNames: Set<string>; ok: boolean }> {
   try {
     const { prisma } = await import("@/lib/prisma");

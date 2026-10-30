@@ -114,3 +114,107 @@ export function buildArabicSearchVariants(query: string, searchType: ArabicSearc
 
   return [...variants].filter((variant) => variant.length >= 2).slice(0, 32);
 }
+
+/**
+ * HKM-062 — صور بديلة للفظ السؤال (جهة السؤال وحدها): السؤال بلغة الناس يكتب الفعل بضميره («فصلوه»، «يحجزوني»)
+ * أو بحرف المضارعة («أفسخ»، «تخصم») أو الجمع («إجازات»)، والمطابقة في النص (word-match) تتسع للسوابق واللواحق
+ * من جهة النص لا من جهة اللفظ: «فصلوه» لا تطابق «فُصل». فتُولَّد هنا صور تدخل بدائلَ (OR) للفظ في التغطية، لا بدلًا منه
+ * ولا في الحصر اللفظي (adapter: الحصر بلفظ السائل وحده).
+ *
+ * الوضع المحافظ (الافتراض، للسؤال الفصيح الدقيق): ما لا يغيّر الكلمة نفسها فقط —
+ *   • سابقة الجر والعطف مع «ال» (بال، وال، فال، كال، ولل): بالتقسيط ← تقسيط (word-match تجرّد «ال» و«لل» وحدهما).
+ *   • مؤنث النسبة: نهائي ← نهائية، صوري ← صورية (الصفة نفسها).
+ * الوضع الكامل (`full`، للسؤال الدارج):
+ *   • ضمير متصل في آخر الفعل أو الاسم: فصلوه ← فصل، زوجته ← زوجه (التاء المربوطة).
+ *   • حرف المضارعة (أ، ي، ت، ن) في فعل من أربعة أحرف (يفعل): تخصم ← خصم، أفسخ ← فسخ؛ ووزن «يُفاعِل»: أعارض ← عارض؛
+ *     لا في غيرهما («تجاري» اسم لا فعل)، ولا في ما ينتهي بالتاء المربوطة («أجرة»، «إعادة» اسم).
+ *   • الجمع السالم: إجازات ← إجازه، الموظفين ← موظف.
+ *   • ضمير الفاعل في الماضي (ت، تم، وا): تركت ← ترك؛ وحرف العطف أو الجر المتصل: وتراجعت ← تراجعت.
+ * الياء الأخيرة في كلمة من أربعة أحرف فأكثر لا تُجرَّد (ضميرًا أو مع النون والتاء) إلا إن كانت الصورة الناتجة معروفة
+ * (`known`: من الجسر وجمع التكسير): «مادي» لا تصير «مادة»، و«رسمي» لا «رسوم»، و«عيني» لا «عين»؛ و«حقوقي» ← حقوق.
+ * ويُستثنى ضمير المتكلم بعد تاء التأنيث أو جمع المؤنث (الوضع الكامل): «موافقتي» ← موافقة، «سيارتي» ← سيارة،
+ * «بياناتي» ← بيانات؛ فالصفة المنسوبة لا تنتهي بـ«تي» ولا «اتي» إلا نادرًا، وصورتها الزائدة لا تطابق شيئًا.
+ * لا يبقى أقل من ثلاثة أحرف. الدخل والخرج مطبَّعان (normalizeAr في word-match): الهمزات ألف، والتاء المربوطة هاء.
+ */
+const STEM_MIN = 3;
+const OBJECT_SUFFIXES = ["وهم", "وها", "وني", "وكم", "هما", "وه", "ني", "ها", "هم", "كم", "تم", "وا", "ه", "ك", "ي", "ت"];
+
+export interface QueryStemOptions {
+  /** الصور الصرفية كلها (السؤال الدارج)؛ وإلا سابقة «ال» المركبة ومؤنث النسبة وحدهما. */
+  full?: boolean;
+  /** صورة معروفة تُقبل بعد تجريد الياء الأخيرة. */
+  known?: (stem: string) => boolean;
+}
+
+export function queryStemVariants(normalizedWord: string, opts: QueryStemOptions = {}): string[] {
+  const w = (normalizedWord ?? "").trim();
+  const out = new Set<string>();
+  if (w.length < STEM_MIN + 1) return [];
+  const full = opts.full === true;
+  const known = opts.known ?? (() => false);
+  const add = (x: string) => {
+    if (x.length >= STEM_MIN && x !== w) out.add(x);
+  };
+  // تجريد ينتهي بالياء من كلمة طويلة: لا يُقبل إلا بصورة معروفة.
+  const addStripped = (from: string, stem: string, suffix: string) => {
+    if (suffix.endsWith("ي") && from.length >= STEM_MIN + 1 && !known(stem)) return;
+    add(stem);
+  };
+  const nisba = (x: string) => {
+    if (x.endsWith("ي") && x.length >= STEM_MIN + 1) add(`${x}ه`);
+  };
+  const plural = (x: string) => {
+    if (x.endsWith("ات") && x.length - 2 >= STEM_MIN) {
+      add(x.slice(0, -2));
+      add(`${x.slice(0, -2)}ه`);
+    }
+    if (/(?:ين|ون)$/.test(x) && x.length - 2 >= STEM_MIN) add(x.slice(0, -2));
+  };
+  // ١) المعرّف: سابقة مع «ال» (وال، فال، بال، كال، لل) تُجرَّد، ثم الجمع السالم على ما بعد «ال»؛ ولا ضمير مع «ال».
+  const def = w.match(/^(?:[وف]?[بك]?ال|[وف]?لل)(.+)$/);
+  if (def) {
+    const core = def[1];
+    if (core.length >= STEM_MIN && !w.startsWith("ال")) add(core);
+    nisba(core);
+    if (full) plural(core);
+    return [...out];
+  }
+  nisba(w);
+  if (!full) return [...out];
+  const inflections = (x: string, verbPrefix: boolean) => {
+    add(x);
+    // ٢) ضمير متصل: «ته/تها/تي/تك/تهم» على اسم مؤنث ← التاء المربوطة.
+    const ta = x.match(/^(.{2,})ت(هما|هم|ها|ه|ي|ك|كم)$/);
+    if (ta && ta[1].length + 1 >= STEM_MIN) addStripped(x, `${ta[1]}ه`, ta[2]);
+    // كل ضمير محتمل يُجرَّد (لا الأطول وحده)؛ الصورة الزائدة لا تطابق شيئًا غالبًا.
+    for (const suf of OBJECT_SUFFIXES) {
+      if (!x.endsWith(suf) || x.length - suf.length < STEM_MIN) continue;
+      // كاف الخطاب على كلمة من أربعة أحرف («اترك» ← «اتر») جزء من الفعل غالبًا.
+      if (suf === "ك" && x.length - 1 < STEM_MIN + 1) continue;
+      const b = x.slice(0, -suf.length);
+      addStripped(x, b, suf);
+      // ٣) حرف المضارعة: وزن «يفعل» وحده، وبعد ضمير لا يلتبس بالنسبة أو التاء («تجاري» ← لا «جار»).
+      if (verbPrefix && suf !== "ي" && suf !== "ت" && b.length === STEM_MIN + 1 && /^[ايتن]/.test(b) && !suf.endsWith("ي") && !b.slice(1).includes("ا")) add(b.slice(1));
+    }
+    // ولا إن كان في الباقي ألف («نصاب» ← «صاب»، «احنا» ← «حنا»): وزن «يفعل» بلا ألف.
+    if (verbPrefix && x.length === STEM_MIN + 1 && /^[ايتن]/.test(x) && !x.endsWith("ه") && !x.slice(1).includes("ا")) add(x.slice(1));
+    // وزن «يُفاعِل» (أعارض، يطالب، نراجع) ← فاعل؛ لا في المصدر بالتاء المربوطة («إعادة» لا «عادة»).
+    if (verbPrefix && x.length === STEM_MIN + 2 && /^[ايتن].ا/.test(x) && !x.endsWith("ه")) add(x.slice(1));
+    // ٤) الجمع السالم.
+    plural(x);
+  };
+  inflections(w, true);
+  // ضمير المتكلم على المؤنث وجمعه: «موافقتي» ← موافقه، «بياناتي» ← بيانات (ثم صوره).
+  const poss = w.match(/^(.{2,}?)(ات|ت)ي$/);
+  // «بيتي» ← لا «بيه»: الاسم قبل تاء التأنيث ثلاثة أحرف فأكثر.
+  if (poss && (poss[2] === "ات" ? poss[1].length >= 2 : poss[1].length >= STEM_MIN)) {
+    if (poss[2] === "ات") {
+      add(`${poss[1]}ات`);
+      plural(`${poss[1]}ات`);
+    } else add(`${poss[1]}ه`);
+  }
+  // ١-ب) واو العطف أو باء الجر المتصلة (ولام الجر قبل مصدر بالألف: لاستخراج)، وما بعدها أربعة أحرف فأكثر.
+  const clitic = w.match(/^(?:[وب](.{4,})|ل(ا.{3,}))$/);
+  if (clitic) inflections(clitic[1] ?? clitic[2], false);
+  return [...out];
+}

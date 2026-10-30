@@ -1,13 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { parseArticleQuery } from "./query-parse";
 import { loadSystemsRegistry, matchSystemsInText, normalizeSystemName, type SystemRef } from "@/lib/modules/agents/substrate/systems-registry";
-import { EMPTY_SURFACE, inSurface, loadSearchSurface, mapToSurface } from "@/lib/modules/legal-core/search-surface";
+import { EMPTY_SURFACE, inSurface, loadSearchSurface, loadSearchSurfaceStrict, mapToSurface } from "@/lib/modules/legal-core/search-surface";
 import { knowledgeGraphProvider } from "./providers/knowledge-graph-provider";
 import { opensearchProvider } from "./providers/opensearch-provider";
 import { postgresProvider } from "./providers/postgres-provider";
 import { vectorProvider } from "./providers/vector-provider";
 import {
   getSearchMode,
+  ProviderHttpError,
   type LegalEntityType,
   type ProviderStatus,
   type RawResult,
@@ -108,6 +109,22 @@ export async function filterArticleIdsToSurface(ids: string[], opts: { asOf?: st
   return new Set(kept.map((r) => r.id));
 }
 
+/**
+ * HKM-062 (مراجعة الجودة الثالثة على #984): هل المادة داخل وجه البحث الساري؟ يفشل مغلقًا: تعذّر قراءة الوجه أو سجل
+ * الإلغاء أو صف المادة = false. لقرار تثبيت المطابقة التامة أولًا (lib/mcp/adapter.ts)؛ والبحث العام يبقى على
+ * filterArticleIdsToSurface (يفشل مفتوحًا كما كان).
+ */
+export async function articleInSurfaceStrict(id: string, opts: { asOf?: string } = {}): Promise<boolean> {
+  try {
+    const loaded = await loadSearchSurfaceStrict(opts.asOf);
+    if (!loaded) return false;
+    const row = await prisma.legalArticle.findUnique({ where: { id }, select: { legalSystemId: true, lawName: true } });
+    return row ? inSurface(row, loaded.surface, loaded.hiddenNames) : false;
+  } catch {
+    return false;
+  }
+}
+
 /** منسّق البحث الهجين: يشغّل المزوّدات المتاحة، يدمج ويزيل التكرار ويرتّب. */
 export async function hybridSearch(query: SearchQuery): Promise<HybridSearchResponse> {
   const mode = getSearchMode();
@@ -120,7 +137,8 @@ export async function hybridSearch(query: SearchQuery): Promise<HybridSearchResp
   const rawBatches = await Promise.all(
     selected.map(async (p): Promise<RawResult[]> => {
       const t0 = Date.now();
-      const state: { outcome: "ok" | "unavailable" | "error" | "budget" } = { outcome: "ok" };
+      // HKM-062: outcome=http_403 (رفض المزوّد) يُميَّز عن ok؛ وunavailable يحمل سببه إن عُرف (reason=http_403).
+      const state: { outcome: string; reason?: string | null } = { outcome: "ok" };
       try {
         // ميزانية لكل مزوّد: البطيء يُسقَط وتُرجَع نتائج البقية، بدل أن يُسقط البحث كله مهلةَ الأداة.
         const r = await withBudget(
@@ -128,6 +146,7 @@ export async function hybridSearch(query: SearchQuery): Promise<HybridSearchResp
             const available = await p.isAvailable();
             if (!available) {
               state.outcome = "unavailable";
+              state.reason = p.lastFailure?.() ?? null;
               return [] as RawResult[];
             }
             return p.search({ ...query, limit });
@@ -141,12 +160,12 @@ export async function hybridSearch(query: SearchQuery): Promise<HybridSearchResp
         }
         providerStatuses.push({ name: p.name, status: state.outcome === "unavailable" ? "unavailable" : "active" });
         return r;
-      } catch {
-        state.outcome = "error";
+      } catch (e) {
+        state.outcome = e instanceof ProviderHttpError ? `http_${e.status}` : "error";
         providerStatuses.push({ name: p.name, status: "unavailable" });
         return [];
       } finally {
-        console.info(`[search] provider=${p.name} ms=${Date.now() - t0} outcome=${state.outcome}`);
+        console.info(`[search] provider=${p.name} ms=${Date.now() - t0} outcome=${state.outcome}${state.reason ? ` reason=${state.reason}` : ""}`);
       }
     })
   );

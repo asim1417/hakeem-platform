@@ -133,6 +133,43 @@ export function scopedArticlesSql(take: number): string {
      LIMIT ${take}`;
 }
 
+/**
+ * HKM-062: تشابه مواد بعينها مع متجه السؤال (المرشحون من الحصر اللفظي لا من أقرب الجيران). أحدث نسخة في
+ * embedding_version تتقدم على متجه الجدول العام، كما في scopedArticlesSql. المعرّفات معامل ($2) لا نص مدموج.
+ */
+export function articleIdsSimilaritySql(): string {
+  return `WITH vecs AS (
+       SELECT DISTINCT ON (owner_id) owner_id, embedding FROM (
+         SELECT ev.owner_id, ev.embedding, 0 AS pri, ev.created_at FROM embedding_version ev
+          WHERE ev.owner_type = 'article' AND ev.embedding IS NOT NULL AND ev.owner_id = ANY($2::text[])
+         UNION ALL
+         SELECT e.owner_id, e.embedding, 1 AS pri, NULL::timestamptz FROM embeddings e
+          WHERE e.owner_type = 'article' AND e.embedding IS NOT NULL AND e.owner_id = ANY($2::text[])
+       ) x ORDER BY owner_id, pri, created_at DESC NULLS LAST
+     )
+     SELECT owner_id, (1 - (embedding <=> $1::vector)) AS score FROM vecs`;
+}
+
+/**
+ * HKM-062: تشابه المعنى لمرشحين لفظيين (معرّف ← 0..1). نداء التضمين نفسه الذي يجريه البحث الدلالي للنص ذاته
+ * (مخزَّن مؤقتًا في embedText)، واستعلام قراءة واحد على المعرّفات. سقوط آمن: خريطة فارغة.
+ */
+export async function articleSimilarities(q: string, ids: string[]): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
+  const list = [...new Set(ids)].slice(0, 200);
+  if (!list.length || !semanticSearchEnabled() || !q.trim()) return out;
+  try {
+    const vec = await embedText(q.trim());
+    if (!vec?.length) return out;
+    const literal = `[${vec.map((x) => Number(x)).join(",")}]`;
+    const rows = await prisma.$queryRawUnsafe<Array<{ owner_id: string; score: number }>>(articleIdsSimilaritySql(), literal, list);
+    for (const r of rows) out.set(r.owner_id, Math.max(0, Math.min(1, Number(r.score))));
+  } catch {
+    return new Map();
+  }
+  return out;
+}
+
 /** المسار المفهرس: أعلى take لكل مصدر ثم الدمج — اتحادها يحوي أعلى take الكلّي. */
 async function nearestViaPartialIndexes(literal: string, take: number, segReady: boolean, want: (t: LegalEntityType) => boolean): Promise<VectorRow[]> {
   const q = (sql: string) => prisma.$queryRawUnsafe<VectorRow[]>(sql, literal);

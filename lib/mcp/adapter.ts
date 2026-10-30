@@ -20,12 +20,28 @@ import { citationFlagsFromVerification } from "@/lib/modules/legal-core/verified
 import { latestVerification } from "@/lib/modules/legal-core/verification-read";
 import { NON_ARTICLE_BIS } from "@/lib/modules/legal-core/article-key";
 import { effectiveArticleTexts } from "@/lib/modules/legal-core/effective-text";
-import { BUDGET_EXCEEDED, filterArticleIdsToSurface, hybridSearch, providerBudgetMs, withBudget } from "@/lib/modules/legal-search/hybrid-search";
-import { acceptFill, bm25TermWeight, keepCandidate, lexicalPageUsable, rankFused, RARE_TERM_MAX, type FusionCandidate } from "@/lib/mcp/search-fusion";
-import { handleSemanticSearch, hintedLaws, queryKeywords } from "@/lib/mcp/tools/semantic";
+import { articleInSurfaceStrict, BUDGET_EXCEEDED, filterArticleIdsToSurface, findExactArticleMatch, hybridSearch, providerBudgetMs, withBudget } from "@/lib/modules/legal-search/hybrid-search";
+import { explicitArticleCitation } from "@/lib/mcp/article-citation";
+import { articleSimilarities } from "@/lib/modules/legal-search/providers/vector-provider";
+import {
+  acceptFill,
+  bm25TermWeight,
+  keepCandidate,
+  lexicalPageUsable,
+  rankFused,
+  RARE_TERM_MAX,
+  keepLowSemantic,
+  pinnableExact,
+  WEAK_EVIDENCE_SEMANTIC_MIN,
+  WEIGHTS_DISTINCTIVE,
+  WEIGHTS_WEAK_LEXICAL,
+  type FusionCandidate,
+} from "@/lib/mcp/search-fusion";
+import { handleSemanticSearch, hintedLaws, SEMANTIC_TOOL_MIN_SCORE } from "@/lib/mcp/tools/semantic";
+import { groupTerms, planQuery, probeTerms } from "@/lib/mcp/query-plan";
 import { handleEnumerate } from "@/lib/mcp/tools/enumerate";
 import { loadLawCatalog } from "@/lib/mcp/tools/catalog";
-import { compileTerm, matchesNormalized, matchPositions, normalizeAr, windowCoverage, type CompiledTerm } from "@/lib/mcp/tools/word-match";
+import { compileAny, matchPositions, normalizeAr, windowCoverage, type CompiledTerm } from "@/lib/mcp/tools/word-match";
 import { matchThesaurusConcepts } from "@/lib/modules/legal-thesaurus/concept-index";
 import { prismaSqlClient } from "@/lib/modules/legal-core/sql-port";
 import { getSiteUrl } from "@/lib/modules/config/site-url";
@@ -76,43 +92,115 @@ export function parseArticleCitation(raw: string): { n: number; bis: number } | 
 }
 
 
+/**
+ * HKM-062: ضبط مسار hakeem_search. الافتراض هو الإنتاج؛ المفاتيح للقياس وحده (scripts/eval-everyday.ts يقيس أثر كل
+ * جزء بإسقاطه) ولا تُعرض في أداة الموصل.
+ */
+/** نطاق جزء من الدمج: كل سؤال، أو السؤال الدارج وحده (query-plan: colloquial)، أو معطَّل. */
+export type TuningScope = boolean | "colloquial";
+
+export interface SearchTuning {
+  /** الحصر اللفظي للألفاظ النادرة (hakeem_research يعطّله لأنه يحصر بنفسه). */
+  lexicalProbe?: boolean;
+  /** جسر لغة الناس: صيغ اللفظ الصرفية وجمعه وبدائل النظام في التغطية (lib/mcp/query-plan.ts). */
+  bridge?: boolean;
+  /** المداخل الملتبسة والصور الكاملة للسؤال الدارج وحده (false: لكل سؤال — سلوك المسودة الأولى، للقياس). */
+  registerGate?: boolean;
+  /** حصر اللفظ الدارج الذي له بديل في الجسر (الافتراض: لا يُحصر؛ ندرة «مهلة» ندرة لهجة لا تمييز). */
+  probeBridged?: boolean;
+  /**
+   * نص البحث الدلالي (نداء تضمين واحد في كل حال): السؤال كما هو، أو بلا عبارة الطلب، أو بلفظ النظام مكان اللفظ الدارج
+   * (plan)، أو السؤال بلا حشو وألفاظ النظام ملحقة في آخره (append، الافتراض: أعلى hit@3 في القياس).
+   */
+  semanticText?: "original" | "cleaned" | "plan" | "append";
+  /** تقديم المعنى حين لا يحمل السؤال لفظًا نادرًا مميِّزًا. */
+  adaptiveWeights?: TuningScope;
+  /** تشابه المعنى للمرشحين اللفظيين أيضًا (لا لأقرب الجيران وحدهم). */
+  lexicalSimilarity?: TuningScope;
+  /** «المادة 55 من نظام العمل»: المادة نفسها أولًا. */
+  exactCitation?: boolean;
+}
+
+const TUNING_DEFAULTS: Required<SearchTuning> = {
+  lexicalProbe: true,
+  bridge: true,
+  registerGate: true,
+  probeBridged: false,
+  semanticText: "append",
+  // مراجعة الجودة على #984: ترجيح المعنى عند ضعف الدليل، وتشابه المعنى للمرشح اللفظي، للسؤال الدارج وحده؛ والفصيح
+  // يرتَّب بالدمج كما كان (القياس: لا فرق في أسئلة الناس، والسؤال الدقيق أقرب إلى ترتيب main).
+  adaptiveWeights: "colloquial",
+  lexicalSimilarity: "colloquial",
+  exactCitation: true,
+};
+
+const inScope = (scope: TuningScope, colloquial: boolean) => scope === true || (scope === "colloquial" && colloquial);
+
+/** ألفاظ السؤال مجموعاتٍ مُجمَّعة (كل مجموعة لفظ بصيغه وبدائله، OR). */
+function compiledGroups(query: string, tuning: Pick<Required<SearchTuning>, "bridge" | "registerGate">): { plan: ReturnType<typeof planQuery>; compiled: CompiledTerm[] } {
+  const plan = planQuery(query, { bridge: tuning.bridge, registerGate: tuning.registerGate });
+  const compiled = plan.groups.map((g) => compileAny(g.term, groupTerms(g), "derivatives")).filter((c): c is CompiledTerm => c !== null);
+  return { plan, compiled };
+}
+
 /** HKM-048: معرّفات المواد مرتّبة بدمج الحصر اللفظي للألفاظ النادرة والبحث الدلالي. */
-async function fusedArticleIds(query: string, lawId: string | undefined, limit: number, lexicalProbe: boolean): Promise<Array<{ id: string; type: string }>> {
+async function fusedArticleIds(query: string, lawId: string | undefined, limit: number, tuning: Required<SearchTuning>): Promise<{ ids: Array<{ id: string; type: string }>; compiled: CompiledTerm[] }> {
   const db = prismaSqlClient(prisma);
-  const keywords = queryKeywords(query);
-  const compiled = keywords.map((k) => compileTerm(k, "derivatives")).filter((c): c is CompiledTerm => c !== null);
-  if (!compiled.length) return [];
-  const coverageOf = (text: string) => {
-    const norm = normalizeAr(text);
-    return compiled.filter((c) => matchesNormalized(norm, c)).length / compiled.length;
-  };
+  // HKM-062: ألفاظ السؤال بلا عبارة الطلب والحوار الدارج، كل لفظ بصيغه الصرفية وبدائله في لغة النظام.
+  const { plan, compiled } = compiledGroups(query, tuning);
+  if (!compiled.length) return { ids: [], compiled };
+  const adaptive = inScope(tuning.adaptiveWeights, plan.colloquial);
+  const lexSim = inScope(tuning.lexicalSimilarity, plan.colloquial);
+  const semText =
+    tuning.semanticText === "original" ? query : tuning.semanticText === "cleaned" ? plan.cleaned : tuning.semanticText === "plan" ? plan.semanticText : plan.semanticAppend;
   // الألفاظ الأطول أندر غالبًا؛ حصران كحدٍّ أقصى لضبط الكلفة (كل حصر مسح كامل للمدونة).
-  const probe = lexicalProbe ? [...keywords].sort((a, b) => b.length - a.length).slice(0, 2) : [];
+  // HKM-062 (مراجعة الجودة): الحصر بلفظ السائل وحده كما كان، والصيغ والبدائل للتغطية لا للحصر: «صوري» وحدها 8 مواد،
+  // وبصيغها وبدائلها 1,052 فتُرفض الصفحة. واللفظ الدارج الذي له بديل في الجسر لا يُحصر: ندرته ندرة لهجة («مهلة» ← رخص المياه).
+  const probe = tuning.lexicalProbe ? probeTerms(plan, { probeBridged: tuning.probeBridged }) : [];
   // ميزانية زمنية لكل مصدر: البطيء يُسقَط وتبقى نتائج الآخر (كما في المحرك الهجين).
   const budget = providerBudgetMs();
   const bounded = async <T>(work: Promise<T>, fallback: T): Promise<T> => {
     const r = await withBudget(work.catch(() => fallback), budget);
     return r === BUDGET_EXCEEDED ? fallback : (r as T);
   };
+  type Sem = Awaited<ReturnType<typeof handleSemanticSearch>> | null;
+  // HKM-053: الحصر بالنظام داخل استعلام المتجهات (كان يُجلب أقرب 20 من المدونة ثم يُصفّى فيخلو).
+  // HKM-062: تغطية مرشح المعنى بمجموعات السؤال على النص الساري (نص البحث الدلالي قد صار بلفظ النظام).
+  // HKM-062 (الدليل الضعيف): يُطلب الدلالي من حد أدنى، ثم يُعاد إلى 0.5 إن وُجدت صفحة حصر مقبولة (فلا يتغير ترتيب سؤال
+  // فيه لفظ نادر)؛ وأقرب الجيران العشرون هم أنفسهم، فالحد لا يغيّر كلفة الاستعلام.
+  const semFloor = adaptive ? WEAK_EVIDENCE_SEMANTIC_MIN : SEMANTIC_TOOL_MIN_SCORE;
+  const semanticOf = (text: string) =>
+    bounded(handleSemanticSearch(db, { query: text, limit: 20, ...(lawId ? { law_id: lawId } : {}) }, { coverageTerms: compiled, minScore: semFloor }) as Promise<Sem>, null);
   const [semantic, lexicalPages, catalog] = await Promise.all([
-    // HKM-053: الحصر بالنظام داخل استعلام المتجهات (كان يُجلب أقرب 20 من المدونة ثم يُصفّى فيخلو).
-    bounded(handleSemanticSearch(db, { query, limit: 20, ...(lawId ? { law_id: lawId } : {}) }) as Promise<Awaited<ReturnType<typeof handleSemanticSearch>> | null>, null),
+    semanticOf(semText),
     Promise.all(probe.map((t) => bounded(handleEnumerate({ terms: [t], law_id: lawId, page_size: RARE_TERM_MAX, snippet_len: 2000 }), null))),
     bounded(loadLawCatalog(db), []),
   ]);
   const named = hintedLaws(query, catalog);
-  const cands: FusionCandidate[] = [];
-  const semResults = semantic && "results" in semantic ? (semantic.results as Array<{ article_id: string; law_id: string | null; similarity: number; keyword_coverage: number }>) : [];
-  for (const r of semResults) {
-    if (lawId && r.law_id !== lawId) continue; // صمام أمان: الاستعلام محصور أصلًا
-    cands.push({ id: r.article_id, coverage: r.keyword_coverage, similarity: r.similarity, lexicalHit: false, lawNamed: Boolean(r.law_id && named.has(r.law_id)) });
-  }
+  type SemRow = { article_id: string; law_id: string | null; similarity: number; keyword_coverage: number };
+  const rowsOf = (r: Sem) => (r && "results" in r ? (r.results as SemRow[]) : []);
   const lexRows = lexicalPages.flatMap((page) => (!page || !lexicalPageUsable(page.total, Boolean(lawId)) ? [] : page.page.filter((r) => !r.repealed)));
+  // لا صفحة حصر مقبولة = ألفاظ السؤال كلها شائعة: لا دليل لفظي مميِّز.
+  const weakLexical = !lexRows.length;
+  const semResults = rowsOf(semantic).filter((r) =>
+    r.similarity >= SEMANTIC_TOOL_MIN_SCORE ? true : weakLexical && keepLowSemantic({ coverage: r.keyword_coverage, similarity: r.similarity }),
+  );
   // HKM-051: القرب بين الألفاظ يُقاس على النص الكامل لا المقتطف المقصوص.
   const fullText = new Map<string, string>();
   if (lexRows.length) {
     const rows = await prisma.legalArticle.findMany({ where: { id: { in: [...new Set(lexRows.map((r) => r.article_id))] } }, select: { id: true, content: true } }).catch(() => []);
     for (const r of rows) fullText.set(r.id, r.content ?? "");
+  }
+  // HKM-062: تشابه المعنى للمرشح اللفظي (نداء التضمين نفسه، مخزَّن)، فيُرجَّح بين مواد اللفظ الواحد بقربها من السؤال.
+  const similarity = new Map<string, number>(semResults.map((r) => [r.article_id, r.similarity]));
+  if (lexSim) {
+    const missing = lexRows.map((r) => r.article_id).filter((id) => !similarity.has(id));
+    if (missing.length) for (const [id, sc] of await bounded(articleSimilarities(semText, missing), new Map<string, number>())) similarity.set(id, sc);
+  }
+  const cands: FusionCandidate[] = [];
+  for (const r of semResults) {
+    if (lawId && r.law_id !== lawId) continue; // صمام أمان: الاستعلام محصور أصلًا
+    cands.push({ id: r.article_id, coverage: r.keyword_coverage, similarity: r.similarity, lexicalHit: false, lawNamed: Boolean(r.law_id && named.has(r.law_id)) });
   }
   // HKM-058: وزن التكرار (BM25) لكسر التعادل بين مرشحين بالتغطية نفسها؛ متوسط الطول من المرشحين اللفظيين.
   const lexNorm = lexRows.map((r) => normalizeAr(fullText.get(r.article_id) ?? r.snippet));
@@ -124,7 +212,7 @@ async function fusedArticleIds(query: string, lawId: string | undefined, limit: 
     cands.push({
       id: r.article_id,
       coverage: windowCoverage(norm, compiled),
-      similarity: 0,
+      similarity: similarity.get(r.article_id) ?? 0,
       lexicalHit: true,
       lawNamed: Boolean(r.law_id && named.has(r.law_id)),
       termWeight: bm25TermWeight(tf, norm.length, avgLen),
@@ -133,15 +221,39 @@ async function fusedArticleIds(query: string, lawId: string | undefined, limit: 
   // مرشح الوجه: لا تُعرض مواد أنظمة ملغاة أو مخفية عن الوجه الحالي (كالمحرك الهجين).
   const allowed = await filterArticleIdsToSurface([...new Set(cands.map((c) => c.id))]).catch(() => null);
   const visible = (allowed ? cands.filter((c) => allowed.has(c.id)) : cands).filter((c) => keepCandidate(c, compiled.length));
-  return rankFused(visible, limit).map((c) => ({ id: c.id, type: "article" }));
+  // HKM-062: بلا دليل لفظي مميِّز يُقدَّم المعنى على التغطية.
+  const weights = adaptive && weakLexical ? WEIGHTS_WEAK_LEXICAL : WEIGHTS_DISTINCTIVE;
+  return { ids: rankFused(visible, limit, weights).map((c) => ({ id: c.id, type: "article" })), compiled };
+}
+
+/**
+ * HKM-062: «المادة 55 من نظام العمل» — المادة نفسها بالمطابقة التامة (كان الدمج يملأ الصفحة فلا يبلغها المحرك الهجين).
+ * الإحالة الصريحة وحدها («المادة/مادة»، أو «م» مستقلة لا رقم مرسوم): «كم 60 يوم» و«رقم 120» و«(م/53)» ليست مواد (B2).
+ */
+async function exactCitationHit(query: string, lawId: string | undefined): Promise<{ id: string; type: string } | null> {
+  const cite = explicitArticleCitation(query);
+  if (!cite) return null;
+  const hit = await findExactArticleMatch(`المادة ${cite.articleNumber} ${cite.systemHint}`).catch(() => null);
+  if (!hit || hit.type !== "article") return null;
+  if (lawId && String(hit.meta?.systemId ?? "") !== lawId) return null;
+  // مادة نظام ملغى أو مستبدل لا تُثبَّت أولًا (مراجعتا الجودة الثانية والثالثة): الوجه نفسه الذي تمر به بقية النتائج،
+  // ويفشل مغلقًا (تعذّر قراءة الوجه أو سجل الإلغاء = لا تثبيت؛ والمادة تبقى للدمج والتكملة كغيرها).
+  const ok = await articleInSurfaceStrict(hit.id).catch(() => false);
+  return pinnableExact({ id: hit.id, type: "article" }, ok);
 }
 
 // ١) البحث في المواد — HKM-048: دمج دليلين مستقلين (اللفظ النادر + المعنى) بترتيب تغطية الألفاظ،
 // وعند خلوّهما يرجع إلى المحرّك الهجين القديم (لا تتراجع القدرة).
-export async function searchArticles(query: string, lawId?: string, limit = 10, opts: { lexicalProbe?: boolean } = {}) {
+export async function searchArticles(query: string, lawId?: string, limit = 10, opts: SearchTuning = {}) {
+  const tuning: Required<SearchTuning> = { ...TUNING_DEFAULTS, ...Object.fromEntries(Object.entries(opts).filter(([, v]) => v !== undefined)) };
   // HKM-053: الحصر بالنظام شرط داخل المصادر الثلاثة (الدلالي واللفظي والهجين) قبل الترتيب، والتصفية بعدها صمام أمان.
   const fetchLimit = limit;
-  let ranked: Array<{ id: string; type: string }> = await fusedArticleIds(query, lawId, fetchLimit, opts.lexicalProbe ?? true).catch(() => []);
+  const [fused, exact] = await Promise.all([
+    fusedArticleIds(query, lawId, fetchLimit, tuning).catch(() => null),
+    tuning.exactCitation ? exactCitationHit(query, lawId).catch(() => null) : Promise.resolve(null),
+  ]);
+  let ranked: Array<{ id: string; type: string }> = fused?.ids ?? [];
+  if (exact) ranked = [exact, ...ranked.filter((r) => r.id !== exact.id)].slice(0, fetchLimit);
   const fusedIds = new Set(ranked.map((r) => r.id));
   if (ranked.length < fetchLimit) {
     // تكملة من المحرك الهجين حتى الحد (لا يقل الاسترجاع عن السابق)، بلا تكرار.
@@ -152,7 +264,8 @@ export async function searchArticles(query: string, lawId?: string, limit = 10, 
   }
 
   // ترطيب من القاعدة لضمان حقول العقد الدقيقة (خاصّة law_id = معرّف النظام).
-  const fillTerms = queryKeywords(query).map((k) => compileTerm(k, "derivatives")).filter((c): c is CompiledTerm => c !== null);
+  // HKM-062: تغطية التكملة بمجموعات السؤال نفسها (اللفظ وصيغه وبدائله).
+  const fillTerms = fused?.compiled ?? compiledGroups(query, tuning).compiled;
   const fillCoverage = (text: string) => {
     return fillTerms.length ? windowCoverage(normalizeAr(text), fillTerms) : 0;
   };

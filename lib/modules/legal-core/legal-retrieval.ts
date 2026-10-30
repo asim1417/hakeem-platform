@@ -35,6 +35,7 @@ import { getArticleAuthorityMap } from "./authority";
 import { getFiqhIssuesForArticle } from "./fiqh-issues";
 import { matchThesaurusConcepts, thesaurusGraphExpansion } from "@/lib/modules/legal-thesaurus/concept-index";
 import { getOpenSearchConfig, openSearchHeaders } from "@/lib/modules/legal-search/providers/search-provider";
+import { noteOpenSearchFailure, openSearchBlocked } from "@/lib/modules/legal-search/providers/opensearch-breaker";
 import { EMPTY_SURFACE, inSurface, loadSearchSurface, mapToSurface } from "./search-surface";
 
 export const noLegalArticleMessage = "لم يتم العثور على مادة نظامية مطابقة في قاعدة البيانات الحالية.";
@@ -261,6 +262,8 @@ async function openSearchArticleScores(query: string, take: number): Promise<Map
   if (!q) return out;
   const cfg = getOpenSearchConfig();
   if (!cfg) return out;
+  // HKM-062: العنقود الذي رفض الطلبات (403 موقوف) يُتخطّى بلا نداء شبكة حتى يُغلق القاطع؛ النتيجة كما كانت (فارغة).
+  if (openSearchBlocked()) return out;
   const size = Math.min(Math.max(take, 1), 200);
   const body = {
     size,
@@ -294,7 +297,10 @@ async function openSearchArticleScores(query: string, take: number): Promise<Map
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(3500)
     });
-    if (!res.ok) return out;
+    if (!res.ok) {
+      noteOpenSearchFailure(res.status, "core");
+      return out;
+    }
     const data = (await res.json()) as {
       hits?: { max_score?: number; hits?: Array<{ _score?: number; _source?: Record<string, unknown> }> };
     };
