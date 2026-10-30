@@ -52,6 +52,9 @@ check("حرف المضارعة (الوضع الكامل): تخصم ← خصم، 
   assert.ok(queryStemVariants(n("تخصم"), full).includes("خصم"));
   assert.ok(queryStemVariants(n("أفسخ"), full).includes("فسخ"));
   assert.equal(queryStemVariants(n("أجرة"), full).includes(n("جرة")), false, "«أجرة» اسم");
+  assert.ok(queryStemVariants(n("أعارض"), full).includes(n("عارض")), "وزن يفاعل");
+  assert.equal(queryStemVariants(n("إعادة"), full).includes(n("عادة")), false, "«إعادة» مصدر");
+  assert.deepEqual(queryStemVariants(n("أعارض")), [], "الفصيح بلا تجريد");
 });
 check("الجمع السالم والتاء مع الضمير (الوضع الكامل): إجازات ← إجازة، الموظفين ← موظف، زوجته ← زوجة", () => {
   assert.ok(queryStemVariants(n("إجازات"), full).includes(n("اجازة")));
