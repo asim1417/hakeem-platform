@@ -31,6 +31,7 @@ import {
   rankFused,
   RARE_TERM_MAX,
   keepLowSemantic,
+  MIN_WINDOW_COVERAGE,
   WEAK_EVIDENCE_SEMANTIC_MIN,
   WEIGHTS_DISTINCTIVE,
   WEIGHTS_WEAK_LEXICAL,
@@ -116,6 +117,8 @@ export interface SearchTuning {
   adaptiveWeights?: TuningScope;
   /** تشابه المعنى للمرشحين اللفظيين أيضًا (لا لأقرب الجيران وحدهم). */
   lexicalSimilarity?: TuningScope;
+  /** مع ترجيح المعنى: صفحة حصر لا تغطي مادةٌ منها ثلاثة أرباع السؤال ليست دليلًا مميِّزًا. */
+  weakByCoverage?: boolean;
   /** «المادة 55 من نظام العمل»: المادة نفسها أولًا. */
   exactCitation?: boolean;
 }
@@ -130,6 +133,7 @@ const TUNING_DEFAULTS: Required<SearchTuning> = {
   // يرتَّب بالدمج كما كان (القياس: لا فرق في أسئلة الناس، والسؤال الدقيق أقرب إلى ترتيب main).
   adaptiveWeights: "colloquial",
   lexicalSimilarity: "colloquial",
+  weakByCoverage: true,
   exactCitation: true,
 };
 
@@ -179,17 +183,20 @@ async function fusedArticleIds(query: string, lawId: string | undefined, limit: 
   type SemRow = { article_id: string; law_id: string | null; similarity: number; keyword_coverage: number };
   const rowsOf = (r: Sem) => (r && "results" in r ? (r.results as SemRow[]) : []);
   const lexRows = lexicalPages.flatMap((page) => (!page || !lexicalPageUsable(page.total, Boolean(lawId)) ? [] : page.page.filter((r) => !r.repealed)));
-  // لا صفحة حصر مقبولة = ألفاظ السؤال كلها شائعة: لا دليل لفظي مميِّز.
-  const weakLexical = !lexRows.length;
-  const semResults = rowsOf(semantic).filter((r) =>
-    r.similarity >= SEMANTIC_TOOL_MIN_SCORE ? true : weakLexical && keepLowSemantic({ coverage: r.keyword_coverage, similarity: r.similarity }),
-  );
   // HKM-051: القرب بين الألفاظ يُقاس على النص الكامل لا المقتطف المقصوص.
   const fullText = new Map<string, string>();
   if (lexRows.length) {
     const rows = await prisma.legalArticle.findMany({ where: { id: { in: [...new Set(lexRows.map((r) => r.article_id))] } }, select: { id: true, content: true } }).catch(() => []);
     for (const r of rows) fullText.set(r.id, r.content ?? "");
   }
+  const lexNorm = lexRows.map((r) => normalizeAr(fullText.get(r.article_id) ?? r.snippet));
+  const lexCoverage = lexNorm.map((norm) => windowCoverage(norm, compiled));
+  // لا صفحة حصر مقبولة = ألفاظ السؤال كلها شائعة: لا دليل لفظي مميِّز. HKM-062 (السؤال الدارج): ولا دليل أيضًا إن لم
+  // تغطِّ مادةٌ من صفحات الحصر ثلاثة أرباع السؤال — لفظ نادر ورد عرضًا («حادث»، «موافقتي») لا يميّز جوابًا.
+  const weakLexical = !lexRows.length || (adaptive && tuning.weakByCoverage && !lexCoverage.some((c) => c >= MIN_WINDOW_COVERAGE));
+  const semResults = rowsOf(semantic).filter((r) =>
+    r.similarity >= SEMANTIC_TOOL_MIN_SCORE ? true : weakLexical && keepLowSemantic({ coverage: r.keyword_coverage, similarity: r.similarity }),
+  );
   // HKM-062: تشابه المعنى للمرشح اللفظي (نداء التضمين نفسه، مخزَّن)، فيُرجَّح بين مواد اللفظ الواحد بقربها من السؤال.
   const similarity = new Map<string, number>(semResults.map((r) => [r.article_id, r.similarity]));
   if (lexSim) {
@@ -202,7 +209,6 @@ async function fusedArticleIds(query: string, lawId: string | undefined, limit: 
     cands.push({ id: r.article_id, coverage: r.keyword_coverage, similarity: r.similarity, lexicalHit: false, lawNamed: Boolean(r.law_id && named.has(r.law_id)) });
   }
   // HKM-058: وزن التكرار (BM25) لكسر التعادل بين مرشحين بالتغطية نفسها؛ متوسط الطول من المرشحين اللفظيين.
-  const lexNorm = lexRows.map((r) => normalizeAr(fullText.get(r.article_id) ?? r.snippet));
   const avgLen = lexNorm.length ? lexNorm.reduce((n, t) => n + t.length, 0) / lexNorm.length : 0;
   lexRows.forEach((r, i) => {
     const norm = lexNorm[i];
@@ -210,7 +216,7 @@ async function fusedArticleIds(query: string, lawId: string | undefined, limit: 
     // لفظ شائع (نتائجه أكثر من الحد) استُبعدت صفحته أعلاه: لا يميّز مادة.
     cands.push({
       id: r.article_id,
-      coverage: windowCoverage(norm, compiled),
+      coverage: lexCoverage[i],
       similarity: similarity.get(r.article_id) ?? 0,
       lexicalHit: true,
       lawNamed: Boolean(r.law_id && named.has(r.law_id)),
