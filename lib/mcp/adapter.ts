@@ -126,8 +126,10 @@ const TUNING_DEFAULTS: Required<SearchTuning> = {
   registerGate: true,
   probeBridged: false,
   semanticText: "append",
-  adaptiveWeights: true,
-  lexicalSimilarity: true,
+  // مراجعة الجودة على #984: ترجيح المعنى عند ضعف الدليل، وتشابه المعنى للمرشح اللفظي، للسؤال الدارج وحده؛ والفصيح
+  // يرتَّب بالدمج كما كان (القياس: لا فرق في أسئلة الناس، والسؤال الدقيق أقرب إلى ترتيب main).
+  adaptiveWeights: "colloquial",
+  lexicalSimilarity: "colloquial",
   exactCitation: true,
 };
 
