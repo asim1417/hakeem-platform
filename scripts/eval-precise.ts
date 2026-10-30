@@ -21,7 +21,7 @@ import { prisma } from "@/lib/prisma";
 import { loadUsableKnownItems, strideSample } from "./known-item-sample";
 
 type Term = { id: string; query: string; law_id?: string; note?: string };
-type Baseline = { ref?: string; sha?: string; at?: string; terms?: Record<string, string[]>; known_item?: Record<string, number | null> };
+type Baseline = { ref?: string; sha?: string; at?: string; terms?: Record<string, string[]>; known_item?: Record<string, number | null>; reviewed?: Record<string, string> };
 type Fixture = { version: number; terms: Term[]; baseline?: Baseline };
 type Variant = { name: string; opts?: Record<string, unknown> };
 type Row = { article_id: string; law: string; law_id: string | null; article_number: number };
@@ -130,7 +130,11 @@ async function main() {
     const tBase = base.terms ?? {};
     const tCompared = terms.filter((x) => !x.error && tBase[x.t.id]?.length);
     const kept = tCompared.filter((x) => x.rows.slice(0, 3).some((r) => r.article_id === tBase[x.t.id][0]));
-    const tDrops = tCompared.filter((x) => !kept.includes(x));
+    // فرق راجعه إنسان بقراءة نص المواد (أولى main خطأ): يُعرض ولا يُسقط البوابة (baseline.reviewed، والسبب مكتوب).
+    const reviewed = base.reviewed ?? {};
+    const tDiffs = tCompared.filter((x) => !kept.includes(x));
+    const tDrops = tDiffs.filter((x) => !(x.t.id in reviewed));
+    const tReviewed = tDiffs.filter((x) => x.t.id in reviewed);
     const overlap = tCompared.length
       ? +(tCompared.reduce((s, x) => s + x.rows.slice(0, 3).filter((r) => tBase[x.t.id].slice(0, 3).includes(r.article_id)).length / Math.min(3, tBase[x.t.id].length), 0) / tCompared.length).toFixed(3)
       : null;
@@ -144,7 +148,7 @@ async function main() {
       `variant=${v.name} p50=${p50} p95=${p95}`,
       `known_item n=${kiSum.n} hit1=${kiSum.hit1} hit3=${kiSum.hit3} hit10=${kiSum.hit10} mrr=${kiSum.mrr} errors=${kiSum.errors}`,
       `known_item vs baseline: compared=${kiCompared.length} base_hit3=${kiBaseHit3 ?? "—"} drop3=${kiDrops.length} gain3=${kiGains.length}`,
-      `terms n=${terms.length} errors=${tErrors} vs baseline: compared=${tCompared.length} main_top1_in_top3=${kept.length}/${tCompared.length} top3_overlap=${overlap ?? "—"}`,
+      `terms n=${terms.length} errors=${tErrors} vs baseline: compared=${tCompared.length} main_top1_in_top3=${kept.length}/${tCompared.length} top3_overlap=${overlap ?? "—"} drops=${tDrops.length} reviewed=${tReviewed.map((x) => x.t.id).join(",") || "—"}`,
     ].join("\n");
     console.log(`\n══ ${head}`);
     for (const x of terms) console.log(`  ${x.t.id}  [${refs(x.rows)}]${x.error ? ` ERROR ${x.error}` : ""}`);
@@ -157,6 +161,7 @@ async function main() {
     }
     const changed = [
       ...tDrops.map((x) => `DROP ${x.t.id} main1=${tBase[x.t.id][0]} now=[${refs(x.rows)}]`),
+      ...tReviewed.map((x) => `REVIEWED ${x.t.id} main1=${tBase[x.t.id][0]} now=[${refs(x.rows)}] — ${reviewed[x.t.id].slice(0, 80)}`),
       ...kiDrops.map((p) => `DROP ki ${p.id} ${kiBase[p.id]}→${p.rank ?? "-"} «${p.q.slice(0, 40)}» [${refs(p.rows)}]`),
       ...kiGains.map((p) => `gain ki ${p.id} ${kiBase[p.id] ?? "-"}→${p.rank} «${p.q.slice(0, 30)}»`),
       ...terms.filter((x) => !tDrops.includes(x)).map((x) => `${x.t.id} [${refs(x.rows)}]`),
