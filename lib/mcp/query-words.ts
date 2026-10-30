@@ -65,33 +65,11 @@ export const DIALECT_REQUESTS: string[][] = phrases([
   "ودي اسال", "الله يعافيك", "يعطيك العافية", "وش حكم", "ايش حكم", "هل لازم", "هل اقدر", "ما اقدر",
 ]);
 
-/**
- * HKM-062 (مراجعة الجودة الثالثة): «هل يقدر/ما يقدر» دارجة بمعنى «يستطيع» إن تلاها فعل مضارع بلا «أن» («هل يقدر الدائن
- * يطلب تصفية…»)، وفصيحة بمعنى «يُقدَّر» في غير ذلك («هل يقدر التعويض عن الضرر…»، «ما يقدر به التعويض») فتبقى
- * ألفاظها كما في main ولا يتغير السجل.
+/*
+ * HKM-062 (مراجعة الجودة الخامسة على #984): «هل يقدر/ما يقدر/هل نقدر…» ليست علامة سجل ولا تُحذف وحدها؛ «يقدر» تحتمل
+ * «يستطيع» و«يُقدَّر» ولا تفصل بينهما قاعدة شكلية (جُرّبت في ثلاث جولات وأخطأت). السؤال الذي فيها دارج إن حمل علامة أخرى (لفظ دارج،
+ * أو صيغة دارجة من الجسر، أو عبارة طلب دارجة)، وإلا فصيح كما في main؛ و«يقدر» في الدارج حشو (SOFT_STOP).
  */
-export const CONDITIONAL_REQUESTS: string[][] = phrases(["هل يقدر", "هل نقدر", "هل يقدرون", "ما يقدر", "ما نقدر", "ما يقدرون"]);
-
-/**
- * HKM-062 (مراجعة الجودة الرابعة): ما يقطع البحث عن الفعل بعد «يقدر»: «أن»، والموصول وما المصدرية («بما يجبر الضرر»،
- * «ما يستحق العامل»، «الذي»، «التي») — ما بعدها صلة لا فعل «يستطيع».
- */
-const VERB_SCAN_STOP = new Set(["ان", "بان", "ما", "بما", "مما", "فيما", "عما", "كما", "لما", "الذي", "التي"].map(normalizeAr));
-/** أسماء تبدأ بالياء ليست مضارعًا («هل يقدر يمين المدعي»، «يسار المنفق»، «يسير الغرر»). */
-const YA_NOUNS = new Set(["يمين", "يسار", "يسير", "يسيرا", "يوميا", "يتيم", "يتامى", "يقين", "يقينا"].map(normalizeAr));
-/** أفعال مساعدة لا تدل على «يقدر يفعل» («ما يقدر به التعويض يكون بحسب الضرر»). */
-const HELPER_VERBS = new Set(["يكون", "تكون", "يجب", "تجب", "يحق", "يجوز", "تجوز", "يمكن", "ينبغي", "يلزم"].map(normalizeAr));
-
-/** فعل مضارع (لا اسم بالتاء المربوطة ولا معرّف ولا اسم بالياء ولا فعل مساعد) خلال ثلاث كلمات بعد «يقدر/نقدر» قبل أي قاطع. */
-function presentVerbFollows(w: string[], from: number, person: "ي" | "ن"): boolean {
-  for (let j = from; j < Math.min(w.length, from + 3); j++) {
-    const x = w[j];
-    if (VERB_SCAN_STOP.has(x)) return false;
-    if (YA_NOUNS.has(x) || HELPER_VERBS.has(x)) continue;
-    if (x.length >= 4 && x.startsWith(person) && !x.startsWith("ال") && !/[ه]$/.test(x)) return true;
-  }
-  return false;
-}
 
 /** للتوافق: كل العبارات المحذوفة دائمًا (الأطول أولًا). */
 export const REQUEST_PHRASES: string[][] = [...FORMAL_OPENERS, ...DIALECT_REQUESTS].sort((a, b) => b.length - a.length);
@@ -124,12 +102,6 @@ export function scanRequestPhrases(words: string[]): RequestScan {
     if (hit) {
       dialect ||= DIALECT_REQUESTS.includes(hit);
       i += hit.length;
-      continue;
-    }
-    const cond = CONDITIONAL_REQUESTS.find((p) => p.every((x, j) => w[i + j] === x));
-    if (cond && presentVerbFollows(w, i + cond.length, cond[1].startsWith("ن") ? "ن" : "ي")) {
-      dialect = true;
-      i += cond.length;
       continue;
     }
     kept.push(i);
