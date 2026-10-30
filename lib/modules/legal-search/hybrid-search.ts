@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { parseArticleQuery } from "./query-parse";
 import { loadSystemsRegistry, matchSystemsInText, normalizeSystemName, type SystemRef } from "@/lib/modules/agents/substrate/systems-registry";
-import { EMPTY_SURFACE, inSurface, loadSearchSurface, mapToSurface } from "@/lib/modules/legal-core/search-surface";
+import { EMPTY_SURFACE, inSurface, loadSearchSurface, loadSearchSurfaceStrict, mapToSurface } from "@/lib/modules/legal-core/search-surface";
 import { knowledgeGraphProvider } from "./providers/knowledge-graph-provider";
 import { opensearchProvider } from "./providers/opensearch-provider";
 import { postgresProvider } from "./providers/postgres-provider";
@@ -107,6 +107,22 @@ export async function filterArticleIdsToSurface(ids: string[], opts: { asOf?: st
   const asMerged = ids.map((id) => ({ id, type: "article" }) as unknown as MergedResult);
   const kept = await filterArticlesToSurface(asMerged, opts);
   return new Set(kept.map((r) => r.id));
+}
+
+/**
+ * HKM-062 (مراجعة الجودة الثالثة على #984): هل المادة داخل وجه البحث الساري؟ يفشل مغلقًا: تعذّر قراءة الوجه أو سجل
+ * الإلغاء أو صف المادة = false. لقرار تثبيت المطابقة التامة أولًا (lib/mcp/adapter.ts)؛ والبحث العام يبقى على
+ * filterArticleIdsToSurface (يفشل مفتوحًا كما كان).
+ */
+export async function articleInSurfaceStrict(id: string, opts: { asOf?: string } = {}): Promise<boolean> {
+  try {
+    const loaded = await loadSearchSurfaceStrict(opts.asOf);
+    if (!loaded) return false;
+    const row = await prisma.legalArticle.findUnique({ where: { id }, select: { legalSystemId: true, lawName: true } });
+    return row ? inSurface(row, loaded.surface, loaded.hiddenNames) : false;
+  } catch {
+    return false;
+  }
 }
 
 /** منسّق البحث الهجين: يشغّل المزوّدات المتاحة، يدمج ويزيل التكرار ويرتّب. */

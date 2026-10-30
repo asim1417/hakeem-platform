@@ -9,6 +9,7 @@ import { groupTerms, planQuery, probeTerms } from "../lib/mcp/query-plan";
 import { dropRequestPhrases, hasColloquialMarker, queryKeywords } from "../lib/mcp/query-words";
 import { fusionScore, pinnableExact, WEIGHTS_DISTINCTIVE, WEIGHTS_WEAK_LEXICAL } from "../lib/mcp/search-fusion";
 import { compileAny, matchesText, normalizeAr } from "../lib/mcp/tools/word-match";
+import { EMPTY_SURFACE, strictSurface } from "../lib/modules/legal-core/search-surface";
 
 let failures = 0;
 function check(name: string, fn: () => void) {
@@ -213,7 +214,8 @@ check("السؤال الدارج: المدخل الملتبس يعمل («ما �
 });
 check("النفي الدارج عبارةً: «ما حضر» ← غياب، و«ما نفذ» ← الإخلال؛ و«حضر» وحدها بلا بديل", () => {
   assert.ok(group("المدعي ما حضر الجلسة", "حضر").alts.includes(n("غياب")));
-  assert.ok(group("الطرف الثاني ما نفذ العقد", "نفذ").alts.includes(n("الإخلال")));
+  assert.ok(group("الطرف الثاني ما نفذ العقد وش اسوي", "نفذ").alts.includes(n("الإخلال")), "«ما نفذ» ملتبسة: في الدارج");
+  assert.deepEqual(group("الطرف الثاني ما نفذ العقد", "نفذ").alts, [], "وفي الفصيح لا");
   assert.deepEqual(group("حضر المدعى عليه", "حضر").alts, []);
 });
 check("«لازم» و«أبي» و«شيء» حشو في الدارج وحده", () => {
@@ -291,6 +293,55 @@ check("صور زائدة في الدارج: «اترك» لا «اتر»، «ا�
   assert.ok(queryStemVariants(n("زوجتي"), full).includes(n("زوجة")));
 });
 
+// ── مراجعة الجودة الثالثة ──
+check("«هل يقدر/ما يقدر» فصيحة (يُقدَّر) لا تقلب السجل ولا تُحذف؛ ودارجة إن تلاها مضارع بلا «أن»", () => {
+  const cases: Array<[string, string, string[]]> = [
+    ["هل يقدر التعويض عن الضرر الذي تولد عن الخطأ", "تولد", ["الوضع", "وضع", "ولد", "اولاد"]],
+    ["هل يقدر التعويض عن عيب الشقة المبيعة", "الشقة", ["المسكن", "الماجور"]],
+    ["ما يقدر به التعويض عن صور المحررات المزورة", "صور", ["الكاميرا", "الحياه الخاصه"]],
+    ["هل يقدر القاضي نفقة الأطفال", "الأطفال", ["المحضون", "الاولاد"]],
+  ];
+  for (const [q, term, bad] of cases) {
+    const p = planQuery(q);
+    assert.equal(p.colloquial, false, q);
+    assert.ok(p.groups.some((g) => g.term === "يقدر"), `«يقدر» لفظ: ${q}`);
+    assert.equal(p.semanticAppend, q, `نص المعنى هو السؤال: ${p.semanticAppend}`);
+    const terms = groupTerms(group(q, term));
+    for (const b of bad) assert.equal(terms.includes(n(b)), false, `«${q}» ← ${b}`);
+  }
+  for (const q of ["هل يقدر الدائن يطلب تصفية أموال المدين المفلس", "هل يقدر صاحب العمل يفصل الموظفة وهي في إجازة الولادة", "ما يقدر يرجع عن البيع"]) {
+    const p = planQuery(q);
+    assert.ok(p.colloquial, q);
+    assert.equal(p.groups.some((g) => g.term === "يقدر"), false, `«يقدر» تُحذف في الدارج: ${q}`);
+  }
+  assert.equal(planQuery("هل يقدر القاضي أن يحكم بأكثر مما طلب").colloquial, false, "«أن» قبل المضارع فصيحة");
+});
+check("«ما دفع»، «ما نفذ»، «بدلها» ملتبسة: لا بدائل في السؤال الفصيح", () => {
+  const cases: Array<[string, string, string[]]> = [
+    ["الرد على ما دفع به المدعى عليه", "دفع", ["اداء", "يودي", "الوفاء", "سداد"]],
+    ["ما حكم ما دفع به الخصم من دفوع شكلية", "دفع", ["اداء", "الوفاء"]],
+    ["ما نفذ من الالتزامات قبل الفسخ", "نفذ", ["اخل", "الاخلال", "يوف"]],
+    ["التزام البائع بتسليم سلعة بدلها", "بدلها", ["اجره", "مقابل"]],
+  ];
+  for (const [q, term, bad] of cases) {
+    assert.equal(planQuery(q).colloquial, false, q);
+    const terms = groupTerms(group(q, term));
+    for (const b of bad) assert.equal(terms.includes(n(b)), false, `«${q}» ← ${b}`);
+  }
+  assert.ok(group("المستأجر ما دفع الإيجار وش أسوي", "دفع").alts.includes(n("الوفاء")), "في الدارج تبقى");
+});
+check("«يسوي» و«آية» ليستا دارجتين؛ «يسوي» لفظ في الفصيح", () => {
+  assert.equal(planQuery("يسوي القاضي بين الخصوم").colloquial, false);
+  assert.ok(queryKeywords("يسوي القاضي بين الخصوم").includes("يسوي"));
+  assert.equal(planQuery("تفسير آية الدين").colloquial, false);
+  assert.ok(queryKeywords("تفسير آية الدين").includes("ايه"));
+});
+check("«الحضانة لمين/لمن» ← الأحق بالحضانة؛ «حضانة الأم» بلا بديل", () => {
+  assert.ok(group("الحضانة لمين بعد الطلاق", "الحضانة").alts.includes(n("الأحق بالحضانة")));
+  assert.ok(planQuery("الحضانة لمين بعد الطلاق").semanticAppend.includes("الأحق بالحضانة"));
+  assert.deepEqual(group("حضانة الأم", "حضانة").alts, []);
+});
+
 // ── الإحالة الصريحة إلى مادة (B2) ──
 check("الإحالة الصريحة: «المادة/مادة» أو «م» مستقلة", () => {
   const yes: Array<[string, number]> = [
@@ -325,10 +376,16 @@ check("ليست إحالة: «كم 60 يوم»، «رقم 120»، «م/53» وا
 });
 check("مطابقة المادة التامة لا تُثبَّت أولًا إلا داخل وجه البحث (BLK-2)", () => {
   const hit = { id: "a1", type: "article" };
-  assert.deepEqual(pinnableExact(hit, new Set(["a1", "b2"])), hit, "مادة نظام ساري");
-  assert.equal(pinnableExact(hit, new Set(["b2"])), null, "مادة نظام ملغى أو مستبدل (خارج الوجه)");
-  assert.equal(pinnableExact(hit, null), null, "تعذّر قراءة الوجه: لا تثبيت");
-  assert.equal(pinnableExact(null, new Set(["a1"])), null);
+  assert.deepEqual(pinnableExact(hit, true), hit, "مادة نظام ساري");
+  assert.equal(pinnableExact(hit, false), null, "مادة نظام ملغى أو مستبدل، أو تعذّرت القراءة");
+  assert.equal(pinnableExact(null, true), null);
+});
+check("الوجه لقرار التثبيت يفشل مغلقًا: فشل قراءة الوجه أو سجل الإلغاء = null، والملغى مخفي (N1)", () => {
+  const tables = { surface: { ...EMPTY_SURFACE, asOf: "2026-10-30" }, hiddenNames: new Set<string>(), ok: true };
+  assert.equal(strictSurface({ ...tables, ok: false }, { ids: [], ok: true }), null, "فشل جدولي الوجه");
+  assert.equal(strictSurface(tables, { ids: [], ok: false }), null, "فشل سجل الإلغاء");
+  const ok = strictSurface(tables, { ids: ["old-reg"], ok: true });
+  assert.ok(ok && ok.surface.hidden.has("old-reg"), "الملغى بسجل التحقق مخفي");
 });
 
 // ── أوزان الدمج ──

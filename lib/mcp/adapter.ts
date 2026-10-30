@@ -20,7 +20,7 @@ import { citationFlagsFromVerification } from "@/lib/modules/legal-core/verified
 import { latestVerification } from "@/lib/modules/legal-core/verification-read";
 import { NON_ARTICLE_BIS } from "@/lib/modules/legal-core/article-key";
 import { effectiveArticleTexts } from "@/lib/modules/legal-core/effective-text";
-import { BUDGET_EXCEEDED, filterArticleIdsToSurface, findExactArticleMatch, hybridSearch, providerBudgetMs, withBudget } from "@/lib/modules/legal-search/hybrid-search";
+import { articleInSurfaceStrict, BUDGET_EXCEEDED, filterArticleIdsToSurface, findExactArticleMatch, hybridSearch, providerBudgetMs, withBudget } from "@/lib/modules/legal-search/hybrid-search";
 import { explicitArticleCitation } from "@/lib/mcp/article-citation";
 import { articleSimilarities } from "@/lib/modules/legal-search/providers/vector-provider";
 import {
@@ -236,9 +236,10 @@ async function exactCitationHit(query: string, lawId: string | undefined): Promi
   const hit = await findExactArticleMatch(`المادة ${cite.articleNumber} ${cite.systemHint}`).catch(() => null);
   if (!hit || hit.type !== "article") return null;
   if (lawId && String(hit.meta?.systemId ?? "") !== lawId) return null;
-  // مادة نظام ملغى أو مستبدل لا تُثبَّت أولًا (مراجعة الجودة الثانية): مرشح الوجه نفسه الذي تمر به بقية النتائج.
-  const allowed = await filterArticleIdsToSurface([hit.id]).catch(() => null);
-  return pinnableExact({ id: hit.id, type: "article" }, allowed);
+  // مادة نظام ملغى أو مستبدل لا تُثبَّت أولًا (مراجعتا الجودة الثانية والثالثة): الوجه نفسه الذي تمر به بقية النتائج،
+  // ويفشل مغلقًا (تعذّر قراءة الوجه أو سجل الإلغاء = لا تثبيت؛ والمادة تبقى للدمج والتكملة كغيرها).
+  const ok = await articleInSurfaceStrict(hit.id).catch(() => false);
+  return pinnableExact({ id: hit.id, type: "article" }, ok);
 }
 
 // ١) البحث في المواد — HKM-048: دمج دليلين مستقلين (اللفظ النادر + المعنى) بترتيب تغطية الألفاظ،

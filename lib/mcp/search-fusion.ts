@@ -133,11 +133,10 @@ export function keepCandidate(c: { coverage: number; similarity: number }, keywo
 }
 
 /**
- * HKM-062 (مراجعة الجودة الثانية على #984): مطابقة «المادة N من نظام X» التامة تشمل الأنظمة الملغاة والمستبدلة
- * (الوصول المباشر يجيب «موجودة وملغاة»)، فلا تتصدر نتائج البحث إلا إن كانت في وجه البحث الساري كبقية المرشحين
- * (`allowed` من filterArticleIdsToSurface، كما يفعل المحرك الهجين في main). تعذّر قراءة الوجه (null) = لا تثبيت.
+ * HKM-062 (مراجعتا الجودة الثانية والثالثة على #984): مطابقة «المادة N من نظام X» التامة تشمل الأنظمة الملغاة والمستبدلة
+ * (الوصول المباشر يجيب «موجودة وملغاة»)، فلا تتصدر نتائج البحث إلا إن ثبت أنها في وجه البحث الساري (`inSurface` من
+ * articleInSurfaceStrict). القرار يفشل مغلقًا: تعذّر قراءة الوجه أو سجل الإلغاء = false = لا تثبيت.
  */
-export function pinnableExact<T extends { id: string }>(exact: T | null, allowed: Set<string> | null): T | null {
-  if (!exact || !allowed) return null;
-  return allowed.has(exact.id) ? exact : null;
+export function pinnableExact<T extends { id: string }>(exact: T | null, inSurface: boolean): T | null {
+  return exact && inSurface === true ? exact : null;
 }

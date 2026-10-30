@@ -22,7 +22,7 @@ import { loadUsableKnownItems, strideSample } from "./known-item-sample";
 
 type Term = { id: string; query: string; law_id?: string; note?: string };
 type Baseline = { ref?: string; sha?: string; at?: string; terms?: Record<string, string[]>; known_item?: Record<string, number | null>; reviewed?: Record<string, string> };
-type Fixture = { version: number; terms: Term[]; baseline?: Baseline };
+type Fixture = { version: number; terms: Term[]; negative?: Record<string, { ids: string[]; why?: string }>; baseline?: Baseline };
 type Variant = { name: string; opts?: Record<string, unknown> };
 type Row = { article_id: string; law: string; law_id: string | null; article_number: number };
 type SearchFn = (q: string, lawId?: string, limit?: number, opts?: Record<string, unknown>) => Promise<{ results: Row[] }>;
@@ -128,7 +128,11 @@ async function main() {
 
     // ── الألفاظ الدقيقة: أولى main في ثلاث الإعداد ──
     const tBase = base.terms ?? {};
-    const tCompared = terms.filter((x) => !x.error && tBase[x.t.id]?.length);
+    // فحص سلبي (fx.negative): مواد يجب ألا تظهر في أعلى عشر؛ السؤال به لا يُقارن بأولى main.
+    const negative = fx.negative ?? {};
+    const negTerms = terms.filter((x) => x.t.id in negative);
+    const negFails = negTerms.filter((x) => x.error || x.rows.slice(0, LIMIT).some((r) => negative[x.t.id].ids.includes(r.article_id)));
+    const tCompared = terms.filter((x) => !x.error && tBase[x.t.id]?.length && !(x.t.id in negative));
     const kept = tCompared.filter((x) => x.rows.slice(0, 3).some((r) => r.article_id === tBase[x.t.id][0]));
     // فرق راجعه إنسان بقراءة نص المواد (أولى main خطأ): يُعرض ولا يُسقط البوابة (baseline.reviewed، والسبب مكتوب).
     const reviewed = base.reviewed ?? {};
@@ -142,13 +146,14 @@ async function main() {
     const ms = [...terms.map((x) => x.ms), ...ki.map((x) => x.ms)].sort((a, b) => a - b);
     const p50 = ms[Math.floor(ms.length / 2)] ?? 0;
     const p95 = ms[Math.min(ms.length - 1, Math.floor(ms.length * 0.95))] ?? 0;
-    if (tDrops.length || kiDrops.length || tErrors || kiSum.errors) gateFailed = true;
+    if (tDrops.length || kiDrops.length || tErrors || kiSum.errors || negFails.length) gateFailed = true;
 
     const head = [
       `variant=${v.name} p50=${p50} p95=${p95}`,
       `known_item n=${kiSum.n} hit1=${kiSum.hit1} hit3=${kiSum.hit3} hit10=${kiSum.hit10} mrr=${kiSum.mrr} errors=${kiSum.errors}`,
       `known_item vs baseline: compared=${kiCompared.length} base_hit3=${kiBaseHit3 ?? "—"} drop3=${kiDrops.length} gain3=${kiGains.length}`,
       `terms n=${terms.length} errors=${tErrors} vs baseline: compared=${tCompared.length} main_top1_in_top3=${kept.length}/${tCompared.length} top3_overlap=${overlap ?? "—"} drops=${tDrops.length} reviewed=${tReviewed.map((x) => x.t.id).join(",") || "—"}`,
+      `negative (not in top ${LIMIT}): pass=${negTerms.length - negFails.length}/${negTerms.length}${negFails.length ? ` FAIL=${negFails.map((x) => x.t.id).join(",")}` : ""}`,
     ].join("\n");
     console.log(`\n══ ${head}`);
     for (const x of terms) console.log(`  ${x.t.id}  [${refs(x.rows)}]${x.error ? ` ERROR ${x.error}` : ""}`);
@@ -160,6 +165,7 @@ async function main() {
       warn(`precise ${v.name} dump-ki`, ki.map((p) => `K:${p.id}=${p.error ? "E" : (p.rank ?? "-")}`));
     }
     const changed = [
+      ...negFails.map((x) => `NEGATIVE-FAIL ${x.t.id} [${refs(x.rows)}]`),
       ...tDrops.map((x) => `DROP ${x.t.id} main1=${tBase[x.t.id][0]} now=[${refs(x.rows)}]`),
       ...tReviewed.map((x) => `REVIEWED ${x.t.id} main1=${tBase[x.t.id][0]} now=[${refs(x.rows)}] — ${reviewed[x.t.id].slice(0, 80)}`),
       ...kiDrops.map((p) => `DROP ki ${p.id} ${kiBase[p.id]}→${p.rank ?? "-"} «${p.q.slice(0, 40)}» [${refs(p.rows)}]`),
