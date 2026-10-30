@@ -72,11 +72,22 @@ export const DIALECT_REQUESTS: string[][] = phrases([
  */
 export const CONDITIONAL_REQUESTS: string[][] = phrases(["هل يقدر", "هل نقدر", "هل يقدرون", "ما يقدر", "ما نقدر", "ما يقدرون"]);
 
-/** فعل مضارع (لا اسم بالتاء المربوطة ولا معرّف) خلال ثلاث كلمات بعد «يقدر/نقدر»، ولا «أن» قبله. */
+/**
+ * HKM-062 (مراجعة الجودة الرابعة): ما يقطع البحث عن الفعل بعد «يقدر»: «أن»، والموصول وما المصدرية («بما يجبر الضرر»،
+ * «ما يستحق العامل»، «الذي»، «التي») — ما بعدها صلة لا فعل «يستطيع».
+ */
+const VERB_SCAN_STOP = new Set(["ان", "بان", "ما", "بما", "مما", "فيما", "عما", "كما", "لما", "الذي", "التي"].map(normalizeAr));
+/** أسماء تبدأ بالياء ليست مضارعًا («هل يقدر يمين المدعي»، «يسار المنفق»، «يسير الغرر»). */
+const YA_NOUNS = new Set(["يمين", "يسار", "يسير", "يسيرا", "يوميا", "يتيم", "يتامى", "يقين", "يقينا"].map(normalizeAr));
+/** أفعال مساعدة لا تدل على «يقدر يفعل» («ما يقدر به التعويض يكون بحسب الضرر»). */
+const HELPER_VERBS = new Set(["يكون", "تكون", "يجب", "تجب", "يحق", "يجوز", "تجوز", "يمكن", "ينبغي", "يلزم"].map(normalizeAr));
+
+/** فعل مضارع (لا اسم بالتاء المربوطة ولا معرّف ولا اسم بالياء ولا فعل مساعد) خلال ثلاث كلمات بعد «يقدر/نقدر» قبل أي قاطع. */
 function presentVerbFollows(w: string[], from: number, person: "ي" | "ن"): boolean {
   for (let j = from; j < Math.min(w.length, from + 3); j++) {
     const x = w[j];
-    if (x === "ان" || x === "بان") return false;
+    if (VERB_SCAN_STOP.has(x)) return false;
+    if (YA_NOUNS.has(x) || HELPER_VERBS.has(x)) continue;
     if (x.length >= 4 && x.startsWith(person) && !x.startsWith("ال") && !/[ه]$/.test(x)) return true;
   }
   return false;

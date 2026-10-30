@@ -45,4 +45,4 @@ jobs:
 
       # HKM-062: اختبارات وحدة صرفة لمسار hakeem_search (بلا قاعدة ولا شبكة: fetch مستبدل في اختبار القاطع).
       - name: Search query unit tests
-        run: npm run test:everyday-query && npm run test:opensearch-breaker
+        run: npm run test:everyday-query && npm run test:opensearch-breaker && npm run test:pin-surface
